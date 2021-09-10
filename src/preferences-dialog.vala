@@ -103,7 +103,7 @@ namespace Pomodoro
         }
     }
 
-    [GtkTemplate (ui = "/org/gnome/pomodoro/preferences-keyboard-shortcut-page.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/preferences-keyboard-shortcut-page.ui")]
     public class PreferencesKeyboardShortcutPage : Gtk.Box, Gtk.Buildable, Pomodoro.PreferencesPage
     {
         private Pomodoro.Accelerator accelerator { get; set; }
@@ -322,7 +322,7 @@ namespace Pomodoro
         }
     }
 
-    [GtkTemplate (ui = "/org/gnome/pomodoro/preferences-plugins-page.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/preferences-plugins-page.ui")]
     public class PreferencesPluginsPage : Gtk.ScrolledWindow, Gtk.Buildable, Pomodoro.PreferencesPage
     {
         [GtkChild]
@@ -492,7 +492,7 @@ namespace Pomodoro
         }
     }
 
-    [GtkTemplate (ui = "/org/gnome/pomodoro/preferences-main-page.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/preferences-main-page.ui")]
     public class PreferencesMainPage : Gtk.ScrolledWindow, Gtk.Buildable, Pomodoro.PreferencesPage
     {
         [GtkChild]
@@ -766,7 +766,7 @@ namespace Pomodoro
         }
     }
 
-    [GtkTemplate (ui = "/org/gnome/pomodoro/preferences.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/preferences.ui")]
     public class PreferencesDialog : Gtk.ApplicationWindow, Gtk.Buildable
     {
         private const int DEFAULT_WIDTH = 600;

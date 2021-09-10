@@ -23,7 +23,7 @@ using GLib;
 
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnome/pomodoro/stats-page.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/stats-page.ui")]
     private abstract class StatsPage : Gtk.Box, Gtk.Buildable
     {
         private const double GUIDES_OFFSET = 5.0;

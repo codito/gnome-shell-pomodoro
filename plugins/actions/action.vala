@@ -40,7 +40,7 @@ namespace Actions
             }
             construct set {
                 if (value != null) {
-                    this.settings = new Settings.with_path ("org.gnome.pomodoro.plugins.actions.action",
+                    this.settings = new Settings.with_path ("org.gnomepomodoro.Pomodoro.plugins.actions.action",
                                                             value);
 
                     this.settings.bind ("name",

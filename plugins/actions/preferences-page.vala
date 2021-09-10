@@ -36,7 +36,7 @@ namespace Actions
     }
 
 
-    [GtkTemplate (ui = "/org/gnome/pomodoro/plugins/actions/preferences-page.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/plugins/actions/preferences-page.ui")]
     public class PreferencesPage : Gtk.Box, Pomodoro.PreferencesPage
     {
         [GtkChild]

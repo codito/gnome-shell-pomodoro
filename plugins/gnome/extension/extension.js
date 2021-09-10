@@ -69,7 +69,7 @@ export default class PomodoroExtension extends Extension {
     }
 
     get application() {
-        return Shell.AppSystem.get_default().lookup_app('org.gnome.Pomodoro.desktop');
+        return Shell.AppSystem.get_default().lookup_app('org.gnomepomodoro.Pomodoro.desktop');
     }
 
     get notificationManager() {
@@ -142,7 +142,7 @@ export default class PomodoroExtension extends Extension {
     }
 
     _onServiceNameLost() {
-        Utils.logWarning('Lost service name "org.gnome.Pomodoro.Extension"');
+        Utils.logWarning('Lost service name "org.gnomepomodoro.Pomodoro.Extension"');
     }
 
     _onTimerServiceConnected() {
@@ -151,7 +151,7 @@ export default class PomodoroExtension extends Extension {
     }
 
     _onTimerServiceDisconnected() {
-        Utils.logWarning('Lost connection to "org.gnome.Pomodoro"');
+        Utils.logWarning('Lost connection to "org.gnomepomodoro.Pomodoro"');
         this._updateMode();
     }
 
@@ -276,10 +276,10 @@ export default class PomodoroExtension extends Extension {
     }
 
     enable() {
-        this.settings = this.getSettings('org.gnome.pomodoro.preferences');
+        this.settings = this.getSettings('org.gnomepomodoro.pomodoro.preferences');
         this.settings.connect('changed::show-screen-notifications', this._onSettingsChanged.bind(this));
 
-        this.pluginSettings = this.getSettings('org.gnome.pomodoro.plugins.gnome');
+        this.pluginSettings = this.getSettings('org.gnomepomodoro.pomodoro.plugins.gnome');
         this.pluginSettings.connect('changed::hide-system-notifications', this._onSettingsChanged.bind(this));
         this.pluginSettings.connect('changed::indicator-type', this._onSettingsChanged.bind(this));
         this.pluginSettings.connect('changed::blur-effect', this._onSettingsChanged.bind(this));

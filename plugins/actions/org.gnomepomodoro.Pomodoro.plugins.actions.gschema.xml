@@ -1,10 +1,10 @@
 <schemalist>
-  <flags id="org.gnome.pomodoro.plugins.actions.State">
+  <flags id="org.gnomepomodoro.Pomodoro.plugins.actions.State">
     <value nick="pomodoro" value="1"/>
     <value nick="short-break" value="2"/>
     <value nick="long-break" value="4"/>
   </flags>
-  <flags id="org.gnome.pomodoro.plugins.actions.Trigger">
+  <flags id="org.gnomepomodoro.Pomodoro.plugins.actions.Trigger">
     <value nick="start" value="1"/>
     <value nick="complete" value="2"/>
     <value nick="skip" value="4"/>
@@ -13,14 +13,14 @@
     <value nick="enable" value="32"/>
     <value nick="disable" value="64"/>
   </flags>
-  <schema id="org.gnome.pomodoro.plugins.actions" path="/org/gnome/pomodoro/plugins/actions/" gettext-domain="gnome-pomodoro">
+  <schema id="org.gnomepomodoro.Pomodoro.plugins.actions" path="/org/gnomepomodoro/Pomodoro/plugins/actions/" gettext-domain="gnome-pomodoro">
     <key name="actions-list" type="as">
       <default>[]</default>
       <summary>Actions</summary>
       <description>List of actions.</description>
     </key>
   </schema>
-  <schema id="org.gnome.pomodoro.plugins.actions.action" gettext-domain="gnome-pomodoro">
+  <schema id="org.gnomepomodoro.Pomodoro.plugins.actions.action" gettext-domain="gnome-pomodoro">
     <key name="name" type="s">
       <default>""</default>
       <summary>Name</summary>
@@ -31,12 +31,12 @@
       <summary>Command</summary>
       <description>Command to run when the action is invoked.</description>
     </key>
-    <key name="states" flags="org.gnome.pomodoro.plugins.actions.State">
+    <key name="states" flags="org.gnomepomodoro.Pomodoro.plugins.actions.State">
       <default>['pomodoro', 'short-break', 'long-break']</default>
       <summary>States</summary>
       <description>State in which action should be triggered.</description>
     </key>
-    <key name="triggers" flags="org.gnome.pomodoro.plugins.actions.Trigger">
+    <key name="triggers" flags="org.gnomepomodoro.Pomodoro.plugins.actions.Trigger">
       <default>[]</default>
       <summary>Triggers</summary>
       <description>Triggers for the action.</description>

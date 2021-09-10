@@ -33,7 +33,7 @@ namespace Pomodoro
     public unowned GLib.Settings get_settings ()
     {
         if (Pomodoro.settings == null) {
-            Pomodoro.settings = new GLib.Settings ("org.gnome.pomodoro");
+            Pomodoro.settings = new GLib.Settings ("org.gnomepomodoro.Pomodoro");
         }
 
         return Pomodoro.settings;

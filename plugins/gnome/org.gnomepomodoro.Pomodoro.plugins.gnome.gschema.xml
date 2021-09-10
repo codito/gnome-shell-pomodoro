@@ -1,5 +1,5 @@
 <schemalist>
-  <schema id="org.gnome.pomodoro.plugins.gnome" path="/org/gnome/pomodoro/plugins/gnome/" gettext-domain="gnome-pomodoro">
+  <schema id="org.gnomepomodoro.Pomodoro.plugins.gnome" path="/org/gnomepomodoro/Pomodoro/plugins/gnome/" gettext-domain="gnome-pomodoro">
     <key name="indicator-type" type="s">
       <choices>
         <choice value="text"/>

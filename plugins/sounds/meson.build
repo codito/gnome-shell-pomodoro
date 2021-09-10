@@ -29,6 +29,6 @@ install_data(
 )
 
 install_data(
-  'org.gnome.pomodoro.plugins.sounds.gschema.xml',
+  'org.gnomepomodoro.Pomodoro.plugins.sounds.gschema.xml',
   install_dir: gschema_dir,
 )

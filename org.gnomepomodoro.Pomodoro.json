@@ -1,11 +1,9 @@
 {
-    "app-id": "org.gnome.Pomodoro",
+    "app-id": "org.gnomepomodoro.Pomodoro",
     "runtime": "org.gnome.Platform",
     "runtime-version": "master",
     "sdk": "org.gnome.Sdk",
     "command": "gnome-pomodoro",
-    "copy-icon": true,
-    "rename-icon": "gnome-pomodoro",
     "finish-args": [
         "--share=ipc",
         "--socket=x11",

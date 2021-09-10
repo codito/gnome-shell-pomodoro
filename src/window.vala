@@ -21,7 +21,7 @@
 
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnome/pomodoro/window.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
     public class Window : Gtk.ApplicationWindow, Gtk.Buildable
     {
         private const int MIN_WIDTH = 500;

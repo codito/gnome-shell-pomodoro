@@ -274,7 +274,7 @@ namespace GnomePlugin
 
         construct
         {
-            this.settings = new GLib.Settings ("org.gnome.pomodoro.plugins.gnome");
+            this.settings = new GLib.Settings ("org.gnomepomodoro.Pomodoro.plugins.gnome");
             this.dialog = Pomodoro.PreferencesDialog.get_default ();
 
             this.setup_main_page ();

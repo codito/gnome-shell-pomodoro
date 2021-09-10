@@ -1,5 +1,5 @@
-data/org.gnome.Pomodoro.appdata.xml.in
-data/org.gnome.Pomodoro.desktop.in
+data/org.gnomepomodoro.Pomodoro.appdata.xml.in
+data/org.gnomepomodoro.Pomodoro.desktop.in
 data/resources/menus.ui
 data/resources/preferences-keyboard-shortcut-page.ui
 data/resources/preferences-main-page.ui

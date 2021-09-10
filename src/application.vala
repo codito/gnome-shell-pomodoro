@@ -161,7 +161,7 @@ namespace Pomodoro
         public Application ()
         {
             GLib.Object (
-                application_id: "org.gnome.Pomodoro",
+                application_id: "org.gnomepomodoro.Pomodoro",
                 flags: GLib.ApplicationFlags.HANDLES_COMMAND_LINE
             );
 
@@ -186,7 +186,7 @@ namespace Pomodoro
         private void setup_resources ()
         {
             var css_provider = new Gtk.CssProvider ();
-            css_provider.load_from_resource ("/org/gnome/pomodoro/style.css");
+            css_provider.load_from_resource ("/org/gnomepomodoro/Pomodoro/style.css");
 
             Gtk.StyleContext.add_provider_for_screen (
                                          Gdk.Screen.get_default (),
@@ -285,7 +285,7 @@ namespace Pomodoro
 
             GLib.debug ("Migrating database to version %u", version);
 
-            var file = File.new_for_uri ("resource:///org/gnome/pomodoro/database/version-%u.sql".printf (version));
+            var file = File.new_for_uri ("resource:///org/gnomepomodoro/Pomodoro/database/version-%u.sql".printf (version));
             file.load_contents (null, out file_contents, null);
 
             /* Gom.Adapter.execute_sql is limited to single line queries,
@@ -824,7 +824,7 @@ namespace Pomodoro
                 this.service = new Pomodoro.Service (connection, this.timer);
 
                 try {
-                    connection.register_object ("/org/gnome/Pomodoro", this.service);
+                    connection.register_object ("/org/gnomepomodoro/Pomodoro", this.service);
                 }
                 catch (GLib.IOError error) {
                     GLib.warning ("%s", error.message);

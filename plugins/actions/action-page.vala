@@ -21,7 +21,7 @@ using GLib;
 
 namespace Actions
 {
-    [GtkTemplate (ui = "/org/gnome/pomodoro/plugins/actions/action-page.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/plugins/actions/action-page.ui")]
     public class ActionPage : Gtk.Box, Pomodoro.PreferencesPage
     {
         [GtkChild]
@@ -66,7 +66,7 @@ namespace Actions
 
             try {
                 var menu_builder = new Gtk.Builder ();
-                menu_builder.add_from_resource ("/org/gnome/pomodoro/plugins/actions/menus.ui");
+                menu_builder.add_from_resource ("/org/gnomepomodoro/Pomodoro/plugins/actions/menus.ui");
 
                 var add_variable_model = menu_builder.get_object ("add-variable") as GLib.MenuModel;
                 var add_variable_popover = new Gtk.Popover.from_model (this.add_variable_button,

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
-  <schema id="org.gnome.pomodoro" path="/org/gnome/pomodoro/">
-    <child name="preferences" schema="org.gnome.pomodoro.preferences"/>
-    <child name="state" schema="org.gnome.pomodoro.state"/>
+  <schema id="org.gnomepomodoro.Pomodoro" path="/org/gnomepomodoro/Pomodoro/">
+    <child name="preferences" schema="org.gnomepomodoro.Pomodoro.preferences"/>
+    <child name="state" schema="org.gnomepomodoro.Pomodoro.state"/>
   </schema>
 
-  <schema id="org.gnome.pomodoro.preferences" path="/org/gnome/pomodoro/preferences/">
+  <schema id="org.gnomepomodoro.Pomodoro.preferences" path="/org/gnomepomodoro/Pomodoro/preferences/">
     <key name="pomodoro-duration" type="d">
       <default>1500</default>
       <range min="1" max="36000"/>
@@ -51,7 +51,7 @@
     </key>
   </schema>
 
-  <schema id="org.gnome.pomodoro.state" path="/org/gnome/pomodoro/state/">
+  <schema id="org.gnomepomodoro.Pomodoro.state" path="/org/gnomepomodoro/Pomodoro/state/">
     <key name="timer-state" type="s">
       <choices>
         <choice value="null"/>

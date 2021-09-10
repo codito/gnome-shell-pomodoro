@@ -101,7 +101,7 @@ namespace Pomodoro
     {
         private GLib.TestSuite root_suite;
         private GLib.File tmp_dir;
-        private const string SCHEMA_FILE_NAME = "org.gnome.pomodoro.gschema.xml";
+        private const string SCHEMA_FILE_NAME = "org.gnomepomodoro.Pomodoro.gschema.xml";
 
         public TestRunner (GLib.TestSuite? root_suite = null)
         {

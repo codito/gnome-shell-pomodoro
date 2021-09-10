@@ -23,7 +23,7 @@ using GLib;
 
 namespace Pomodoro
 {
-    [DBus (name = "org.gnome.Pomodoro")]
+    [DBus (name = "org.gnomepomodoro.Pomodoro")]
     public class Service : GLib.Object
     {
         private weak GLib.DBusConnection connection;
@@ -157,11 +157,11 @@ namespace Pomodoro
 
             try {
                 this.connection.emit_signal (null,
-                                             "/org/gnome/Pomodoro",
+                                             "/org/gnomepomodoro/Pomodoro",
                                              "org.freedesktop.DBus.Properties",
                                              "PropertiesChanged",
                                              new GLib.Variant ("(sa{sv}as)",
-                                                               "org.gnome.Pomodoro",
+                                                               "org.gnomepomodoro.Pomodoro",
                                                                builder_properties,
                                                                builder_invalid));
                 this.connection.flush_sync (this.cancellable);

@@ -21,7 +21,7 @@ using GLib;
 
 namespace Pomodoro
 {
-    [DBus (name = "org.gnome.Pomodoro.Extension")]
+    [DBus (name = "org.gnomepomodoro.Pomodoro.Extension")]
     private interface DesktopExtensionInterface : GLib.Object
     {
         public abstract string[] capabilities { owned get; }
@@ -52,13 +52,13 @@ namespace Pomodoro
         {
             this.proxy = GLib.Bus.get_proxy_sync<DesktopExtensionInterface>
                                    (GLib.BusType.SESSION,
-                                    "org.gnome.Pomodoro.Extension",
-                                    "/org/gnome/Pomodoro/Extension",
+                                    "org.gnomepomodoro.Pomodoro.Extension",
+                                    "/org/gnomepomodoro/Pomodoro/Extension",
                                     GLib.DBusProxyFlags.NONE);
 
             this.watcher_id = GLib.Bus.watch_name (
                                         GLib.BusType.SESSION,
-                                        "org.gnome.Pomodoro.Extension",
+                                        "org.gnomepomodoro.Pomodoro.Extension",
                                         GLib.BusNameWatcherFlags.NONE,
                                         this.on_name_appeared,
                                         this.on_name_vanished);
@@ -72,7 +72,7 @@ namespace Pomodoro
                     desktop_extension.set_default ();
                 }
                 catch (GLib.Error error) {
-                    GLib.critical ("Failed to create proxy org.gnome.Pomodoro.Extension");
+                    GLib.critical ("Failed to create proxy org.gnomepomodoro.Pomodoro.Extension");
                 }
             }
 

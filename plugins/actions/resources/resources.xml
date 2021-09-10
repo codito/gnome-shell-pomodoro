@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/org/gnome/pomodoro/plugins/actions">
+  <gresource prefix="/org/gnomepomodoro/Pomodoro/plugins/actions">
     <file compressed="true" preprocess="xml-stripblanks">action-listboxrow.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">action-page.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">menus.ui</file>

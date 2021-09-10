@@ -21,7 +21,7 @@ using GLib;
 
 namespace Actions
 {
-    [GtkTemplate (ui = "/org/gnome/pomodoro/plugins/actions/action-listboxrow.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/plugins/actions/action-listboxrow.ui")]
     public class ActionListBoxRow : Gtk.ListBoxRow
     {
         public Actions.Action action { get; private set; }
@@ -47,7 +47,7 @@ namespace Actions
 
             try {
                 var menu_builder = new Gtk.Builder ();
-                menu_builder.add_from_resource ("/org/gnome/pomodoro/plugins/actions/menus.ui");
+                menu_builder.add_from_resource ("/org/gnomepomodoro/Pomodoro/plugins/actions/menus.ui");
 
                 var options_model = menu_builder.get_object ("action") as GLib.MenuModel;
                 var options_popover = new Gtk.Popover.from_model (this.options_button,

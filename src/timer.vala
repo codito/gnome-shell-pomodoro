@@ -369,7 +369,7 @@ namespace Pomodoro
          * Saves timer state to settings.
          */
         public void save (GLib.Settings settings)
-                          requires (settings.settings_schema.get_id () == "org.gnome.pomodoro.state")
+                          requires (settings.settings_schema.get_id () == "org.gnomepomodoro.Pomodoro.state")
         {
             var timer_datetime = new DateTime.from_unix_utc (
                                  (int64) Math.floor (this.timestamp));
@@ -401,7 +401,7 @@ namespace Pomodoro
          */
         public void restore (GLib.Settings settings,
                              double        timestamp = Pomodoro.get_current_time ())
-                             requires (settings.settings_schema.get_id () == "org.gnome.pomodoro.state")
+                             requires (settings.settings_schema.get_id () == "org.gnomepomodoro.Pomodoro.state")
         {
             var state          = Pomodoro.TimerState.lookup (settings.get_string ("timer-state"));
             var is_paused      = settings.get_boolean ("timer-paused");

@@ -21,7 +21,7 @@ using GLib;
 
 namespace Actions
 {
-    private const string ACTION_PATH_PREFIX = "/org/gnome/pomodoro/plugins/actions/action";
+    private const string ACTION_PATH_PREFIX = "/org/gnomepomodoro/Pomodoro/plugins/actions/action";
     private const string ACTION_PATH_SUFFIX = "/";
 
 
@@ -47,7 +47,7 @@ namespace Actions
         {
             Actions.ActionManager.instance = this;
 
-            this.settings = new GLib.Settings ("org.gnome.pomodoro.plugins.actions");
+            this.settings = new GLib.Settings ("org.gnomepomodoro.Pomodoro.plugins.actions");
             this.settings.changed.connect (this.on_settings_changed);
 
             this.actions_hash = new GLib.HashTable<string, unowned Actions.Action> (str_hash, str_equal);
@@ -163,7 +163,7 @@ namespace Actions
                          int            position = -1)
         {
             if (action.path == null) {
-                action.path = "/org/gnome/pomodoro/plugins/actions/action%u/".printf (this.get_next_id ());
+                action.path = "/org/gnomepomodoro/Pomodoro/plugins/actions/action%u/".printf (this.get_next_id ());
             }
 
             this.add_internal (action, position);
@@ -389,7 +389,7 @@ namespace Actions
         construct
         {
             this.css_provider = new Gtk.CssProvider ();
-            this.css_provider.load_from_resource ("/org/gnome/pomodoro/plugins/actions/style.css");
+            this.css_provider.load_from_resource ("/org/gnomepomodoro/Pomodoro/plugins/actions/style.css");
 
             Gtk.StyleContext.add_provider_for_screen (
                                          Gdk.Screen.get_default (),

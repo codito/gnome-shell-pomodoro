@@ -11,13 +11,13 @@ hicolor_icondir = get_option('datadir') / 'icons' / 'hicolor'
 
 foreach i:icon_dirs
   install_data(
-    i / 'gnome-pomodoro.png',
+    i / 'org.gnomepomodoro.Pomodoro.png',
     install_dir: hicolor_icondir / i / 'apps',
   )
 endforeach
 
 install_data(
-    'symbolic' / 'gnome-pomodoro-symbolic.svg',
+    'symbolic' / 'org.gnomepomodoro.Pomodoro-symbolic.svg',
     install_dir: hicolor_icondir / 'symbolic' / 'apps',
 )
 

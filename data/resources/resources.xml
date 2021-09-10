@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/org/gnome/pomodoro">
+  <gresource prefix="/org/gnomepomodoro/Pomodoro">
     <file>database/version-1.sql</file>
     <file compressed="true" preprocess="xml-stripblanks">menus.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences.ui</file>

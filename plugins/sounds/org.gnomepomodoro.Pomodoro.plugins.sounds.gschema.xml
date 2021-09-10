@@ -1,5 +1,5 @@
 <schemalist>
-  <schema id="org.gnome.pomodoro.plugins.sounds" path="/org/gnome/pomodoro/plugins/sounds/" gettext-domain="gnome-pomodoro">
+  <schema id="org.gnomepomodoro.Pomodoro.plugins.sounds" path="/org/gnomepomodoro/Pomodoro/plugins/sounds/" gettext-domain="gnome-pomodoro">
     <key name="pomodoro-start-sound" type="s">
       <default>"loud-bell.ogg"</default>
       <summary>Pomodoro start sound</summary>

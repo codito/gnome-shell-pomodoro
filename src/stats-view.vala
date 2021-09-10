@@ -23,7 +23,7 @@ using GLib;
 
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnome/pomodoro/stats-view.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/stats-view.ui")]
     public class StatsView : Gtk.Box, Gtk.Buildable
     {
         public string mode {
