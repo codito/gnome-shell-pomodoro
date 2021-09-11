@@ -44,7 +44,7 @@ add_project_arguments(
 # We are going to use these variables later on for the plugins
 gschema_dir = get_option('prefix') / get_option('datadir') / 'glib-2.0' / 'schemas'
 plugin_libdir = get_option('prefix') / get_option('libdir') / meson.project_name() / 'plugins'
-extension_dir = get_option('prefix') / get_option('datadir') / 'gnome-shell' / 'extensions' / 'pomodoro@arun.codito.in'
+extension_dir = get_option('prefix') / get_option('datadir') / 'gnome-shell' / 'extensions' / 'pomodoro@gnomepomodoro.org'
 
 # TODO: Remove the double quotes from plugins/indicator/extension/config.js.in.
 # Right now we have to set the below config values twice because of that,
@@ -57,7 +57,7 @@ package_version = meson.project_version()
 package_bugreport = 'https://github.com/gnome-pomodoro/gnome-pomodoro/issues'
 package_url = 'https://gnomepomodoro.org'
 gettext_package = package_name
-extension_uuid = 'pomodoro@arun.codito.in'
+extension_uuid = 'pomodoro@gnomepomodoro.org'
 package_localedir = get_option('prefix') / get_option('datadir') / 'locale'
 
 conf = configuration_data()
