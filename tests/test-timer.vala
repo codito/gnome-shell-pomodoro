@@ -130,7 +130,6 @@ namespace Pomodoro
             var timestamp = Pomodoro.get_current_time ();
 
             timer.state_changed.connect ((new_state, previous_state) => {
-                
             });
 
             timer.state = new PomodoroState.with_timestamp (timestamp);

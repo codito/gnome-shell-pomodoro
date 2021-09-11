@@ -155,7 +155,9 @@ namespace Pomodoro
             {
                 if (error is Pomodoro.AcceleratorError.TYPING_COLLISION)
                 {
-                    this.error_label.label = _("Using \"%s\" as shortcut will interfere with typing. Try adding another key, such as Control, Alt or Shift.").printf (this.accelerator.display_name);
+                    this.error_label.label = _(
+                        "Using \"%s\" as shortcut will interfere with typing. Try adding another key, such as Control, Alt or Shift."  // vala-lint=line-length
+                    ).printf (this.accelerator.display_name);
                     this.error_label.show ();
                 }
             }
@@ -176,7 +178,7 @@ namespace Pomodoro
                 if (index > 0) {
                     this.preview_box.pack_start (new Gtk.Label ("+"),
                                                  false,
-                                                 false, 
+                                                 false,
                                                  0);
                 }
 
@@ -601,7 +603,7 @@ namespace Pomodoro
                                 GLib.SettingsBindFlags.DEFAULT);
 
             this.accelerator = new Pomodoro.Accelerator ();
-            this.accelerator.changed.connect(() => {
+            this.accelerator.changed.connect (() => {
                 accelerator_label.label = this.accelerator.display_name != ""
                         ? this.accelerator.display_name : _("Off");
             });

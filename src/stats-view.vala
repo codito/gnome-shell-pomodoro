@@ -324,7 +324,7 @@ namespace Pomodoro
 
                 this.pages.add_named (page as Gtk.Widget, page_name);
             }
-            
+
             return page;
         }
 

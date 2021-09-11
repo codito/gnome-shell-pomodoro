@@ -238,7 +238,7 @@ namespace Actions
 
         construct
         {
-            this.actions_manager = new Actions.ActionManager ();;
+            this.actions_manager = new Actions.ActionManager ();
 
             this.jobs_queue = new GLib.AsyncQueue<Actions.Context?> ();
             this.jobs_thread = new GLib.Thread<bool> ("actions-queue", this.jobs_thread_func);

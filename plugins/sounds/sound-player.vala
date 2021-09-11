@@ -79,7 +79,7 @@ namespace SoundsPlugin
     }
 
     private class GStreamerPlayer : GLib.Object, SoundPlayer, Fadeable
-    { 
+    {
         public GLib.File? file {
             get {
                 return this._file;
@@ -104,7 +104,7 @@ namespace SoundsPlugin
                         state = pending_state;
                     }
 
-                    if (state == Gst.State.PLAYING || 
+                    if (state == Gst.State.PLAYING ||
                         state == Gst.State.PAUSED)
                     {
                         this.is_about_to_finish = false;
