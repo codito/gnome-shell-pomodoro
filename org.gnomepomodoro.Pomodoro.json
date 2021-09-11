@@ -83,7 +83,8 @@
         },
         {
             "name": "gnome-pomodoro",
-            "buildsystem": "autotools",
+            "builddir" : true,
+            "buildsystem" : "meson",
             "sources": [
                 {
                     "type": "file",
