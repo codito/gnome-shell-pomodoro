@@ -1,10 +1,10 @@
 {
-    "app-id": "org.gnomepomodoro.Pomodoro",
-    "runtime": "org.gnome.Platform",
-    "runtime-version": "master",
-    "sdk": "org.gnome.Sdk",
-    "command": "gnome-pomodoro",
-    "finish-args": [
+    "app-id" : "org.gnomepomodoro.Pomodoro",
+    "runtime" : "org.gnome.Platform",
+    "runtime-version" : "40",
+    "sdk" : "org.gnome.Sdk",
+    "command" : "gnome-pomodoro",
+    "finish-args" : [
         "--share=ipc",
         "--socket=x11",
         "--socket=wayland",
@@ -19,13 +19,12 @@
         "--talk-name=ca.desrt.dconf",
         "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
     ],
-    "build-options": {
-        "cflags": "-O2 -g",
-        "cxxflags": "-O2 -g",
-        "env": {
-        }
+    "build-options" : {
+        "cflags" : "-O2 -g",
+        "cxxflags" : "-O2 -g",
+        "env" : {        }
     },
-    "cleanup": [
+    "cleanup" : [
         "/include",
         "/lib/girepository-1.0",
         "/lib/pkgconfig",
@@ -40,16 +39,43 @@
         "*.la",
         "*.a"
     ],
-    "modules": [
+    "modules" : [
         {
-            "name": "libpeas",
-            "buildsystem": "meson",
-            "config-opts": [
+            "name": "gsound",
+            "buildsystem" : "meson",
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://gitlab.gnome.org/GNOME/gsound.git"
+                }
+            ],
+            "modules": [
+                {
+                    "name": "libcanberra",
+                    "sources": [
+                        {
+                            "type": "archive",
+                            "url": "http://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
+                            "sha256": "c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72"
+                        }
+                    ],
+                    "config-opts": [
+                        "--disable-alsa",
+                        "--disable-null",
+                        "--disable-oss"
+                    ]
+                }
+            ]
+        },
+        {
+            "name" : "libpeas",
+            "buildsystem" : "meson",
+            "config-opts" : [
                 "-Dlua51=false",
                 "-Dpython3=false",
                 "-Ddemos=false"
             ],
-            "cleanup": [
+            "cleanup" : [
                 "/bin/*",
                 "/lib/peas-demo",
                 "/include",
@@ -59,41 +85,41 @@
                 "/share/gir-1.0",
                 "/share/gtk-doc"
             ],
-            "sources": [
+            "sources" : [
                 {
-                    "type": "git",
-                    "branch": "master",
-                    "url": "https://gitlab.gnome.org/GNOME/libpeas.git"
+                    "type" : "git",
+                    "branch" : "master",
+                    "url" : "https://gitlab.gnome.org/GNOME/libpeas.git"
                 }
             ]
         },
         {
-            "name": "gom",
-            "buildsystem": "meson",
-            "config-opts": [
+            "name" : "gom",
+            "buildsystem" : "meson",
+            "config-opts" : [
                 "--prefix=/app"
             ],
-            "sources": [
+            "sources" : [
                 {
-                    "type": "git",
-                    "branch": "master",
-                    "url": "https://gitlab.gnome.org/GNOME/gom.git"
+                    "type" : "git",
+                    "branch" : "master",
+                    "url" : "https://gitlab.gnome.org/GNOME/gom.git"
                 }
             ]
         },
         {
-            "name": "gnome-pomodoro",
+            "name" : "gnome-pomodoro",
             "builddir" : true,
             "buildsystem" : "meson",
-            "sources": [
+            "sources" : [
                 {
-                    "type": "file",
-                    "path": "."
+                    "type" : "file",
+                    "path" : "."
                 },
                 {
-                    "type": "git",
-                    "branch": "master",
-                    "url": "https://github.com/gnome-pomodoro/gnome-pomodoro.git"
+                    "type" : "git",
+                    "branch" : "master",
+                    "url" : "https://github.com/gnome-pomodoro/gnome-pomodoro.git"
                 }
             ]
         }

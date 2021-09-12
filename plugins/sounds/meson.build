@@ -15,8 +15,8 @@ shared_library(
   [libsound_vala_sources, generated_sources],
   dependencies: [
     gnome_pomodoro_lib_dep,
+    gsound_dep,
     gstreamer_dep,
-    libcanberra_dep,
     libm_dep,
   ],
   install: true,

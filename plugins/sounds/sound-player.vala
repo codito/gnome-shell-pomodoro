@@ -390,49 +390,38 @@ namespace SoundsPlugin
         public double volume { get; set; default = 1.0; }
 
         private GLib.File _file;
-        private Canberra.Context context;
+        private GSound.Context context;
         private bool is_cached = false;
 
         public CanberraPlayer (string? event_id) throws SoundPlayerError
         {
-            Canberra.Context context;
+            this.event_id = event_id;
 
-            /* Create context */
-            var status = Canberra.Context.create (out context);
-            var application = GLib.Application.get_default ();
-
-            if (status != Canberra.SUCCESS) {
-                throw new SoundPlayerError.FAILED_TO_INITIALIZE (
-                        "Failed to initialize canberra context - %s".printf (Canberra.strerror (status)));
+            try {
+                this.context = new GSound.Context ();
+            }
+            catch (GLib.Error error) {
+                throw new SoundPlayerError.FAILED_TO_INITIALIZE ("Failed to initialize canberra context");
             }
 
             /* Set properties about application */
-            status = context.change_props (
-                    Canberra.PROP_APPLICATION_ID, application.application_id,
-                    Canberra.PROP_APPLICATION_NAME, Config.PACKAGE_NAME,
-                    Canberra.PROP_APPLICATION_ICON_NAME, Config.PACKAGE_NAME);
-
-            if (status != Canberra.SUCCESS) {
-                throw new SoundPlayerError.FAILED_TO_INITIALIZE (
-                        "Failed to set context properties - %s".printf (Canberra.strerror (status)));
+            var application = GLib.Application.get_default ();
+            try {
+                context.set_attributes (
+                        GSound.Attribute.APPLICATION_ID, application.application_id,
+                        GSound.Attribute.APPLICATION_NAME, Config.PACKAGE_NAME,
+                        GSound.Attribute.APPLICATION_ICON_NAME, Config.PACKAGE_NAME);
+            }
+            catch (GLib.Error error) {
+                throw new SoundPlayerError.FAILED_TO_INITIALIZE ("Failed to set context properties");
             }
 
-            /* Connect to the sound system */
-            status = context.open ();
-
-            if (status != Canberra.SUCCESS) {
-                throw new SoundPlayerError.FAILED_TO_INITIALIZE (
-                        "Failed to open canberra context - %s".printf (Canberra.strerror (status)));
+            /* Try to connect to the sound system */
+            try {
+                context.open ();
             }
-
-            this.context = (owned) context;
-            this.event_id = event_id;
-        }
-
-        ~CanberraPlayer ()
-        {
-            if (this.context != null) {
-                this.stop ();
+            catch (GLib.Error error) {
+                /* it's ok to fail, will retry at play() */
             }
         }
 
@@ -444,40 +433,35 @@ namespace SoundsPlugin
         public void play ()
                     requires (this.context != null)
         {
-            if (this._file != null)
+            if (this._file != null) {
+                return;
+            }
+
+            if (this.context != null)
             {
-                if (this.context != null)
-                {
-                    Canberra.Proplist properties = null;
+                var volume = (float) amplitude_to_decibels (this.volume);
 
-                    var status = Canberra.Proplist.create (out properties);
-                    properties.sets (Canberra.PROP_MEDIA_ROLE, "alert");
-                    properties.sets (Canberra.PROP_MEDIA_FILENAME, this._file.get_path ());
-                    properties.sets (Canberra.PROP_CANBERRA_VOLUME,
-                                     ((float) amplitude_to_decibels (this.volume)).to_string ());
-
-                    if (this.event_id != null) {
-                        properties.sets (Canberra.PROP_EVENT_ID, this.event_id);
-
-                        if (!this.is_cached) {
-                            this.cache_file ();
-                        }
-                    }
-
-                    status = this.context.play_full (0,
-                                                     properties,
-                                                     this.on_play_callback);
-
-                    if (status != Canberra.SUCCESS) {
-                        GLib.warning ("Couldn't play sound '%s' - %s",
-                                      this._file.get_uri (),
-                                      Canberra.strerror (status));
+                if (this.event_id != null) {
+                    if (!this.is_cached) {
+                        this.cache_file ();
                     }
                 }
-                else {
+
+                try {
+                    this.context.play_simple (null,  /* cancellable */
+                                              GSound.Attribute.MEDIA_ROLE, "alert",
+                                              GSound.Attribute.MEDIA_FILENAME, this._file.get_path (),
+                                              GSound.Attribute.CANBERRA_VOLUME, volume.to_string (),
+                                              GSound.Attribute.EVENT_ID, this.event_id);
+                }
+                catch (GLib.Error error) {
                     GLib.warning ("Couldn't play sound '%s'",
                                   this._file.get_uri ());
                 }
+            }
+            else {
+                GLib.warning ("Couldn't play sound '%s'",
+                              this._file.get_uri ());
             }
         }
 
@@ -499,30 +483,18 @@ namespace SoundsPlugin
 
         private void cache_file ()
         {
-            Canberra.Proplist properties = null;
-
             if (this.context != null && this.event_id != null && this._file != null)
             {
-                var status = Canberra.Proplist.create (out properties);
-                properties.sets (Canberra.PROP_EVENT_ID, this.event_id);
-                properties.sets (Canberra.PROP_MEDIA_FILENAME, this._file.get_path ());
-
-                status = this.context.cache_full (properties);
-
-                if (status != Canberra.SUCCESS) {
-                    GLib.warning ("Couldn't clear libcanberra cache - %s",
-                                  Canberra.strerror (status));
-                }
-                else {
+                try {
+                    this.context.cache (
+                            GSound.Attribute.EVENT_ID, this.event_id,
+                            GSound.Attribute.MEDIA_FILENAME, this._file.get_path ());
                     this.is_cached = true;
                 }
+                catch (GLib.Error error) {
+                    GLib.warning ("Couldn't clear libcanberra cache");
+                }
             }
-        }
-
-        private void on_play_callback (Canberra.Context context,
-                                       uint32           id,
-                                       int              code)
-        {
         }
     }
 
