@@ -84,12 +84,6 @@ namespace Gnome
         public abstract string mode { owned get; }
         public abstract string shell_version { owned get; }
 
-        public abstract void eval
-                                       (string     script,
-                                        out bool   success,
-                                        out string result)
-                                        throws GLib.DBusError, GLib.IOError;
-
         public abstract bool grab_accelerator
                                        (string     accelerator,
                                         uint32     mode_flags,

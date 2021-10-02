@@ -160,7 +160,6 @@ try {
             }
         }
 
-        // private Gnome.ExtensionState   _state = Gnome.ExtensionState.UNKNOWN;
         private Gnome.ShellExtensions? proxy = null;
 
 
@@ -172,13 +171,6 @@ try {
         construct
         {
             this.info = Gnome.ExtensionInfo.with_defaults (this.uuid);
-
-            // this.info = Gnome.ExtensionInfo() {
-            //     uuid = this.uuid,
-            //     path = "",
-            //     version = "",
-            //     state = Gnome.ExtensionState.UNKNOWN
-            // };
         }
 
         public virtual async bool init_async (int io_priority = GLib.Priority.DEFAULT,
@@ -226,7 +218,6 @@ try {
 
             this.on_info_changed ();
         }
-
 
         private async void update_info (GLib.Cancellable? cancellable = null)
         {
@@ -417,128 +408,3 @@ try {
         }
     }
 }
-
-
-
-
-        // private void on_status_changed (string uuid,
-        //                                 int32  state,
-        //                                 string error)
-        // {
-        //     if (uuid != this.uuid) {
-        //         return;
-        //     }
-        //
-        //     this.update_info ();
-        //
-        //     if (this.info != null)
-        //     {
-        //         GLib.debug ("Extension %s changed state to %s", uuid, this.info.state.to_string ());
-        //
-        //         this.state = this.info.state;
-        //
-        //         if (this.enabled) {
-        //             this.notify_enabled ();
-        //         }
-        //     }
-        // }
-
-        // private async void eval (string            script,
-        //                          GLib.Cancellable? cancellable = null)
-        // {
-        //     GLib.return_if_fail (this.proxy != null);
-
-        //     if (cancellable != null && cancellable.is_cancelled ()) {
-        //         return;
-        //     }
-
-        //     var handler_id = this.proxy.extension_status_changed.connect_after ((uuid, state, error) => {
-        //         if (uuid == this.uuid) {
-        //             this.eval.callback ();
-        //         }
-        //     });
-        //     var cancellable_id = (ulong) 0;
-
-        //     if (cancellable != null) {
-        //         cancellable_id = cancellable.connect (() => {
-        //             this.eval.callback ();
-        //         });
-        //     }
-
-        //     try {
-        //         var shell_proxy = GLib.Bus.get_proxy_sync<Gnome.Shell> (GLib.BusType.SESSION,
-        //                                                                 "org.gnome.Shell",
-        //                                                                 "/org/gnome/Shell",
-        //                                                                 GLib.DBusProxyFlags.DO_NOT_AUTO_START);
-        //         shell_proxy.eval (script);
-
-        //         yield;
-        //     }
-        //     catch (GLib.Error error) {
-        //         GLib.warning ("Failed to eval script: %s",
-        //                       error.message);
-        //     }
-
-        //     if (cancellable_id != 0) {
-        //         cancellable.disconnect (cancellable_id);
-        //     }
-
-        //     this.proxy.disconnect (handler_id);
-        // }
-
-//         /**
-//          * GNOME Shell has no public API to enable extensions
-//          */
-//         private async void enable_internal (GLib.Cancellable? cancellable = null)
-//         {
-//             yield this.eval ("""
-// (function() {
-//     let uuid = '""" + this.uuid + """';
-//     let enabledExtensions = global.settings.get_strv('enabled-extensions');
-
-//     if (enabledExtensions.indexOf(uuid) == -1) {
-//         enabledExtensions.push(uuid);
-//         global.settings.set_strv('enabled-extensions', enabledExtensions);
-//     }
-// })();
-// """, cancellable);
-//         }
-
-//         /**
-//          * GNOME Shell may not be aware of freshly installed extension. Load it explicitly.
-//          */
-//         private async void load (GLib.Cancellable? cancellable = null)
-//         {
-//             yield this.eval ("""
-// (function() {
-//     let paths = [
-//         global.userdatadir,
-//         global.datadir
-//     ];
-//     let uuid = '""" + this.uuid + """';
-//     let existing = ExtensionUtils.extensions[uuid];
-//     if (existing) {
-//         ExtensionSystem.unloadExtension(existing);
-//     }
-//
-//     let perUserDir = Gio.File.new_for_path(global.userdatadir);
-//     let type = dir.has_prefix(perUserDir) ? ExtensionUtils.ExtensionType.PER_USER
-//                                           : ExtensionUtils.ExtensionType.SYSTEM;
-//
-//     try {
-//         let extension = ExtensionUtils.createExtensionObject(uuid, dir, type);
-//
-//         ExtensionSystem.loadExtension(extension);
-//
-//         let enabledExtensions = global.settings.get_strv('enabled-extensions');
-//         if (enabledExtensions.indexOf(uuid) == -1) {
-//             enabledExtensions.push(uuid);
-//             global.settings.set_strv('enabled-extensions', enabledExtensions);
-//         }
-//     } catch(e) {
-//         logError(e, 'Could not load extension %s'.format(uuid));
-//         return;
-//     }
-// })();
-// """, cancellable);
-//         }

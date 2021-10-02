@@ -240,4 +240,3 @@ namespace Pomodoro
                                           GLib.HashTable<string, GLib.Variant> previous_state);
     }
 }
-
