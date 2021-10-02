@@ -248,7 +248,7 @@ namespace GnomePlugin
          * We want to detect user/human activity so it sparse events.
          */
         private void on_become_active (GnomePlugin.IdleMonitor monitor,
-                                       uint                    id)
+                                       uint32                  id)
         {
             var timestamp = Pomodoro.get_current_time ();
 

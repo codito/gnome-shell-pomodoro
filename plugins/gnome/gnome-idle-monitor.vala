@@ -27,17 +27,17 @@ using GLib;
 namespace GnomePlugin
 {
     public delegate void IdleMonitorWatchFunc (GnomePlugin.IdleMonitor monitor,
-                                               uint                    id);
+                                               uint32                  id);
 
     private class IdleMonitorWatch : GLib.InitiallyUnowned
     {
         public unowned GnomePlugin.IdleMonitor   monitor;
-        public uint                              id;
-        public uint                              upstream_id;
+        public uint32                            id;
+        public uint32                            upstream_id;
         public GnomePlugin.IdleMonitorWatchFunc? callback;
         public uint64                            timeout_msec;
 
-        private static uint next_id = 1;
+        private static uint32 next_id = 1;
 
         construct
         {
@@ -53,7 +53,7 @@ namespace GnomePlugin
             this.callback = (owned) callback;
         }
 
-        private uint get_next_id ()
+        private uint32 get_next_id ()
         {
             var next_id = IdleMonitorWatch.next_id;
 
@@ -127,7 +127,7 @@ namespace GnomePlugin
         }
 
         private void on_watch_fired (Meta.IdleMonitor proxy,
-                                     uint             upstream_id)
+                                     uint32           upstream_id)
         {
             var watch = this.watches_by_upstream_id.lookup (upstream_id);
 
@@ -201,9 +201,9 @@ namespace GnomePlugin
          * when the user has become active, use
          * gnome_idle_monitor_add_user_active_watch().
          */
-        public uint add_idle_watch (uint64                      interval_msec,
-                                    owned IdleMonitorWatchFunc? callback)
-                                    requires (interval_msec > 0)
+        public uint32 add_idle_watch (uint64                      interval_msec,
+                                      owned IdleMonitorWatchFunc? callback)
+                                      requires (interval_msec > 0)
         {
             var watch = new IdleMonitorWatch (this,
                                               interval_msec,
@@ -234,7 +234,7 @@ namespace GnomePlugin
          * to call this when an idle watch, as added by
          * gnome_idle_monitor_add_idle_watch(), has triggered.
          */
-        public uint add_user_active_watch (owned IdleMonitorWatchFunc callback)
+        public uint32 add_user_active_watch (owned IdleMonitorWatchFunc callback)
         {
             var watch = new IdleMonitorWatch (this,
                                               0,
@@ -258,7 +258,7 @@ namespace GnomePlugin
          * gnome_idle_monitor_add_idle_watch() or
          * gnome_idle_monitor_add_user_active_watch().
          */
-        public void remove_watch (uint id)
+        public void remove_watch (uint32 id)
         {
             var watch = this.watches.lookup (id);
 

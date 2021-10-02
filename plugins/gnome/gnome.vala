@@ -157,18 +157,18 @@ namespace Meta
                                         throws GLib.DBusError, GLib.IOError;
 
         public abstract void add_idle_watch
-                                       (uint64   interval,
-                                        out uint id)
+                                       (uint64     interval,
+                                        out uint32 id)
                                         throws GLib.DBusError, GLib.IOError;
 
         public abstract void add_user_active_watch
-                                       (out uint id)
+                                       (out uint32 id)
                                         throws GLib.DBusError, GLib.IOError;
 
         public abstract void remove_watch
                                        (uint id)
                                         throws GLib.DBusError, GLib.IOError;
 
-        public signal void watch_fired (uint id);
+        public signal void watch_fired (uint32 id);
     }
 }
