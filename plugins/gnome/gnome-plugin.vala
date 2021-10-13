@@ -30,6 +30,31 @@ namespace GnomePlugin
 
     private const string CURRENT_DESKTOP_VARIABLE = "XDG_CURRENT_DESKTOP";
 
+    // private string get_extension_path ()
+    // {
+    //     if (this.is_running_from_flatpak ()) {
+    //         return GLib.Path.build_filename (
+    //             GLib.Environment.get_home_dir (), ".local", "share", "gnome-shell", "extensions",
+    //             Config.EXTENSION_UUID);
+    //     }
+    //     else {
+    //         return Config.EXTENSION_DIR;
+    //     }
+    // }
+
+    private bool is_running_from_flatpak ()
+    {
+        foreach (var prefix in GLib.Environment.get_system_data_dirs ())
+        {
+            if (prefix == FLATPAK_DATA_DIR) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     public class ApplicationExtension : Peas.ExtensionBase, Pomodoro.ApplicationExtension, GLib.AsyncInitable
     {
         private Pomodoro.Timer                  timer;
@@ -39,8 +64,10 @@ namespace GnomePlugin
         private string                          shell_extension_expected_path;
         private string                          shell_extension_expected_version;
         private GnomePlugin.IdleMonitor         idle_monitor;
-        private uint                            become_active_id = 0;
+        private uint32                          become_active_id = 0;
         private bool                            is_gnome = false;
+        private bool                            can_enable = false;
+        private bool                            can_install = false;
         private double                          last_activity_time = 0.0;
         private Gnome.Shell?                    shell_proxy = null;
         private Gnome.ShellExtensions?          shell_extensions_proxy = null;
@@ -149,6 +176,71 @@ namespace GnomePlugin
             // TODO: monitor extension state?
         }
 
+        /**
+         * Extension can't be exported from the Flatpak container. So, we install it to user dir.
+         */
+        private void install_extension (GLib.File         destination_dir,
+                                        GLib.Cancellable? cancellable = null)
+        {
+            var cleanup = true;
+            var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
+            var temporary_dir = GLib.File.new_for_path (GLib.DirUtils.make_tmp (null));
+
+            info ("### temporary_dir = %s", temporary_dir.get_path ());
+            info ("#### user_data_dir = %s", GLib.Envirionment.get_user_data_dir ());
+
+            copy_recursive (
+                GLib.File.new_for_path (source_path),
+                GLib.File.new_for_path (temporary_dir),
+                GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
+                cancellable
+            );
+            copy_recursive (
+                GLib.File.new_for_path (locale_path),
+                GLib.File.new_for_path (GLib.Path.build_filename (temporary_dir, "locale")),
+                GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
+                cancellable
+            );
+            // TODO: compile and install schema?
+
+            if (!cancellable.is_cancelled ()) {
+                try {
+                    temporary_dir.move (destination_dir,
+                                        FileCopyFlags.OVERWRITE | FileCopyFlags.TARGET_DEFAULT_PERMS,
+                                        cancellable,
+                                        () => {});
+                    cleanup = false;
+                }
+                catch (GLib.Error error) {
+                    warning ("Error while moving dir: %s", error.message);
+                }
+            }
+
+            if (cleanup) {
+                try {
+                    temporary_dir.@delete ();
+                }
+                catch (GLib.Error error) {
+                    warning ("Failed to cleanup temporary dir: %s", error.message);
+                }
+            }
+
+            // info ("get_application_name = %s", GLib.Environment.get_application_name ());
+            // info ("get_current_dir = %s", GLib.Environment.get_current_dir ());
+            // info ("get_home_dir = %s", GLib.Environment.get_home_dir ());
+            // info ("get_host_name = %s", GLib.Environment.get_host_name ());
+            // info ("get_prgname = %s", GLib.Environment.get_prgname ());
+
+            // info ("get_system_config_dirs = %s...", string.joinv (", ", GLib.Environment.get_system_config_dirs ()));
+            // info ("get_system_data_dirs = %s...", string.joinv (", ", GLib.Environment.get_system_data_dirs ()));
+
+            // info ("get_user_cache_dir = %s", GLib.Environment.get_user_cache_dir ());
+            // info ("get_user_config_dir = %s", GLib.Environment.get_user_config_dir ());
+            // info ("get_user_data_dir = %s", GLib.Environment.get_user_data_dir ());
+            // info ("get_user_name = %s", GLib.Environment.get_user_name ());
+            // info ("get_user_runtime_dir = %s", GLib.Environment.get_user_runtime_dir ());
+        }
+
         public async bool init_async (int               io_priority = GLib.Priority.DEFAULT,
                                       GLib.Cancellable? cancellable = null)
                                       throws GLib.Error
@@ -209,6 +301,85 @@ namespace GnomePlugin
 
             /* GNOME Shell extension */
             yield this.init_shell_extension (cancellable);
+
+            /*
+            var expected_extension_dir = File.new_for_path (
+                    is_running_from_flatpak ()
+                    ? GLib.Path.build_filename (
+                          GLib.Environment.get_home_dir (), ".local", "share", "gnome-shell", "extensions",
+                          Config.EXTENSION_UUID)
+                    : Config.EXTENSION_DIR
+                );
+
+            // TODO: check if gnome shell allows extensions at all
+
+            if (this.can_enable && this.shell_extension == null)
+            {
+                // TODO: ask before installing extension
+                // if (this.can_install && !expected_extension_dir.query_exists (cancellable)) {
+                //     this.install_extension (expected_extension_dir, cancellable);
+                // }
+
+                this.shell_extension = new GnomePlugin.GnomeShellExtension (Config.EXTENSION_UUID);
+
+                // fetch extension state
+                yield this.shell_extension.init_async (GLib.Priority.DEFAULT, cancellable);
+
+                this.can_install = (
+                    is_running_from_flatpak () && this.shell_extension.can_install
+                );
+
+
+                if (this.shell_extension.path != expected_extension_dir) {
+                    //
+                }
+
+                if (this.shell_extension.status == Gnome.ExtensionState.UNINSTALLED) {
+                    // extension may have been freshly installed and GNOME Shell is not aware of it
+                    yield this.shell_extension.load ();
+                }
+                else if (this.shell_extension.version != Config.EXTENSION_VERSION) {
+                    // extension has been found, but looks like it's for older release
+                    yield this.shell_extension.reload ();
+                }
+
+                // if we're runing from flatpak, extension needs to be installed
+                // TODO: show a dialog and ask whether to install the extension
+                if (this.shell_extension.status == Gnome.ExtensionState.UNINSTALLED) {
+                    yield this.shell_extension.install ();
+                }
+
+                if (this.shell_extension.path != Config.EXTENSION_DIR) {
+                    yield this.shell_extension.load ();
+                }
+
+                this.shell_extension = new GnomePlugin.GnomeShellExtension (Config.EXTENSION_UUID,
+
+
+                // TODO: don't try enabling extension
+                // if (this.shell_extension.status == Gnome.ExtensionState.DISABLED) {
+                //    yield this.shell_extension.enable ();
+                // }
+
+                // if missing, try to install
+                // if (this.is_running_from_flatpak ())
+                // {
+                    // TODO: show a dialog before installing
+                //     if (this.shell_extension.info.state == Gnome.ExtensionState.UNINSTALLED)
+                //     {
+                //         this.install_extension ();
+                //     }
+
+                // TODO: show a dialog before updating
+                //     if (this.shell_extension.info.state == Gnome.ExtensionState.OUT_OF_DATE)
+                //     {
+                //         this.install_extension ();
+                //     }
+                // }
+
+                // var enabled = yield this.shell_extension.enable (cancellable);
+            }
+            */
 
             return true;
         }
