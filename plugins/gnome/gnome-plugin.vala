@@ -30,28 +30,55 @@ namespace GnomePlugin
 
     private const string CURRENT_DESKTOP_VARIABLE = "XDG_CURRENT_DESKTOP";
 
-    // private string get_extension_path ()
-    // {
-    //     if (this.is_running_from_flatpak ()) {
-    //         return GLib.Path.build_filename (
-    //             GLib.Environment.get_home_dir (), ".local", "share", "gnome-shell", "extensions",
-    //             Config.EXTENSION_UUID);
-    //     }
-    //     else {
-    //         return Config.EXTENSION_DIR;
-    //     }
-    // }
+    private const string FLATPAK_DATA_DIR = "/app/share";
 
-    private bool is_running_from_flatpak ()
+    private bool has_prefix (string path,
+                             string prefix)
     {
-        foreach (var prefix in GLib.Environment.get_system_data_dirs ())
+        return File.new_for_path (path).has_prefix (File.new_for_path (prefix));
+    }
+
+    private bool has_data_dir (string data_dir)
+    {
+        foreach (var system_data_dir in GLib.Environment.get_system_data_dirs ())
         {
-            if (prefix == FLATPAK_DATA_DIR) {
+            if (system_data_dir == data_dir) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private void copy_recursive (GLib.File src,
+                                 GLib.File dest,
+                                 GLib.FileCopyFlags flags = GLib.FileCopyFlags.NONE,
+                                 GLib.Cancellable? cancellable = null) throws GLib.Error
+    {
+        GLib.FileType src_type = src.query_file_type (GLib.FileQueryInfoFlags.NONE, cancellable);
+
+        if (src_type == GLib.FileType.DIRECTORY) {
+            dest.make_directory (cancellable);
+            src.copy_attributes (dest, flags, cancellable);
+
+            var src_path = src.get_path ();
+            var dest_path = dest.get_path ();
+            GLib.FileEnumerator enumerator = src.enumerate_children (GLib.FileAttribute.STANDARD_NAME,
+                                                                     GLib.FileQueryInfoFlags.NONE,
+                                                                     cancellable);
+
+            for (GLib.FileInfo? info = enumerator.next_file (cancellable); info != null; info = enumerator.next_file (cancellable))
+            {
+                copy_recursive (
+                    GLib.File.new_for_path (GLib.Path.build_filename (src_path, info.get_name ())),
+                    GLib.File.new_for_path (GLib.Path.build_filename (dest_path, info.get_name ())),
+                    flags,
+                    cancellable);
+            }
+        }
+        else if (src_type == GLib.FileType.REGULAR) {
+            src.copy (dest, flags, cancellable);
+        }
     }
 
 
@@ -66,58 +93,123 @@ namespace GnomePlugin
         private GnomePlugin.IdleMonitor         idle_monitor;
         private uint32                          become_active_id = 0;
         private bool                            is_gnome = false;
-        private bool                            can_enable = false;
-        private bool                            can_install = false;
+        // private bool                            can_enable = false;
+        // private bool                            can_install = false;
         private double                          last_activity_time = 0.0;
         private Gnome.Shell?                    shell_proxy = null;
         private Gnome.ShellExtensions?          shell_extensions_proxy = null;
 
-        /**
-         * Method for enabling extension after install
-         */
-        private async void enable_extension (GLib.Cancellable? cancellable = null) throws GLib.Error
+        public void ApplicationExtension ()
         {
-            if (this.shell_extension.path != shell_extension_expected_path ||
-                this.shell_extension.path != shell_extension_expected_version)
-            {
-                yield this.shell_extension.reload ();
-            }
-
-            yield this.shell_extension.enable ();
+            this.settings = Pomodoro.get_settings ().get_child ("preferences");
+            this.is_gnome = GLib.Environment.get_variable (CURRENT_DESKTOP_VARIABLE) == "GNOME";
+            this.capabilities = new Pomodoro.CapabilityGroup ("gnome");
         }
 
         /**
-         * Read extension version from metadata.json
+         * Extension can't be exported from the Flatpak container. So, we install it to user dir.
          */
-        private string get_extension_version (string extension_path)
+        private async void install_extension (string            path,
+                                              GLib.Cancellable? cancellable = null) throws GLib.Error
         {
-            var metadata_path = GLib.Path.build_filename (extension_path, "metadata.json");
-            var parser = new Json.Parser ();
+            string temporary_path;
 
             try {
-                parser.load_from_file (metadata_path);
+                temporary_path = GLib.DirUtils.make_tmp ("gnome-pomodoro-XXXXXX");
+            }
+            catch (GLib.FileError error) {
+                throw error;
+            }
 
-                var data = parser.get_root ().get_object ();
+            var cleanup = true;
+            var destination_dir = GLib.File.new_for_path (path);
+            var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
+            var temporary_dir = GLib.File.new_for_path (temporary_path);
 
-                if (data != null) {
-                    return data.get_string_member_with_default ("version", "");
+            info ("### temporary_dir = %s", temporary_dir.get_path ());
+            info ("### user_data_dir = %s", GLib.Environment.get_user_data_dir ());
+            info ("### PACKAGE_LOCALE_DIR = %s", Config.PACKAGE_LOCALE_DIR);
+
+            // TODO: this part should be async
+            copy_recursive (
+                source_dir,
+                temporary_dir,
+                GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
+                cancellable
+            );
+            // TODO: install locale
+            // copy_recursive (
+            //     GLib.File.new_for_path (locale_path),
+            //     GLib.File.new_for_path (GLib.Path.build_filename (temporary_dir.get_path (), "locale")),
+            //     GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
+            //     cancellable
+            // );
+            // TODO: compile and install schema?
+
+            if (!cancellable.is_cancelled ()) {
+                try {
+                    temporary_dir.move (destination_dir,
+                                        FileCopyFlags.OVERWRITE | FileCopyFlags.TARGET_DEFAULT_PERMS,
+                                        cancellable,
+                                        () => {});
+                    cleanup = false;
+                }
+                catch (GLib.Error error) {
+                    warning ("Error while moving dir: %s", error.message);
                 }
             }
-            catch (GLib.FileError.NOENT error) {
-                // ignore when file does not exist
+
+            if (cleanup) {
+                try {
+                    temporary_dir.@delete ();
+                }
+                catch (GLib.Error error) {
+                    warning ("Failed to cleanup temporary dir: %s", error.message);
+                }
             }
-            catch (GLib.Error error) {
-                warning ("Error while parsing file %s: %s\n", extension_path, error.message);
+        }
+
+        /**
+         *
+         */
+        public bool can_install_extension (string path,
+                                           string version)
+        {
+            if (this.shell_extensions_proxy != null && !this.shell_extensions_proxy.user_extensions_enabled) {
+                return false;
             }
 
-            return "";
+            // TODO: check if it's already installed
+            // var metadata_file = GLib.Path.build_filename (
+            //     path, "metadata.json"
+            // );
+
+            // TODO: pomodoro should contain extension .zip file in its datadir, not install extension into /app/share/gnome-shell/...
+            // TODO: check if that zipfile exists, not whether we're running from flatpak
+            if (!has_data_dir (FLATPAK_DATA_DIR)) {
+                return false;
+            }
+
+            return true;
         }
 
         public async void init_shell_extension (GLib.Cancellable? cancellable = null)
         {
             var expected_version = Config.PACKAGE_VERSION;
             var expected_path = Config.EXTENSION_DIR;
+            var install_prefix = GLib.Path.build_filename (GLib.Environment.get_home_dir (), ".local");
             var should_enable = true;
+
+            // if (!this.shell_extensions_proxy.user_extensions_enabled) {
+            //     // TODO: determine optimal install_prefix,
+            //     //       may require sudo to install the extension
+            // }
+
+            if (has_prefix (expected_path, FLATPAK_DATA_DIR)) {
+                expected_path = GLib.Path.build_filename (
+                          install_prefix, "share", "gnome-shell", "extensions",
+                          Config.EXTENSION_UUID);
+            }
 
             if (this.shell_extension == null) {
                 this.shell_extension = new GnomePlugin.GnomeShellExtension (
@@ -130,16 +222,9 @@ namespace GnomePlugin
                     yield this.shell_extension.init_async (GLib.Priority.DEFAULT, cancellable);
                 }
                 catch (GLib.Error error) {
-                    GLib.warning ("Error while initializing extension: %s", error.message);
-                    return;
+                    warning ("Error while initializing extension: %s", error.message);
                 }
             }
-
-            this.shell_extension_expected_path = expected_path;
-            this.shell_extension_expected_version = expected_version;
-
-            GLib.info ("Extension state=\"%s\" version=\"%s\" path=\"%s\"",
-                       this.shell_extension.state.to_string (), this.shell_extension.version, this.shell_extension.path);
 
             // reload extension if it's not up-to-date,
             // allow extension to be installed in other place than `expected_path`
@@ -151,7 +236,21 @@ namespace GnomePlugin
                     yield this.shell_extension.reload ();
                 }
                 catch (GLib.Error error) {
-                    GLib.warning ("Error while reloading extension: %s", error.message);
+                    warning ("Error while reloading extension: %s", error.message);
+                }
+            }
+
+            // try to install if missing
+            // TODO: ask before installing extension
+            if (
+                    this.shell_extension.state == Gnome.ExtensionState.UNINSTALLED &&
+                    this.can_install_extension (expected_path, expected_version)
+            ) {
+                try {
+                    yield this.install_extension (expected_path, cancellable);
+                }
+                catch (GLib.Error error) {
+                    warning ("Error while installing extension: %s", error.message);
                 }
             }
 
@@ -176,81 +275,12 @@ namespace GnomePlugin
             // TODO: monitor extension state?
         }
 
-        /**
-         * Extension can't be exported from the Flatpak container. So, we install it to user dir.
-         */
-        private void install_extension (GLib.File         destination_dir,
-                                        GLib.Cancellable? cancellable = null)
-        {
-            var cleanup = true;
-            var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
-            var temporary_dir = GLib.File.new_for_path (GLib.DirUtils.make_tmp (null));
-
-            info ("### temporary_dir = %s", temporary_dir.get_path ());
-            info ("#### user_data_dir = %s", GLib.Envirionment.get_user_data_dir ());
-
-            copy_recursive (
-                GLib.File.new_for_path (source_path),
-                GLib.File.new_for_path (temporary_dir),
-                GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
-                cancellable
-            );
-            copy_recursive (
-                GLib.File.new_for_path (locale_path),
-                GLib.File.new_for_path (GLib.Path.build_filename (temporary_dir, "locale")),
-                GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
-                cancellable
-            );
-            // TODO: compile and install schema?
-
-            if (!cancellable.is_cancelled ()) {
-                try {
-                    temporary_dir.move (destination_dir,
-                                        FileCopyFlags.OVERWRITE | FileCopyFlags.TARGET_DEFAULT_PERMS,
-                                        cancellable,
-                                        () => {});
-                    cleanup = false;
-                }
-                catch (GLib.Error error) {
-                    warning ("Error while moving dir: %s", error.message);
-                }
-            }
-
-            if (cleanup) {
-                try {
-                    temporary_dir.@delete ();
-                }
-                catch (GLib.Error error) {
-                    warning ("Failed to cleanup temporary dir: %s", error.message);
-                }
-            }
-
-            // info ("get_application_name = %s", GLib.Environment.get_application_name ());
-            // info ("get_current_dir = %s", GLib.Environment.get_current_dir ());
-            // info ("get_home_dir = %s", GLib.Environment.get_home_dir ());
-            // info ("get_host_name = %s", GLib.Environment.get_host_name ());
-            // info ("get_prgname = %s", GLib.Environment.get_prgname ());
-
-            // info ("get_system_config_dirs = %s...", string.joinv (", ", GLib.Environment.get_system_config_dirs ()));
-            // info ("get_system_data_dirs = %s...", string.joinv (", ", GLib.Environment.get_system_data_dirs ()));
-
-            // info ("get_user_cache_dir = %s", GLib.Environment.get_user_cache_dir ());
-            // info ("get_user_config_dir = %s", GLib.Environment.get_user_config_dir ());
-            // info ("get_user_data_dir = %s", GLib.Environment.get_user_data_dir ());
-            // info ("get_user_name = %s", GLib.Environment.get_user_name ());
-            // info ("get_user_runtime_dir = %s", GLib.Environment.get_user_runtime_dir ());
-        }
-
         public async bool init_async (int               io_priority = GLib.Priority.DEFAULT,
                                       GLib.Cancellable? cancellable = null)
                                       throws GLib.Error
         {
-            this.is_gnome = GLib.Environment.get_variable (CURRENT_DESKTOP_VARIABLE).has_suffix ("GNOME");
-            this.settings = Pomodoro.get_settings ().get_child ("preferences");
-            this.capabilities = new Pomodoro.CapabilityGroup ("gnome");
-
             if (!this.is_gnome) {
-                return false;
+                return true;
             }
 
             /* Mutter IdleMonitor */
@@ -302,85 +332,6 @@ namespace GnomePlugin
             /* GNOME Shell extension */
             yield this.init_shell_extension (cancellable);
 
-            /*
-            var expected_extension_dir = File.new_for_path (
-                    is_running_from_flatpak ()
-                    ? GLib.Path.build_filename (
-                          GLib.Environment.get_home_dir (), ".local", "share", "gnome-shell", "extensions",
-                          Config.EXTENSION_UUID)
-                    : Config.EXTENSION_DIR
-                );
-
-            // TODO: check if gnome shell allows extensions at all
-
-            if (this.can_enable && this.shell_extension == null)
-            {
-                // TODO: ask before installing extension
-                // if (this.can_install && !expected_extension_dir.query_exists (cancellable)) {
-                //     this.install_extension (expected_extension_dir, cancellable);
-                // }
-
-                this.shell_extension = new GnomePlugin.GnomeShellExtension (Config.EXTENSION_UUID);
-
-                // fetch extension state
-                yield this.shell_extension.init_async (GLib.Priority.DEFAULT, cancellable);
-
-                this.can_install = (
-                    is_running_from_flatpak () && this.shell_extension.can_install
-                );
-
-
-                if (this.shell_extension.path != expected_extension_dir) {
-                    //
-                }
-
-                if (this.shell_extension.status == Gnome.ExtensionState.UNINSTALLED) {
-                    // extension may have been freshly installed and GNOME Shell is not aware of it
-                    yield this.shell_extension.load ();
-                }
-                else if (this.shell_extension.version != Config.EXTENSION_VERSION) {
-                    // extension has been found, but looks like it's for older release
-                    yield this.shell_extension.reload ();
-                }
-
-                // if we're runing from flatpak, extension needs to be installed
-                // TODO: show a dialog and ask whether to install the extension
-                if (this.shell_extension.status == Gnome.ExtensionState.UNINSTALLED) {
-                    yield this.shell_extension.install ();
-                }
-
-                if (this.shell_extension.path != Config.EXTENSION_DIR) {
-                    yield this.shell_extension.load ();
-                }
-
-                this.shell_extension = new GnomePlugin.GnomeShellExtension (Config.EXTENSION_UUID,
-
-
-                // TODO: don't try enabling extension
-                // if (this.shell_extension.status == Gnome.ExtensionState.DISABLED) {
-                //    yield this.shell_extension.enable ();
-                // }
-
-                // if missing, try to install
-                // if (this.is_running_from_flatpak ())
-                // {
-                    // TODO: show a dialog before installing
-                //     if (this.shell_extension.info.state == Gnome.ExtensionState.UNINSTALLED)
-                //     {
-                //         this.install_extension ();
-                //     }
-
-                // TODO: show a dialog before updating
-                //     if (this.shell_extension.info.state == Gnome.ExtensionState.OUT_OF_DATE)
-                //     {
-                //         this.install_extension ();
-                //     }
-                // }
-
-                // var enabled = yield this.shell_extension.enable (cancellable);
-            }
-            */
-
             return true;
         }
 
@@ -394,6 +345,11 @@ namespace GnomePlugin
             }
         }
 
+        // private void on_shell_mode_changed ()
+        // {
+            // TODO?
+        // }
+
         private void on_timer_state_changed (Pomodoro.TimerState state,
                                              Pomodoro.TimerState previous_state)
         {
@@ -405,8 +361,8 @@ namespace GnomePlugin
             if (state is Pomodoro.PomodoroState &&
                 previous_state is Pomodoro.BreakState &&
                 previous_state.is_completed () &&
-                this.settings.get_boolean ("pause-when-idle"))
-            {
+                this.settings.get_boolean ("pause-when-idle")
+            ) {
                 this.become_active_id = this.idle_monitor.add_user_active_watch (this.on_become_active);
 
                 this.timer.pause ();
