@@ -50,52 +50,61 @@ namespace GnomePlugin
         return false;
     }
 
-    private void copy_recursive (GLib.File src,
-                                 GLib.File dest,
-                                 GLib.FileCopyFlags flags = GLib.FileCopyFlags.NONE,
-                                 GLib.Cancellable? cancellable = null) throws GLib.Error
+    private string generate_random_string (uint   length,
+                                           uint32 seed = 0)
     {
-        GLib.FileType src_type = src.query_file_type (GLib.FileQueryInfoFlags.NONE, cancellable);
+        var string_builder = new GLib.StringBuilder.sized (length);
+        GLib.Rand random;
 
-        if (src_type == GLib.FileType.DIRECTORY) {
-            dest.make_directory (cancellable);
-            src.copy_attributes (dest, flags, cancellable);
-
-            var src_path = src.get_path ();
-            var dest_path = dest.get_path ();
-            GLib.FileEnumerator enumerator = src.enumerate_children (GLib.FileAttribute.STANDARD_NAME,
-                                                                     GLib.FileQueryInfoFlags.NONE,
-                                                                     cancellable);
-
-            for (GLib.FileInfo? info = enumerator.next_file (cancellable); info != null; info = enumerator.next_file (cancellable))
-            {
-                copy_recursive (
-                    GLib.File.new_for_path (GLib.Path.build_filename (src_path, info.get_name ())),
-                    GLib.File.new_for_path (GLib.Path.build_filename (dest_path, info.get_name ())),
-                    flags,
-                    cancellable);
-            }
-        }
-        else if (src_type == GLib.FileType.REGULAR) {
-            src.copy (dest, flags, cancellable);
-        }
-    }
-
-    private void recursively_delete (GLib.File         file,
-                                     GLib.Cancellable? cancellable = null) throws GLib.Error
-    {
-        var file_type = file.query_file_type (GLib.FileQueryInfoFlags.NONE, cancellable);
-
-        if (file_type == GLib.FileType.DIRECTORY) {
-            recursively_delete_dir (file, cancellable);
+        if (seed != 0) {
+            random = new GLib.Rand.with_seed (seed);
         }
         else {
-            file.@delete ();
+            random = new GLib.Rand ();
         }
+
+        for (var index = 0; index < length; index++)
+        {
+            var random_value = (uint8) random.int_range (0, 36);
+
+            string_builder.append_c ((char) ((random_value <= 9 ? 48 : 87) + random_value));
+        }
+
+        return string_builder.str;
     }
 
-    private void recursively_delete_dir (GLib.File         directory,
-                                         GLib.Cancellable? cancellable = null) throws GLib.Error
+    private bool recursively_copy (GLib.File          source,
+                                   GLib.File          destination,
+                                   GLib.FileCopyFlags flags = GLib.FileCopyFlags.NONE,
+                                   GLib.Cancellable?  cancellable = null) throws GLib.Error
+    {
+        destination.make_directory (cancellable);
+        source.copy_attributes (destination, flags, cancellable);
+
+        var children = source.enumerate_children ("standard::name,standard::type",
+                                                  GLib.FileQueryInfoFlags.NONE,
+                                                  cancellable);
+        for (GLib.FileInfo? info = children.next_file (cancellable);
+             info != null;
+             info = children.next_file (cancellable))
+        {
+            var type = info.get_file_type ();
+            var source_child = source.get_child (info.get_name ());
+            var destination_child = destination.get_child (info.get_name ());
+
+            if (type == GLib.FileType.DIRECTORY) {
+                recursively_copy (source_child, destination_child, flags, cancellable);
+            }
+            else {
+                source_child.copy (destination_child, flags, cancellable);
+            }
+        }
+
+        return cancellable == null || !cancellable.is_cancelled ();
+    }
+
+    private void recursively_delete (GLib.File         directory,
+                                     GLib.Cancellable? cancellable = null) throws GLib.Error
     {
         var children = directory.enumerate_children ("standard::name,standard::type",
                                                      GLib.FileQueryInfoFlags.NONE, cancellable);
@@ -106,11 +115,11 @@ namespace GnomePlugin
             var type = info.get_file_type ();
             var child = directory.get_child (info.get_name());
 
-            if (type == GLib.FileType.REGULAR) {
-                child.@delete (cancellable);
+            if (type == GLib.FileType.DIRECTORY) {
+                recursively_delete (child);
             }
-            else if (type == GLib.FileType.DIRECTORY) {
-                recursively_delete_dir (child);
+            else {
+                child.@delete (cancellable);
             }
         }
 
@@ -118,13 +127,15 @@ namespace GnomePlugin
     }
 
     /**
-     * Safely replace one file with another
+     * Safely replace one dir with another
      */
-    private bool replace_file (GLib.File         source,
-                               GLib.File         destination,
-                               GLib.Cancellable? cancellable = null) throws GLib.Error
+    // TODO: should be async
+    private bool replace_dir (GLib.File         source,
+                              GLib.File         destination,
+                              GLib.Cancellable? cancellable = null) throws GLib.Error
     {
-        var backup = destination.get_parent ().get_child (".%s-old".printf (Config.EXTENSION_UUID));  // TODO: generate random name
+        var backup = destination.get_parent ().get_child (
+            ".%s.%s".printf (destination.get_basename (), generate_random_string (12)));
         var can_restore = false;
         var success = false;
 
@@ -136,18 +147,25 @@ namespace GnomePlugin
             can_restore = destination.move (backup, FileCopyFlags.NONE, cancellable);
         }
 
-        if (source.move (destination, FileCopyFlags.NONE, cancellable)) {
-            success = true;
-            can_restore = false;
-            recursively_delete (backup);
-        }
+        try {
+            if (recursively_copy (source, destination, FileCopyFlags.TARGET_DEFAULT_PERMS, cancellable)) {
+                success = true;
+                recursively_delete (source);
 
-        if (can_restore) {
-            try {
-                backup.move (destination, FileCopyFlags.NONE);  // can't be cancellable
+                if (can_restore) {
+                    recursively_delete (backup);
+                    can_restore = false;
+                }
             }
-            catch (GLib.Error error) {
-                warning ("Error while restoring dir: %s", error.message);
+        }
+        finally {
+            if (can_restore) {
+                try {
+                    backup.move (destination, FileCopyFlags.NONE);
+                }
+                catch (GLib.Error error) {
+                    warning ("Error while restoring dir: %s", error.message);
+                }
             }
         }
 
@@ -180,7 +198,9 @@ namespace GnomePlugin
 
             var destination_dir = GLib.File.new_for_path (path);
             var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
-            var temporary_dir = destination_dir.get_parent ().get_child (".%s".printf (Config.EXTENSION_UUID));  // TODO: generate random name
+            var temporary_dir = GLib.File.new_for_path (
+                GLib.Path.build_filename (GLib.Environment.get_tmp_dir (), destination_dir.get_basename ())
+            );
             var success = false;
 
             if (temporary_dir.query_exists (cancellable)) {
@@ -189,13 +209,13 @@ namespace GnomePlugin
 
             // TODO: this part should be async
             // TODO: should handle progress callback, see: https://valadoc.org/gio-2.0/GLib.File.move.html
-            copy_recursive (
+            recursively_copy (
                 source_dir,
                 temporary_dir,
                 GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
                 cancellable
             );
-            copy_recursive (
+            recursively_copy (
                 GLib.File.new_for_path (Config.PACKAGE_LOCALE_DIR),
                 GLib.File.new_for_path (GLib.Path.build_filename (temporary_dir.get_path (), "locale")),
                 GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
@@ -204,7 +224,7 @@ namespace GnomePlugin
             // TODO: compile and install schema?
 
             try {
-                success = replace_file (temporary_dir, destination_dir, cancellable);
+                success = replace_dir (temporary_dir, destination_dir, cancellable);
             }
             catch (GLib.Error error) {
                 warning ("Error while moving dir: %s", error.message);
