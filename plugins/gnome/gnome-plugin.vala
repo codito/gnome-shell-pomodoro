@@ -244,6 +244,30 @@ namespace GnomePlugin
         }
 
         /**
+         * Read extension version from metadata.json
+         */
+        private string get_extension_version (string extension_path)
+        {
+            var metadata_path = GLib.Path.build_filename (extension_path, "metadata.json");
+            var parser = new Json.Parser ();
+
+            try {
+	            parser.load_from_file (metadata_path);
+
+	            var data = parser.get_root ().get_object ();
+
+                if (data != null) {
+                    return data.get_string_member_with_default ("version", "");
+                }
+            }
+            catch (GLib.Error error) {
+	            print ("Error while parsing file %s: %s\n", extension_path, error.message);
+            }
+
+            return "";
+        }
+
+        /**
          *
          */
         public bool can_install_extension (string path,
@@ -253,10 +277,10 @@ namespace GnomePlugin
                 return false;
             }
 
-            // TODO: check if it's already installed
-            // var metadata_file = GLib.Path.build_filename (
-            //     path, "metadata.json"
-            // );
+            if (this.get_extension_version (path) == version) {
+                // already installed
+                return false;
+            }
 
             // TODO: pomodoro should contain extension .zip file in its datadir, not install extension into /app/share/gnome-shell/...
             // TODO: check if that zipfile exists, not whether we're running from flatpak
