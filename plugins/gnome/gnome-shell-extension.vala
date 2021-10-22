@@ -318,25 +318,6 @@ namespace GnomePlugin
 }
 
 /*
-        // private async bool eval (string script,
-        //                          GLib.Cancellable? cancellable = null)
-        // {
-        //     if (cancellable != null && cancellable.is_cancelled ()) {
-        //         return;
-        //     }
-        //
-        //     try {
-        //         return yield this.shell_proxy.eval (script);
-        //     }
-        //     catch (GLib.Error error) {
-        //          GLib.warning ("Failed to eval script: %s", error.message);
-        //     }
-        //
-        //     return false;
-        // }
-
-
-
 function uninstallExtension(uuid) {
     let extension = Main.extensionManager.lookup(uuid);
     if (!extension)

@@ -155,45 +155,6 @@ namespace GnomePlugin
     }
 
 
-// function recursivelyDeleteDir(dir, deleteParent) {
-//     let children = dir.enumerate_children('standard::name,standard::type',
-//                                           Gio.FileQueryInfoFlags.NONE, null);
-//
-//     let info;
-//     while ((info = children.next_file(null)) != null) {
-//         let type = info.get_file_type();
-//         let child = dir.get_child(info.get_name());
-//         if (type == Gio.FileType.REGULAR)
-//             child.delete(null);
-//         else if (type == Gio.FileType.DIRECTORY)
-//             recursivelyDeleteDir(child, true);
-//     }
-//
-//     if (deleteParent)
-//         dir.delete(null);
-// }
-
-// function recursivelyMoveDir(srcDir, destDir) {
-//     let children = srcDir.enumerate_children('standard::name,standard::type',
-//                                              Gio.FileQueryInfoFlags.NONE, null);
-//
-//     if (!destDir.query_exists(null))
-//         destDir.make_directory_with_parents(null);
-//
-//     let info;
-//     while ((info = children.next_file(null)) != null) {
-//         let type = info.get_file_type();
-//         let srcChild = srcDir.get_child(info.get_name());
-//         let destChild = destDir.get_child(info.get_name());
-//         if (type == Gio.FileType.REGULAR)
-//             srcChild.move(destChild, Gio.FileCopyFlags.NONE, null, null);
-//         else if (type == Gio.FileType.DIRECTORY)
-//             recursivelyMoveDir(srcChild, destChild);
-//     }
-// }
-
-
-
     public class ApplicationExtension : Peas.ExtensionBase, Pomodoro.ApplicationExtension, GLib.AsyncInitable
     {
         private Pomodoro.Timer                  timer;
@@ -205,21 +166,9 @@ namespace GnomePlugin
         private GnomePlugin.IdleMonitor         idle_monitor;
         private uint32                          become_active_id = 0;
         private bool                            is_gnome = false;
-        // private bool                            can_enable = false;
-        // private bool                            can_install = false;
         private double                          last_activity_time = 0.0;
         private Gnome.Shell?                    shell_proxy = null;
         private Gnome.ShellExtensions?          shell_extensions_proxy = null;
-
-        // public void ApplicationExtension ()
-        // {
-        //     // TODO: remove
-        //     GLib.debug ("@@@ ApplicationExtension ()");
-        //
-        //     this.settings = Pomodoro.get_settings ().get_child ("preferences");
-        //     this.is_gnome = GLib.Environment.get_variable (CURRENT_DESKTOP_VARIABLE) == "GNOME";
-        //     this.capabilities = new Pomodoro.CapabilityGroup ("gnome");
-        // }
 
         /**
          * Extension can't be exported from the Flatpak container. So, we install it to user dir.
@@ -229,49 +178,17 @@ namespace GnomePlugin
         {
             GLib.warning ("Installing extension…");
 
-            // GLib.File temporary_dir;
-            // uint retry = 0;
-
-            // while (true)
-            // {
-            //     try {
-            //         var temporary_path = GLib.DirUtils.make_tmp ("gnome-pomodoro-XXXXXX");
-            //         temporary_dir = GLib.File.new_for_path (temporary_path);
-            //         break;
-
-                    // temporary_dir = GLib.File.new_for_path (
-                    //     Pomodoro.build_tmp_path ("gnome-pomodoro-XXXXXX")
-                    // );
-                    // yield temporary_dir.make_directory_async (GLib.Priority.DEFAULT, cancellable);
-                    // break;
-
-            //     }
-            //     catch (GLib.Error error) {
-            //         if (retry < 10) {
-            //             retry++;
-            //         }
-            //         else {
-            //             GLib.warning ("Failed to create temporary directory: %s", error.message);
-            //             throw error;
-            //         }
-            //     }
-            // }
-
-            var success = false;
-
             var destination_dir = GLib.File.new_for_path (path);
             var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
             var temporary_dir = destination_dir.get_parent ().get_child (".%s".printf (Config.EXTENSION_UUID));  // TODO: generate random name
-
-            // info ("### temporary_dir = %s", temporary_dir.get_path ());
-            // info ("### user_data_dir = %s", GLib.Environment.get_user_data_dir ());
-            // info ("### PACKAGE_LOCALE_DIR = %s", Config.PACKAGE_LOCALE_DIR);
+            var success = false;
 
             if (temporary_dir.query_exists (cancellable)) {
                 recursively_delete (temporary_dir);
             }
 
             // TODO: this part should be async
+            // TODO: should handle progress callback, see: https://valadoc.org/gio-2.0/GLib.File.move.html
             copy_recursive (
                 source_dir,
                 temporary_dir,
@@ -288,18 +205,11 @@ namespace GnomePlugin
 
             try {
                 success = replace_file (temporary_dir, destination_dir, cancellable);
-
-                // temporary_dir.move (destination_dir,
-                //                     FileCopyFlags.OVERWRITE | FileCopyFlags.TARGET_DEFAULT_PERMS,
-                //                     cancellable,
-                                    // TODO: handle progress_callback
-                //                     () => {});
             }
             catch (GLib.Error error) {
                 warning ("Error while moving dir: %s", error.message);
             }
 
-            // TODO: when cancelled, it will override old dir if there was any
             if (success) {
                 info ("Moved extension to %s", path);
             }
