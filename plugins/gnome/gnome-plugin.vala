@@ -81,6 +81,118 @@ namespace GnomePlugin
         }
     }
 
+    private void recursively_delete (GLib.File         file,
+                                     GLib.Cancellable? cancellable = null) throws GLib.Error
+    {
+        var file_type = file.query_file_type (GLib.FileQueryInfoFlags.NONE, cancellable);
+
+        if (file_type == GLib.FileType.DIRECTORY) {
+            recursively_delete_dir (file, cancellable);
+        }
+        else {
+            file.@delete ();
+        }
+    }
+
+    private void recursively_delete_dir (GLib.File         directory,
+                                         GLib.Cancellable? cancellable = null) throws GLib.Error
+    {
+        var children = directory.enumerate_children ("standard::name,standard::type",
+                                                     GLib.FileQueryInfoFlags.NONE, cancellable);
+        GLib.FileInfo? info = null;
+
+        while ((info = children.next_file (cancellable)) != null)
+        {
+            var type = info.get_file_type ();
+            var child = directory.get_child (info.get_name());
+
+            if (type == GLib.FileType.REGULAR) {
+                child.@delete (cancellable);
+            }
+            else if (type == GLib.FileType.DIRECTORY) {
+                recursively_delete_dir (child);
+            }
+        }
+
+        directory.@delete (cancellable);
+    }
+
+    /**
+     * Safely replace one file with another
+     */
+    private bool replace_file (GLib.File         source,
+                               GLib.File         destination,
+                               GLib.Cancellable? cancellable = null) throws GLib.Error
+    {
+        var backup = destination.get_parent ().get_child (".%s-old".printf (Config.EXTENSION_UUID));  // TODO: generate random name
+        var can_restore = false;
+        var success = false;
+
+        if (backup.query_exists (cancellable)) {
+            recursively_delete (backup, cancellable);
+        }
+
+        if (destination.query_exists (cancellable)) {
+            can_restore = destination.move (backup, FileCopyFlags.NONE, cancellable);
+        }
+
+        if (source.move (destination, FileCopyFlags.NONE, cancellable)) {
+            success = true;
+            can_restore = false;
+            recursively_delete (backup);
+        }
+
+        if (can_restore) {
+            try {
+                backup.move (destination, FileCopyFlags.NONE);  // can't be cancellable
+            }
+            catch (GLib.Error error) {
+                warning ("Error while restoring dir: %s", error.message);
+            }
+        }
+
+        return success;
+    }
+
+
+// function recursivelyDeleteDir(dir, deleteParent) {
+//     let children = dir.enumerate_children('standard::name,standard::type',
+//                                           Gio.FileQueryInfoFlags.NONE, null);
+//
+//     let info;
+//     while ((info = children.next_file(null)) != null) {
+//         let type = info.get_file_type();
+//         let child = dir.get_child(info.get_name());
+//         if (type == Gio.FileType.REGULAR)
+//             child.delete(null);
+//         else if (type == Gio.FileType.DIRECTORY)
+//             recursivelyDeleteDir(child, true);
+//     }
+//
+//     if (deleteParent)
+//         dir.delete(null);
+// }
+
+// function recursivelyMoveDir(srcDir, destDir) {
+//     let children = srcDir.enumerate_children('standard::name,standard::type',
+//                                              Gio.FileQueryInfoFlags.NONE, null);
+//
+//     if (!destDir.query_exists(null))
+//         destDir.make_directory_with_parents(null);
+//
+//     let info;
+//     while ((info = children.next_file(null)) != null) {
+//         let type = info.get_file_type();
+//         let srcChild = srcDir.get_child(info.get_name());
+//         let destChild = destDir.get_child(info.get_name());
+//         if (type == Gio.FileType.REGULAR)
+//             srcChild.move(destChild, Gio.FileCopyFlags.NONE, null, null);
+//         else if (type == Gio.FileType.DIRECTORY)
+//             recursivelyMoveDir(srcChild, destChild);
+//     }
+// }
+
+
 
     public class ApplicationExtension : Peas.ExtensionBase, Pomodoro.ApplicationExtension, GLib.AsyncInitable
     {
@@ -99,12 +211,15 @@ namespace GnomePlugin
         private Gnome.Shell?                    shell_proxy = null;
         private Gnome.ShellExtensions?          shell_extensions_proxy = null;
 
-        public void ApplicationExtension ()
-        {
-            this.settings = Pomodoro.get_settings ().get_child ("preferences");
-            this.is_gnome = GLib.Environment.get_variable (CURRENT_DESKTOP_VARIABLE) == "GNOME";
-            this.capabilities = new Pomodoro.CapabilityGroup ("gnome");
-        }
+        // public void ApplicationExtension ()
+        // {
+        //     // TODO: remove
+        //     GLib.debug ("@@@ ApplicationExtension ()");
+        //
+        //     this.settings = Pomodoro.get_settings ().get_child ("preferences");
+        //     this.is_gnome = GLib.Environment.get_variable (CURRENT_DESKTOP_VARIABLE) == "GNOME";
+        //     this.capabilities = new Pomodoro.CapabilityGroup ("gnome");
+        // }
 
         /**
          * Extension can't be exported from the Flatpak container. So, we install it to user dir.
@@ -112,23 +227,49 @@ namespace GnomePlugin
         private async void install_extension (string            path,
                                               GLib.Cancellable? cancellable = null) throws GLib.Error
         {
-            string temporary_path;
+            GLib.warning ("Installing extension…");
 
-            try {
-                temporary_path = GLib.DirUtils.make_tmp ("gnome-pomodoro-XXXXXX");
-            }
-            catch (GLib.FileError error) {
-                throw error;
-            }
+            // GLib.File temporary_dir;
+            // uint retry = 0;
 
-            var cleanup = true;
+            // while (true)
+            // {
+            //     try {
+            //         var temporary_path = GLib.DirUtils.make_tmp ("gnome-pomodoro-XXXXXX");
+            //         temporary_dir = GLib.File.new_for_path (temporary_path);
+            //         break;
+
+                    // temporary_dir = GLib.File.new_for_path (
+                    //     Pomodoro.build_tmp_path ("gnome-pomodoro-XXXXXX")
+                    // );
+                    // yield temporary_dir.make_directory_async (GLib.Priority.DEFAULT, cancellable);
+                    // break;
+
+            //     }
+            //     catch (GLib.Error error) {
+            //         if (retry < 10) {
+            //             retry++;
+            //         }
+            //         else {
+            //             GLib.warning ("Failed to create temporary directory: %s", error.message);
+            //             throw error;
+            //         }
+            //     }
+            // }
+
+            var success = false;
+
             var destination_dir = GLib.File.new_for_path (path);
             var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
-            var temporary_dir = GLib.File.new_for_path (temporary_path);
+            var temporary_dir = destination_dir.get_parent ().get_child (".%s".printf (Config.EXTENSION_UUID));  // TODO: generate random name
 
-            info ("### temporary_dir = %s", temporary_dir.get_path ());
-            info ("### user_data_dir = %s", GLib.Environment.get_user_data_dir ());
-            info ("### PACKAGE_LOCALE_DIR = %s", Config.PACKAGE_LOCALE_DIR);
+            // info ("### temporary_dir = %s", temporary_dir.get_path ());
+            // info ("### user_data_dir = %s", GLib.Environment.get_user_data_dir ());
+            // info ("### PACKAGE_LOCALE_DIR = %s", Config.PACKAGE_LOCALE_DIR);
+
+            if (temporary_dir.query_exists (cancellable)) {
+                recursively_delete (temporary_dir);
+            }
 
             // TODO: this part should be async
             copy_recursive (
@@ -137,31 +278,34 @@ namespace GnomePlugin
                 GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
                 cancellable
             );
-            // TODO: install locale
-            // copy_recursive (
-            //     GLib.File.new_for_path (locale_path),
-            //     GLib.File.new_for_path (GLib.Path.build_filename (temporary_dir.get_path (), "locale")),
-            //     GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
-            //     cancellable
-            // );
+            copy_recursive (
+                GLib.File.new_for_path (Config.PACKAGE_LOCALE_DIR),
+                GLib.File.new_for_path (GLib.Path.build_filename (temporary_dir.get_path (), "locale")),
+                GLib.FileCopyFlags.TARGET_DEFAULT_PERMS,
+                cancellable
+            );
             // TODO: compile and install schema?
 
-            if (!cancellable.is_cancelled ()) {
-                try {
-                    temporary_dir.move (destination_dir,
-                                        FileCopyFlags.OVERWRITE | FileCopyFlags.TARGET_DEFAULT_PERMS,
-                                        cancellable,
-                                        () => {});
-                    cleanup = false;
-                }
-                catch (GLib.Error error) {
-                    warning ("Error while moving dir: %s", error.message);
-                }
+            try {
+                success = replace_file (temporary_dir, destination_dir, cancellable);
+
+                // temporary_dir.move (destination_dir,
+                //                     FileCopyFlags.OVERWRITE | FileCopyFlags.TARGET_DEFAULT_PERMS,
+                //                     cancellable,
+                                    // TODO: handle progress_callback
+                //                     () => {});
+            }
+            catch (GLib.Error error) {
+                warning ("Error while moving dir: %s", error.message);
             }
 
-            if (cleanup) {
+            // TODO: when cancelled, it will override old dir if there was any
+            if (success) {
+                info ("Moved extension to %s", path);
+            }
+            else {
                 try {
-                    temporary_dir.@delete ();
+                    recursively_delete (temporary_dir);
                 }
                 catch (GLib.Error error) {
                     warning ("Failed to cleanup temporary dir: %s", error.message);
@@ -223,8 +367,11 @@ namespace GnomePlugin
                 }
                 catch (GLib.Error error) {
                     warning ("Error while initializing extension: %s", error.message);
+                    return;
                 }
             }
+
+            info ("Extension version=\"%s\" path=\"%s\"", this.shell_extension.version, this.shell_extension.path);
 
             // reload extension if it's not up-to-date,
             // allow extension to be installed in other place than `expected_path`
@@ -279,8 +426,12 @@ namespace GnomePlugin
                                       GLib.Cancellable? cancellable = null)
                                       throws GLib.Error
         {
+            this.is_gnome = GLib.Environment.get_variable (CURRENT_DESKTOP_VARIABLE) == "GNOME";
+            this.settings = Pomodoro.get_settings ().get_child ("preferences");
+            this.capabilities = new Pomodoro.CapabilityGroup ("gnome");
+
             if (!this.is_gnome) {
-                return true;
+                return false; // TODO: what returned false does?
             }
 
             /* Mutter IdleMonitor */

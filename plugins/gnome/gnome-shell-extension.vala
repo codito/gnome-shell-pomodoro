@@ -79,9 +79,9 @@ namespace GnomePlugin
     internal class GnomeShellExtension : GLib.Object, GLib.AsyncInitable
     {
         public string                 uuid { get; construct set; }
-        public string                 path { get; private set; }
-        public string                 version { get; private set; }
-        public Gnome.ExtensionState   state { get; private set; }
+        public string                 path { get; set; }
+        public string                 version { get; set; }
+        public Gnome.ExtensionState   state { get; set; default=Gnome.ExtensionState.UNINSTALLED; }
 
         private Gnome.Shell           shell_proxy;
         private Gnome.ShellExtensions shell_extensions_proxy;
@@ -94,8 +94,7 @@ namespace GnomePlugin
         {
             GLib.Object (uuid: uuid,
                          path: "",
-                         version: "",
-                         state: Gnome.ExtensionState.UNINSTALLED);
+                         version: "");
 
             this.shell_proxy = shell_proxy;
             this.shell_extensions_proxy = shell_extensions_proxy;
