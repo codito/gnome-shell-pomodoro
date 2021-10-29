@@ -210,71 +210,72 @@ namespace Pomodoro
             this.update_preview ();
         }
 
-        private bool on_key_press_event (Gdk.EventKey event)
-        {
-            switch (event.keyval)
-            {
-                case Gdk.Key.Tab:
-                case Gdk.Key.space:
-                case Gdk.Key.Return:
-                    return base.key_press_event (event);
+        // TODO: port to gtk4
+        // private bool on_key_press_event (Gdk.EventKey event)
+        // {
+        //     switch (event.keyval)
+        //     {
+        //         case Gdk.Key.Tab:
+        //         case Gdk.Key.space:
+        //         case Gdk.Key.Return:
+        //             return base.key_press_event (event);
+        //
+        //         case Gdk.Key.BackSpace:
+        //             if (!this.settings.has_unapplied) {
+        //                 this.on_disable_clicked ();
+        //             }
+        //
+        //             return true;
+        //
+        //         case Gdk.Key.Escape:
+        //             this.get_action_group ("win").activate_action ("back", null);
+        //
+        //             return true;
+        //     }
+        //
+        //     this.accelerator.set_keyval (event.keyval,
+        //                                  event.state);
+        //
+        //     return true;
+        // }
 
-                case Gdk.Key.BackSpace:
-                    if (!this.settings.has_unapplied) {
-                        this.on_disable_clicked ();
-                    }
+        // private bool on_key_release_event (Gdk.EventKey event)
+        // {
+        //     switch (event.keyval)
+        //     {
+        //         case Gdk.Key.Tab:
+        //         case Gdk.Key.space:
+        //         case Gdk.Key.Return:
+        //         case Gdk.Key.BackSpace:
+        //             return true;
+        //     }
+        //
+        //     if (event.state == 0 || event.length == 0)
+        //     {
+        //         try {
+        //             this.accelerator.validate ();
+        //
+        //             this.settings.apply ();
+        //         }
+        //         catch (Pomodoro.AcceleratorError error)
+        //         {
+        //             this.settings.revert ();
+        //         }
+        //     }
+        //
+        //     return true;
+        // }
 
-                    return true;
-
-                case Gdk.Key.Escape:
-                    this.get_action_group ("win").activate_action ("back", null);
-
-                    return true;
-            }
-
-            this.accelerator.set_keyval (event.keyval,
-                                         event.state);
-
-            return true;
-        }
-
-        private bool on_key_release_event (Gdk.EventKey event)
-        {
-            switch (event.keyval)
-            {
-                case Gdk.Key.Tab:
-                case Gdk.Key.space:
-                case Gdk.Key.Return:
-                case Gdk.Key.BackSpace:
-                    return true;
-            }
-
-            if (event.state == 0 || event.length == 0)
-            {
-                try {
-                    this.accelerator.validate ();
-
-                    this.settings.apply ();
-                }
-                catch (Pomodoro.AcceleratorError error)
-                {
-                    this.settings.revert ();
-                }
-            }
-
-            return true;
-        }
-
-        private bool on_focus_out_event (Gdk.EventFocus event)
-        {
-            if (!this.visible) {
-                return false;
-            }
-
-            this.settings.revert ();
-
-            return true;
-        }
+        // private bool on_focus_out_event (Gdk.EventFocus event)
+        // {
+        //     if (!this.visible) {
+        //         return false;
+        //     }
+        //
+        //     this.settings.revert ();
+        //
+        //     return true;
+        // }
 
         public override void map ()
         {

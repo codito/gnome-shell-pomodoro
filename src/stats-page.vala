@@ -596,14 +596,14 @@ namespace Pomodoro
 
             this.timeline_chart.visible = false;
             this.totals_chart.visible = false;
-            this.spinner.active = true;
+            this.spinner.spinning = true;
 
             this.fetch.begin ((obj, res) => {
                 this.fetch.end (res);
 
                 this.timeline_chart.visible = this.date_end.compare (this.date.add_weeks (1)) >= 0;
                 this.totals_chart.visible = true;
-                this.spinner.active = false;
+                this.spinner.spinning = false;
 
                 if (this.timeline_chart.get_mapped ()) {
                     this.timeline_chart.queue_draw ();

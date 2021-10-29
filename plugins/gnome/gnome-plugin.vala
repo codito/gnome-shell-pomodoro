@@ -556,12 +556,11 @@ namespace GnomePlugin
             this.last_activity_time = timestamp;
         }
 
-        private void on_install_extension_notification_clicked (Gtk.Widget widget)
+        private void on_install_extension_notification_clicked ()
         {
-            var revealer = widget as Gtk.Revealer;
             var cancellable = new GLib.Cancellable ();
-            var window = widget.get_toplevel () as Pomodoro.Window;
             var application = Pomodoro.Application.get_default ();
+            var window = application.get_last_focused_window ();
 
             var dialog = new Pomodoro.InstallExtensionDialog ();
             dialog.set_transient_for ((Gtk.Window?) window);
@@ -577,7 +576,6 @@ namespace GnomePlugin
                         this.install_extension.end (result);
 
                         // if (this.shell_extension.path != "") {
-                        revealer.set_reveal_child (false);
 
                         this.enable_extension.begin (cancellable, (object_, result_) => {
                             try {

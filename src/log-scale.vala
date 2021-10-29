@@ -101,9 +101,10 @@ namespace Pomodoro.Widgets
             return true;
         }
 
-        public override bool scroll_event (Gdk.EventScroll event)
-        {
-            return false;
-        }
+        // TODO: port to gtk4?
+        // public override bool scroll_event (Gdk.EventScroll event)
+        // {
+        //     return false;
+        // }
     }
 }
