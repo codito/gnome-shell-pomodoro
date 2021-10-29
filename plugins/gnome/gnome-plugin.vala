@@ -172,6 +172,36 @@ namespace GnomePlugin
         return success;
     }
 
+    // private void open_extensions_app ()
+    // {
+    //     try {
+    //         string[] spawn_args = { "gnome-shell-extension-prefs", };
+    //         string[] spawn_env = GLib.Environ.get ();
+
+    //         GLib.Process.spawn_async (null,
+    //                                   spawn_args,
+    //                                   spawn_env,
+    //                                   GLib.SpawnFlags.SEARCH_PATH,
+    //                                   null,
+    //                                   null);
+    //     }
+    //     catch (GLib.SpawnError error) {
+    //         GLib.warning ("Failed to spawn process: %s", error.message);
+    //     }
+    // }
+
+    // public async void sleep (uint              interval,
+    //                          int               priority = GLib.Priority.DEFAULT,
+    //                          GLib.Cancellable? cancellable = null)
+    // {
+    //     GLib.Timeout.add (interval, () => {
+    //         sleep.callback ();
+    //         return false;
+    //     }, priority);
+    //
+    //     yield;
+    // }
+
 
     public class ApplicationExtension : Peas.ExtensionBase, Pomodoro.ApplicationExtension, GLib.AsyncInitable
     {
@@ -187,6 +217,8 @@ namespace GnomePlugin
         private double                          last_activity_time = 0.0;
         private Gnome.Shell?                    shell_proxy = null;
         private Gnome.ShellExtensions?          shell_extensions_proxy = null;
+        private bool                            install_extension_notification_dismissed = false;
+
 
         /**
          * Extension can't be exported from the Flatpak container. So, we install it to user dir.
@@ -194,7 +226,7 @@ namespace GnomePlugin
         private async void install_extension (string            path,
                                               GLib.Cancellable? cancellable = null) throws GLib.Error
         {
-            GLib.warning ("Installing extension…");
+            GLib.info ("Installing extension…");
 
             var destination_dir = GLib.File.new_for_path (path);
             var source_dir = GLib.File.new_for_path (Config.EXTENSION_DIR);
@@ -203,12 +235,14 @@ namespace GnomePlugin
             );
             var success = false;
 
+            // TODO: remove
+            // yield sleep (3000, GLib.Priority.DEFAULT, cancellable);
+
             if (temporary_dir.query_exists (cancellable)) {
                 recursively_delete (temporary_dir);
             }
 
             // TODO: this part should be async
-            // TODO: should handle progress callback, see: https://valadoc.org/gio-2.0/GLib.File.move.html
             recursively_copy (
                 source_dir,
                 temporary_dir,
@@ -244,6 +278,15 @@ namespace GnomePlugin
         }
 
         /**
+         * Method for enabling extension after install
+         */
+        private async void enable_extension (GLib.Cancellable? cancellable = null) throws GLib.Error
+        {
+            yield this.shell_extension.reload ();
+            yield this.shell_extension.enable ();
+        }
+
+        /**
          * Read extension version from metadata.json
          */
         private string get_extension_version (string extension_path)
@@ -260,8 +303,11 @@ namespace GnomePlugin
                     return data.get_string_member_with_default ("version", "");
                 }
             }
+            catch (GLib.FileError.NOENT error) {
+                // ignore when file does not exist
+            }
             catch (GLib.Error error) {
-	            print ("Error while parsing file %s: %s\n", extension_path, error.message);
+	            warning ("Error while parsing file %s: %s\n", extension_path, error.message);
             }
 
             return "";
@@ -325,7 +371,11 @@ namespace GnomePlugin
                 }
             }
 
-            info ("Extension version=\"%s\" path=\"%s\"", this.shell_extension.version, this.shell_extension.path);
+            this.shell_extension_expected_path = expected_path;
+            this.shell_extension_expected_version = expected_version;
+
+            info ("Extension state=\"%s\" version=\"%s\" path=\"%s\"",
+                  this.shell_extension.state.to_string (), this.shell_extension.version, this.shell_extension.path);
 
             // reload extension if it's not up-to-date,
             // allow extension to be installed in other place than `expected_path`
@@ -341,8 +391,10 @@ namespace GnomePlugin
                 }
             }
 
+            /*
             // try to install if missing
             // TODO: ask before installing extension
+
             if (
                     this.shell_extension.state == Gnome.ExtensionState.UNINSTALLED &&
                     this.can_install_extension (expected_path, expected_version)
@@ -374,6 +426,8 @@ namespace GnomePlugin
             // TODO: wait until extension initializes its client, registers its capabilities?
             // TODO: monitor gnome-shell mode?
             // TODO: monitor extension state?
+
+            */
         }
 
         public async bool init_async (int               io_priority = GLib.Priority.DEFAULT,
@@ -437,6 +491,12 @@ namespace GnomePlugin
             /* GNOME Shell extension */
             yield this.init_shell_extension (cancellable);
 
+            // TODO: wait until extension to register a service over D-Bus?
+
+            /* Pomodoro Window */
+            application.window_added.connect (this.on_window_added);
+            application.get_windows ().@foreach (this.on_window_added);
+
             return true;
         }
 
@@ -494,6 +554,129 @@ namespace GnomePlugin
             }
 
             this.last_activity_time = timestamp;
+        }
+
+        private void on_install_extension_notification_clicked (Gtk.Widget widget)
+        {
+            var revealer = widget as Gtk.Revealer;
+            var cancellable = new GLib.Cancellable ();
+            var window = widget.get_toplevel () as Pomodoro.Window;
+            var application = Pomodoro.Application.get_default ();
+
+            var dialog = new Pomodoro.InstallExtensionDialog ();
+            dialog.set_transient_for ((Gtk.Window?) window);
+
+            // delay installing to show progress
+            GLib.Timeout.add (500, () => {
+                if (cancellable.is_cancelled ()) {
+                    return GLib.Source.REMOVE;
+                }
+
+                this.install_extension.begin (this.shell_extension_expected_path, cancellable, (object, result) => {
+                    try {
+                        this.install_extension.end (result);
+
+                        // if (this.shell_extension.path != "") {
+                        revealer.set_reveal_child (false);
+
+                        this.enable_extension.begin (cancellable, (object_, result_) => {
+                            try {
+                                this.enable_extension.end (result_);
+                                dialog.show_success_page ();
+                            }
+                            catch (GLib.Error error) {
+                                warning ("Error while enabling extension: %s", error.message);
+                                dialog.show_enabling_error_page (error.message);
+                            }
+                        });
+                    }
+                    catch (GLib.Error error) {
+                        warning ("Error while installing extension: %s", error.message);
+                        dialog.show_error_page (error.message);
+                    }
+                });
+
+                if (cancellable.is_cancelled ()) {
+                    dialog.close ();
+                }
+
+                return GLib.Source.REMOVE;
+            });
+
+            dialog.response.connect ((response_id) => {
+                switch (response_id)
+                {
+                    case Gtk.ResponseType.DELETE_EVENT:
+                        cancellable.cancel ();
+                        break;
+
+                    case Pomodoro.InstallExtensionDialogResponse.CANCEL:
+                        cancellable.cancel ();
+                        dialog.close ();
+                        break;
+
+                    case Pomodoro.InstallExtensionDialogResponse.CLOSE:
+                        dialog.close ();
+                        break;
+
+                    case Pomodoro.InstallExtensionDialogResponse.MANAGE_EXTENSIONS:
+                        this.shell_extension.show_preferences ();
+                        dialog.close ();
+                        break;
+
+                    case Pomodoro.InstallExtensionDialogResponse.REPORT_ISSUE:
+                        application.activate_action ("report-issue", null);
+                        dialog.close ();
+                        break;
+
+                    default:
+                        warning ("Dialog response %d not handled", response_id);
+                        break;
+                }
+            });
+            dialog.close.connect (() => {
+                cancellable.cancel ();
+            });
+
+            dialog.run ();
+        }
+
+        private void on_install_extension_notification_dismissed (Gtk.Widget widget)
+        {
+            this.install_extension_notification_dismissed = true;
+        }
+
+        private void update_window (Pomodoro.Window window)
+        {
+            if (
+                    !this.install_extension_notification_dismissed &&
+                    // this.shell_extension.state == Gnome.ExtensionState.UNINSTALLED &&
+                    this.can_install_extension (this.shell_extension_expected_path, this.shell_extension_expected_version)
+            ) {
+                window.show_in_app_notification_install_extension (
+                    on_install_extension_notification_clicked,
+                    on_install_extension_notification_dismissed);
+            }
+            else {
+                window.hide_in_app_notification_install_extension ();
+            }
+        }
+
+        private void on_window_added (Gtk.Window window)
+        {
+            if (window is Pomodoro.Window) {
+                GLib.debug ("on_window_added()");
+
+                var state_changed_id = this.shell_extension.state_changed.connect (() => {
+                    this.update_window (window as Pomodoro.Window);
+                });
+
+                window.destroy.connect (() => {
+                    window.disconnect (state_changed_id);
+                });
+
+                this.update_window (window as Pomodoro.Window);
+            }
         }
     }
 

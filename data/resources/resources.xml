@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="/org/gnomepomodoro/Pomodoro">
     <file>database/version-1.sql</file>
+    <file compressed="true" preprocess="xml-stripblanks">install-extension-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">menus.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences-keyboard-shortcut-page.ui</file>

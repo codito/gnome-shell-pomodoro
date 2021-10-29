@@ -84,11 +84,10 @@ namespace Gnome
         public abstract string mode { owned get; }
         public abstract string shell_version { owned get; }
 
-        public abstract async bool eval
+        public abstract void eval
                                        (string     script,
-                                        // out bool   success,
-                                        // out string result,
-                                        Cancellable? cancellable = null)
+                                        out bool   success,
+                                        out string result)
                                         throws GLib.DBusError, GLib.IOError;
 
         public abstract bool grab_accelerator
@@ -115,6 +114,8 @@ namespace Gnome
         public abstract bool user_extensions_enabled { get; set; }
         public abstract string shell_version { owned get; }
 
+        // TODO: drop cancellable args
+
         public abstract async bool enable_extension
                                        (string uuid,
                                         Cancellable? cancellable = null)
@@ -135,10 +136,22 @@ namespace Gnome
                                         Cancellable? cancellable = null)
                                         throws GLib.DBusError, GLib.IOError;
 
+        // TODO: is it needed? are errors returned by get_extension_info() ?
         public abstract void get_extension_errors
                                        (string       uuid,
                                         out string[] errors)
                                         throws GLib.DBusError, GLib.IOError;
+
+        public abstract async void launch_extension_prefs
+                                       (string       uuid)
+                                        throws GLib.DBusError, GLib.IOError;
+
+        // TODO: use instead of launch_extension_prefs
+        // public abstract async void open_extension_prefs
+        //                                (string                    uuid,
+        //                                 string                    parent_window,
+        //                                 HashTable<string,Variant> options)
+        //                                 throws GLib.DBusError, GLib.IOError;
 
         public signal void extension_state_changed
                                        (string uuid,

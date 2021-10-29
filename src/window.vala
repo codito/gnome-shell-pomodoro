@@ -78,14 +78,14 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Button pause_resume_button;
         [GtkChild]
-        private unowned Gtk.Button skip_stop_button;
+        private unowned Gtk.Image pause_button_image;
         [GtkChild]
-        private unowned Gtk.Image pause_resume_image;
-        [GtkChild]
-        private unowned Gtk.Image skip_stop_image;
+        private unowned Gtk.Revealer in_app_notification_install_extension;
 
         private Pomodoro.Animation blink_animation;
         private string default_page;
+        private Gtk.Callback? install_extension_callback = null;
+        private Gtk.Callback? install_extension_dismissed_callback = null;
 
         construct
         {
@@ -298,6 +298,129 @@ namespace Pomodoro
             }
 
             return false;
+        }
+
+        [GtkCallback]
+        private void on_in_app_notification_install_extension_install_button_clicked (Gtk.Button button)
+        {
+            if (install_extension_callback != null) {
+                this.install_extension_callback (this.in_app_notification_install_extension);
+            }
+        }
+
+        [GtkCallback]
+        private void on_in_app_notification_install_extension_close_button_clicked (Gtk.Button button)
+        {
+            this.in_app_notification_install_extension.set_reveal_child (false);
+
+            if (install_extension_dismissed_callback != null) {
+                this.install_extension_dismissed_callback (this.in_app_notification_install_extension);
+            }
+        }
+
+        public void show_in_app_notification_install_extension (Gtk.Callback? callback,
+                                                                Gtk.Callback? dismissed_callback = null)
+        {
+            this.install_extension_callback = callback;
+            this.install_extension_dismissed_callback = dismissed_callback;
+
+            this.in_app_notification_install_extension.set_reveal_child (true);
+        }
+
+        public void hide_in_app_notification_install_extension ()
+        {
+            this.in_app_notification_install_extension.set_reveal_child (false);
+        }
+    }
+
+    public enum InstallExtensionDialogResponse
+    {
+        CANCEL = 0,
+        CLOSE = 1,
+        MANAGE_EXTENSIONS = 2,
+        REPORT_ISSUE = 3
+    }
+
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/install-extension-dialog.ui")]
+    public class InstallExtensionDialog : Gtk.MessageDialog, Gtk.Buildable
+    {
+        [GtkChild]
+        private unowned Gtk.Spinner spinner;
+        [GtkChild]
+        private unowned Gtk.Stack stack;
+        [GtkChild]
+        private unowned Gtk.ButtonBox action_area;
+        [GtkChild]
+        private unowned Gtk.TextView error_installing_textview;
+        [GtkChild]
+        private unowned Gtk.TextView error_enabling_textview;
+
+        construct
+        {
+            this.show_in_progress_page ();
+        }
+
+        public void show_in_progress_page ()
+        {
+            this.action_area.@foreach ((button) => {
+                if (button.name == "cancel") {
+                    button.show ();
+                }
+                else {
+                    button.hide ();
+                }
+            });
+
+            this.stack.set_visible_child_name ("in-progress");
+        }
+
+        public void show_success_page ()
+        {
+            this.action_area.@foreach ((button) => {
+                if (button.name == "manage-extensions" || button.name == "done") {
+                    button.show ();
+                }
+                else {
+                    button.hide ();
+                }
+            });
+
+            this.spinner.active = false;
+            this.stack.set_visible_child_name ("success");
+        }
+
+        public void show_error_page (string error_message)
+        {
+            this.action_area.@foreach ((button) => {
+                if (button.name == "report-issue" || button.name == "close") {
+                    button.show ();
+                }
+                else {
+                    button.hide ();
+                }
+            });
+
+            this.error_installing_textview.buffer.text = error_message;
+
+            this.spinner.active = false;
+            this.stack.set_visible_child_name ("error-installing");
+        }
+
+        public void show_enabling_error_page (string error_message)
+        {
+            this.action_area.@foreach ((button) => {
+                if (button.name == "report-issue" || button.name == "close") {
+                    button.show ();
+                }
+                else {
+                    button.hide ();
+                }
+            });
+
+            this.error_installing_textview.buffer.text = error_message;
+
+            this.spinner.active = false;
+            this.stack.set_visible_child_name ("error-enabling");
         }
     }
 }

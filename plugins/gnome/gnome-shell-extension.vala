@@ -21,52 +21,59 @@ using GLib;
 
 namespace GnomePlugin
 {
-    private const string LOAD_SCRIPT = """
+    private const string SCRIPT_WRAPPER = """
 (function() {
-    let perUserDir = Gio.File.new_for_path(global.userdatadir);
-    let uuid = '${UUID}';
+    ${SCRIPT}
 
-    FileUtils.collectFromDatadirs('extensions', true, (dir, info) => {
-        let fileType = info.get_file_type();
-        if (fileType != Gio.FileType.DIRECTORY)
-            return;
-
-        if (info.get_name() != uuid)
-            return;
-
-        let existing = Main.extensionManager.lookup(uuid);
-        if (existing) {
-            return;
-        }
-
-        let type = dir.has_prefix(perUserDir)
-            ? ExtensionType.PER_USER
-            : ExtensionType.SYSTEM;
-        try {
-            extension = Main.extensionManager.createExtensionObject(uuid, dir, type);
-        } catch (error) {
-            logError(error, 'Could not load extension %s'.format(uuid));
-            return;
-        }
-        Main.extensionManager.loadExtension(extension);
-    });
-
-    let extension = Main.extensionManager.lookup(uuid);
-    if (!extension)
-        throw new Error('Could not find extension %s'.format(uuid));
+    return null;
 })();
 """;
 
-    private const string RELOAD_SCRIPT = """
-(function() {
-    let uuid = '${UUID}';
-    let extension = Main.extensionManager.lookup(uuid);
+    private const string LOAD_SCRIPT = """
+const { Gio } = imports.gi;
+const FileUtils = imports.misc.fileUtils;
+const { ExtensionType } = imports.misc.extensionUtils;
 
-    if (extension)
-        Main.extensionManager.reloadExtension(extension);
-    else
-        throw new Error('Could not find extension %s'.format(uuid));
-})();
+let perUserDir = Gio.File.new_for_path(global.userdatadir);
+let uuid = '${UUID}';
+let extension = Main.extensionManager.lookup(uuid);
+
+if (extension)
+    return;
+
+FileUtils.collectFromDatadirs('extensions', true, (dir, info) => {
+    let fileType = info.get_file_type();
+    if (fileType != Gio.FileType.DIRECTORY)
+        return;
+
+    if (info.get_name() != uuid)
+        return;
+
+    let extensionType = dir.has_prefix(perUserDir)
+        ? ExtensionType.PER_USER
+        : ExtensionType.SYSTEM;
+    try {
+        Main.extensionManager.loadExtension(
+            Main.extensionManager.createExtensionObject(uuid, dir, extensionType)
+        );
+    } catch (error) {
+        logError(error, 'Could not load extension %s'.format(uuid));
+        throw error;
+    }
+});
+extension = Main.extensionManager.lookup(uuid);
+if (!extension)
+    throw new Error('Could not find extension %s'.format(uuid));
+""";
+
+    private const string RELOAD_SCRIPT = """
+let uuid = '${UUID}';
+let extension = Main.extensionManager.lookup(uuid);
+
+if (extension)
+    Main.extensionManager.reloadExtension(extension);
+else
+    throw new Error('Could not find extension %s'.format(uuid));
 """;
 
     internal errordomain GnomeShellExtensionError
@@ -187,38 +194,49 @@ namespace GnomePlugin
             }
         }
 
+        private void eval_script (string script) throws GLib.Error
+        {
+            var success = false;
+            var result = "";
+
+            this.shell_proxy.eval (
+                SCRIPT_WRAPPER.replace ("${SCRIPT}", script),
+                out success,
+                out result);
+
+            GLib.debug ("Eval result: %s %s", success ? "true" : "false", result);
+
+            if (success && result == "null") {
+                // no syntax error and no error message
+            }
+            else {
+                throw new GnomeShellExtensionError.EVAL_ERROR (result);
+            }
+        }
+
         /**
          * GNOME Shell is not aware of freshly installed extensions.
          * Extension normally would be visible after logging out.
          * This function tries to load the extension the same way GNOME Shell does it.
          */
-        private async bool load (GLib.Cancellable? cancellable = null) throws GLib.Error
+        public async bool load (GLib.Cancellable? cancellable = null) throws GLib.Error
         {
             if (cancellable != null && cancellable.is_cancelled ()) {
                 return false;
             }
 
-            var success = false;
-
             GLib.debug ("Loading extension…");
             try {
-                success = yield this.shell_proxy.eval (
-                    LOAD_SCRIPT.replace("${UUID}", this.uuid),
-                    cancellable);
+                // TODO: should be async
+                this.eval_script (LOAD_SCRIPT.replace ("${UUID}", this.uuid));
+
+                yield this.update (cancellable);
             }
             catch (GLib.Error error) {
                 GLib.warning ("Failed to load extension: %s", error.message);
             }
 
-            if (success) {
-                try {
-                    yield this.update (cancellable);
-                }
-                catch (GLib.Error error) {
-                }
-            }
-
-            return success;
+            return this.state != Gnome.ExtensionState.UNINSTALLED;
         }
 
         /**
@@ -232,32 +250,23 @@ namespace GnomePlugin
                 return false;
             }
 
-            if (this.path != "") {
+            if (this.state == Gnome.ExtensionState.UNINSTALLED || this.path == "") {
                 return yield this.load (cancellable);
             }
 
             var previous_path = this.path;
             var previous_version = this.version;
-            var success = false;
 
             GLib.debug ("Reloading extension…");
             try {
-                success = yield this.shell_proxy.eval (
-                    RELOAD_SCRIPT.replace("${UUID}", this.uuid),
-                    cancellable);
+                // TODO: should be async
+                this.eval_script (RELOAD_SCRIPT.replace ("${UUID}", this.uuid));
+
+                yield this.update (cancellable);
             }
             catch (GLib.Error error) {
                 GLib.warning ("Failed to reload extension: %s", error.message);
                 throw new GnomeShellExtensionError.EVAL_ERROR (error.message);
-            }
-
-            if (success) {
-                try {
-                    yield this.update (cancellable);
-                }
-                catch (GLib.Error error) {
-                    // TODO: log error?
-                }
             }
 
             return this.path != previous_path || this.version != previous_version;
@@ -299,6 +308,21 @@ namespace GnomePlugin
             }
 
             return this.state != Gnome.ExtensionState.ENABLED;
+        }
+
+        // FIXME: does not work
+        public void show_preferences ()
+        {
+            GLib.debug ("Opening extension preferences…");
+
+            this.shell_extensions_proxy.launch_extension_prefs.begin (this.uuid, (obj, result) => {
+                try {
+                    this.shell_extensions_proxy.launch_extension_prefs.end (result);
+                }
+                catch (GLib.Error error) {
+                    GLib.warning ("Error opening extension preferences: %s", error.message);
+                }
+            });
         }
 
         public signal void state_changed ();
