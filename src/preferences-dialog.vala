@@ -86,6 +86,19 @@ namespace Pomodoro
         }
     }
 
+    // TODO: refactor code, it can be removed
+    private void listbox_foreach (Gtk.ListBox            listbox,
+                                  Gtk.ListBoxForeachFunc func)
+    {
+        var selection_mode = listbox.selection_mode;
+
+        listbox.selection_mode = Gtk.SelectionMode.MULTIPLE;
+        listbox.select_all ();
+        listbox.selected_foreach (func);
+        listbox.unselect_all ();
+        listbox.selection_mode = selection_mode;
+    }
+
     public interface PreferencesDialogExtension : Peas.ExtensionBase
     {
     }
@@ -692,8 +705,9 @@ namespace Pomodoro
 
         private void setup_listbox (Gtk.ListBox listbox)
         {
-            listbox.@foreach ((child) => {
-                this.on_listbox_add (listbox as Gtk.Widget, child);
+            // TODO: refactor this, UI should be statically defined
+            listbox_foreach (listbox, (listbox_, row) => {
+                this.on_listbox_add (listbox as Gtk.Widget, row as Gtk.Widget);
             });
 
             listbox.add.connect_after (this.on_listbox_add);
@@ -713,7 +727,9 @@ namespace Pomodoro
 
             if (widget.parent != null)
             {
-                listbox.@foreach ((child) => {
+                // TODO: this is horrible
+                // TODO: refactor this, UI should be statically defined
+                listbox_foreach (listbox, (listbox_, row) => {
                     visible |= child.visible;
                 });
 
@@ -744,7 +760,9 @@ namespace Pomodoro
                 var listbox = widget as Gtk.ListBox;
                 var visible = false;
 
-                listbox.@foreach ((child) => {
+                // TODO: this is horrible
+                // TODO: refactor this, UI should be statically defined
+                listbox_foreach (listbox, (listbox_, row) => {
                     visible |= child.visible;
                 });
 
