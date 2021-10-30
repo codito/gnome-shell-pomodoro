@@ -123,7 +123,7 @@ namespace Pomodoro
                     }
 
                     if (modifier == "Alt") {
-                        modifiers |= Gdk.ModifierType.MOD1_MASK;
+                        modifiers |= Gdk.ModifierType.ALT_MASK;
                     }
 
                     if (modifier == "Shift") {
@@ -176,7 +176,7 @@ namespace Pomodoro
 
                 case Gdk.Key.Alt_L:
                 case Gdk.Key.Alt_R:
-                    keyval_modifier = Gdk.ModifierType.MOD1_MASK;
+                    keyval_modifier = Gdk.ModifierType.ALT_MASK;
                     break;
             }
 
@@ -188,7 +188,7 @@ namespace Pomodoro
             modifiers &= (Gdk.ModifierType.CONTROL_MASK |
                           Gdk.ModifierType.SHIFT_MASK |
                           Gdk.ModifierType.SUPER_MASK |
-                          Gdk.ModifierType.MOD1_MASK);
+                          Gdk.ModifierType.ALT_MASK);
         }
 
         public void set_keyval (uint             keyval,
@@ -267,7 +267,7 @@ namespace Pomodoro
                 elements += (escape ? "<Ctrl>" : "Ctrl");
             }
 
-            if (Gdk.ModifierType.MOD1_MASK in this.modifiers) {
+            if (Gdk.ModifierType.ALT_MASK in this.modifiers) {
                 elements += (escape ? "<Alt>" : "Alt");
             }
 
