@@ -131,6 +131,7 @@ namespace Pomodoro
         private ulong key_press_event_id = 0;
         private ulong key_release_event_id = 0;
         private ulong focus_out_event_id = 0;
+        private GLib.List<unowned Gtk.Label> preview_labels;
 
         construct
         {
@@ -181,14 +182,18 @@ namespace Pomodoro
         {
             var index = 0;
 
-            this.preview_box.forall ((child) => {
-                child.destroy ();
-            });
+            while (!this.preview_labels.is_empty ()) {
+                var link = this.preview_labels.first ();
+                this.preview_labels.remove_link (link);
+                link.data.destroy ();
+            }
 
             foreach (var element in this.accelerator.get_keys ())
             {
                 if (index > 0) {
-                    this.preview_box.prepend (new Gtk.Label ("+"));
+                    var separator_label = new Gtk.Label ("+");
+                    this.preview_box.prepend (separator_label);
+                    this.preview_labels.append (separator_label);
                 }
 
                 var key_label = new Gtk.Label (element);
@@ -196,6 +201,7 @@ namespace Pomodoro
                 key_label.get_style_context ().add_class ("key");
 
                 this.preview_box.prepend (key_label);
+                this.preview_labels.append (key_label);
 
                 index++;
             }
@@ -874,12 +880,9 @@ namespace Pomodoro
 
             this.back_button.visible = this.history.length () > 1;
 
-            this.header_bar.forall (
-                (child) => {
-                    if (child != this.back_button) {
-                        this.header_bar.remove (child);
-                    }
-                });
+            if (this.back_button.parent == (Gtk.Widget) this.header_bar) {
+                this.back_button.unparent ();
+            }
 
             page.configure_header_bar (this.header_bar);
         }
