@@ -816,16 +816,6 @@ namespace Pomodoro
         {
             PreferencesDialog.instance = this;
 
-            var geometry = Gdk.Geometry () {
-                min_width = DEFAULT_WIDTH,
-                max_width = -1,
-                min_height = 300,
-                max_height = -1
-            };
-            this.set_geometry_hints (this,
-                                     geometry,
-                                     Gdk.WindowHints.MIN_SIZE);
-
             this.pages = new GLib.HashTable<string, PageMeta?> (str_hash, str_equal);
 
             this.add_page ("main",
@@ -917,10 +907,12 @@ namespace Pomodoro
                 var scrolled_window = page as Gtk.ScrolledWindow;
                 scrolled_window.set_min_content_height (int.min (page_height, DEFAULT_HEIGHT));
 
-                this.resize (window_width, header_bar_height + DEFAULT_HEIGHT);
+                // TODO: the dialog needs to be redesigned, so that changing its height is no longer needed
+                // this.resize (window_width, header_bar_height + DEFAULT_HEIGHT);
             }
             else {
-                this.resize (window_width, header_bar_height + page_height);
+                // TODO: the dialog needs to be redesigned, so that changing its height is no longer needed
+                // this.resize (window_width, header_bar_height + page_height);
             }
         }
 

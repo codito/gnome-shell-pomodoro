@@ -16,7 +16,6 @@
             <property name="can-focus">False</property>
             <property name="events">GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>
             <property name="visible-window">False</property>
-            <signal name="button-press-event" handler="on_button_press" after="yes" swapped="no"/>
             <child>
               <object class="GtkOverlay">
                 <property name="visible">True</property>

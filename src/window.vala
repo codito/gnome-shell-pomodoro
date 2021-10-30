@@ -89,14 +89,6 @@ namespace Pomodoro
 
         construct
         {
-            var geometry = Gdk.Geometry () {
-                min_width = MIN_WIDTH,
-                max_width = -1,
-                min_height = MIN_HEIGHT,
-                max_height = -1
-            };
-            this.set_geometry_hints (this, geometry, Gdk.WindowHints.MIN_SIZE);
-
             // this.stack.add_titled (this.timer_stack, "timer", _("Timer"));
             this.stack.add_titled (new Pomodoro.StatsView (), "stats", _("Stats"));
 
@@ -286,20 +278,6 @@ namespace Pomodoro
 
             return false;
         }
-
-        // TODO: port to gtk4
-        // [GtkCallback]
-        // private bool on_button_press (Gtk.Widget      widget,
-        //                               Gdk.EventButton event)
-        // {
-        //     if (event.button == 1) {
-        //         this.begin_move_drag ((int) event.button, (int) event.x_root, (int) event.y_root, event.time);
-        //
-        //         return true;
-        //     }
-        //
-        //     return false;
-        // }
 
         [GtkCallback]
         private void on_in_app_notification_install_extension_install_button_clicked (Gtk.Button button)

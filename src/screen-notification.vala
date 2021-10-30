@@ -80,8 +80,6 @@ namespace Pomodoro
             this.on_timer_state_changed ();
 
             this.fullscreen ();
-            this.stick ();
-            this.set_keep_above (true);
         }
 
         ~ScreenNotification ()
