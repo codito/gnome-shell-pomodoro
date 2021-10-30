@@ -103,10 +103,7 @@ namespace Pomodoro
             }
 
             if (this.get_realized ()) {
-                var window = this.get_window ();
-
-                var cursor = value ? null : new Gdk.Cursor.from_name (window.get_display (), "none");
-                window.set_cursor (cursor);
+                this.set_cursor (value ? null : new Gdk.Cursor.from_name ("none", null));
             }
         }
 
