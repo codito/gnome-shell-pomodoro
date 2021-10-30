@@ -634,7 +634,6 @@ namespace Pomodoro
         {
             var option_context = new GLib.OptionContext ();
             option_context.add_main_entries (Options.ENTRIES, Config.GETTEXT_PACKAGE);
-            option_context.add_group (Gtk.get_option_group (true));
 
             // TODO: add options from plugins
 
