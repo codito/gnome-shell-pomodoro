@@ -95,7 +95,7 @@ namespace Pomodoro
     {
         public unowned Pomodoro.PreferencesDialog get_preferences_dialog ()
         {
-            return this.get_toplevel () as Pomodoro.PreferencesDialog;
+            return this.root as Pomodoro.PreferencesDialog;
         }
 
         public virtual void configure_header_bar (Gtk.HeaderBar header_bar)
@@ -281,18 +281,18 @@ namespace Pomodoro
         {
             base.map ();
 
-            var toplevel = this.get_toplevel ();
+            var root = (Gtk.Widget) this.root;
 
             if (this.key_press_event_id == 0) {
-                this.key_press_event_id = toplevel.key_press_event.connect (this.on_key_press_event);
+                this.key_press_event_id = root.key_press_event.connect (this.on_key_press_event);
             }
 
             if (this.key_release_event_id == 0) {
-                this.key_release_event_id = toplevel.key_release_event.connect (this.on_key_release_event);
+                this.key_release_event_id = root.key_release_event.connect (this.on_key_release_event);
             }
 
             if (this.focus_out_event_id == 0) {
-                this.focus_out_event_id = toplevel.focus_out_event.connect (this.on_focus_out_event);
+                this.focus_out_event_id = root.focus_out_event.connect (this.on_focus_out_event);
             }
 
             var application = Pomodoro.Application.get_default ();
@@ -303,20 +303,20 @@ namespace Pomodoro
         {
             base.unmap ();
 
-            var toplevel = this.get_toplevel ();
+            var root = (Gtk.Widget) this.root;
 
             if (this.key_press_event_id != 0) {
-                toplevel.key_press_event.disconnect (this.on_key_press_event);
+                root.key_press_event.disconnect (this.on_key_press_event);
                 this.key_press_event_id = 0;
             }
 
             if (this.key_release_event_id != 0) {
-                toplevel.key_release_event.disconnect (this.on_key_release_event);
+                root.key_release_event.disconnect (this.on_key_release_event);
                 this.key_release_event_id = 0;
             }
 
             if (this.focus_out_event_id != 0) {
-                toplevel.focus_out_event.disconnect (this.on_focus_out_event);
+                root.focus_out_event.disconnect (this.on_focus_out_event);
                 this.focus_out_event_id != 0;
             }
 
