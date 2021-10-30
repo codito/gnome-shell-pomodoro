@@ -870,7 +870,11 @@ namespace Pomodoro
                                   "title", out title);
             this.history_push (name);
 
-            this.header_bar.title = title;
+            var title_label = this.header_bar.title_widget as Gtk.Label;
+            if (title_label != null) {
+                title_label.label = title;
+            }
+
             this.back_button.visible = this.history.length () > 1;
 
             this.header_bar.forall (
