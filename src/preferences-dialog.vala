@@ -897,12 +897,9 @@ namespace Pomodoro
             window_height = this.get_size (Gtk.Orientation.VERTICAL);
 
             /* calculate window size */
-            this.header_bar.get_preferred_height (null,
-                                                  out header_bar_height);
+            this.header_bar.measure (Gtk.Orientation.VERTICAL, -1, null, out header_bar_height, null, null);
 
-            stack_page.child.get_preferred_height_for_width (window_width,
-                                                             null,
-                                                             out page_height);
+            stack_page.child.measure (Gtk.Orientation.VERTICAL, window_width, null, out page_height, null, null);
 
             if (stack_page.child is Gtk.ScrolledWindow) {
                 var scrolled_window = stack_page.child as Gtk.ScrolledWindow;
