@@ -253,7 +253,7 @@ namespace Pomodoro
             if (!(this.timer.state is Pomodoro.DisabledState))
             {
                 var style_context = widget.get_style_context ();
-                var color         = style_context.get_color (widget.get_state_flags ());
+                var color         = style_context.get_color ();
 
                 var width  = widget.get_allocated_width ();
                 var height = widget.get_allocated_height ();
