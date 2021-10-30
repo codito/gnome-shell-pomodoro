@@ -188,17 +188,14 @@ namespace Pomodoro
             foreach (var element in this.accelerator.get_keys ())
             {
                 if (index > 0) {
-                    this.preview_box.pack_start (new Gtk.Label ("+"),
-                                                 false,
-                                                 false,
-                                                 0);
+                    this.preview_box.prepend (new Gtk.Label ("+"));
                 }
 
                 var key_label = new Gtk.Label (element);
                 key_label.valign = Gtk.Align.CENTER;
                 key_label.get_style_context ().add_class ("key");
 
-                this.preview_box.pack_start (key_label, false, false, 0);
+                this.preview_box.prepend (key_label);
 
                 index++;
             }
@@ -456,12 +453,12 @@ namespace Pomodoro
             this.toggles.insert (plugin_info.get_module_name (), toggle);
 
             var vbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-            vbox.pack_start (name_label, false, false, 0);
-            vbox.pack_start (description_label, false, false, 0);
+            vbox.append (name_label);
+            vbox.append (description_label);
 
             var hbox = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 30);
-            hbox.pack_start (vbox, true, true, 0);
-            hbox.pack_start (toggle, false, true, 0);
+            hbox.append (vbox);
+            hbox.append (toggle);
 
             var row = new Gtk.ListBoxRow ();
             row.set_data<string> ("name", plugin_info.get_name ());

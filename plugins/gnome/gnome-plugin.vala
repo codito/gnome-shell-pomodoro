@@ -730,8 +730,8 @@ namespace GnomePlugin
             name_label.valign = Gtk.Align.BASELINE;
 
             var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-            box.pack_start (name_label, true, true, 0);
-            box.pack_start (widget, false, true, 0);
+            box.append (name_label);
+            box.append (widget);
 
             var row = new Gtk.ListBoxRow ();
             row.activatable = false;

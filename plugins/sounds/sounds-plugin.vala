@@ -682,9 +682,9 @@ namespace SoundsPlugin
             volume_image.get_style_context ().add_class ("dim-label");
 
             var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-            box.pack_start (name_label, true, true, 0);
-            box.pack_start (value_label, false, true, 0);
-            box.pack_start (volume_image, false, true, 0);
+            box.append (name_label);
+            box.append (value_label);
+            box.append (volume_image);
 
             var row = new Gtk.ListBoxRow ();
             row.name = name;
