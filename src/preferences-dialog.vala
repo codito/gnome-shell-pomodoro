@@ -897,7 +897,8 @@ namespace Pomodoro
 
             this.on_page_notify (page);
 
-            this.get_size (out window_width, out window_height);
+            window_width = this.get_size (Gtk.Orientation.HORIZONTAL);
+            window_height = this.get_size (Gtk.Orientation.VERTICAL);
 
             /* calculate window size */
             this.header_bar.get_preferred_height (null,
