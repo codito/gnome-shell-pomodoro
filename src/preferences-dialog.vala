@@ -463,7 +463,7 @@ namespace Pomodoro
             var row = new Gtk.ListBoxRow ();
             row.set_data<string> ("name", plugin_info.get_name ());
             row.activatable = false;
-            row.add (hbox);
+            row.set_child (hbox);
 
             return row;
         }
@@ -702,13 +702,13 @@ namespace Pomodoro
 
         private void setup_listbox (Gtk.ListBox listbox)
         {
-            // TODO: refactor this, UI should be statically defined
-            listbox_foreach (listbox, (listbox_, row) => {
-                this.on_listbox_add (listbox as Gtk.Widget, row as Gtk.Widget);
-            });
+            // // TODO: refactor this, UI should be statically defined
+            // listbox_foreach (listbox, (listbox_, row) => {
+            //     this.on_listbox_add (listbox as Gtk.Widget, row as Gtk.Widget);
+            // });
 
-            listbox.add.connect_after (this.on_listbox_add);
-            listbox.remove.connect_after (this.on_listbox_remove);
+            // listbox.add.connect_after (this.on_listbox_add);
+            // listbox.remove.connect_after (this.on_listbox_remove);
         }
 
         private void on_listboxrow_visible_notify (GLib.Object    object,
@@ -736,38 +736,38 @@ namespace Pomodoro
             }
         }
 
-        /* Note that the "add" signal is not emmited when calling insert() */
-        private void on_listbox_add (Gtk.Widget widget,
-                                     Gtk.Widget child)
-        {
-            child.notify["visible"].connect (this.on_listboxrow_visible_notify);
+        // /* Note that the "add" signal is not emmited when calling insert() */
+        // private void on_listbox_add (Gtk.Widget widget,
+        //                              Gtk.Widget child)
+        // {
+        //     child.notify["visible"].connect (this.on_listboxrow_visible_notify);
+        //
+        //     if (widget.parent != null && !widget.parent.visible && child.visible) {
+        //         widget.parent.visible = true;
+        //     }
+        // }
 
-            if (widget.parent != null && !widget.parent.visible && child.visible) {
-                widget.parent.visible = true;
-            }
-        }
-
-        private void on_listbox_remove (Gtk.Widget widget,
-                                        Gtk.Widget child)
-        {
-            child.notify["visible"].disconnect (this.on_listboxrow_visible_notify);
-
-            if (widget.parent != null)
-            {
-                var listbox = widget as Gtk.ListBox;
-                var visible = false;
-
-                // TODO: this is horrible
-                // TODO: refactor this, UI should be statically defined
-                listbox_foreach (listbox, (listbox_, row) => {
-                    visible |= child.visible;
-                });
-
-                if (widget.parent.visible != visible) {
-                    widget.parent.visible = visible;
-                }
-            }
-        }
+        // private void on_listbox_remove (Gtk.Widget widget,
+        //                                 Gtk.Widget child)
+        // {
+        //     child.notify["visible"].disconnect (this.on_listboxrow_visible_notify);
+        //
+        //     if (widget.parent != null)
+        //     {
+        //         var listbox = widget as Gtk.ListBox;
+        //         var visible = false;
+        //
+        //         // TODO: this is horrible
+        //         // TODO: refactor this, UI should be statically defined
+        //         listbox_foreach (listbox, (listbox_, row) => {
+        //             visible |= child.visible;
+        //         });
+        //
+        //         if (widget.parent.visible != visible) {
+        //             widget.parent.visible = visible;
+        //         }
+        //     }
+        // }
 
         public override void dispose ()
         {
