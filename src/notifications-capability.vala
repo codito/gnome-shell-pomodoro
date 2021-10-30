@@ -109,7 +109,7 @@ namespace Pomodoro
         {
             if (this.screen_notification == null) {
                 this.screen_notification = new Pomodoro.ScreenNotification ();
-                this.screen_notification.destroy.connect (() => {
+                ((Gtk.Widget) this.screen_notification).destroy.connect (() => {
                     this.screen_notification = null;
 
                     if (!this.timer.is_paused && this.timer.state is Pomodoro.BreakState) {

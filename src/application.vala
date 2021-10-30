@@ -377,7 +377,7 @@ namespace Pomodoro
             if (this.window == null) {
                 this.window = new Pomodoro.Window ();
                 this.window.application = this;
-                this.window.destroy.connect (() => {
+                ((Gtk.Widget) this.window).destroy.connect (() => {
                     this.remove_window (this.window);
                     this.window = null;
                 });
@@ -400,7 +400,7 @@ namespace Pomodoro
         {
             if (this.preferences_dialog == null) {
                 this.preferences_dialog = new Pomodoro.PreferencesDialog ();
-                this.preferences_dialog.destroy.connect (() => {
+                ((Gtk.Widget) this.preferences_dialog).destroy.connect (() => {
                     this.remove_window (this.preferences_dialog);
                     this.preferences_dialog = null;
                 });
@@ -481,7 +481,7 @@ namespace Pomodoro
                 var window = this.get_last_focused_window ();
 
                 this.about_dialog = new Pomodoro.AboutDialog ();
-                this.about_dialog.destroy.connect (() => {
+                ((Gtk.Widget) this.about_dialog).destroy.connect (() => {
                     this.remove_window (this.about_dialog);
                     this.about_dialog = null;
                 });
