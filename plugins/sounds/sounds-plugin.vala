@@ -47,7 +47,6 @@ namespace SoundsPlugin
 
             if (header == null) {
                 header = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-                header.show ();
                 row.set_header (header);
             }
         }
@@ -691,7 +690,6 @@ namespace SoundsPlugin
             row.name = name;
             row.selectable = false;
             row.add (box);
-            row.show_all ();
 
             this.settings.bind_with_mapping (settings_key,
                                              value_label,

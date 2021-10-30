@@ -737,7 +737,6 @@ namespace GnomePlugin
             row.activatable = false;
             row.selectable = false;
             row.add (box);
-            row.show_all ();
 
             return row;
         }

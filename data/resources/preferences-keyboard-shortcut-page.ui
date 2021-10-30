@@ -60,7 +60,6 @@
         <child>
           <object class="GtkLabel" id="error_label">
             <property name="can_focus">False</property>
-            <property name="no_show_all">True</property>
             <property name="label">Using \"%s\" as shortcut will interfere with typing. Try adding another key, such as Control, Alt or Shift.</property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>

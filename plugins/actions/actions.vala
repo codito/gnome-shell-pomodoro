@@ -468,7 +468,6 @@ namespace Actions
             row.name = name;
             row.selectable = false;
             row.add (name_label);
-            row.show_all ();
 
             return row;
         }

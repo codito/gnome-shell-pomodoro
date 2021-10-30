@@ -75,8 +75,6 @@ namespace Actions
                 this.keywords_flowbox.add (
                         new Gtk.Label (state.get_label ()));
             }
-
-            this.keywords_flowbox.show_all ();
         }
      }
 }

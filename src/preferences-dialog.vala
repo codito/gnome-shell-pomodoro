@@ -81,7 +81,6 @@ namespace Pomodoro
 
             if (header == null) {
                 header = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-                header.show ();
                 row.set_header (header);
             }
         }
@@ -192,8 +191,6 @@ namespace Pomodoro
             }
 
             this.disable_button.sensitive = index > 0;
-
-            this.preview_box.show_all ();
         }
 
         [GtkCallback]
@@ -457,7 +454,6 @@ namespace Pomodoro
             row.set_data<string> ("name", plugin_info.get_name ());
             row.activatable = false;
             row.add (hbox);
-            row.show_all ();
 
             return row;
         }
@@ -548,7 +544,6 @@ namespace Pomodoro
                                                  0.0);
 
             var scale = new Widgets.LogScale (adjustment, 2.0);
-            scale.show ();
 
             var grid = builder.get_object (grid_name) as Gtk.Grid;
             grid.attach (scale, 0, 1, 2, 1);

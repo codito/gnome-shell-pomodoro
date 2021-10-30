@@ -35,7 +35,6 @@
           <object class="GtkButton" id="back_button">
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="no_show_all">True</property>
             <property name="action_name">win.back</property>
             <child>
               <object class="GtkImage" id="back_icon">
