@@ -863,19 +863,15 @@ namespace Pomodoro
             base.parser_finished (builder);
         }
 
-        private void on_page_notify (Pomodoro.PreferencesPage page)
+        private void on_page_notify (Gtk.StackPage stack_page)
         {
-            string name;
-            string title;
+            var preferences_page = stack_page.child as Pomodoro.PreferencesPage;
 
-            this.stack.child_get (page,
-                                  "name", out name,
-                                  "title", out title);
-            this.history_push (name);
+            this.history_push (stack_page.name);
 
             var title_label = this.header_bar.title_widget as Gtk.Label;
             if (title_label != null) {
-                title_label.label = title;
+                title_label.label = stack_page.title;
             }
 
             this.back_button.visible = this.history.length () > 1;
@@ -884,7 +880,7 @@ namespace Pomodoro
                 this.back_button.unparent ();
             }
 
-            page.configure_header_bar (this.header_bar);
+            preferences_page.configure_header_bar (this.header_bar);
         }
 
         private void on_visible_child_notify ()
@@ -893,9 +889,9 @@ namespace Pomodoro
             var window_height = 0;
             var header_bar_height = 0;
             var page_height = 0;
-            var page = this.stack.visible_child as Pomodoro.PreferencesPage;
+            var stack_page = this.stack.get_page (this.stack.visible_child);
 
-            this.on_page_notify (page);
+            this.on_page_notify (stack_page);
 
             window_width = this.get_size (Gtk.Orientation.HORIZONTAL);
             window_height = this.get_size (Gtk.Orientation.VERTICAL);
@@ -904,12 +900,12 @@ namespace Pomodoro
             this.header_bar.get_preferred_height (null,
                                                   out header_bar_height);
 
-            page.get_preferred_height_for_width (window_width,
-                                                 null,
-                                                 out page_height);
+            stack_page.child.get_preferred_height_for_width (window_width,
+                                                             null,
+                                                             out page_height);
 
-            if (page is Gtk.ScrolledWindow) {
-                var scrolled_window = page as Gtk.ScrolledWindow;
+            if (stack_page.child is Gtk.ScrolledWindow) {
+                var scrolled_window = stack_page.child as Gtk.ScrolledWindow;
                 scrolled_window.set_min_content_height (int.min (page_height, DEFAULT_HEIGHT));
 
                 // TODO: the dialog needs to be redesigned, so that changing its height is no longer needed
