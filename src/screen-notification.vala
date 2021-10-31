@@ -95,12 +95,10 @@ namespace Pomodoro
             this.last_motion_x = -1.0;
             this.last_motion_y = -1.0;
 
-            if (value) {
-                this.input_shape_combine_region (new Cairo.Region ());
-            }
-            else {
-                this.input_shape_combine_region (null);
-            }
+            // TODO: Not sure it this works.
+            //       The old way would involve Gdk.Surface.set_input_region(),
+            //       but I don't see any methods for accessing the surface.
+            this.can_target = !value;
 
             if (this.get_realized ()) {
                 this.set_cursor (value ? null : new Gdk.Cursor.from_name ("none", null));
