@@ -337,16 +337,6 @@ namespace Pomodoro
         private unowned Gtk.TextView error_installing_textview;
         [GtkChild]
         private unowned Gtk.TextView error_enabling_textview;
-        [GtkChild]
-        private unowned Gtk.Button cancel_button;
-        [GtkChild]
-        private unowned Gtk.Button manage_extensions_button;
-        [GtkChild]
-        private unowned Gtk.Button report_button;
-        [GtkChild]
-        private unowned Gtk.Button close_button;
-        [GtkChild]
-        private unowned Gtk.Button done_button;
 
         construct
         {
@@ -355,11 +345,13 @@ namespace Pomodoro
 
         private void foreach_button (ForeachChildFunc func)
         {
-            func ((Gtk.Widget) this.cancel_button);
-            func ((Gtk.Widget) this.manage_extensions_button);
-            func ((Gtk.Widget) this.report_button);
-            func ((Gtk.Widget) this.close_button);
-            func ((Gtk.Widget) this.done_button);
+            var child = this.action_area.get_first_child ();
+
+            while (child != null)
+            {
+                func (child);
+                child = child.get_next_sibling ();
+            }
         }
 
         public void show_in_progress_page ()

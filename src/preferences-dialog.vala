@@ -131,7 +131,6 @@ namespace Pomodoro
         private ulong key_press_event_id = 0;
         private ulong key_release_event_id = 0;
         private ulong focus_out_event_id = 0;
-        private GLib.List<unowned Gtk.Label> preview_labels;
 
         construct
         {
@@ -182,26 +181,23 @@ namespace Pomodoro
         {
             var index = 0;
 
-            while (!this.preview_labels.is_empty ()) {
-                var link = this.preview_labels.first ();
-                this.preview_labels.remove_link (link);
-                link.data.destroy ();
+            var child = this.preview_box.get_first_child ();
+            while (child != null) {
+                var next_child = child.get_next_sibling ();
+                child.destroy ();
+                child = next_child;
             }
 
             foreach (var element in this.accelerator.get_keys ())
             {
                 if (index > 0) {
-                    var separator_label = new Gtk.Label ("+");
-                    this.preview_box.prepend (separator_label);
-                    this.preview_labels.append (separator_label);
+                    this.preview_box.append (new Gtk.Label ("+"));
                 }
 
                 var key_label = new Gtk.Label (element);
                 key_label.valign = Gtk.Align.CENTER;
                 key_label.get_style_context ().add_class ("key");
-
-                this.preview_box.prepend (key_label);
-                this.preview_labels.append (key_label);
+                this.preview_box.append (key_label);
 
                 index++;
             }
