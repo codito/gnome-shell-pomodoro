@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
-<interface>
-  <requires lib="gtk+" version="3.16"/>
-  <!-- interface-css-provider-path style.css -->
+<interface domain="gnome-pomodoro">
   <template class="PomodoroScreenNotification" parent="GtkWindow">
     <property name="can_focus">False</property>
-    <property name="events">GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_STRUCTURE_MASK | GDK_TOUCH_MASK</property>
-    <property name="default_width">400</property>
-    <property name="default_height">400</property>
+<!--    <property name="events">GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_STRUCTURE_MASK | GDK_TOUCH_MASK</property>-->
     <property name="icon_name">gnome-pomodoro</property>
-    <property name="skip_taskbar_hint">True</property>
+<!--    <property name="skip_taskbar_hint">True</property>-->
+    <style>
+      <class name="pomodoro-screen-notification"/>
+    </style>
     <child>
       <object class="GtkBox" id="timer_container">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+<!--        <property name="can_focus">False</property>-->
         <property name="halign">center</property>
         <property name="valign">center</property>
         <property name="margin_bottom">24</property>
@@ -21,12 +18,10 @@
         <property name="spacing">6</property>
         <child>
           <object class="GtkBox" id="timer_box">
-            <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">center</property>
             <child>
               <object class="GtkLabel" id="minutes_label">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label">00</property>
                 <property name="justify">center</property>
@@ -43,7 +38,6 @@
             </child>
             <child>
               <object class="GtkLabel" id="separator_label">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_bottom">12</property>
                 <property name="label">:</property>
@@ -60,7 +54,6 @@
             </child>
             <child>
               <object class="GtkLabel" id="seconds_label">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label">00</property>
                 <property name="justify">center</property>
@@ -84,7 +77,6 @@
         </child>
         <child>
           <object class="GtkLabel" id="label1">
-            <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">It's time to take a break</property>
           </object>
@@ -96,6 +88,7 @@
         </child>
       </object>
     </child>
+<!--
     <child type="titlebar">
       <object class="GtkHeaderBar" id="headerbar1">
         <property name="can_focus">False</property>
@@ -104,8 +97,32 @@
         </child>
       </object>
     </child>
-    <style>
-      <class name="pomodoro-screen-notification"/>
-    </style>
+-->
+
+
+    <child>
+      <object class="GtkEventControllerKey">
+        <signal name="key-pressed" handler="on_key_pressed" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkEventControllerMotion">
+        <signal name="motion" handler="on_motion" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkEventControllerFocus">
+        <signal name="leave" handler="on_focus_leave" swapped="no"/>
+      </object>
+    </child>
+
+    <!--
+    <child>
+      <object class="GtkGestureClick">
+        <property name="touch-only">1</property>
+        <signal name="pressed" handler="on_pressed" swapped="yes"/>
+      </object>
+    </child>
+    -->
   </template>
 </interface>

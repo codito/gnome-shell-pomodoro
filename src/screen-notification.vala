@@ -74,6 +74,8 @@ namespace Pomodoro
 
         construct
         {
+            this.css_name = "screen-notification";
+
             this.timer = Pomodoro.Timer.get_default ();
             this.timer.state_changed.connect (this.on_timer_state_changed);
 
@@ -95,16 +97,21 @@ namespace Pomodoro
             this.last_motion_x = -1.0;
             this.last_motion_y = -1.0;
 
-            // TODO: Not sure it this works.
-            //       The old way would involve Gdk.Surface.set_input_region(),
-            //       but I don't see any methods for accessing the surface.
+            // TODO: Not sure it this works. Other proposals:
+            //       1. The old way would involve Gdk.Surface.set_input_region(),
+            //          `.get_native().get_surface ()`
+            //       2. Use CSS to disable events
             this.can_target = !value;
+
+            // var surface = this.get_native().get_surface ();
+            // surface.set_input_region (value ? new Cairo.Region () : null);
 
             if (this.get_realized ()) {
                 this.set_cursor (value ? null : new Gdk.Cursor.from_name ("none", null));
             }
         }
 
+        /*
         public override void realize ()
         {
             base.realize ();
@@ -123,6 +130,7 @@ namespace Pomodoro
             var style_context = this.get_style_context ();
             style_context.add_class ("hidden");
         }
+        */
 
         private void on_timer_state_changed ()
         {
@@ -149,6 +157,7 @@ namespace Pomodoro
             this.seconds_label.label = "%02u".printf (seconds);
         }
 
+        /*
         public override void show ()
         {
             this.fade_in ();
@@ -158,6 +167,7 @@ namespace Pomodoro
         {
             this.fade_out ();
         }
+        */
 
         private bool on_fade_in_timeout ()
         {
@@ -213,13 +223,14 @@ namespace Pomodoro
             }
         }
 
-        private uint32 get_idle_time ()
+        private uint32 get_idle_time (uint32 timestamp)
         {
             return this.last_event_time != 0
-                    ? Gtk.get_current_event_time () - this.last_event_time
+                    ? timestamp - this.last_event_time
                     : 0;
         }
 
+        /*
         public override bool event (Gdk.Event event)
         {
             if (!this.close_on_activity) {
@@ -227,7 +238,7 @@ namespace Pomodoro
             }
 
             var event_time = event.get_time ();
-            var idle_time  = this.get_idle_time ();
+            var idle_time  = this.get_idle_time (event_time);
 
             switch (event.type)
             {
@@ -273,6 +284,28 @@ namespace Pomodoro
             }
 
             return true;
+        }
+        */
+
+        [GtkCallback]
+        private void on_key_pressed (Gtk.EventControllerKey event_controller,
+                                     uint                   keyval,
+                                     uint                   keycode,
+                                     Gdk.ModifierType       state)
+        {
+
+        }
+
+        [GtkCallback]
+        private void on_motion (Gtk.EventControllerMotion event_controller,
+                                double                    x,
+                                double                    y)
+        {
+        }
+
+        [GtkCallback]
+        private void on_focus_leave (Gtk.EventControllerFocus event_controller)
+        {
         }
 
         private bool on_close_on_activity_timeout ()
