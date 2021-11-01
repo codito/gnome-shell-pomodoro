@@ -480,7 +480,7 @@ namespace Pomodoro
             {
                 var window = this.get_last_focused_window ();
 
-                this.about_dialog = new Pomodoro.AboutDialog ();
+                this.about_dialog = Pomodoro.create_about_dialog ();
                 ((Gtk.Widget) this.about_dialog).destroy.connect (() => {
                     this.remove_window (this.about_dialog);
                     this.about_dialog = null;
