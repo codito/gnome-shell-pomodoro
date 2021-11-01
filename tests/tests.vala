@@ -247,9 +247,7 @@ namespace Pomodoro
 
 public static int main (string[] args)
 {
-    var exit_status = 0;
-
-    Gtk.init (ref args);
+    Gtk.init ();
     Test.init (ref args);
 
     var tests = new Pomodoro.TestRunner ();
@@ -259,14 +257,18 @@ public static int main (string[] args)
     tests.add (new Pomodoro.CapabilityGroupTest ());
     tests.add (new Pomodoro.CapabilityManagerTest ());
 
+    var mainloop = new MainLoop ();
+    var exit_status = 0;
+
     GLib.Idle.add (() => {
         exit_status = tests.run ();
-        Gtk.main_quit ();
+
+        mainloop.quit ();
 
         return false;
     });
 
-    Gtk.main ();
+    mainloop.run ();
 
     return exit_status;
 }

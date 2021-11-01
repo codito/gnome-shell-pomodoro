@@ -56,8 +56,5 @@ public int main (string[] args)
     Posix.signal (Posix.Signal.INT, on_posix_signal);
     Posix.signal (Posix.Signal.TERM, on_posix_signal);
 
-    exit_status = application.run (args);
-    application = null;
-
-    return exit_status;
+    return application.run (args);
 }
