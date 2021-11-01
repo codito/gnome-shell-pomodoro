@@ -1,50 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
 <interface domain="gnome-pomodoro">
-  <template class="PomodoroInstallExtensionDialog" parent="GtkMessageDialog">
-<!--    <property name="can-focus">False</property>-->
-<!--    <property name="can-default">True</property>-->
-<!--    <property name="has-default">True</property>-->
-<!--    <property name="receives-default">True</property>-->
-    <property name="modal">True</property>
-    <property name="destroy-with-parent">True</property>
-<!--    <property name="type-hint">dialog</property>-->
-    <action-widgets>
-      <action-widget response="0">cancel_button</action-widget>
-      <action-widget response="2">manage_extensions_button</action-widget>
-      <action-widget response="3">report_button</action-widget>
-      <action-widget response="1">close_button</action-widget>
-      <action-widget response="1">done_button</action-widget>
-    </action-widgets>
+  <requires lib="gtk+" version="3.16"/>
+  <template class="PomodoroInstallExtensionDialog" parent="GtkDialog">
+    <property name="can-focus">False</property>
+    <property name="type-hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox">
-<!--        <property name="can-focus">False</property>-->
-<!--        <property name="orientation">vertical</property>-->
-<!--        <property name="spacing">2</property>-->
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkBox" id="action_area">
-<!--            <property name="can-focus">False</property>-->
-<!--            <property name="homogeneous">True</property>-->
-<!--            <property name="layout-style">expand</property>-->
+          <object class="GtkButtonBox">
+            <property name="can-focus">False</property>
+            <property name="layout-style">end</property>
             <child>
-              <object class="GtkButton" id="cancel_button">
-                <property name="label" translatable="yes">_Cancel</property>
-                <property name="name">cancel</property>
+              <object class="GtkButton" id="done_button">
+                <property name="label" translatable="yes">_Done</property>
+                <property name="name">done</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
                 <property name="use-underline">True</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="manage_extensions_button">
-                <property name="label" translatable="yes">_Manage extensions</property>
-                <property name="name">manage-extensions</property>
+              <object class="GtkButton" id="close_button">
+                <property name="label" translatable="yes">_Close</property>
+                <property name="name">close</property>
                 <property name="can-focus">True</property>
-                <property name="receives-default">False</property>
+                <property name="receives-default">True</property>
                 <property name="use-underline">True</property>
               </object>
               <packing>
@@ -68,11 +60,11 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="close_button">
-                <property name="label" translatable="yes">_Close</property>
-                <property name="name">close</property>
+              <object class="GtkButton" id="manage_extensions_button">
+                <property name="label" translatable="yes">_Manage extensions</property>
+                <property name="name">manage-extensions</property>
                 <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
+                <property name="receives-default">False</property>
                 <property name="use-underline">True</property>
               </object>
               <packing>
@@ -82,18 +74,15 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="done_button">
-                <property name="label" translatable="yes">_Done</property>
-                <property name="name">done</property>
+              <object class="GtkButton" id="cancel_button">
+                <property name="label" translatable="yes">_Cancel</property>
+                <property name="name">cancel</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
                 <property name="use-underline">True</property>
-                <style>
-                  <class name="suggested-action"/>
-                </style>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">4</property>
               </packing>
@@ -113,6 +102,8 @@
             <child>
               <object class="GtkBox">
                 <property name="can-focus">False</property>
+                <property name="margin-left">24</property>
+                <property name="margin-right">24</property>
                 <property name="margin-start">24</property>
                 <property name="margin-end">24</property>
                 <property name="margin-top">24</property>
@@ -150,6 +141,8 @@
             <child>
               <object class="GtkBox">
                 <property name="can-focus">False</property>
+                <property name="margin-left">24</property>
+                <property name="margin-right">24</property>
                 <property name="margin-start">24</property>
                 <property name="margin-end">24</property>
                 <property name="margin-top">24</property>
@@ -195,6 +188,8 @@
             <child>
               <object class="GtkBox">
                 <property name="can-focus">False</property>
+                <property name="margin-left">24</property>
+                <property name="margin-right">24</property>
                 <property name="margin-start">24</property>
                 <property name="margin-end">24</property>
                 <property name="margin-top">24</property>
@@ -234,6 +229,8 @@
                 <child>
                   <object class="GtkExpander">
                     <property name="can-focus">True</property>
+                    <property name="margin-left">24</property>
+                    <property name="margin-right">24</property>
                     <property name="margin-start">24</property>
                     <property name="margin-end">24</property>
                     <property name="resize-toplevel">True</property>
@@ -266,6 +263,8 @@
             <child>
               <object class="GtkBox">
                 <property name="can-focus">False</property>
+                <property name="margin-left">24</property>
+                <property name="margin-right">24</property>
                 <property name="margin-start">24</property>
                 <property name="margin-end">24</property>
                 <property name="margin-top">24</property>
@@ -305,6 +304,8 @@
                 <child>
                   <object class="GtkExpander">
                     <property name="can-focus">True</property>
+                    <property name="margin-left">24</property>
+                    <property name="margin-right">24</property>
                     <property name="margin-start">24</property>
                     <property name="margin-end">24</property>
                     <property name="resize-toplevel">True</property>
@@ -338,10 +339,17 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>
     </child>
+    <action-widgets>
+      <action-widget response="1">done_button</action-widget>
+      <action-widget response="1">close_button</action-widget>
+      <action-widget response="3">report_button</action-widget>
+      <action-widget response="2">manage_extensions_button</action-widget>
+      <action-widget response="0">cancel_button</action-widget>
+    </action-widgets>
   </template>
 </interface>

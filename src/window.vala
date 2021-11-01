@@ -325,7 +325,7 @@ namespace Pomodoro
     }
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/install-extension-dialog.ui")]
-    public class InstallExtensionDialog : Gtk.MessageDialog, Gtk.Buildable
+    public class InstallExtensionDialog : Gtk.Dialog
     {
         private delegate void ForeachChildFunc (Gtk.Widget child);
 
@@ -334,11 +334,19 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Stack stack;
         [GtkChild]
-        private unowned Gtk.Box action_area;
-        [GtkChild]
         private unowned Gtk.TextView error_installing_textview;
         [GtkChild]
         private unowned Gtk.TextView error_enabling_textview;
+        [GtkChild]
+        private unowned Gtk.Button cancel_button;
+        [GtkChild]
+        private unowned Gtk.Button manage_extensions_button;
+        [GtkChild]
+        private unowned Gtk.Button report_button;
+        [GtkChild]
+        private unowned Gtk.Button close_button;
+        [GtkChild]
+        private unowned Gtk.Button done_button;
 
         construct
         {
@@ -347,13 +355,11 @@ namespace Pomodoro
 
         private void foreach_button (ForeachChildFunc func)
         {
-            var child = this.action_area.get_first_child ();
-
-            while (child != null)
-            {
-                func (child);
-                child = child.get_next_sibling ();
-            }
+            func (this.cancel_button);
+            func (this.manage_extensions_button);
+            func (this.report_button);
+            func (this.close_button);
+            func (this.done_button);
         }
 
         public void show_in_progress_page ()
