@@ -33,6 +33,9 @@
 using GLib;
 
 
+// TODO: Use Gtk.Shortcut / Gtk.ShortcutController API?
+
+
 namespace Pomodoro
 {
     private errordomain AcceleratorError

@@ -330,6 +330,7 @@ namespace Pomodoro
             }
         }
 
+        /*
         [GtkCallback]
         private bool on_timeline_chart_draw (Gtk.Widget    widget,
                                              Cairo.Context context)
@@ -373,7 +374,7 @@ namespace Pomodoro
                      theme_fg_color.blue,
                      theme_fg_color.alpha);
 
-            /* collect data and draw labels */
+            // collect data and draw labels
             for (var index=0; index < days_count; index++)
             {
                 var date = this.date.add_days (index);
@@ -404,7 +405,7 @@ namespace Pomodoro
                 context.show_text (label_text);
             }
 
-            /* grid */
+            // grid
             draw_guide_lines (context,
                               reference_value,
                               chart_x - CHART_PADDING,
@@ -416,7 +417,7 @@ namespace Pomodoro
             context.rectangle (0.0, chart_y, width, chart_height);
             context.clip ();
 
-            /* totals chart */
+            // totals chart
             context.set_source_rgba
                     (theme_selected_bg_color.red   * 0.8 + theme_bg_color.red   * 0.2,
                      theme_selected_bg_color.green * 0.8 + theme_bg_color.green * 0.2,
@@ -430,7 +431,7 @@ namespace Pomodoro
                              chart_height);
             context.fill ();
 
-            /* pomodoro chart */
+            // pomodoro chart
             context.set_source_rgba
                     (theme_selected_bg_color.red,
                      theme_selected_bg_color.green,
@@ -446,7 +447,9 @@ namespace Pomodoro
 
             return false;
         }
+        */
 
+        /*
         [GtkCallback]
         private bool on_totals_chart_draw (Gtk.Widget    widget,
                                            Cairo.Context context)
@@ -478,7 +481,7 @@ namespace Pomodoro
             style_context.lookup_color ("theme_selected_bg_color", out theme_selected_bg_color);
             style_context.lookup_color ("borders", out theme_border_color);
 
-            /* collect data */
+            // collect data
             var totals = Data ();
 
             this.days.for_each ((date_string, data) => {
@@ -486,7 +489,7 @@ namespace Pomodoro
                 totals.break_elapsed += data.break_elapsed;
             });
 
-            /* grid */
+            // grid
             draw_guide_lines (context,
                               reference_value,
                               chart_x - CHART_PADDING,
@@ -495,7 +498,7 @@ namespace Pomodoro
                               chart_height,
                               theme_fg_color);
 
-            /* pomodoro bar */
+            // pomodoro bar
             bar_x = Math.floor (chart_x + chart_width / 2.0 - bar_spacing / 2.0 - bar_width);
 
             context.set_source_rgba
@@ -511,7 +514,7 @@ namespace Pomodoro
                       bar_height);
             context.fill ();
 
-            /* pomodoro bar: label */
+            // pomodoro bar: label
             context.select_font_face ("Sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
             context.set_font_size (14.0);
             context.set_source_rgba
@@ -530,7 +533,7 @@ namespace Pomodoro
                         label_width,
                         label_height);
 
-            /* pomodoro bar: total value */
+            // pomodoro bar: total value
             label_y += label_height;
 
             context.select_font_face ("Sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.NORMAL);
@@ -541,7 +544,7 @@ namespace Pomodoro
                         label_width,
                         label_height);
 
-            /* break bar */
+            // break bar
             bar_x = Math.floor (chart_x + chart_width / 2.0 + bar_spacing / 2.0);
 
             context.set_source_rgba
@@ -557,7 +560,7 @@ namespace Pomodoro
                       bar_height);
             context.fill ();
 
-            /* break bar: label */
+            // break bar: label
             context.select_font_face ("Sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
             context.set_font_size (14.0);
             context.set_source_rgba
@@ -576,7 +579,7 @@ namespace Pomodoro
                         label_width,
                         label_height);
 
-            /* break bar: total value */
+            // break bar: total value
             label_y += label_height;
 
             context.select_font_face ("Sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.NORMAL);
@@ -589,6 +592,7 @@ namespace Pomodoro
 
             return false;
         }
+        */
 
         public void update ()
         {

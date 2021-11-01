@@ -128,9 +128,9 @@ namespace Pomodoro
         private unowned Gtk.Label error_label;
 
         private GLib.Settings settings;
-        private ulong key_press_event_id = 0;
-        private ulong key_release_event_id = 0;
-        private ulong focus_out_event_id = 0;
+        // private ulong key_press_event_id = 0;
+        // private ulong key_release_event_id = 0;
+        // private ulong focus_out_event_id = 0;
 
         construct
         {
@@ -290,19 +290,19 @@ namespace Pomodoro
         {
             base.map ();
 
-            var root = (Gtk.Widget) this.root;
+            // var root = (Gtk.Widget) this.root;
 
-            if (this.key_press_event_id == 0) {
-                this.key_press_event_id = root.key_press_event.connect (this.on_key_press_event);
-            }
+            // if (this.key_press_event_id == 0) {
+            //     this.key_press_event_id = root.key_press_event.connect (this.on_key_press_event);
+            // }
 
-            if (this.key_release_event_id == 0) {
-                this.key_release_event_id = root.key_release_event.connect (this.on_key_release_event);
-            }
+            // if (this.key_release_event_id == 0) {
+            //     this.key_release_event_id = root.key_release_event.connect (this.on_key_release_event);
+            // }
 
-            if (this.focus_out_event_id == 0) {
-                this.focus_out_event_id = root.focus_out_event.connect (this.on_focus_out_event);
-            }
+            // if (this.focus_out_event_id == 0) {
+            //     this.focus_out_event_id = root.focus_out_event.connect (this.on_focus_out_event);
+            // }
 
             var application = Pomodoro.Application.get_default ();
             application.capabilities.disable ("accelerator");
@@ -312,22 +312,22 @@ namespace Pomodoro
         {
             base.unmap ();
 
-            var root = (Gtk.Widget) this.root;
+            // var root = (Gtk.Widget) this.root;
 
-            if (this.key_press_event_id != 0) {
-                root.key_press_event.disconnect (this.on_key_press_event);
-                this.key_press_event_id = 0;
-            }
+            // if (this.key_press_event_id != 0) {
+            //     root.key_press_event.disconnect (this.on_key_press_event);
+            //     this.key_press_event_id = 0;
+            // }
 
-            if (this.key_release_event_id != 0) {
-                root.key_release_event.disconnect (this.on_key_release_event);
-                this.key_release_event_id = 0;
-            }
+            // if (this.key_release_event_id != 0) {
+            //     root.key_release_event.disconnect (this.on_key_release_event);
+            //     this.key_release_event_id = 0;
+            // }
 
-            if (this.focus_out_event_id != 0) {
-                root.focus_out_event.disconnect (this.on_focus_out_event);
-                this.focus_out_event_id != 0;
-            }
+            // if (this.focus_out_event_id != 0) {
+            //     root.focus_out_event.disconnect (this.on_focus_out_event);
+            //     this.focus_out_event_id != 0;
+            // }
 
             var application = Pomodoro.Application.get_default ();
             application.capabilities.enable ("accelerator");
