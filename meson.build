@@ -3,15 +3,16 @@ project(
   ['vala', 'c'],
   version: '0.24.1',
   meson_version: '>=0.58.0',
+  default_options: ['warning_level=2'],
 )
 
 i18n = import('i18n')
 gnome = import ('gnome')
 
-glib_dep = dependency('glib-2.0', version: '>=2.38.0')
-gobject_dep = dependency('gobject-2.0', version: '>=2.38.0')
-gio_dep = dependency('gio-2.0', version: '>=2.38.0')
-gtk_dep = dependency('gtk4', version: '>=4.0.0')
+glib_dep = dependency('glib-2.0', version: '>=2.50')
+gobject_dep = dependency('gobject-2.0', version: '>=2.50')
+gio_dep = dependency('gio-2.0', version: '>=2.50')
+gtk_dep = dependency('gtk4', version: '>=4.2')
 cairo_dep = dependency('cairo')
 introspection_dep = dependency('gobject-introspection-1.0', version: '>=0.10.1')
 peas_dep = dependency('libpeas-1.0', version: '>=1.5.0')
