@@ -1,55 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 -->
+<!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.16"/>
-  <template class="PomodoroPreferencesPluginsPage" parent="GtkScrolledWindow">
+  <template class="PomodoroPreferencesPluginsPage" parent="GtkBox">
     <property name="visible">True</property>
-    <property name="can_focus">True</property>
-    <property name="hscrollbar_policy">never</property>
+    <property name="can-focus">False</property>
+    <property name="margin-start">30</property>
+    <property name="margin-end">30</property>
+    <property name="margin-top">12</property>
+    <property name="margin-bottom">12</property>
+    <property name="border-width">12</property>
+    <property name="orientation">vertical</property>
+    <property name="spacing">3</property>
     <child>
-      <object class="GtkViewport" id="viewport">
+      <object class="GtkFrame" id="frame">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
+        <property name="label-xalign">0</property>
+        <property name="shadow-type">in</property>
         <child>
-          <object class="GtkBox" id="box">
+          <object class="GtkListBox" id="plugins_listbox">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_start">30</property>
-            <property name="margin_end">30</property>
-            <property name="margin_top">12</property>
-            <property name="margin_bottom">12</property>
-            <property name="border_width">12</property>
-            <property name="orientation">vertical</property>
-            <property name="spacing">3</property>
-            <child>
-              <object class="GtkFrame" id="frame">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">in</property>
-                <child>
-                  <object class="GtkListBox" id="plugins_listbox">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="selection_mode">none</property>
-                    <style>
-                      <class name="pomodoro-list"/>
-                    </style>
-                  </object>
-                </child>
-                <child type="label_item">
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
+            <property name="can-focus">False</property>
+            <property name="selection-mode">none</property>
+            <style>
+              <class name="pomodoro-list"/>
+            </style>
           </object>
         </child>
+        <child type="label_item">
+          <placeholder/>
+        </child>
       </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
     </child>
   </template>
 </interface>

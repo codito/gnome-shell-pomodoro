@@ -335,7 +335,7 @@ namespace Pomodoro
     }
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/preferences-plugins-page.ui")]
-    public class PreferencesPluginsPage : Gtk.ScrolledWindow, Gtk.Buildable, Pomodoro.PreferencesPage
+    public class PreferencesPluginsPage : Gtk.Box, Pomodoro.PreferencesPage
     {
         [GtkChild]
         private unowned Gtk.ListBox plugins_listbox;
@@ -504,10 +504,8 @@ namespace Pomodoro
     }
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/preferences-main-page.ui")]
-    public class PreferencesMainPage : Gtk.ScrolledWindow, Gtk.Buildable, Pomodoro.PreferencesPage
+    public class PreferencesMainPage : Gtk.Box, Pomodoro.PreferencesPage
     {
-        [GtkChild]
-        public unowned Gtk.Box box;
         [GtkChild]
         public unowned Gtk.ListBox timer_listbox;
         [GtkChild]
@@ -518,7 +516,6 @@ namespace Pomodoro
         public unowned Gtk.ListBox plugins_listbox;
         [GtkChild]
         public unowned Gtk.SizeGroup lisboxrow_sizegroup;
-
         [GtkChild]
         private unowned Gtk.ListBoxRow listboxrow_accelerator;
         [GtkChild]
@@ -729,7 +726,7 @@ namespace Pomodoro
                 // TODO: this is horrible
                 // TODO: refactor this, UI should be statically defined
                 listbox_foreach (listbox, (listbox_, row) => {
-                    visible |= child.visible;
+                    visible |= row.visible;
                 });
 
                 if (widget.parent.visible != visible) {
