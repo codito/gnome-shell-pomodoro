@@ -21,6 +21,28 @@
 
 namespace Pomodoro
 {
+    public enum WindowView
+    {
+        DEFAULT = 0,
+        TIMER = 1,
+        STATS = 2;
+
+        public static WindowView from_string (string? view_name)
+        {
+            switch (view_name)
+            {
+                case "timer":
+                    return WindowView.TIMER;
+
+                case "stats":
+                    return WindowView.STATS;
+
+                default:
+                    return WindowView.DEFAULT;
+            }
+        }
+    }
+
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
     public class Window : Gtk.ApplicationWindow
     {
@@ -48,24 +70,33 @@ namespace Pomodoro
         };
         */
 
-        public string mode {
+        public Pomodoro.WindowView view {
             get {
-                return this.stack.visible_child_name;
+                return this._view;
             }
             set {
-                this.stack.visible_child_name = value;
-            }
-        }
+                this._view = value;
 
-        public string default_mode {
-            get {
-                return this.default_page;
+                switch (value)
+                {
+                    case Pomodoro.WindowView.TIMER:
+                        this.stack.visible_child_name = "timer";
+                        break;
+
+                    case Pomodoro.WindowView.STATS:
+                        this.stack.visible_child_name = "stats";
+                        break;
+
+                    default:
+                        this.stack.visible_child_name = "timer";
+                        break;
+                }
             }
         }
 
         private unowned Pomodoro.Timer timer;
         // private Pomodoro.Animation blink_animation;
-        private string default_page;
+        private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
         // private GLib.Callback? install_extension_callback = null;
         // private GLib.Callback? install_extension_dismissed_callback = null;
 
@@ -97,9 +128,14 @@ namespace Pomodoro
             // this.stack.add_titled (new Pomodoro.StatsView (), "stats", _("Stats"));
 
             // TODO: this.default_page should be set from application.vala
-            var application = Pomodoro.Application.get_default ();
+            // var application = Pomodoro.Application.get_default ();
 
-            this.default_page = "timer";
+            // if (application.capabilities.has_capability ("indicator")) {
+            //     this.default_page = "stats";
+            // }
+            // else {
+            //     this.default_page = "timer";
+            // }
 
             /*
             this.stack.visible_child_name = this.default_page;

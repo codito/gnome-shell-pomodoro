@@ -1,11 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="4.2"/>
+
+  <!--
+  <object class="GtkPopoverMenu" id="state_popover">
+    <property name="can-focus">False</property>
+    <property name="relative-to">state_togglebutton</property>
+    <child>
+      <object class="GtkBox">
+        <property name="can-focus">False</property>
+        <property name="margin-start">10</property>
+        <property name="margin-end">10</property>
+        <property name="margin-top">10</property>
+        <property name="margin-bottom">10</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkModelButton">
+            <property name="can-focus">True</property>
+            <property name="receives-default">False</property>
+            <property name="action-name">app.timer-set-state</property>
+            <property name="action-target">'pomodoro'</property>
+            <property name="text" translatable="yes">Pomodoro</property>
+            <property name="centered">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="can-focus">True</property>
+            <property name="receives-default">False</property>
+            <property name="action-name">app.timer-set-state</property>
+            <property name="action-target">'short-break'</property>
+            <property name="text" translatable="yes">Short Break</property>
+            <property name="centered">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="can-focus">True</property>
+            <property name="receives-default">False</property>
+            <property name="action-name">app.timer-set-state</property>
+            <property name="action-target">'long-break'</property>
+            <property name="text" translatable="yes">Long Break</property>
+            <property name="centered">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  -->
+
+
   <template class="PomodoroWindow" parent="GtkApplicationWindow">
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
-    <property name="default-width">600</property>
-    <property name="default-height">400</property>
+    <property name="default-width">400</property>
+    <property name="default-height">600</property>
     <style>
+      <!-- <class name="pomodoro-window"/>-->
       <class name="unified"/>
     </style>
 
@@ -13,35 +62,61 @@
       <object class="GtkHeaderBar" id="header_bar">
         <child type="title">
           <object class="GtkStackSwitcher" id="stack_switcher">
-            <!-- <property name="can-focus">False</property> -->
             <property name="stack">stack</property>
           </object>
         </child>
         <child type="end">
           <object class="GtkMenuButton" id="menu_button">
-            <property name="direction">none</property>
-            <!--
-            <property name="can-focus">True</property>
-            <property name="popover">menu_popover</property>
-            <child>
-              <object class="GtkImage">
-                <property name="can-focus">False</property>
-                <property name="icon-name">open-menu-symbolic</property>
+<!--            <property name="halign">center</property>-->
+            <property name="valign">center</property>
+            <property name="focus-on-click">0</property>
+            <property name="icon-name">open-menu-symbolic</property>
+            <property name="popover">
+              <object class="GtkPopover">
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="margin-top">10</property>
+                    <property name="margin-bottom">10</property>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="action-name">app.preferences</property>
+                        <property name="label" translatable="yes">_Preferences</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="action-name">app.about</property>
+                        <property name="label" translatable="yes">_About</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparator">
+                        <property name="can-focus">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="action-name">app.quit</property>
+                        <property name="label" translatable="yes">_Quit</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
-            </child>
-            <style>
-              <class name="image-button"/>
-            </style>
-            -->
-          </object>
+            </property>
+          </object><!-- menu_button -->
         </child>
-      </object>
+      </object><!-- header_bar -->
     </child>
 
     <child>
       <object class="GtkStack" id="stack">
         <property name="transition-type">crossfade</property>
         <property name="transition-duration">100</property>
+
         <child>
           <object class="GtkStackPage">
             <property name="name">timer</property>
@@ -81,7 +156,7 @@
                             </style>
                           </object>
                         </child>
-                      </object>
+                      </object><!-- start_button -->
                     </property>
                   </object>
                 </child>
@@ -89,6 +164,20 @@
             </property>
           </object>
         </child>
+
+        <child>
+          <object class="GtkStackPage">
+            <property name="name">stats</property>
+            <property name="title" translatable="yes">Stats</property>
+            <property name="child">
+              <!-- TODO -->
+              <object class="GtkLabel">
+                <property name="label">Stats</property>
+              </object>
+            </property>
+          </object>
+        </child>
+
       </object><!-- stack -->
     </child>
 
@@ -329,95 +418,4 @@
         -->
 
   </template>
-
-
-  <object class="GtkPopoverMenu" id="menu_popover">
-<!--    <property name="relative-to">menu_button</property>-->
-    <child>
-      <object class="GtkBox">
-        <property name="orientation">vertical</property>
-        <property name="margin-start">10</property>
-        <property name="margin-end">10</property>
-        <property name="margin-top">10</property>
-        <property name="margin-bottom">10</property>
-        <!--
-        <child>
-          <object class="GtkModelButton">
-            <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
-            <property name="action-name">app.preferences</property>
-            <property name="text" translatable="yes">_Preferences</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
-            <property name="action-name">app.about</property>
-            <property name="text" translatable="yes">_About</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkSeparator">
-            <property name="can-focus">False</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
-            <property name="action-name">app.quit</property>
-            <property name="text" translatable="yes">_Quit</property>
-          </object>
-        </child>
-        -->
-      </object>
-    </child>
-  </object>
-  <!--
-  <object class="GtkPopoverMenu" id="state_popover">
-    <property name="can-focus">False</property>
-    <property name="relative-to">state_togglebutton</property>
-    <child>
-      <object class="GtkBox">
-        <property name="can-focus">False</property>
-        <property name="margin-start">10</property>
-        <property name="margin-end">10</property>
-        <property name="margin-top">10</property>
-        <property name="margin-bottom">10</property>
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkModelButton">
-            <property name="can-focus">True</property>
-            <property name="receives-default">False</property>
-            <property name="action-name">app.timer-set-state</property>
-            <property name="action-target">'pomodoro'</property>
-            <property name="text" translatable="yes">Pomodoro</property>
-            <property name="centered">True</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="can-focus">True</property>
-            <property name="receives-default">False</property>
-            <property name="action-name">app.timer-set-state</property>
-            <property name="action-target">'short-break'</property>
-            <property name="text" translatable="yes">Short Break</property>
-            <property name="centered">True</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="can-focus">True</property>
-            <property name="receives-default">False</property>
-            <property name="action-name">app.timer-set-state</property>
-            <property name="action-target">'long-break'</property>
-            <property name="text" translatable="yes">Long Break</property>
-            <property name="centered">True</property>
-          </object>
-        </child>
-      </object>
-    </child>
-  </object>
-  -->
 </interface>

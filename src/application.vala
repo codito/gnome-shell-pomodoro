@@ -51,10 +51,10 @@ namespace Pomodoro
             return (GLib.Object) this.repository;
         }
 
-        private Pomodoro.PreferencesDialog preferences_dialog;
-        private Pomodoro.Window window;
+        private unowned Pomodoro.PreferencesDialog preferences_dialog;
+        private unowned Pomodoro.Window window;
+        private unowned Gtk.AboutDialog about_dialog;
         private Pomodoro.DesktopExtension desktop_extension;
-        private Gtk.Window about_dialog;
         private Peas.ExtensionSet extensions;
         private GLib.Settings settings;
 
@@ -371,22 +371,20 @@ namespace Pomodoro
             }
         }
 
-        public void show_window (string mode,
+        public void show_window (string view_name,
                                  uint32 timestamp = 0)
         {
             if (this.window == null) {
-                this.window = new Pomodoro.Window ();
-                this.window.application = this;
-                ((Gtk.Widget) this.window).destroy.connect (() => {
-                    this.remove_window (this.window);
+                var window = new Pomodoro.Window ();
+                (window as Gtk.Widget).destroy.connect (() => {
                     this.window = null;
                 });
 
-                this.add_window (this.window);
+                this.add_window (window);
+                this.window = window;
             }
 
-            this.window.mode = mode != null && mode != "default"
-                ? mode : this.window.default_mode;
+            this.window.view = Pomodoro.WindowView.from_string (view_name);
 
             if (timestamp > 0) {
                 this.window.present_with_time (timestamp);
@@ -399,21 +397,20 @@ namespace Pomodoro
         public void show_preferences (uint32 timestamp = 0)
         {
             if (this.preferences_dialog == null) {
-                this.preferences_dialog = new Pomodoro.PreferencesDialog ();
-                ((Gtk.Widget) this.preferences_dialog).destroy.connect (() => {
-                    this.remove_window (this.preferences_dialog);
+                var preferences_dialog = new Pomodoro.PreferencesDialog ();
+                (preferences_dialog as Gtk.Widget).destroy.connect (() => {
                     this.preferences_dialog = null;
                 });
-                this.add_window (this.preferences_dialog);
+
+                this.add_window (preferences_dialog);
+                this.preferences_dialog = preferences_dialog;
             }
 
-            if (this.preferences_dialog != null) {
-                if (timestamp > 0) {
-                    this.preferences_dialog.present_with_time (timestamp);
-                }
-                else {
-                    this.preferences_dialog.present ();
-                }
+            if (timestamp > 0) {
+                this.preferences_dialog.present_with_time (timestamp);
+            }
+            else {
+                this.preferences_dialog.present ();
             }
         }
 
@@ -478,19 +475,17 @@ namespace Pomodoro
         {
             if (this.about_dialog == null)
             {
-                var window = this.get_last_focused_window ();
-
-                this.about_dialog = Pomodoro.create_about_dialog ();
-                ((Gtk.Widget) this.about_dialog).destroy.connect (() => {
-                    this.remove_window (this.about_dialog);
+                var about_dialog = Pomodoro.create_about_dialog ();
+                (about_dialog as Gtk.Widget).destroy.connect (() => {
                     this.about_dialog = null;
                 });
 
-                if (window != null) {
-                    this.about_dialog.set_transient_for (window);
+                if (this.window != null) {
+                    about_dialog.set_transient_for (this.window);
                 }
 
-                this.add_window (this.about_dialog);
+                this.add_window (about_dialog);
+                this.about_dialog = about_dialog;
             }
 
             this.about_dialog.present ();

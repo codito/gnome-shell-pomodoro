@@ -25,24 +25,24 @@ namespace Pomodoro
 {
     public Gtk.AboutDialog create_about_dialog ()
     {
-        var dialog = new Gtk.AboutDialog ();
-        dialog.title = _("About Pomodoro");
-        dialog.program_name = _("Pomodoro");
-        dialog.comments = _("A simple time management utility");
-        dialog.logo_icon_name = "org.gnomepomodoro.Pomodoro";
-        dialog.version = Config.PACKAGE_VERSION;
-        dialog.website = Config.PACKAGE_URL;
-        dialog.authors = {
+        var about_dialog = new Gtk.AboutDialog ();
+        about_dialog.title = _("About Pomodoro");
+        about_dialog.program_name = _("Pomodoro");
+        about_dialog.comments = _("A simple time management utility");
+        about_dialog.logo_icon_name = "org.gnomepomodoro.Pomodoro";
+        about_dialog.version = Config.PACKAGE_VERSION;
+        about_dialog.website = Config.PACKAGE_URL;
+        about_dialog.authors = {
             "Arun Mahapatra <pratikarun@gmail.com>",
             "Kamil Prusko <kamilprusko@gmail.com>"
         };
-        dialog.translator_credits = _("translator-credits");
-        dialog.copyright = "\xc2\xa9 2011-2021 Arun Mahapatra, Kamil Prusko";
-        dialog.license_type = Gtk.License.GPL_3_0;
+        about_dialog.translator_credits = _("translator-credits");
+        about_dialog.copyright = "\xc2\xa9 2011-2021 Arun Mahapatra, Kamil Prusko";
+        about_dialog.license_type = Gtk.License.GPL_3_0;
 
-        dialog.destroy_with_parent = true;
-        dialog.modal = true;
+        about_dialog.destroy_with_parent = true;
+        about_dialog.modal = true;
 
-        return dialog;
+        return about_dialog;
     }
 }
