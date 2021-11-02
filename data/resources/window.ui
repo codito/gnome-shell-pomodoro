@@ -48,6 +48,42 @@
   </object>
   -->
 
+  <menu id="app_menu">
+    <section>
+      <!-- <attribute name="display-hint">circular-buttons</attribute> -->
+      <!--
+      <item>
+        <attribute name="verb-icon">audio-speakers-symbolic</attribute>
+        <attribute name="action">app.sounds</attribute>
+      </item>
+      <item>
+        <attribute name="verb-icon">weather-clear-night-symbolic</attribute>
+        <attribute name="action">app.dark_mode</attribute>
+      </item>
+      <item>
+        <attribute name="verb-icon">go-top-symbolic</attribute>
+        <attribute name="action">win.shrink</attribute>
+      </item>
+      -->
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Preferences</attribute>
+        <attribute name="action">app.preferences</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">About</attribute>
+        <attribute name="action">app.about</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Quit</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+    </section>
+  </menu>
+
 
   <template class="PomodoroWindow" parent="GtkApplicationWindow">
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
@@ -66,48 +102,10 @@
           </object>
         </child>
         <child type="end">
-          <object class="GtkMenuButton" id="menu_button">
-<!--            <property name="halign">center</property>-->
-            <property name="valign">center</property>
-            <property name="focus-on-click">0</property>
+          <object class="GtkMenuButton">
             <property name="icon-name">open-menu-symbolic</property>
-            <property name="popover">
-              <object class="GtkPopover">
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">vertical</property>
-                    <property name="margin-start">10</property>
-                    <property name="margin-end">10</property>
-                    <property name="margin-top">10</property>
-                    <property name="margin-bottom">10</property>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="action-name">app.preferences</property>
-                        <property name="label" translatable="yes">_Preferences</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="action-name">app.about</property>
-                        <property name="label" translatable="yes">_About</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkSeparator">
-                        <property name="can-focus">0</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="action-name">app.quit</property>
-                        <property name="label" translatable="yes">_Quit</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </property>
-          </object><!-- menu_button -->
+            <property name="menu-model">app_menu</property>
+          </object>
         </child>
       </object><!-- header_bar -->
     </child>
@@ -123,15 +121,17 @@
             <property name="title" translatable="yes">Timer</property>
             <property name="child">
               <object class="GtkStack" id="timer_stack">
+                <!--
                 <property name="margin-start">20</property>
                 <property name="margin-end">20</property>
                 <property name="margin-top">50</property>
                 <property name="margin-bottom">50</property>
+                -->
                 <property name="transition-type">crossfade</property>
                 <property name="transition-duration">100</property>
                 <child>
                   <object class="GtkStackPage">
-                    <property name="name">disabled</property>
+                    <property name="name">timer-stopped</property>
                     <property name="child">
                       <object class="GtkButton" id="start_button">
                         <property name="receives-default">True</property>
@@ -157,6 +157,17 @@
                           </object>
                         </child>
                       </object><!-- start_button -->
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkStackPage">
+                    <property name="name">timer-running</property>
+                    <property name="child">
+                      <!-- TODO -->
+                      <object class="GtkLabel">
+                        <property name="label">Timer running</property>
+                      </object>
                     </property>
                   </object>
                 </child>
