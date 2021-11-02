@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface domain="gnome-pomodoro">
+  <requires lib="gtk" version="4.0"/>
   <template class="PomodoroScreenNotification" parent="GtkWindow">
-    <property name="can_focus">False</property>
-<!--    <property name="events">GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_STRUCTURE_MASK | GDK_TOUCH_MASK</property>-->
     <property name="icon_name">gnome-pomodoro</property>
-<!--    <property name="skip_taskbar_hint">True</property>-->
     <style>
       <class name="pomodoro-screen-notification"/>
     </style>
-    <child>
+    <property name="child">
       <object class="GtkBox" id="timer_container">
-<!--        <property name="can_focus">False</property>-->
+        <property name="visible">0</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
         <property name="margin_bottom">24</property>
@@ -18,11 +16,12 @@
         <property name="spacing">6</property>
         <child>
           <object class="GtkBox" id="timer_box">
-            <property name="can_focus">False</property>
+            <property name="valign">center</property>
+            <property name="visible">0</property>
             <property name="halign">center</property>
             <child>
               <object class="GtkLabel" id="minutes_label">
-                <property name="can_focus">False</property>
+                <property name="visible">0</property>
                 <property name="label">00</property>
                 <property name="justify">center</property>
                 <property name="width_chars">2</property>
@@ -30,15 +29,10 @@
                   <class name="pomodoro-timer-label"/>
                 </style>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
             </child>
             <child>
               <object class="GtkLabel" id="separator_label">
-                <property name="can_focus">False</property>
+                <property name="visible">0</property>
                 <property name="margin_bottom">12</property>
                 <property name="label">:</property>
                 <style>
@@ -46,15 +40,10 @@
                   <class name="pomodoro-separator-label"/>
                 </style>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
             </child>
             <child>
               <object class="GtkLabel" id="seconds_label">
-                <property name="can_focus">False</property>
+                <property name="visible">0</property>
                 <property name="label">00</property>
                 <property name="justify">center</property>
                 <property name="width_chars">2</property>
@@ -62,44 +51,17 @@
                   <class name="pomodoro-timer-label"/>
                 </style>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
             </child>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="label1">
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">It's time to take a break</property>
+            <property name="visible">0</property>
+            <property name="label" translatable="yes">It&apos;s time to take a break</property>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
         </child>
       </object>
-    </child>
-<!--
-    <child type="titlebar">
-      <object class="GtkHeaderBar" id="headerbar1">
-        <property name="can_focus">False</property>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-    </child>
--->
-
-
+    </property>
     <child>
       <object class="GtkEventControllerKey">
         <signal name="key-pressed" handler="on_key_pressed" swapped="no"/>
@@ -115,14 +77,5 @@
         <signal name="leave" handler="on_focus_leave" swapped="no"/>
       </object>
     </child>
-
-    <!--
-    <child>
-      <object class="GtkGestureClick">
-        <property name="touch-only">1</property>
-        <signal name="pressed" handler="on_pressed" swapped="yes"/>
-      </object>
-    </child>
-    -->
   </template>
 </interface>
