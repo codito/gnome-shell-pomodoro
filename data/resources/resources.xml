@@ -14,4 +14,7 @@
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
     <file>style.css</file>
   </gresource>
+  <gresource prefix="/org/gnomepomodoro/Pomodoro">
+    <file>icons/scalable/actions/shrink-symbolic.svg</file>
+  </gresource>
 </gresources>

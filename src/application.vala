@@ -185,13 +185,18 @@ namespace Pomodoro
 
         private void setup_resources ()
         {
+            var display = Gdk.Display.get_default ();
+
             var css_provider = new Gtk.CssProvider ();
             css_provider.load_from_resource ("/org/gnomepomodoro/Pomodoro/style.css");
 
             Gtk.StyleContext.add_provider_for_display (
-                                           Gdk.Display.get_default (),
+                                           display,
                                            css_provider,
                                            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+            var icon_theme = Gtk.IconTheme.get_for_display (display);
+            icon_theme.add_resource_path ("/org/gnomepomodoro/Pomodoro/icons");
         }
 
         private void setup_desktop_extension ()
@@ -528,15 +533,6 @@ namespace Pomodoro
             }
         }
 
-        private void change_dark_theme_state (GLib.SimpleAction action,
-                                              GLib.Variant?     state)
-        {
-            var gtk_settings = Gtk.Settings.get_default ();
-            gtk_settings.gtk_application_prefer_dark_theme = state.get_boolean ();
-
-            action.set_state (state);
-        }
-
         private void setup_actions ()
         {
             GLib.SimpleAction action;
@@ -577,17 +573,10 @@ namespace Pomodoro
             action.activate.connect (this.activate_timer_set_state);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("timer-switch-state", GLib.VariantType.STRING);
-            action.activate.connect (this.activate_timer_switch_state);
-            this.add_action (action);
-
-            action = new GLib.SimpleAction.stateful ("dark-theme", null, new GLib.Variant.boolean (false));  // TODO: fetch from settings
-            action.change_state.connect (this.change_dark_theme_state);
-            this.add_action (action);
-
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
             this.set_accels_for_action ("app.quit", {"<Primary>q"});
+            this.set_accels_for_action ("win.shrink", {"<Primary>space"});
         }
 
         private static bool command_line_version_callback ()

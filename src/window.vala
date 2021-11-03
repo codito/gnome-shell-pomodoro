@@ -44,7 +44,7 @@ namespace Pomodoro
     }
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
-    public class Window : Gtk.ApplicationWindow
+    public class Window : Gtk.ApplicationWindow, Gtk.Buildable
     {
         /*
         private const int MIN_WIDTH = 500;
@@ -102,6 +102,8 @@ namespace Pomodoro
 
         [GtkChild]
         private unowned Gtk.Stack stack;
+        [GtkChild]
+        private unowned Gtk.Revealer revealer;
         [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
@@ -283,9 +285,9 @@ namespace Pomodoro
                 window_x += native_x;
                 window_y += native_y;
 
-                var surface = native.get_surface ();
-                if (surface is Gdk.Toplevel) {
-                    (surface as Gdk.Toplevel).begin_move (
+                var toplevel = native.get_surface () as Gdk.Toplevel;
+                if (toplevel != null) {
+                    toplevel.begin_move (
                         gesture.get_device (),
                         (int) gesture.get_current_button (),
                         window_x, window_y,
@@ -375,6 +377,73 @@ namespace Pomodoro
             this.in_app_notification_install_extension.set_reveal_child (false);
         }
         */
+
+        public bool shrinked {
+            get {
+                return this.revealer.child_revealed;
+            }
+        }
+
+        public void shrink ()
+        {
+            this.revealer.set_reveal_child (false);
+        }
+
+        public void unshrink ()
+        {
+            this.revealer.set_reveal_child (true);
+        }
+
+        private void change_shrink_state (GLib.SimpleAction action,
+                                          GLib.Variant?     state)
+        {
+            if (state.get_boolean ()) {
+                this.shrink ();
+            }
+            else {
+                this.unshrink ();
+            }
+
+            action.set_state (state);
+        }
+
+        private void change_dark_theme_state (GLib.SimpleAction action,
+                                              GLib.Variant?     state)
+        {
+            var gtk_settings = Gtk.Settings.get_default ();
+            gtk_settings.gtk_application_prefer_dark_theme = state.get_boolean ();
+
+            action.set_state (state);
+        }
+
+        private void setup_actions ()
+        {
+            var action_map = (GLib.ActionMap) this;
+            var gtk_settings = Gtk.Settings.get_default ();
+
+            GLib.SimpleAction action;
+
+            action = new GLib.SimpleAction.stateful (
+                "shrink", null, new GLib.Variant.boolean (false));
+            action.change_state.connect (this.change_shrink_state);
+            action_map.add_action (action);
+            // this.notify["fullscreened"].connect (() => {  // TODO: does not work
+            //     action.set_enabled (!this.fullscreened);
+            // });
+
+            action = new GLib.SimpleAction.stateful (
+                "dark-theme", null, new GLib.Variant.boolean (gtk_settings.gtk_application_prefer_dark_theme));
+            action.change_state.connect (this.change_dark_theme_state);
+            action_map.add_action (action);
+            // TODO: monitor gtk_application_prefer_dark_theme for changes
+        }
+
+        public void parser_finished (Gtk.Builder builder)
+        {
+            base.parser_finished (builder);
+
+            this.setup_actions ();
+        }
     }
 
     /*
