@@ -50,21 +50,22 @@
 
   <menu id="app_menu">
     <section>
-      <!-- <attribute name="display-hint">circular-buttons</attribute> -->
+      <attribute name="display-hint">horizontal-buttons</attribute>
       <!--
       <item>
         <attribute name="verb-icon">audio-speakers-symbolic</attribute>
         <attribute name="action">app.sounds</attribute>
       </item>
       <item>
-        <attribute name="verb-icon">weather-clear-night-symbolic</attribute>
-        <attribute name="action">app.dark_mode</attribute>
-      </item>
-      <item>
         <attribute name="verb-icon">go-top-symbolic</attribute>
         <attribute name="action">win.shrink</attribute>
       </item>
       -->
+      <item>
+        <attribute name="verb-icon">weather-clear-night-symbolic</attribute>
+        <attribute name="action">app.dark-theme</attribute>
+        <attribute name="hidden-when">action-disabled</attribute>
+      </item>
     </section>
     <section>
       <item>
@@ -72,13 +73,13 @@
         <attribute name="action">app.preferences</attribute>
       </item>
       <item>
-        <attribute name="label" translatable="yes">About</attribute>
+        <attribute name="label" translatable="yes">_About</attribute>
         <attribute name="action">app.about</attribute>
       </item>
     </section>
     <section>
       <item>
-        <attribute name="label" translatable="yes">Quit</attribute>
+        <attribute name="label" translatable="yes">_Quit</attribute>
         <attribute name="action">app.quit</attribute>
       </item>
     </section>

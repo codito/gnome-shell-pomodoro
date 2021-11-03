@@ -528,6 +528,15 @@ namespace Pomodoro
             }
         }
 
+        private void change_dark_theme_state (GLib.SimpleAction action,
+                                              GLib.Variant?     state)
+        {
+            var gtk_settings = Gtk.Settings.get_default ();
+            gtk_settings.gtk_application_prefer_dark_theme = state.get_boolean ();
+
+            action.set_state (state);
+        }
+
         private void setup_actions ()
         {
             GLib.SimpleAction action;
@@ -570,6 +579,10 @@ namespace Pomodoro
 
             action = new GLib.SimpleAction ("timer-switch-state", GLib.VariantType.STRING);
             action.activate.connect (this.activate_timer_switch_state);
+            this.add_action (action);
+
+            action = new GLib.SimpleAction.stateful ("dark-theme", null, new GLib.Variant.boolean (false));  // TODO: fetch from settings
+            action.change_state.connect (this.change_dark_theme_state);
             this.add_action (action);
 
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
