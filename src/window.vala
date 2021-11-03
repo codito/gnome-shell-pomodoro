@@ -102,6 +102,10 @@ namespace Pomodoro
 
         [GtkChild]
         private unowned Gtk.Stack stack;
+        [GtkChild]
+        private unowned Gtk.GestureClick click_gesture;
+        [GtkChild]
+        private unowned Gtk.GestureDrag drag_gesture;
 
         /*
         [GtkChild]
@@ -235,6 +239,63 @@ namespace Pomodoro
             }
         }
         */
+
+        [GtkCallback]
+        private void on_pressed (Gtk.GestureClick gesture,
+                                 int              n_press,
+                                 double           x,
+                                 double           y)
+        {
+            var sequence = gesture.get_current_sequence ();
+            var event = gesture.get_last_event (sequence);
+
+            if (event == null) {
+                return;
+            }
+
+            if (n_press > 1) {
+                this.drag_gesture.set_state (Gtk.EventSequenceState.DENIED);
+            }
+        }
+
+        [GtkCallback]
+        private void on_drag_update (Gtk.GestureDrag gesture,
+                                     double          offset_x,
+                                     double          offset_y)
+        {
+            double start_x, start_y;
+            double window_x, window_y;
+            double native_x, native_y;
+
+            // TODO: use drag_check_threshold_double once available in Vala API
+            if (Gtk.drag_check_threshold (this, 0, 0, (int) offset_x, (int) offset_y))
+            {
+                gesture.set_state (Gtk.EventSequenceState.CLAIMED);
+                gesture.get_start_point (out start_x, out start_y);
+
+                var native = this.get_native ();
+                gesture.widget.translate_coordinates (
+                    native,
+                    start_x, start_y,
+                    out window_x, out window_y);
+
+                native.get_surface_transform (out native_x, out native_y);
+                window_x += native_x;
+                window_y += native_y;
+
+                var surface = native.get_surface ();
+                if (surface is Gdk.Toplevel) {
+                    (surface as Gdk.Toplevel).begin_move (
+                        gesture.get_device (),
+                        (int) gesture.get_current_button (),
+                        window_x, window_y,
+                        gesture.get_current_event_time ());
+                }
+
+                this.drag_gesture.reset ();
+                this.click_gesture.reset ();
+            }
+        }
 
         /*
         [GtkCallback]
