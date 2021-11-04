@@ -242,7 +242,24 @@ namespace Pomodoro
             return builddir;
         }
     }
+
+    class TestsApplication : Gtk.Application
+    {
+        public TestsApplication ()
+        {
+            GLib.Object (
+                application_id: "org.gnomepomodoro.Tests",
+                flags: GLib.ApplicationFlags.FLAGS_NONE
+            );
+        }
+
+        construct
+        {
+
+        }
+    }
 }
+
 
 
 public static int main (string[] args)

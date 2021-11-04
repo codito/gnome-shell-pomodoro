@@ -24,6 +24,7 @@ libgnome_pomodoro_vala_sources = [
   'timer.vala',
   'timer-action-group.vala',
   'timer-state.vala',
+  'timer-view.vala',
   'utils.vala',
   'window.vala',
   gnome_pomodoro_generated_sources,

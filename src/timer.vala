@@ -146,6 +146,7 @@ namespace Pomodoro
         public bool is_running ()
         {
             return this.timeout_source != 0;
+            // return !(this.state is Pomodoro.DisabledState);
         }
 
         public void start (double timestamp = Pomodoro.get_current_time ())
