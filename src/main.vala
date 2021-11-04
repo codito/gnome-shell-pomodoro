@@ -21,16 +21,16 @@
 using GLib;
 
 
-private Pomodoro.Application application;
-
-
 private void on_posix_signal (int signal)
 {
     switch (signal)
     {
         case Posix.Signal.INT:
         case Posix.Signal.TERM:
-            application.quit ();
+            var application = Pomodoro.Application.get_default ();
+            if (application != null) {
+                application.quit ();
+            }
             break;
 
         default:
@@ -41,8 +41,6 @@ private void on_posix_signal (int signal)
 
 public int main (string[] args)
 {
-    var exit_status = 0;
-
     Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PACKAGE_LOCALE_DIR);
     Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
     Intl.textdomain (Config.GETTEXT_PACKAGE);
@@ -50,11 +48,10 @@ public int main (string[] args)
     GLib.Environment.set_application_name (_("Pomodoro"));
     GLib.Environment.set_prgname (Config.PACKAGE_NAME);
 
-    application = new Pomodoro.Application ();
-
-    /* register unix signal handler */
     Posix.signal (Posix.Signal.INT, on_posix_signal);
     Posix.signal (Posix.Signal.TERM, on_posix_signal);
+
+    var application = new Pomodoro.Application ();
 
     return application.run (args);
 }
