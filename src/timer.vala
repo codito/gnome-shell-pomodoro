@@ -200,6 +200,15 @@ namespace Pomodoro
             this.state = this._state.create_next_state (this.score, timestamp);
         }
 
+        public void rewind (double seconds,
+                            double timestamp = Pomodoro.get_current_time ())
+        {
+            // TODO: handle rewinding to previous state
+
+            this._state.elapsed = double.max (this._state.elapsed - seconds, 0.0);
+            this.update_offset ();
+        }
+
         /**
          * set_state_full
          *

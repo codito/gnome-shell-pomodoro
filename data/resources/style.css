@@ -1,3 +1,10 @@
+@keyframes blink {
+    0% { opacity: 1.0; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1.0; }
+}
+
+
 .keybinding {
     font-size: 16pt;
 }
@@ -36,38 +43,6 @@
     padding-bottom: 6px;
     font-size: 1.2em;
     font-weight: bold;
-}
-
-.pomodoro-symbolic-button {
-    outline: 0;
-    border: 0;
-    padding: 25px;
-    /* border-radius: 50%;*/
-    box-shadow: none;
-}
-
-.pomodoro-symbolic-button:focus {
-    outline: 1px dashed alpha(@theme_fg_color, 0.1);
-}
-
-.pomodoro-symbolic-button:hover,
-.pomodoro-symbolic-button.suggested-action {
-    outline: 0;
-    color: @theme_fg_color;
-    background-color: @theme_base_color;
-    background-image: none;
-}
-
-.pomodoro-symbolic-button:active,
-.pomodoro-symbolic-button.suggested-action:active {
-    outline: 0;
-    color: shade(@theme_fg_color, 1.5);
-    background-color: @theme_base_color;
-    background-image: none;
-}
-
-.pomodoro-timer-label {
-    font-size: 55pt;
 }
 
 .pomodoro-separator-label:backdrop {
@@ -110,3 +85,68 @@
     font-size: 15pt;
     font-weight: bold;
 }
+
+.pomodoro-timer-view .small-button {
+    padding: 8px;
+    -gtk-icon-size: 16px;
+}
+.pomodoro-timer-view .small-button.flat {
+    border: 1px solid alpha(@theme_fg_color, 0.2);
+}
+
+.pomodoro-timer-view .large-button {
+    padding: 16px;
+    -gtk-icon-size: 24px;
+}
+
+.pomodoro-timer-view .suggested-action,
+.pomodoro-timer-view .suggested-action:focus,
+.pomodoro-timer-view .suggested-action:hover,
+.pomodoro-timer-view .suggested-action:active {
+    border: 0;
+    color: @theme_base_color;
+    background-color: @theme_fg_color;
+    background-image: none;
+}
+
+.pomodoro-timer-view .suggested-action:focus {
+    outline: 2px solid @focus_border_color;
+}
+
+.pomodoro-timer-view .suggested-action:backdrop,
+.pomodoro-timer-view .suggested-action:disabled {
+    color: @theme_bg_color;
+    background-color: @insensitive_fg_color;
+}
+
+.pomodoro-timer-view .pomodoro-timer-state {
+    font-weight: 700;
+}
+
+.pomodoro-timer-view .pomodoro-timer-state arrow {
+    opacity: 0;
+    margin-left: -16px;
+}
+
+.pomodoro-timer-view .pomodoro-timer-label {
+    font-size: 55pt;
+    font-weight: 400;
+    opacity: 1.0;
+}
+
+.pomodoro-timer-view .pomodoro-timer-label.timer-paused {
+    animation: blink 1500ms steps(2, end) infinite;
+}
+
+.pomodoro-timer-view .pomodoro-timer-label:backdrop,
+.pomodoro-timer-view .pomodoro-timer-state label:backdrop {
+    color: @insensitive_fg_color;
+}
+
+.pomodoro-timer-view .pomodoro-timer-label.timer-running:backdrop,
+.pomodoro-timer-view .pomodoro-timer-state.timer-running label:backdrop {
+    color: @theme_fg_color;
+}
+
+
+

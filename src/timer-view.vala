@@ -10,133 +10,134 @@ namespace Pomodoro
         // private const double TIMER_LINE_WIDTH = 6.0;
         // private const double TIMER_RADIUS = 165.0;
 
-        // private struct Name
-        // {
-        //     public string name;
-        //     public string display_name;
-        // }
-
-        // private const Name[] STATE_NAMES = {
-        //     { "null", "" },
-        //     { "pomodoro", N_("Pomodoro") },
-        //     { "short-break", N_("Short Break") },
-        //     { "long-break", N_("Long Break") }
-        // };
-
         [GtkChild]
-        private unowned Gtk.Stack stack;
+        private unowned Gtk.MenuButton timer_state_menubutton;
         [GtkChild]
-        private unowned Gtk.ToggleButton state_togglebutton;
-        // [GtkChild]
-        // private unowned Gtk.Label minutes_label;
-        // [GtkChild]
-        // private unowned Gtk.Label seconds_label;
-        // [GtkChild]
-        // private unowned Gtk.Widget timer_box;
-        // [GtkChild]
-        // private unowned Gtk.Button pause_button;
-        // [GtkChild]
-        // private unowned Gtk.Image pause_button_image;
+        private unowned Gtk.Label timer_label;
+        [GtkChild]
+        private unowned Gtk.Grid buttons_grid;
+
         // [GtkChild]
         // private unowned Gtk.Revealer in_app_notification_install_extension;
-
-            // this.insert_action_group ("timer", this.timer.get_action_group ());
-
         [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
         private unowned Gtk.GestureDrag drag_gesture;
 
         private unowned Pomodoro.Timer timer;
-        // private Pomodoro.Animation blink_animation;
         // private GLib.Callback? install_extension_callback = null;
         // private GLib.Callback? install_extension_dismissed_callback = null;
 
         construct
         {
-            // this.timer = Pomodoro.Timer.get_default ();
-
-            // this.on_timer_state_notify ();
-            // this.on_timer_elapsed_notify ();
-            // this.on_timer_is_paused_notify ();
-
             this.layout_manager = new Gtk.BinLayout ();
         }
 
-        private void on_timer_state_notify ()
-        {
-            // this.stack.visible_child_name =
-            //         (this.timer.state is Pomodoro.DisabledState) ? "disabled" : "enabled";
-
-            // foreach (var mapping in STATE_NAMES)
-            // {
-            //     if (mapping.name == this.timer.state.name && mapping.display_name != "") {
-            //         this.state_togglebutton.label = mapping.display_name;
-            //         break;
-            //     }
-            // }
-        }
-
-        /*
-        private void on_blink_animation_complete ()
-        {
-            if (this.timer.is_paused) {
-                this.blink_animation.start_with_value (1.0);
-            }
-        }
-
-
         private void on_timer_elapsed_notify ()
         {
-            if (!(this.timer.state is Pomodoro.DisabledState))
+            if (this.timer.state is Pomodoro.DisabledState)
             {
+                this.timer_label.label = "25:00";  // TODO: fetch pomodoro duration
+            }
+            else {
                 var remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
                 var minutes   = remaining / 60;
                 var seconds   = remaining % 60;
 
-                this.minutes_label.label = "%02u".printf (minutes);
-                this.seconds_label.label = "%02u".printf (seconds);
-
-                this.timer_box.queue_draw ();
+                this.timer_label.label = "%02u:%02u".printf (minutes, seconds);
+                // this.timer_box.queue_draw ();
             }
+        }
+
+        /**
+         * Mainly, e want to update the backdrop. To lower the contrast when timer isn't running.
+         */
+        private void update_css_classes ()
+        {
+            var is_stopped = this.timer.state is Pomodoro.DisabledState;
+            var is_paused = this.timer.is_paused;
+
+            if (is_stopped || is_paused) {
+                this.timer_state_menubutton.remove_css_class ("timer-running");
+                this.timer_label.remove_css_class ("timer-running");
+            }
+            else {
+                this.timer_state_menubutton.add_css_class ("timer-running");
+                this.timer_label.add_css_class ("timer-running");
+            }
+
+            if (is_paused) {
+                this.timer_label.add_css_class ("timer-paused");
+            }
+            else {
+                this.timer_label.remove_css_class ("timer-paused");
+            }
+        }
+
+        private void update_buttons_stack ()
+        {
+            var is_stopped = this.timer.state is Pomodoro.DisabledState;
+            var is_paused = this.timer.is_paused;
+            var child = this.buttons_grid.get_first_child ();
+
+            while (child != null) {
+                var stack = child as Gtk.Stack;
+
+                if (stack != null) {
+                    if (is_stopped) {
+                        stack.visible_child_name = "stopped";
+                    }
+                    else if (is_paused && stack.get_child_by_name ("paused") != null) {
+                        stack.visible_child_name = "paused";
+                    }
+                    else {
+                        stack.visible_child_name = "running";
+                    }
+                }
+
+                child = stack.get_next_sibling ();
+            }
+        }
+
+        private void on_timer_state_notify ()
+        {
+            string state_label;
+
+            switch (this.timer.state.name) {
+                case "null":
+                    state_label = _("Stopped");
+                    break;
+
+                case "pomodoro":
+                    state_label = _("Pomodoro");
+                    break;
+
+                case "short-break":
+                    state_label = _("Short Break");
+                    break;
+
+                case "long-break":
+                    state_label = _("Long Break");
+                    break;
+
+                default:
+                    state_label = "";
+                    break;
+            }
+
+            this.timer_state_menubutton.label = state_label;
+
+            this.update_css_classes ();
+            this.update_buttons_stack ();
         }
 
         private void on_timer_is_paused_notify ()
         {
-            if (this.blink_animation != null) {
-                this.blink_animation.stop ();
-                this.blink_animation = null;
-            }
-
-            if (this.timer.is_paused) {
-                this.pause_button_image.icon_name = "media-playback-start-symbolic";
-                this.pause_button.action_name     = "timer.resume";
-                this.pause_button.tooltip_text    = _("Resume");
-
-                this.blink_animation = new Pomodoro.Animation (Pomodoro.AnimationMode.BLINK,
-                                                               2500,
-                                                               5);
-                this.blink_animation.add_property (this.timer_box,
-                                                   "opacity",
-                                                   FADED_OUT);
-                this.blink_animation.complete.connect (this.on_blink_animation_complete);
-                this.blink_animation.start_with_value (1.0);
-            }
-            else {
-                this.pause_button_image.icon_name = "media-playback-pause-symbolic";
-                this.pause_button.action_name     = "timer.pause";
-                this.pause_button.tooltip_text    = _("Pause");
-
-                this.blink_animation = new Pomodoro.Animation (Pomodoro.AnimationMode.EASE_OUT,
-                                                               200,
-                                                               50);
-                this.blink_animation.add_property (this.timer_box,
-                                                   "opacity",
-                                                   1.0);
-                this.blink_animation.start ();
-            }
+            this.update_css_classes ();
+            this.update_buttons_stack ();
         }
 
+        /*
         [GtkCallback]
         private bool on_timer_box_draw (Gtk.Widget    widget,
                                         Cairo.Context context)
@@ -240,20 +241,14 @@ namespace Pomodoro
         {
             base.parser_finished (builder);
 
-            // var state_togglebutton = builder.get_object ("state_togglebutton");
-            // this.state_togglebutton.bind_property ("active",
-            //                                   builder.get_object ("state_popover"),
-            //                                   "visible",
-            //                                   GLib.BindingFlags.BIDIRECTIONAL);
-
             this.timer = Pomodoro.Timer.get_default ();
             this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            // this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
-            // this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
+            this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
 
             this.on_timer_state_notify ();
-            // this.on_timer_elapsed_notify ();
-            // this.on_timer_is_paused_notify ();
+            this.on_timer_elapsed_notify ();
+            this.on_timer_is_paused_notify ();
 
             this.insert_action_group ("timer", this.timer.get_action_group ());
         }

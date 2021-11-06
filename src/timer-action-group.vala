@@ -32,6 +32,8 @@ namespace Pomodoro
         private GLib.SimpleAction resume_action;
         private GLib.SimpleAction skip_action;
         private GLib.SimpleAction state_action;
+        private GLib.SimpleAction skip_action;
+        private GLib.SimpleAction rewind_action;
 
         public TimerActionGroup (Pomodoro.Timer timer)
         {
@@ -64,6 +66,14 @@ namespace Pomodoro
                                                                 new GLib.Variant.string (this.timer.state.name));
             this.state_action.activate.connect (this.activate_state);
             this.add_action (this.state_action);
+
+            this.skip_action = new GLib.SimpleAction ("skip", null);
+            this.skip_action.activate.connect (this.activate_skip);
+            this.add_action (this.skip_action);
+
+            this.rewind_action = new GLib.SimpleAction ("rewind", null);
+            this.rewind_action.activate.connect (this.activate_rewind);
+            this.add_action (this.rewind_action);
 
             this.timer.state_changed.connect_after (this.on_timer_state_changed);
             this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
@@ -136,9 +146,15 @@ namespace Pomodoro
         }
 
         private void activate_skip (GLib.SimpleAction action,
-            GLib.Variant?     parameter)
+                                      GLib.Variant?     parameter)
         {
             this.timer.skip ();
+        }
+
+        private void activate_rewind (GLib.SimpleAction action,
+                                      GLib.Variant?     parameter)
+        {
+            this.timer.rewind (60.0);
         }
 
         private void activate_state (GLib.SimpleAction action,

@@ -16,6 +16,11 @@
     <file>style.css</file>
   </gresource>
   <gresource prefix="/org/gnomepomodoro/Pomodoro">
+    <file>icons/scalable/actions/dark-theme-symbolic.svg</file>
     <file>icons/scalable/actions/shrink-symbolic.svg</file>
+    <file>icons/scalable/actions/timer-pause-symbolic.svg</file>
+    <file>icons/scalable/actions/timer-rewind-symbolic.svg</file>
+    <file>icons/scalable/actions/timer-start-symbolic.svg</file>
+    <file>icons/scalable/actions/timer-stop-symbolic.svg</file>
   </gresource>
 </gresources>
