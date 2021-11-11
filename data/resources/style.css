@@ -134,8 +134,13 @@
     opacity: 1.0;
 }
 
+.pomodoro-timer-view .pomodoro-timer-label > .separator-label {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
 .pomodoro-timer-view .pomodoro-timer-label.timer-paused {
-    animation: blink 1500ms steps(2, end) infinite;
+    animation: blink 1500ms steps(2, start) infinite;
 }
 
 .pomodoro-timer-view .pomodoro-timer-label:backdrop,

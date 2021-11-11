@@ -13,7 +13,7 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.MenuButton timer_state_menubutton;
         [GtkChild]
-        private unowned Gtk.Label timer_label;
+        private unowned Pomodoro.TimerLabel timer_label;
         [GtkChild]
         private unowned Gtk.Grid buttons_grid;
 
@@ -24,7 +24,7 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.GestureDrag drag_gesture;
 
-        private unowned Pomodoro.Timer timer;
+        private Pomodoro.Timer timer;
         // private GLib.Callback? install_extension_callback = null;
         // private GLib.Callback? install_extension_dismissed_callback = null;
 
@@ -33,21 +33,127 @@ namespace Pomodoro
             this.layout_manager = new Gtk.BinLayout ();
         }
 
-        private void on_timer_elapsed_notify ()
-        {
-            if (this.timer.state is Pomodoro.DisabledState)
-            {
-                this.timer_label.label = "25:00";  // TODO: fetch pomodoro duration
-            }
-            else {
-                var remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
-                var minutes   = remaining / 60;
-                var seconds   = remaining % 60;
+        // [GtkChild]
+        // private unowned Gtk.Picture image;
 
-                this.timer_label.label = "%02u:%02u".printf (minutes, seconds);
-                // this.timer_box.queue_draw ();
+        /*
+        private void update_image ()
+        {
+            Pango.Rectangle ink_rect, pink_rect, logical_rect;
+            // int baseline;
+
+            var text = "25:00";
+            var layout = this.timer_label.create_pango_layout (text);
+
+            // var context = this.timer_label.create_pango_context ();  // NOTE: can be cached
+            // desc = gtk_font_chooser_get_font_desc (GTK_FONT_CHOOSER (font_button));
+
+            // var desc = Pango.FontDescription.from_string ("Cantarell 13pt");
+
+            // var fopt = context.get_font_options ().copy ();
+            // fopt.set_hint_style (CAIRO_HINT_STYLE_DEFAULT);
+            // fopt.set_hint_metrics (CAIRO_HINT_METRICS_ON);
+            // fopt.set_hint_metrics (CAIRO_HINT_METRICS_OFF);
+
+            // context.set_font_options (fopt);
+            // context.changed ();  // -- we dont want to change font description
+
+            // var layout = new Pango.Layout (context);
+            // layout.set_font_description (desc);
+            // layout.set_text (text, -1);  // TODO: we can reuse layout
+            layout.get_extents (out ink_rect, out logical_rect);
+            pink_rect = ink_rect;
+            var baseline = layout.get_baseline ();
+
+            Pango.extents_to_pixels (ink_rect, null);
+
+            warning ("ink width=%.3f height=%.3f", Pango.units_to_double (ink_rect.width), Pango.units_to_double (ink_rect.height));
+            // warning ("logical_rect width=%d height=%d", logical_rect.width, logical_rect.height);
+
+            warning ("image width=%d height=%d", this.image.get_width (), this.image.get_height ());
+
+            var surface = new Cairo.ImageSurface (Cairo.Format.ARGB32, 400, 300);
+            var cr = new Cairo.Context (surface);
+            cr.set_source_rgb (1.0, 1.0, 1.0);
+            cr.paint ();
+
+            cr.set_source_rgb (0.0, 0.0, 0.0);
+            cr.move_to (10.0, 10.0);
+            Pango.cairo_show_layout (cr, layout);
+
+            var scale = 5;
+            var pixbuf = Gdk.pixbuf_get_from_surface (surface, 0, 0, surface.get_width (), surface.get_height ());
+            var pixbuf_scaled = pixbuf.scale_simple (pixbuf.get_width () * scale, pixbuf.get_height () * scale, Gdk.InterpType.NEAREST);
+
+            var surface_scaled = new Cairo.ImageSurface.for_data (pixbuf_scaled.get_pixels (),
+                                                           Cairo.Format.ARGB32,
+                                                           pixbuf_scaled.get_width (),
+                                                           pixbuf_scaled.get_height (),
+                                                           pixbuf_scaled.get_rowstride ());
+
+            cr = new Cairo.Context (surface_scaled);
+            cr.set_line_width (1.0);
+
+            // if (gtk_check_button_get_active (GTK_CHECK_BUTTON (show_grid)))
+            // {
+            //     int i;
+            //     cairo_set_source_rgba (cr, 0.2, 0, 0, 0.2);
+            //     for (i = 1; i < ink_rect.height + 20; i++)
+            //     {
+            //         cairo_move_to (cr, 0, scale * i - 0.5);
+            //         cairo_line_to (cr, scale * (ink_rect.width + 20), scale * i - 0.5);
+            //         cairo_stroke (cr);
+            //     }
+            //     for (i = 1; i < ink_rect.width + 20; i++)
+            //     {
+            //         cairo_move_to (cr, scale * i - 0.5, 0);
+            //         cairo_line_to (cr, scale * i - 0.5, scale * (ink_rect.height + 20));
+            //         cairo_stroke (cr);
+            //     }
+            // }
+
+            // Draw extents
+            if (true)
+            {
+                cr.set_source_rgba (0.0, 0.0, 1.0, 1.0);
+
+                cr.rectangle (scale * (10.0 + Pango.units_to_double (logical_rect.x)) - 0.5,
+                              scale * (10.0 + Pango.units_to_double (logical_rect.y)) - 0.5,
+                              scale * Pango.units_to_double (logical_rect.width) + 1,
+                              scale * Pango.units_to_double (logical_rect.height) + 1);
+                cr.stroke ();
+                cr.move_to (scale * (10.0 + Pango.units_to_double (logical_rect.x)) - 0.5,
+                            scale * (10.0 + Pango.units_to_double (baseline)) - 0.5);
+                cr.line_to (scale * (10.0 + Pango.units_to_double (logical_rect.x + logical_rect.width)) + 1,
+                            scale * (10.0 + Pango.units_to_double (baseline)) - 0.5);
+                cr.stroke ();
+                cr.set_source_rgba (1.0, 0.0, 0.0, 1.0);
+                cr.rectangle (scale * (10.0 + Pango.units_to_double (pink_rect.x)) + 0.5,
+                                scale * (10.0 + Pango.units_to_double (pink_rect.y)) + 0.5,
+                                scale * Pango.units_to_double (pink_rect.width) - 1,
+                                scale * Pango.units_to_double (pink_rect.height) - 1);
+                cr.stroke ();
             }
+
+            this.image.set_pixbuf (pixbuf_scaled);
         }
+        */
+
+        // private void on_timer_elapsed_notify ()
+        // {
+        //     if (this.timer.state is Pomodoro.DisabledState)
+        //     {
+        //         this.timer_label.label = "25:00";  // TODO: fetch pomodoro duration
+        //     }
+        //     else {
+        //         var remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
+        //         var minutes   = remaining / 60;
+        //         var seconds   = remaining % 60;
+
+        //         this.timer_label.label = "%02u:%02u".printf (minutes, seconds);
+                // this.timer_box.queue_draw ();
+        //     }
+        // }
 
         /**
          * Mainly, e want to update the backdrop. To lower the contrast when timer isn't running.
@@ -59,19 +165,19 @@ namespace Pomodoro
 
             if (is_stopped || is_paused) {
                 this.timer_state_menubutton.remove_css_class ("timer-running");
-                this.timer_label.remove_css_class ("timer-running");
+                // this.timer_label.remove_css_class ("timer-running");
             }
             else {
                 this.timer_state_menubutton.add_css_class ("timer-running");
-                this.timer_label.add_css_class ("timer-running");
+                // this.timer_label.add_css_class ("timer-running");
             }
 
-            if (is_paused) {
-                this.timer_label.add_css_class ("timer-paused");
-            }
-            else {
-                this.timer_label.remove_css_class ("timer-paused");
-            }
+            // if (is_paused) {
+            //     this.timer_label.add_css_class ("timer-paused");
+            // }
+            // else {
+            //     this.timer_label.remove_css_class ("timer-paused");
+            // }
         }
 
         private void update_buttons_stack ()
@@ -241,16 +347,22 @@ namespace Pomodoro
         {
             base.parser_finished (builder);
 
-            this.timer = Pomodoro.Timer.get_default ();
+            var timer = Pomodoro.Timer.get_default ();
+
+            this.timer = timer;
             this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
+            // this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
             this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
 
             this.on_timer_state_notify ();
-            this.on_timer_elapsed_notify ();
+            // this.on_timer_elapsed_notify ();
             this.on_timer_is_paused_notify ();
 
             this.insert_action_group ("timer", this.timer.get_action_group ());
+
+            // this.image.realize.connect (() => {
+            //     this.update_image ();
+            // });
         }
     }
 }

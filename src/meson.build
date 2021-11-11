@@ -10,6 +10,7 @@ libgnome_pomodoro_vala_sources = [
   'desktop-extension.vala',
   'entry.vala',
   'log-scale.vala',
+  'monospace-label.vala',
   'notifications-capability.vala',
   'preferences-dialog.vala',
   'presence.vala',
@@ -23,6 +24,7 @@ libgnome_pomodoro_vala_sources = [
   'stats-month-page.vala',
   'timer.vala',
   'timer-action-group.vala',
+  'timer-label.vala',
   'timer-state.vala',
   'timer-view.vala',
   'utils.vala',
@@ -41,6 +43,7 @@ libgnome_pomodoro = shared_library(
     libm_dep,
     peas_dep,
     sqlite_dep,
+    pangocairo_dep,  # TODO: remove
   ],
   # include config.h
   include_directories: incs,

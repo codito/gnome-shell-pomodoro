@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroTimerLabel" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="spacing">0</property>
+    <property name="valign">start</property>
+    <child>
+      <object class="PomodoroMonospaceLabel" id="minutes_label">
+        <property name="halign">fill</property>
+        <property name="hexpand">1</property>
+        <property name="valign">baseline</property>
+        <property name="xalign">1.0</property>
+        <property name="text">0</property>
+        <style>
+          <class name="minutes-label"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="PomodoroMonospaceLabel" id="separator_label">
+        <property name="halign">fill</property>
+        <property name="valign">baseline</property>
+        <property name="xalign">0.5</property>
+        <property name="text">:</property>
+        <style>
+          <class name="separator-label"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="PomodoroMonospaceLabel" id="seconds_label">
+        <property name="halign">fill</property>
+        <property name="valign">baseline</property>
+        <property name="xalign">0.0</property>
+        <property name="text">00</property>
+        <style>
+          <class name="seconds-label"/>
+        </style>
+      </object>
+    </child>
+  </template>
+</interface>

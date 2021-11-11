@@ -50,12 +50,23 @@
         </child>
 
         <child>
-          <object class="GtkLabel" id="timer_label">
-            <property name="vexpand">1</property>
-            <property name="label"></property>
+          <object class="PomodoroTimerLabel" id="timer_label">
+            <!-- <property name="vexpand">1</property> -->
+            <property name="halign">center</property>
             <style>
               <class name="pomodoro-timer-label"/>
             </style>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkLevelBar" id="progess_levelbar">
+            <property name="orientation">horizontal</property>
+            <property name="mode">discrete</property>
+            <property name="value">1.0</property>
+            <property name="min-value">0.0</property>
+            <property name="max-value">4.0</property>
+            <property name="halign">center</property>
           </object>
         </child>
 
