@@ -22,6 +22,9 @@ using GLib;
 
 namespace Pomodoro
 {
+    public const double USEC_PER_SEC = 1000000.0;
+
+
     private string format_time (int seconds)
     {
         var minutes = (seconds / 60) % 60;

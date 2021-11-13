@@ -23,11 +23,10 @@
   <template class="PomodoroTimerView" parent="GtkWidget">
     <child>
       <object class="GtkBox">
-        <property name="valign">center</property>
         <property name="orientation">vertical</property>
+        <property name="spacing">20</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
-        <property name="spacing">20</property>
         <property name="margin-top">20</property>
         <property name="margin-bottom">20</property>
         <property name="margin-start">20</property>
@@ -50,23 +49,55 @@
         </child>
 
         <child>
-          <object class="PomodoroTimerLabel" id="timer_label">
-            <!-- <property name="vexpand">1</property> -->
-            <property name="halign">center</property>
-            <style>
-              <class name="pomodoro-timer-label"/>
-            </style>
-          </object>
-        </child>
-
-        <child>
-          <object class="GtkLevelBar" id="progess_levelbar">
-            <property name="orientation">horizontal</property>
-            <property name="mode">discrete</property>
-            <property name="value">1.0</property>
-            <property name="min-value">0.0</property>
-            <property name="max-value">4.0</property>
-            <property name="halign">center</property>
+          <object class="GtkOverlay">
+            <child type="overlay">
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">20</property>
+                <property name="halign">fill</property>
+                <property name="valign">center</property>
+                <!--
+                <property name="margin-top">20</property>
+                <property name="margin-bottom">20</property>
+                <property name="margin-start">20</property>
+                <property name="margin-end">20</property>
+                -->
+                <child>
+                  <object class="PomodoroTimerLabel" id="timer_label">
+                    <!-- <property name="vexpand">1</property> -->
+                    <property name="halign">center</property>
+                    <style>
+                      <class name="pomodoro-timer-label"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <!--
+                  <object class="GtkLevelBar" id="progess_levelbar">
+                    <property name="orientation">horizontal</property>
+                    <property name="mode">discrete</property>
+                    <property name="value">1.0</property>
+                    <property name="min-value">0.0</property>
+                    <property name="max-value">4.0</property>
+                    <property name="halign">center</property>
+                  </object>
+                  -->
+                  <object class="PomodoroTimerLevelBar" id="timer_levelbar">
+                    <property name="halign">center</property>
+                    <style>
+                      <class name="pomodoro-session-progress"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="PomodoroTimerProgressBar" id="timer_progress">
+                <style>
+                  <class name="pomodoro-timer-progress"/>
+                </style>
+              </object>
+            </child>
           </object>
         </child>
 

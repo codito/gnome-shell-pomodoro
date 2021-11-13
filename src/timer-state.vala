@@ -50,8 +50,21 @@ namespace Pomodoro
             this.timestamp = Pomodoro.get_current_time ();
         }
 
+        public double calculate_progress (int64  timestamp,
+                                          double offset)  // TODO: offset should be inside state, not timer
+        {
+            if (this.duration <= 0.0) {
+                return 0.0;
+            }
+
+            return (
+                ((double) timestamp) / USEC_PER_SEC - this.timestamp - offset
+            ) / this.duration;
+        }
+
         public abstract TimerState create_next_state (double score,
                                                       double timestamp);
+
 
         /**
          * Returns acumulated score, or 0.0 if taken a long break.

@@ -25,6 +25,18 @@ namespace Pomodoro
 {
     private const double TIME_TO_RESET_SCORE = 3600.0;
 
+
+    /**
+     * Session (uninterrupted work including long breaks)
+     * - set (4 pomodoros)
+     *   - interval (individual pomodoros) / time block
+     *
+     *
+     */
+
+
+
+
     /**
      * Pomodoro.Timer class.
      *
@@ -101,7 +113,7 @@ namespace Pomodoro
         }
 
         /**
-         * Achieved score or number of completed sessions.
+         * Achieved score or number of completed pomodoros.
          *
          * It's updated on state change.
          */
@@ -323,6 +335,29 @@ namespace Pomodoro
 
             return state_changed;
         }
+
+        // public int64 calculate_elapsed (int64 timestamp)  // TODO: rename to get_elapsed once property is removed
+        // {
+        //     return timestamp - (int64)(this._state.timestamp * 1000.0) - (int64)(this._offset * 1000.0);
+        // }
+
+        // public double calculate_state_progress (int64 timestamp)  // TODO: move it to State class
+        // {
+        //     if (this.state_duration <= 0.0) {
+        //         return 0.0;
+        //     }
+
+        //     warning ( "### %.6f %.6f", ((double) timestamp) / USEC_PER_SEC, this._state.timestamp);
+
+        //     return (
+        //         ((double) timestamp) / USEC_PER_SEC - this._state.timestamp - this._offset
+        //     ) / this.state_duration;
+        // }
+
+        // public double calculate_elapsed_double (int64 timestamp)  // TODO: rename to get_elapsed once property is removed
+        // {
+        //     return ((double) this.calculate_elapsed_double (timestamp)) / 1000.0;
+        // }
 
         public virtual signal void update (double timestamp = Pomodoro.get_current_time ())
         {
