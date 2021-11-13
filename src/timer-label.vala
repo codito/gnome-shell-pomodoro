@@ -22,31 +22,6 @@ namespace Pomodoro
             this.set_direction (Gtk.TextDirection.LTR);
         }
 
-        /*
-        private void on_mapped ()
-        {
-            if (this.mapped) {
-                if (!this._styleChangedId) {
-                    this._styleChangedId = this._secondsLabel.connect('style-changed', this._onStyleChanged.bind(this));
-                    this._onStyleChanged(this._secondsLabel);
-                }
-                if (!this._timerUpdateId) {
-                    this._timerUpdateId = this.timer.connect('update', this._onTimerUpdate.bind(this));
-                    this._onTimerUpdate();
-                }
-            } else {
-                if (this._styleChangedId) {
-                    this._secondsLabel.disconnect(this._styleChangedId);
-                    this._styleChangedId = 0;
-                }
-                if (this._timerUpdateId) {
-                    this.timer.disconnect(this._timerUpdateId);
-                    this._timerUpdateId = 0;
-                }
-            }
-        }
-        */
-
         private void on_timer_elapsed_notify ()
         {
             if (this.timer.state is Pomodoro.DisabledState)
@@ -71,12 +46,13 @@ namespace Pomodoro
         {
             var is_stopped = this.timer.state is Pomodoro.DisabledState;
             var is_paused = this.timer.is_paused;
+            var is_running = !(is_stopped || is_paused);
 
-            if (is_stopped || is_paused) {
-                this.remove_css_class ("timer-running");
+            if (is_running) {
+                this.add_css_class ("timer-running");
             }
             else {
-                this.add_css_class ("timer-running");
+                this.remove_css_class ("timer-running");
             }
 
             if (is_paused) {

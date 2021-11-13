@@ -164,7 +164,9 @@ namespace Pomodoro
             context.set_source_rgba (color.red,
                                      color.green,
                                      color.blue,
-                                     color.alpha);
+                                     color.alpha * OUTLINE_ALPHA);
+
+            context.save ();
             context.translate (padding, baseline);
 
             for (var index = 0; index < 4; index++) {
@@ -174,6 +176,35 @@ namespace Pomodoro
             }
 
             context.stroke ();
+            context.restore ();
+            context.set_source_rgba (color.red,
+                                     color.green,
+                                     color.blue,
+                                     color.alpha);
+            context.translate (padding, baseline);
+
+            for (var index = 0; index < 3; index++) {
+                context.move_to (0.0, 0.0);
+                context.line_to (block_width, 0.0);
+                context.translate (block_width + spacing, 0.0);
+            }
+
+            context.stroke ();
+        }
+
+        public override Gtk.SizeRequestMode get_request_mode ()
+        {
+            return Gtk.SizeRequestMode.CONSTANT_SIZE;
+        }
+
+        public override bool focus (Gtk.DirectionType direction)
+        {
+            return false;
+        }
+
+        public override bool grab_focus ()
+        {
+            return false;
         }
 
         public override void dispose ()

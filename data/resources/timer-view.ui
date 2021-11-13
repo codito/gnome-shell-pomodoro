@@ -24,11 +24,11 @@
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
-        <property name="spacing">20</property>
+        <property name="spacing">50</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
         <property name="margin-top">20</property>
-        <property name="margin-bottom">20</property>
+        <property name="margin-bottom">50</property>
         <property name="margin-start">20</property>
         <property name="margin-end">20</property>
 
@@ -56,15 +56,8 @@
                 <property name="spacing">20</property>
                 <property name="halign">fill</property>
                 <property name="valign">center</property>
-                <!--
-                <property name="margin-top">20</property>
-                <property name="margin-bottom">20</property>
-                <property name="margin-start">20</property>
-                <property name="margin-end">20</property>
-                -->
                 <child>
                   <object class="PomodoroTimerLabel" id="timer_label">
-                    <!-- <property name="vexpand">1</property> -->
                     <property name="halign">center</property>
                     <style>
                       <class name="pomodoro-timer-label"/>
@@ -72,29 +65,19 @@
                   </object>
                 </child>
                 <child>
-                  <!--
-                  <object class="GtkLevelBar" id="progess_levelbar">
-                    <property name="orientation">horizontal</property>
-                    <property name="mode">discrete</property>
-                    <property name="value">1.0</property>
-                    <property name="min-value">0.0</property>
-                    <property name="max-value">4.0</property>
-                    <property name="halign">center</property>
-                  </object>
-                  -->
-                  <object class="PomodoroTimerLevelBar" id="timer_levelbar">
+                  <object class="PomodoroTimerLevelBar" id="session_progressbar">
                     <property name="halign">center</property>
                     <style>
-                      <class name="pomodoro-session-progress"/>
+                      <class name="pomodoro-session-progressbar"/>
                     </style>
                   </object>
                 </child>
               </object>
             </child>
             <child>
-              <object class="PomodoroTimerProgressBar" id="timer_progress">
+              <object class="PomodoroTimerProgressBar" id="timer_progressbar">
                 <style>
-                  <class name="pomodoro-timer-progress"/>
+                  <class name="pomodoro-timer-progressbar"/>
                 </style>
               </object>
             </child>
@@ -257,7 +240,26 @@
                   <object class="GtkStackPage">
                     <property name="name">running</property>
                     <property name="child">
-                      <object class="GtkLabel"/>
+                      <object class="GtkButton" id="timer_skip_button">
+                        <property name="receives-default">0</property>
+                        <property name="tooltip-text" translatable="yes">Take a break</property>
+                        <property name="halign">center</property>
+                        <property name="valign">center</property>
+                        <property name="action-name">timer.skip</property>
+                        <style>
+                          <class name="circular"/>
+                          <class name="small-button"/>
+                          <class name="flat"/>
+                        </style>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">timer-skip-symbolic</property>
+                            <style>
+                              <class name="symbolic"/>
+                            </style>
+                          </object>
+                        </child>
+                      </object><!-- timer_skip_button -->
                     </property>
                   </object>
                 </child>

@@ -138,6 +138,8 @@ namespace Pomodoro
             if (this.layout != null) {
                 this.layout.set_width (-1);
             }
+
+            // base.size_allocate (width, height, baseline);  // TODO: is it needed?
         }
 
         public override void measure (Gtk.Orientation orientation,

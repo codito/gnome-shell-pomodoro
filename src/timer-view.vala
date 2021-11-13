@@ -9,18 +9,17 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.TimerLabel timer_label;
         [GtkChild]
+        private unowned Pomodoro.TimerProgressBar timer_progressbar;
+        [GtkChild]
+        private unowned Pomodoro.TimerLevelBar session_progressbar;
+        [GtkChild]
         private unowned Gtk.Grid buttons_grid;
-
-        // [GtkChild]
-        // private unowned Gtk.Revealer in_app_notification_install_extension;
         [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
         private unowned Gtk.GestureDrag drag_gesture;
 
         private Pomodoro.Timer timer;
-        // private GLib.Callback? install_extension_callback = null;
-        // private GLib.Callback? install_extension_dismissed_callback = null;
 
         construct
         {
@@ -34,12 +33,17 @@ namespace Pomodoro
         {
             var is_stopped = this.timer.state is Pomodoro.DisabledState;
             var is_paused = this.timer.is_paused;
+            var is_running = !(is_stopped || is_paused);
 
-            if (is_stopped || is_paused) {
-                this.timer_state_menubutton.remove_css_class ("timer-running");
+            if (is_running) {
+                this.timer_state_menubutton.add_css_class ("timer-running");
+                this.timer_progressbar.add_css_class ("timer-running");
+                this.session_progressbar.add_css_class ("timer-running");
             }
             else {
-                this.timer_state_menubutton.add_css_class ("timer-running");
+                this.timer_state_menubutton.remove_css_class ("timer-running");
+                this.timer_progressbar.add_css_class ("timer-running");
+                this.session_progressbar.add_css_class ("timer-running");
             }
         }
 
