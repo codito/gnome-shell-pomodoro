@@ -1,3 +1,5 @@
+export const APPLICATION_ID = "@APPLICATION_ID@";
+
 export const PACKAGE_NAME = "@PACKAGE_NAME@";
 
 export const PACKAGE_STRING = "@PACKAGE_STRING@";

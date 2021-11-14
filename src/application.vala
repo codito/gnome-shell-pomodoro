@@ -161,7 +161,7 @@ namespace Pomodoro
         public Application ()
         {
             GLib.Object (
-                application_id: "org.gnomepomodoro.Pomodoro",
+                application_id: Config.APPLICATION_ID,
                 flags: GLib.ApplicationFlags.HANDLES_COMMAND_LINE
             );
 

@@ -52,6 +52,7 @@ extension_dir = get_option('prefix') / get_option('datadir') / 'gnome-shell' / '
 # Right now we have to set the below config values twice because of that,
 # the C/Vala code needs these to be quoted (done via `set_quoted`), but
 # config.js.in needs them to be unquoted
+application_id = 'org.gnomepomodoro.Pomodoro'
 package_name = meson.project_name()
 package_datadir = get_option('prefix') / get_option('datadir') / meson.project_name()
 package_string = package_name + ' ' + meson.project_version()
@@ -64,6 +65,10 @@ package_localedir = get_option('prefix') / get_option('datadir') / 'locale'
 
 conf = configuration_data()
 
+conf.set_quoted(
+  'APPLICATION_ID',
+  application_id,
+)
 conf.set_quoted(
   'GETTEXT_PACKAGE',
   gettext_package,
