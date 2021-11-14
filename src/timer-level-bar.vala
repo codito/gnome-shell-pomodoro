@@ -40,8 +40,6 @@ namespace Pomodoro
 
         private bool update ()
         {
-            var frame_clock = this.get_frame_clock ();
-            var timestamp = frame_clock.get_frame_time () + this.base_timestamp;
             var progress = this.timer.score;
 
             if (this.progress != progress)

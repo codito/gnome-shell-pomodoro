@@ -379,9 +379,10 @@ namespace Pomodoro
         public void show_window (string view_name,
                                  uint32 timestamp = 0)
         {
-            if (this.window == null) {
+            if (this.window == null)
+            {
                 var window = new Pomodoro.Window ();
-                (window as Gtk.Widget).destroy.connect (() => {
+                ((Gtk.Widget) window).destroy.connect (() => {
                     this.window = null;
                 });
 
@@ -401,9 +402,10 @@ namespace Pomodoro
 
         public void show_preferences (uint32 timestamp = 0)
         {
-            if (this.preferences_dialog == null) {
+            if (this.preferences_dialog == null)
+            {
                 var preferences_dialog = new Pomodoro.PreferencesDialog ();
-                (preferences_dialog as Gtk.Widget).destroy.connect (() => {
+                ((Gtk.Widget) preferences_dialog).destroy.connect (() => {
                     this.preferences_dialog = null;
                 });
 
@@ -481,7 +483,7 @@ namespace Pomodoro
             if (this.about_dialog == null)
             {
                 var about_dialog = Pomodoro.create_about_dialog ();
-                (about_dialog as Gtk.Widget).destroy.connect (() => {
+                ((Gtk.Widget) about_dialog).destroy.connect (() => {
                     this.about_dialog = null;
                 });
 

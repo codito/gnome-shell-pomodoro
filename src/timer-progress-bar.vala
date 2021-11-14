@@ -7,8 +7,7 @@ namespace Pomodoro
 
         private Pomodoro.Timer timer;
         private uint           timeout_id = 0;
-        private int64          base_timestamp = 0;
-        private double         position = 0.0;
+        private double         progress = 0.0;
 
         construct
         {
@@ -20,27 +19,14 @@ namespace Pomodoro
             this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
         }
 
-        /**
-         * FrameClock uses monotonic time. Store offset for converting it to an Unix timestamp.
-         */
-        private void sync_time ()
-        {
-            // var frame_clock = this.get_frame_clock ();
-            // this.base_timestamp = GLib.get_real_time () - frame_clock.get_frame_time ();
-
-            // TODO: can this be done better?
-            this.base_timestamp = GLib.get_real_time () - GLib.get_monotonic_time ();
-        }
-
         private bool update ()
         {
-            var frame_clock = this.get_frame_clock ();
-            var timestamp = frame_clock.get_frame_time () + this.base_timestamp;
-            var position = this.timer.state.calculate_progress (timestamp, this.timer.offset);
+            var timestamp = Pomodoro.to_real_time (this.get_frame_clock ().get_frame_time ());
+            var progress = this.timer.state.calculate_progress (timestamp, this.timer.offset);
 
-            if (this.position != position)
+            if (this.progress != progress)
             {
-                this.position = position;
+                this.progress = progress;
 
                 this.queue_draw ();
             }
@@ -62,8 +48,6 @@ namespace Pomodoro
         {
             if (this.timeout_id == 0) {
                 var interval = uint.max (this.calculate_timeout_interval (), 50);
-
-                this.sync_time ();
 
                 // this.update_id = this.add_tick_callback (this.update);
                 this.timeout_id = GLib.Timeout.add (interval, this.update, GLib.Priority.DEFAULT);
@@ -99,13 +83,6 @@ namespace Pomodoro
             else {
                 this.stop_updating ();
             }
-        }
-
-        private void on_timer_elapsed_notify ()
-        {
-            // TODO: no need to
-
-            // this.invalidate_contents ();
         }
 
         public override void map ()
@@ -162,7 +139,7 @@ namespace Pomodoro
 
             if (!is_stopped)
             {
-                var progress = this.position;
+                var progress = this.progress;
                 var progress_angle_from = - 0.5 * Math.PI - 2.0 * Math.PI * progress.clamp (0.000001, 1.0);
                 var progress_angle_to = - 0.5 * Math.PI;
 

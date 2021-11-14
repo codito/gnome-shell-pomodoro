@@ -7,28 +7,32 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.MenuButton timer_state_menubutton;
         [GtkChild]
-        private unowned Pomodoro.TimerLabel timer_label;
-        [GtkChild]
         private unowned Pomodoro.TimerProgressBar timer_progressbar;
         [GtkChild]
         private unowned Pomodoro.TimerLevelBar session_progressbar;
         [GtkChild]
         private unowned Gtk.Grid buttons_grid;
         [GtkChild]
+        private unowned Gtk.Button timer_skip_button;
+        [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
         private unowned Gtk.GestureDrag drag_gesture;
 
         private Pomodoro.Timer timer;
+        private ulong          timer_notify_state_id = 0;
+        private ulong          timer_notify_is_paused_id = 0;
 
         construct
         {
+            var timer = Pomodoro.Timer.get_default ();
+
+            this.timer = timer;
             this.layout_manager = new Gtk.BinLayout ();
+
+            this.insert_action_group ("timer", this.timer.get_action_group ());
         }
 
-        /**
-         * Mainly, e want to update the backdrop. To lower the contrast when timer isn't running.
-         */
         private void update_css_classes ()
         {
             var is_stopped = this.timer.state is Pomodoro.DisabledState;
@@ -37,29 +41,13 @@ namespace Pomodoro
 
             if (is_running) {
                 this.timer_state_menubutton.add_css_class ("timer-running");
-                this.timer_label.add_css_class ("timer-running");
                 this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
             }
             else {
                 this.timer_state_menubutton.remove_css_class ("timer-running");
-                this.timer_label.remove_css_class ("timer-running");
                 this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
-            }
-
-            if (is_paused) {
-                this.timer_label.add_css_class ("timer-paused");
-            }
-            else {
-                this.timer_label.remove_css_class ("timer-paused");
-            }
-
-            if (is_stopped) {
-                this.timer_label.add_css_class ("timer-stopped");
-            }
-            else {
-                this.timer_label.remove_css_class ("timer-stopped");
             }
         }
 
@@ -88,33 +76,50 @@ namespace Pomodoro
             }
         }
 
+        private void disconnect_signals ()
+        {
+            if (this.timer_notify_state_id != 0) {
+                this.timer.disconnect (this.timer_notify_state_id);
+                this.timer_notify_state_id = 0;
+            }
+
+            if (this.timer_notify_is_paused_id != 0) {
+                this.timer.disconnect (this.timer_notify_is_paused_id);
+                this.timer_notify_is_paused_id = 0;
+            }
+        }
+
         private void on_timer_state_notify ()
         {
-            string state_label;
-
-            switch (this.timer.state.name) {
+            switch (this.timer.state.name)
+            {
                 case "null":
-                    state_label = _("Stopped");
+                    this.timer_state_menubutton.label = _("Stopped");
                     break;
 
                 case "pomodoro":
-                    state_label = _("Pomodoro");
+                    this.timer_state_menubutton.label = _("Pomodoro");
                     break;
 
                 case "short-break":
-                    state_label = _("Short Break");
+                    this.timer_state_menubutton.label = _("Short Break");
                     break;
 
                 case "long-break":
-                    state_label = _("Long Break");
+                    this.timer_state_menubutton.label = _("Long Break");
                     break;
 
                 default:
-                    state_label = "";
+                    this.timer_state_menubutton.label = "";
                     break;
             }
 
-            this.timer_state_menubutton.label = state_label;
+            if (this.timer.state is Pomodoro.BreakState) {
+                this.timer_skip_button.tooltip_text = _("Start pomodoro");
+            }
+            else {
+                this.timer_skip_button.tooltip_text = _("Take a break");
+            }
 
             this.update_css_classes ();
             this.update_buttons_stack ();
@@ -183,20 +188,33 @@ namespace Pomodoro
             }
         }
 
-        public void parser_finished (Gtk.Builder builder)
+        public override void map ()
         {
-            base.parser_finished (builder);
-
-            var timer = Pomodoro.Timer.get_default ();
-
-            this.timer = timer;
-            this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
-
             this.on_timer_state_notify ();
-            this.on_timer_is_paused_notify ();
 
-            this.insert_action_group ("timer", this.timer.get_action_group ());
+            base.map ();
+
+            if (this.timer_notify_state_id == 0) {
+                this.timer_notify_state_id = this.timer.notify["state"].connect_after (this.on_timer_state_notify);
+            }
+
+            if (this.timer_notify_is_paused_id == 0) {
+                this.timer_notify_is_paused_id = this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            }
+        }
+
+        public override void unmap ()
+        {
+            base.unmap ();
+
+            this.disconnect_signals ();
+       }
+
+        public override void dispose ()
+        {
+            this.disconnect_signals ();
+
+            base.dispose ();
         }
     }
 }

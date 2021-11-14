@@ -24,6 +24,8 @@ namespace Pomodoro
 {
     public const double USEC_PER_SEC = 1000000.0;
 
+    private int64 reference_time = 0;
+
 
     private string format_time (int seconds)
     {
@@ -54,5 +56,23 @@ namespace Pomodoro
     public double get_current_time ()
     {
         return (double) GLib.get_real_time () / 1000000.0;
+    }
+
+    public void sync_monotonic_time ()
+    {
+        reference_time = GLib.get_real_time () - GLib.get_monotonic_time ();
+    }
+
+    /**
+     * Convert monotonic timestamp to real time, in microseconds
+     */
+    public int64 to_real_time (int64 monotonic_time,
+                               bool  force_sync = false)
+    {
+        if (reference_time == 0 || force_sync) {
+            Pomodoro.sync_monotonic_time ();
+        }
+
+        return monotonic_time + reference_time;
     }
 }

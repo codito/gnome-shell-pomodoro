@@ -26,13 +26,14 @@ namespace Pomodoro
             }
             set {
                 if (this._text != value) {
-                    var text_length_changes = this._text == null || this._text.length != value.length;
+                    var previous_text_length = this._text != null ? this._text.length : 0;
 
                     this._text = value;
 
-                    this.layout.set_text (this._text, -1);
+                    this.clear_layout ();
+                    this.ensure_layout ();
 
-                    if (text_length_changes) {
+                    if (previous_text_length != value.length) {
                         this.queue_resize ();
                     }
                     else {
@@ -60,7 +61,7 @@ namespace Pomodoro
             }
         }
 
-        private string _text;
+        private string _text = null;
         private float _xalign = 0.5f;
         private float _yalign = 0.5f;
         private int glyph_width;
@@ -88,7 +89,7 @@ namespace Pomodoro
         {
             if (this.layout == null)
             {
-                this.layout = this.create_pango_layout (this.text);
+                this.layout = this.create_pango_layout (this._text);
 
                 get_glyph_size (this.layout,
                                 out this.glyph_width,
@@ -131,15 +132,15 @@ namespace Pomodoro
             base.css_changed (change);
         }
 
-        public virtual void size_allocate (int width,
-                                           int height,
-                                           int baseline)
+        public override void size_allocate (int width,
+                                            int height,
+                                            int baseline)
         {
             if (this.layout != null) {
                 this.layout.set_width (-1);
             }
 
-            // base.size_allocate (width, height, baseline);  // TODO: is it needed?
+            base.size_allocate (width, height, baseline);
         }
 
         public override void measure (Gtk.Orientation orientation,
@@ -172,12 +173,9 @@ namespace Pomodoro
             }
 
             this.ensure_layout ();
-
-            var context = this.get_style_context ();
-
             this.get_layout_location (out layout_x, out layout_y);
 
-            snapshot.render_layout (context, layout_x, layout_y, this.layout);
+            snapshot.render_layout (this.get_style_context (), layout_x, layout_y, this.layout);
         }
 
         public override Gtk.SizeRequestMode get_request_mode ()
