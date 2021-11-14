@@ -66,7 +66,7 @@ namespace Pomodoro
         private int glyph_width;
         private int glyph_height;
         private int glyph_baseline;
-        private Pango.Layout layout;
+        private Pango.Layout? layout;
 
         public MonospaceLabel ()
         {

@@ -12,82 +12,74 @@ namespace Pomodoro
         private unowned Pomodoro.MonospaceLabel seconds_label;
 
         private Pomodoro.Timer timer;
+        private GLib.Settings  settings;
+        private ulong          settings_changed_id = 0;
 
         construct
         {
             var timer = Pomodoro.Timer.get_default ();
 
             this.timer = timer;
-
-            this.set_direction (Gtk.TextDirection.LTR);
+            this.settings = Pomodoro.get_settings ().get_child ("preferences");
         }
 
         private void on_timer_elapsed_notify ()
         {
-            if (this.timer.state is Pomodoro.DisabledState)
-            {
-                this.minutes_label.text = "25";  // TODO: fetch pomodoro duration
-                this.seconds_label.text = "00";  // TODO: fetch pomodoro duration
+            uint remaining;
+            uint minutes;
+            uint seconds;
+
+            if (this.timer.state is Pomodoro.DisabledState) {
+                remaining = Pomodoro.PomodoroState.get_default_duration ();
             }
             else {
-                var remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
-                var minutes   = remaining / 60;
-                var seconds   = remaining % 60;
-
-                this.minutes_label.text = minutes.to_string ();
-                this.seconds_label.text = "%02u".printf (seconds);
-            }
-        }
-
-        /**
-         * Mainly, we want to update the backdrop. To lower the contrast when timer isn't running.
-         */
-        private void update_css_classes ()
-        {
-            var is_stopped = this.timer.state is Pomodoro.DisabledState;
-            var is_paused = this.timer.is_paused;
-            var is_running = !(is_stopped || is_paused);
-
-            if (is_running) {
-                this.add_css_class ("timer-running");
-            }
-            else {
-                this.remove_css_class ("timer-running");
+                remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
             }
 
-            if (is_paused) {
-                this.add_css_class ("timer-paused");
-            }
-            else {
-                this.remove_css_class ("timer-paused");
-            }
-        }
+            minutes = remaining / 60;
+            seconds = remaining % 60;
 
-        private void on_timer_state_notify ()
-        {
-            this.update_css_classes ();
-        }
-
-        private void on_timer_is_paused_notify ()
-        {
-            this.update_css_classes ();
+            this.minutes_label.text = minutes.to_string ();
+            this.seconds_label.text = "%02u".printf (seconds);
         }
 
         public void parser_finished (Gtk.Builder builder)
         {
             base.parser_finished (builder);
 
+            this.set_direction (Gtk.TextDirection.LTR);
             this.minutes_label.set_direction (Gtk.TextDirection.LTR);
             this.separator_label.set_direction (Gtk.TextDirection.LTR);
             this.seconds_label.set_direction (Gtk.TextDirection.LTR);
 
-            this.timer.notify["state"].connect_after (this.on_timer_state_notify);
             this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
-            this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
 
-            this.on_timer_state_notify ();
             this.on_timer_elapsed_notify ();
-            this.on_timer_is_paused_notify ();
+
+            this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
+        }
+
+        private void on_settings_changed (GLib.Settings settings,
+                                          string        key)
+        {
+            switch (key)
+            {
+                case "pomodoro-duration":
+                    this.on_timer_elapsed_notify ();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        public override void dispose ()
+        {
+            if (this.settings_changed_id != 0) {
+                this.settings.disconnect (this.settings_changed_id);
+            }
+
+            base.dispose ();
         }
     }
 }

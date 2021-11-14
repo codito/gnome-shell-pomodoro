@@ -144,14 +144,22 @@ namespace Pomodoro
         {
             this.name = "pomodoro";
 
-            this.duration = Pomodoro.get_settings ()
-                                    .get_child ("preferences")
-                                    .get_double ("pomodoro-duration");
+            this.duration = (double) PomodoroState.get_default_duration ();
         }
 
         public PomodoroState.with_timestamp (double timestamp)
         {
             this.timestamp = timestamp;
+        }
+
+        /**
+         * Return duration of a pomodoro from settings
+         */
+        public static uint get_default_duration ()
+        {
+            return (uint) Pomodoro.get_settings ()
+                                      .get_child ("preferences")
+                                      .get_double ("pomodoro-duration");
         }
 
         public override TimerState create_next_state (double score,
@@ -200,14 +208,22 @@ namespace Pomodoro
         {
             this.name = "short-break";
 
-            this.duration = Pomodoro.get_settings ()
-                                    .get_child ("preferences")
-                                    .get_double ("short-break-duration");
+            this.duration = (double) ShortBreakState.get_default_duration ();
         }
 
         public ShortBreakState.with_timestamp (double timestamp)
         {
             this.timestamp = timestamp;
+        }
+
+        /**
+         * Return duration of a short break from settings
+         */
+        public static uint get_default_duration ()
+        {
+            return (uint) Pomodoro.get_settings ()
+                                      .get_child ("preferences")
+                                      .get_double ("short-break-duration");
         }
     }
 
@@ -217,14 +233,22 @@ namespace Pomodoro
         {
             this.name = "long-break";
 
-            this.duration = Pomodoro.get_settings ()
-                                    .get_child ("preferences")
-                                    .get_double ("long-break-duration");
+            this.duration = (double) LongBreakState.get_default_duration ();
         }
 
         public LongBreakState.with_timestamp (double timestamp)
         {
             this.timestamp = timestamp;
+        }
+
+        /**
+         * Return duration of a long break from settings
+         */
+        public static uint get_default_duration ()
+        {
+            return (uint) Pomodoro.get_settings ()
+                                      .get_child ("preferences")
+                                      .get_double ("long-break-duration");
         }
 
         public override double calculate_score (double score,

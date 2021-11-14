@@ -53,8 +53,8 @@
             <child type="overlay">
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                <property name="spacing">20</property>
-                <property name="halign">fill</property>
+                <property name="spacing">5</property>
+                <property name="halign">center</property>
                 <property name="valign">center</property>
                 <child>
                   <object class="PomodoroTimerLabel" id="timer_label">
@@ -67,6 +67,10 @@
                 <child>
                   <object class="PomodoroTimerLevelBar" id="session_progressbar">
                     <property name="halign">center</property>
+                    <property name="margin-top">10</property>
+                    <property name="margin-bottom">10</property>
+                    <property name="margin-start">20</property>
+                    <property name="margin-end">20</property>
                     <style>
                       <class name="pomodoro-session-progressbar"/>
                     </style>

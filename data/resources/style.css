@@ -145,6 +145,10 @@
     animation: blink 1500ms steps(2, start) infinite;
 }
 
+.pomodoro-timer-view .pomodoro-timer-label.timer-stopped {
+    opacity: 0.2;  /* same as blink */
+}
+
 .pomodoro-timer-label:backdrop,
 .pomodoro-timer-state label:backdrop,
 .pomodoro-timer-progressbar:backdrop,

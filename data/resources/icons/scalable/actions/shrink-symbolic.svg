@@ -1,95 +1,72 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   width="16"
-   height="16"
+   height="16px"
+   viewBox="0 0 16 16"
+   width="16px"
    version="1.1"
-   id="svg18"
-   sodipodi:docname="view-fullscreen-symbolic.svg"
+   id="svg10"
+   sodipodi:docname="shrink-symbolic.svg"
    inkscape:version="1.1 (c68e22c387, 2021-05-23)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
-     id="defs22" />
+     id="defs14" />
   <sodipodi:namedview
-     id="namedview20"
+     id="namedview12"
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
-     showgrid="false"
-     inkscape:zoom="1.7050781"
-     inkscape:cx="-92.371134"
-     inkscape:cy="86.5063"
+     showgrid="true"
+     inkscape:zoom="19.290757"
+     inkscape:cx="-5.9873234"
+     inkscape:cy="11.326668"
      inkscape:window-width="2560"
      inkscape:window-height="1371"
      inkscape:window-x="0"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg18" />
+     inkscape:current-layer="svg10">
+    <inkscape:grid
+       type="xygrid"
+       id="grid831" />
+  </sodipodi:namedview>
+  <path
+     id="path4"
+     style="fill:#2e3436"
+     d="M 4,0 C 2.355469,0 1,1.355469 1,3 v 10 c 0,1.644531 1.355469,3 3,3 H 6 V 14 H 4 C 3.429688,14 3,13.570312 3,13 V 3 C 3,2.429688 3.429688,2 4,2 h 8 c 0.570312,0 1,0.429688 1,1 v 4 h 2 V 3 C 15,1.355469 13.644531,0 12,0 Z"
+     sodipodi:nodetypes="ssssccssssssccsss" />
+  <path
+     d="m 14,-16 v 2 H 2 v -2 z m 0,0"
+     id="path6"
+     style="fill:#2e3436;stroke-width:1" />
   <g
-     id="g899"
-     transform="translate(-10.000294,8.0003206)">
+     id="g1262"
+     transform="rotate(90,14.5,6.5)">
     <path
-       d="m 12,1 a 1,1 0 1 0 0,2 h 3 v 3 a 1,1 0 1 0 2,0 V 2 A 1,1 0 0 0 16,1 Z"
-       style="color:#000000;line-height:normal;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;text-transform:none;text-orientation:mixed;shape-padding:0;isolation:auto;mix-blend-mode:normal;fill:#474747;marker:none"
-       font-weight="400"
-       font-family="sans-serif"
-       overflow="visible"
-       id="path845" />
+       d="m 24,12 c 0,-0.550781 -0.449219,-1 -1,-1 H 19 V 7 C 19,6.449219 18.550781,6 18,6 17.449219,6 17,6.449219 17,7 v 5 c 0,0.550781 0.449219,1 1,1 h 5 c 0.550781,0 1,-0.449219 1,-1 z m 0,0"
+       id="path1138"
+       style="fill:#2e3436" />
     <path
-       d="m 16,1 h 1 v 1 h -1 z"
-       style="color:#000000;fill:#474747;marker:none"
-       overflow="visible"
-       id="path847" />
+       id="path1140"
+       style="fill:#2e3436"
+       d="M 10,9.5859375 V 11 H 8.5859375 l 4.7070315,4.707031 C 13.480469,15.894531 13.734375,16 14,16 c 0.265625,0 0.519531,-0.105469 0.707031,-0.292969 0.390625,-0.390625 0.390625,-1.023437 0,-1.414062 z"
+       transform="rotate(-90,14.5,6.5)" />
     <path
-       d="m 15.984,0.99 a 1,1 0 0 0 -0.69,0.301 l -4.5,4.469 a 1.0002056,1.0002056 0 1 0 1.411,1.418 l 4.5,-4.469 A 1,1 0 0 0 15.985,0.99 Z"
-       style="color:#000000;line-height:normal;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;text-transform:none;text-orientation:mixed;shape-padding:0;isolation:auto;mix-blend-mode:normal;fill:#474747;marker:none"
-       font-weight="400"
-       font-family="sans-serif"
-       overflow="visible"
-       id="path849" />
+       d="m 17,12 h 1 v 1 h -1 z m 0,0"
+       id="path1142"
+       style="fill:#2e3436" />
     <path
-       style="color:#000000;fill:#474747;marker:none"
-       d="m 11,1 h 1 v 1 h -1 z"
-       id="path868" />
+       d="m 17,6 h 1 v 1 h -1 z m 0,0"
+       id="path1144"
+       style="fill:#2e3436" />
     <path
-       style="color:#000000;fill:#474747;marker:none"
-       d="m 16,6 h 1 v 1 h -1 z"
-       id="path866" />
-  </g>
-  <g
-     id="g910"
-     transform="translate(0,-4)">
-    <path
-       d="m 9,10 h 1 v 1 H 9 Z"
-       style="color:#000000;fill:#474747;marker:none"
-       overflow="visible"
-       id="path843" />
-    <path
-       d="M 9.984,4.986 A 1,1 0 0 0 9,6 v 4 a 1,1 0 0 0 1,1 h 4 A 1,1 0 1 0 14,9 H 11 V 6 A 1,1 0 0 0 9.984,4.986 Z"
-       style="color:#000000;line-height:normal;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;text-transform:none;text-orientation:mixed;shape-padding:0;isolation:auto;mix-blend-mode:normal;fill:#474747;marker:none"
-       font-weight="400"
-       font-family="sans-serif"
-       overflow="visible"
-       id="path839" />
-    <path
-       d="m 14.48,4.49 a 1,1 0 0 0 -0.687,0.303 l -4.5,4.5 a 1,1 0 1 0 1.414,1.414 l 4.5,-4.5 A 1,1 0 0 0 14.48,4.49 Z"
-       style="color:#000000;line-height:normal;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;text-transform:none;text-orientation:mixed;shape-padding:0;isolation:auto;mix-blend-mode:normal;fill:#474747;marker:none"
-       font-weight="400"
-       font-family="sans-serif"
-       overflow="visible"
-       id="path841" />
-    <path
-       style="color:#000000;fill:#474747;marker:none"
-       d="m 14,10 h 1 v 1 h -1 z"
-       id="path864" />
-    <path
-       style="color:#000000;fill:#474747;marker:none"
-       d="m 9,5 h 1 V 6 H 9 Z"
-       id="path851" />
+       d="m 23,12 h 1 v 1 h -1 z m 0,0"
+       id="path1146"
+       style="fill:#2e3436" />
   </g>
 </svg>

@@ -37,13 +37,29 @@ namespace Pomodoro
 
             if (is_running) {
                 this.timer_state_menubutton.add_css_class ("timer-running");
+                this.timer_label.add_css_class ("timer-running");
                 this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
             }
             else {
                 this.timer_state_menubutton.remove_css_class ("timer-running");
+                this.timer_label.remove_css_class ("timer-running");
                 this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
+            }
+
+            if (is_paused) {
+                this.timer_label.add_css_class ("timer-paused");
+            }
+            else {
+                this.timer_label.remove_css_class ("timer-paused");
+            }
+
+            if (is_stopped) {
+                this.timer_label.add_css_class ("timer-stopped");
+            }
+            else {
+                this.timer_label.remove_css_class ("timer-stopped");
             }
         }
 

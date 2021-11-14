@@ -25,6 +25,10 @@ install_subdir(
 js_conf = configuration_data()
 
 js_conf.set(
+  'APPLICATION_ID',
+  application_id,
+)
+js_conf.set(
   'PACKAGE_NAME',
   package_name,
 )
