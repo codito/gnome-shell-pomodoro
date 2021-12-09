@@ -23,112 +23,37 @@ using GLib;
 
 namespace Pomodoro
 {
-    private const double TIME_TO_RESET_SCORE = 3600.0;
-
-
-    /**
-     * Session (uninterrupted work including long breaks)
-     * - set (4 pomodoros)
-     *   - interval (individual pomodoros) / time block
-     *
-     *
-     */
-
-
-
-
     /**
      * Pomodoro.Timer class.
      *
-     * A class for a countdown timer. Timer works in an atomic manner, it acknowlegdes passage
-     * of time after calling update() method.
+     * It works in manner of a state machine; internally it's not much of a timer.
+     *
+     * Its main purpuse:
+     * - advancing time blocks
+     * - keeping reference to a current session
+     * - abstracting time block / session events so to that it's easier to monitor changes
      */
     public class Timer : GLib.Object
     {
         private static Pomodoro.Timer? instance = null;
 
-        public TimerState state {
-            get {
-                return this._state;
-            }
-            set {
-                this.set_state_full (value, value.timestamp);
-            }
-        }
-
-        // deprecated, use state.duration
-        [CCode (notify = false)]
-        public double state_duration {
-            get {
-                return this._state != null ? this._state.duration : 0.0;
-            }
-            set {
-                if (this._state != null) {
-                    this._state.duration = value;
-                }
-            }
-        }
-
-        [CCode (notify = false)]
-        public double elapsed {
-            get {
-                return this._state != null ? this._state.elapsed : 0.0;
-            }
-            set {
-                this._state.elapsed = value;
-                this.update_offset ();
-            }
-        }
-
-        [CCode (notify = false)]
-        public double remaining {
-            get {
-                return this._state != null ? this._state.duration - this._state.elapsed : 0.0;
-            }
-            set {
-                this._state.elapsed = this._state.duration - value;
-                this.update_offset ();
-            }
-        }
-
-        [CCode (notify = false)]
-        public double offset {
-            get;
-            private set;
-        }
-
-        [CCode (notify = false)]
-        public bool is_paused {
-            get {
-                return this._is_paused;
-            }
-            set {
-                this.set_is_paused_full (value, Pomodoro.get_current_time ());
-            }
-        }
-
-        public double timestamp {
-            get;
-            construct set;
-        }
-
         /**
-         * Achieved score or number of completed pomodoros.
-         *
-         * It's updated on state change.
+         * Current session
          */
-        public double score {
-            get; set; default = 0.0;
+        public Pomodoro.Session session {
+            get {
+                return this._session;
+            }
         }
 
+        private Pomodoro.Session _session;
         private uint timeout_source = 0;
-        private Pomodoro.TimerState _state;
-        private bool _is_paused;
+
 
         construct
         {
-            this._state = new Pomodoro.DisabledState ();
-            this.timestamp = this._state.timestamp;
+            // this._state = new Pomodoro.DisabledState ();
+            // this.timestamp = this._state.timestamp;
         }
 
         public static unowned Pomodoro.Timer get_default ()
@@ -137,7 +62,7 @@ namespace Pomodoro
                 var timer = new Timer ();
                 timer.set_default ();
 
-                timer.destroy.connect_after (() => {
+                timer.dispose.connect_after (() => {
                     if (Timer.instance == timer) {
                         Timer.instance = null;
                     }
@@ -153,13 +78,29 @@ namespace Pomodoro
         }
 
         /**
+         * Check whether timer has started.
+         */
+        public bool is_stopped ()
+        {
+            return this._session.current_block.type == TimeBlockType.UNDEFINED;
+        }
+
+        /**
+         * Check whether timer has been paused.
+         */
+        public bool is_paused ()
+        {
+            return this._session.current_block.is_paused ();
+        }
+
+        /**
          * Check whether timer is ticking.
          */
         public bool is_running ()
         {
-            return this.timeout_source != 0;
-            // return !(this.state is Pomodoro.DisabledState);
+            return !(this.is_stopped () || this.is_paused ());
         }
+
 
         public void start (double timestamp = Pomodoro.get_current_time ())
         {
@@ -179,15 +120,16 @@ namespace Pomodoro
             }
         }
 
-        public void toggle (double timestamp = Pomodoro.get_current_time ())
-        {
-            if (this.state is Pomodoro.DisabledState) {
-                this.start (timestamp);
-            }
-            else {
-                this.stop (timestamp);
-            }
-        }
+        // TODO: remove
+        // public void toggle (double timestamp = Pomodoro.get_current_time ())
+        // {
+        //     if (this.state is Pomodoro.DisabledState) {
+        //         this.start (timestamp);
+        //     }
+        //     else {
+        //         this.stop (timestamp);
+        //     }
+        // }
 
         public void pause (double timestamp = Pomodoro.get_current_time ())
         {
@@ -197,14 +139,6 @@ namespace Pomodoro
         public void resume (double timestamp = Pomodoro.get_current_time ())
         {
             this.set_is_paused_full (false, timestamp);
-        }
-
-        public void reset (double timestamp = Pomodoro.get_current_time ())
-        {
-            this.resume (timestamp);
-
-            this.score = 0.0;
-            this.state = new Pomodoro.DisabledState.with_timestamp (timestamp);
         }
 
         public void skip (double timestamp = Pomodoro.get_current_time ())
@@ -336,30 +270,11 @@ namespace Pomodoro
             return state_changed;
         }
 
-        // public int64 calculate_elapsed (int64 timestamp)  // TODO: rename to get_elapsed once property is removed
-        // {
-        //     return timestamp - (int64)(this._state.timestamp * 1000.0) - (int64)(this._offset * 1000.0);
-        // }
 
-        // public double calculate_state_progress (int64 timestamp)  // TODO: move it to State class
-        // {
-        //     if (this.state_duration <= 0.0) {
-        //         return 0.0;
-        //     }
+        // -----------------------------------------------------------
 
-        //     warning ( "### %.6f %.6f", ((double) timestamp) / USEC_PER_SEC, this._state.timestamp);
 
-        //     return (
-        //         ((double) timestamp) / USEC_PER_SEC - this._state.timestamp - this._offset
-        //     ) / this.state_duration;
-        // }
-
-        // public double calculate_elapsed_double (int64 timestamp)  // TODO: rename to get_elapsed once property is removed
-        // {
-        //     return ((double) this.calculate_elapsed_double (timestamp)) / 1000.0;
-        // }
-
-        public virtual signal void update (double timestamp = Pomodoro.get_current_time ())
+        public signal void update (double timestamp = Pomodoro.get_current_time ())
         {
             this.timestamp = timestamp;
 
@@ -376,37 +291,35 @@ namespace Pomodoro
             }
         }
 
-        public virtual signal void state_enter (TimerState state)
+        public signal void enter_session (Session session)
         {
-            state.notify["duration"].connect (this.on_state_duration_notify);
         }
 
-        public virtual signal void state_leave (TimerState state)
+        public signal void leave_session (Session session)
         {
-            state.notify["duration"].disconnect (this.on_state_duration_notify);
-
-            this.score = state.calculate_score (this.score, this.timestamp);
         }
 
-        public virtual signal void state_changed (TimerState state,
-                                                  TimerState previous_state)
-        {
-            Pomodoro.sync_monotonic_time ();
 
-            /* Run the timer */
-            this.update_timeout ();
-
-            this.notify_property ("state");  // TODO: is it needed?
-            this.notify_property ("elapsed");
-        }
+        // public signal void state_changed (TimerState state,
+        //                                   TimerState previous_state)
+        // {
+        //     Pomodoro.sync_monotonic_time ();
+        //
+        //     /* Run the timer */
+        //     this.update_timeout ();
+        //
+        //    // this.notify_property ("state");  // TODO: is it needed?
+        //    // this.notify_property ("elapsed");
+        // }
 
         private void on_state_duration_notify ()
         {
             this.update (this.timestamp);
 
-            this.notify_property ("state-duration");
+            // this.notify_property ("state-duration");
         }
 
+        // TODO: remove
         public GLib.ActionGroup get_action_group ()
         {
             return Pomodoro.TimerActionGroup.for_timer (this);
@@ -500,10 +413,13 @@ namespace Pomodoro
             }
         }
 
-        public virtual signal void destroy ()
-        {
-            this.dispose ();
-        }
+        /**
+         * Emitted on any state related change:
+         * - change of state
+         * - change of duration
+         * - pause/resume
+         */
+        public signal void updated ();
 
         public override void dispose ()
         {
@@ -514,5 +430,110 @@ namespace Pomodoro
 
             base.dispose ();
         }
+
+
+        /**
+         * Achieved score or number of completed pomodoros.
+         *
+         * It's updated on state change.
+         */
+        // public double score {
+        //     get; set; default = 0.0;
+        // }
+        // private bool _is_paused;
+
+        // public int64 calculate_elapsed (int64 timestamp)  // TODO: rename to get_elapsed once property is removed
+        // {
+        //     return timestamp - (int64)(this._state.timestamp * 1000.0) - (int64)(this._offset * 1000.0);
+        // }
+
+        // public double calculate_state_progress (int64 timestamp)  // TODO: move it to State class
+        // {
+        //     if (this.state_duration <= 0.0) {
+        //         return 0.0;
+        //     }
+
+        //     warning ( "### %.6f %.6f", ((double) timestamp) / USEC_PER_SEC, this._state.timestamp);
+
+        //     return (
+        //         ((double) timestamp) / USEC_PER_SEC - this._state.timestamp - this._offset
+        //     ) / this.state_duration;
+        // }
+
+        // public double calculate_elapsed_double (int64 timestamp)  // TODO: rename to get_elapsed once property is removed
+        // {
+        //     return ((double) this.calculate_elapsed_double (timestamp)) / 1000.0;
+        // }
+
+        // deprecated, use state.duration
+        // [CCode (notify = false)]
+        // public double state_duration {
+        //     get {
+        //         return this._state != null ? this._state.duration : 0.0;
+        //     }
+        //     set {
+        //         if (this._state != null) {
+        //             this._state.duration = value;
+        //         }
+        //     }
+        // }
+
+        // [CCode (notify = false)]
+        // public double elapsed {
+        //     get {
+        //         return this._state != null ? this._state.elapsed : 0.0;
+        //     }
+        //     set {
+        //         this._state.elapsed = value;
+        //         this.update_offset ();
+        //     }
+        // }
+
+        // [CCode (notify = false)]
+        // public double remaining {
+        //     get {
+        //         return this._state != null ? this._state.duration - this._state.elapsed : 0.0;
+        //     }
+        //     set {
+        //         this._state.elapsed = this._state.duration - value;
+        //         this.update_offset ();
+        //     }
+        // }
+
+        // [CCode (notify = false)]
+        // public double offset {
+        //     get;
+        //     private set;
+        // }
+
+        // [CCode (notify = false)]
+        // public bool is_paused {
+        //     get {
+        //         return this._is_paused;
+        //     }
+        //     set {
+        //         this.set_is_paused_full (value, Pomodoro.get_current_time ());
+        //     }
+        // }
+
+        // public double timestamp {
+        //     get;
+        //     construct set;
+        // }
+
+        // TODO: remove
+        // public void reset (double timestamp = Pomodoro.get_current_time ())
+        // {
+        //     this.resume (timestamp);
+        //
+        //     this.score = 0.0;
+        //     this.state = new Pomodoro.DisabledState.with_timestamp (timestamp);
+        // }
+
+        // TODO: remove
+        // public virtual signal void destroy ()
+        // {
+        //     this.dispose ();
+        // }
     }
 }

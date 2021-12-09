@@ -25,6 +25,7 @@ namespace Pomodoro
     public const double USEC_PER_SEC = 1000000.0;
 
     private int64 reference_time = 0;
+    private int64 current_time = -1;
 
 
     private string format_time (int seconds)
@@ -51,11 +52,26 @@ namespace Pomodoro
     }
 
     /**
-     * Returns the number of seconds since January 1, 1970 UTC.
+     * Fake GLib.get_real_time (). Added for unittesting.
      */
-    public double get_current_time ()
+    public void freeze_time (int64 timestamp = Pomodoro.get_current_time ())
     {
-        return (double) GLib.get_real_time () / 1000000.0;
+        this.current_time = timestamp;
+    }
+
+    public void unfreeze_time ()
+    {
+        this.current_time = -1;
+    }
+
+    /**
+     * Returns the number of microseconds since January 1, 1970 UTC or frozen time
+     */
+    public int64 get_current_time ()
+    {
+        return this.current_time == -1
+                ? GLib.get_real_time ()
+                : this.current_time;
     }
 
     public void sync_monotonic_time ()
@@ -66,10 +82,9 @@ namespace Pomodoro
     /**
      * Convert monotonic timestamp to real time, in microseconds
      */
-    public int64 to_real_time (int64 monotonic_time,
-                               bool  force_sync = false)
+    public int64 to_real_time (int64 monotonic_time)
     {
-        if (reference_time == 0 || force_sync) {
+        if (reference_time == 0) {
             Pomodoro.sync_monotonic_time ();
         }
 
