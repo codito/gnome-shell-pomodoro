@@ -21,6 +21,7 @@
 using GLib;
 
 
+// TODO: remove
 namespace Freedesktop
 {
     [DBus (name = "org.freedesktop.Notifications")]
@@ -36,11 +37,13 @@ namespace Pomodoro
 {
     public class NotificationsCapability : Pomodoro.Capability
     {
-        private GLib.Settings               settings;
-        private Pomodoro.Timer              timer;
-        private Pomodoro.ScreenNotification screen_notification;
-        private Freedesktop.Notifications   proxy;
+        private GLib.Settings                settings;
+        private Pomodoro.SessionManager?     session_manager;
+        private Pomodoro.ScreenNotification? screen_notification;
+        private Pomodoro.Timer?              timer;
+        private Freedesktop.Notifications    proxy;
 
+        // TODO: remove
         private bool have_actions = false;
         private bool have_persistence = false;
 
@@ -76,16 +79,16 @@ namespace Pomodoro
             base (name);
         }
 
-        private void notify_pomodoro_start ()
+        private void notify_pomodoro_start ()  // TODO: rename to notify_pomodoro_started
         {
-            if (!this.timer.is_paused) {
+            if (!this.timer.is_paused ()) {
                 this.show_pomodoro_start_notification ();
             }
         }
 
-        private void notify_pomodoro_end ()
+        private void notify_pomodoro_end ()  // TODO: rename to notify_break_started
         {
-            if (!this.timer.is_paused) {
+            if (!this.timer.is_paused ()) {
                 if (this.settings.get_boolean ("show-screen-notifications")) {
                     this.show_screen_notification ();
                 }
@@ -112,7 +115,7 @@ namespace Pomodoro
                 ((Gtk.Widget) this.screen_notification).destroy.connect (() => {
                     this.screen_notification = null;
 
-                    if (!this.timer.is_paused && this.timer.state is Pomodoro.BreakState) {
+                    if (!this.timer.is_paused () && this.timer.state.is_break ()) {
                         this.show_pomodoro_end_notification ();
                     }
                 });
@@ -148,8 +151,7 @@ namespace Pomodoro
         private void show_pomodoro_end_notification ()
         {
             // TODO: resident notifications won't be updated, might be better not to display scheduled time
-
-            var remaining = (int) Math.ceil (this.timer.remaining);
+            var remaining = (int) Math.floor (this.timer.get_remaining () / 1000000);
             var minutes   = (int) Math.round ((double) remaining / 60.0);
             var seconds   = (int) Math.floor (remaining % 60);
             var body      = remaining > 45
@@ -158,7 +160,7 @@ namespace Pomodoro
                   : ngettext ("You have %d second",
                               "You have %d seconds", seconds).printf (seconds);
 
-            var notification = new GLib.Notification ((this.timer.state is Pomodoro.ShortBreakState)
+            var notification = new GLib.Notification ((this.timer.state == Pomodoro.State.SHORT_BREAK)
                                                       ? _("Take a break")
                                                       : _("Take a longer break"));
             notification.set_body (body);
@@ -175,7 +177,7 @@ namespace Pomodoro
             {
                 notification.set_default_action ("app.show-screen-notification");
 
-                if (this.timer.state is Pomodoro.ShortBreakState) {
+                if (this.timer.state == Pomodoro.State.SHORT_BREAK) {
                     notification.add_button_with_target_value (_("Lengthen it"),
                                                                "app.timer-switch-state",
                                                                new GLib.Variant.string ("long-break"));
@@ -201,7 +203,7 @@ namespace Pomodoro
             switch (key)
             {
                 case "show-screen-notifications":
-                    if (this.timer.state is Pomodoro.BreakState) {
+                    if (this.timer.state.is_break ()) {
                         this.notify_pomodoro_end ();
                     }
 
@@ -209,49 +211,57 @@ namespace Pomodoro
             }
         }
 
-        private void on_timer_state_changed (Pomodoro.TimerState state,
-                                             Pomodoro.TimerState previous_state)
+        // private void on_timer_state_changed (Pomodoro.TimerState timer_state,
+        //                                      Pomodoro.TimerState previous_timer_state)  // TODO: rename to internal_state_changed
+        // {
+        //     this.withdraw_notifications ();
+        //
+        //     if (timer_state.state == Pomodoro.State.POMODORO) {
+        //         this.notify_pomodoro_start ();
+        //     }
+        //     else if (timer_state.state.is_break ()) {
+        //         this.notify_pomodoro_end ();
+        //     }
+        // }
+
+        // private void on_timer_state_duration_notify ()
+        // {
+        //     if (this.timer.is_running ()) {
+        //         if (this.timer.state == Pomodoro.PomodoroState) {
+        //             this.show_pomodoro_start_notification ();
+        //         }
+        //
+        //         if (this.timer.state.is_break ()) {
+        //             this.show_pomodoro_end_notification ();
+        //         }
+        //     }
+        // }
+
+        private void on_timer_changed ()
         {
-            this.withdraw_notifications ();
-
-            if (state is Pomodoro.PomodoroState) {
-                this.notify_pomodoro_start ();
-            }
-            else if (state is Pomodoro.BreakState) {
-                this.notify_pomodoro_end ();
-            }
-        }
-
-        private void on_timer_state_duration_notify ()
-        {
-            if (!this.timer.is_paused) {
-                if (this.timer.state is Pomodoro.PomodoroState) {
-                    this.show_pomodoro_start_notification ();
-                }
-
-                if (this.timer.state is Pomodoro.BreakState) {
-                    this.show_pomodoro_end_notification ();
-                }
-            }
-        }
-
-        private void on_timer_is_paused_notify ()
-        {
-            if (this.timer.is_paused) {
+            if (this.timer.is_stopped ()) {
                 this.withdraw_notifications ();
             }
-            else {
-                GLib.Idle.add (() => {
-                    if (this.timer.state is Pomodoro.PomodoroState) {
-                        this.notify_pomodoro_start ();
-                    }
-                    else if (this.timer.state is Pomodoro.BreakState) {
-                        this.notify_pomodoro_end ();
-                    }
 
-                    return GLib.Source.REMOVE;
-                });
+            if (this.timer.is_paused ()) {
+                // TODO: if timer is paused to wait for activity, then notification does
+                // not need to be withdrawn
+
+                this.withdraw_notifications ();
             }
+
+            // else {
+            //     GLib.Idle.add (() => {
+            //         if (this.timer.state == Pomodoro.State.POMODORO) {
+            //             this.notify_pomodoro_start ();
+            //         }
+            //         else if (this.timer.state.is_break ()) {
+            //             this.notify_pomodoro_end ();
+            //         }
+            //
+            //         return GLib.Source.REMOVE;
+            //     });
+            // }
         }
 
         private void on_show_screen_notification_activate (GLib.SimpleAction action,
@@ -259,6 +269,30 @@ namespace Pomodoro
         {
             this.show_screen_notification ();
         }
+
+        private void on_enter_time_block (Pomodoro.TimeBlock time_block)
+        {
+            if (time_block.state.is_break ()) {
+                this.notify_pomodoro_end ();
+            }
+
+            if (time_block.state == Pomodoro.State.POMODORO) {
+                this.notify_pomodoro_start ();
+            }
+        }
+
+        private void on_leave_time_block (Pomodoro.TimeBlock time_block)
+        {
+            // var next_time_block = time_block.get_next ();
+
+            // if (next_time_block != null && next_time_block.state == Pomodoro.State.POMODORO) {
+            //     this.notify_pomodoro_start ();
+            // }
+        }
+
+        // private void on_timer_changed ()
+        // {
+        // }
 
         public override void enable ()
         {
@@ -269,16 +303,18 @@ namespace Pomodoro
                 var application = GLib.Application.get_default ();
                 application.add_action (show_screen_notification_action);
 
-                this.timer = Pomodoro.Timer.get_default ();
-                this.timer.state_changed.connect_after (this.on_timer_state_changed);
-                this.timer.notify["state-duration"].connect (this.on_timer_state_duration_notify);
-                this.timer.notify["is-paused"].connect (this.on_timer_is_paused_notify);
+                this.session_manager = Pomodoro.SessionManager.get_default ();
+                this.session_manager.enter_time_block.connect_after (this.on_enter_time_block);
+                this.session_manager.leave_time_block.connect_after (this.on_leave_time_block);
+
+                // this.timer = Pomodoro.Timer.get_default ();
+                // this.timer.changed.connect (this.on_timer_changed);
 
                 this.settings = Pomodoro.get_settings ().get_child ("preferences");
                 this.settings.changed.connect (this.on_settings_changed);
 
-                this.on_timer_state_changed (this.timer.state,
-                                             this.timer.state);
+                // TODO
+                // this.on_enter_time_block (this.session_manager.get_current_time_block ());
             }
 
             base.enable ();
@@ -289,10 +325,12 @@ namespace Pomodoro
             if (this.enabled) {
                 this.withdraw_notifications ();
 
-                this.timer.state_changed.disconnect (this.on_timer_state_changed);
-                this.timer.notify["state-duration"].disconnect (this.on_timer_state_duration_notify);
-                this.timer.notify["is-paused"].disconnect (this.on_timer_is_paused_notify);
-                this.timer = null;
+                this.session_manager.enter_time_block.disconnect (this.on_enter_time_block);
+                this.session_manager.leave_time_block.disconnect (this.on_leave_time_block);
+                this.session_manager = null;
+
+                // this.timer.disconnect (this.on_timer_changed);
+                // this.timer = null;
 
                 this.settings.changed.disconnect (this.on_settings_changed);
                 this.settings = null;

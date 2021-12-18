@@ -39,9 +39,9 @@ namespace Pomodoro
         private const uint REPOSITORY_VERSION = 1;
         private const uint SETUP_PLUGINS_TIMEOUT = 3000;
 
-        public Pomodoro.Service service;
         public Pomodoro.Timer timer;
-        public Pomodoro.CapabilityManager capabilities;
+        public Pomodoro.SessionManager session_manager;
+        public Pomodoro.CapabilityManager capabilities;  // TODO: rename to capability_manager
 
         private Gom.Repository repository;
         private Gom.Adapter adapter;
@@ -54,6 +54,8 @@ namespace Pomodoro
         private unowned Pomodoro.PreferencesDialog preferences_dialog;
         private unowned Pomodoro.Window window;
         private unowned Gtk.AboutDialog about_dialog;
+        private Pomodoro.ApplicationService service;
+        private Pomodoro.TimerService timer_service;
         private Pomodoro.DesktopExtension desktop_extension;
         private Peas.ExtensionSet extensions;
         private GLib.Settings settings;
@@ -167,6 +169,7 @@ namespace Pomodoro
 
             this.timer = null;
             this.service = null;
+            this.timer_service = null;
         }
 
         public new static unowned Application get_default ()
@@ -377,7 +380,7 @@ namespace Pomodoro
         }
 
         public void show_window (string view_name,
-                                 uint32 timestamp = 0)
+                                 int64  timestamp = -1)
         {
             if (this.window == null)
             {
@@ -392,15 +395,15 @@ namespace Pomodoro
 
             this.window.view = Pomodoro.WindowView.from_string (view_name);
 
-            if (timestamp > 0) {
-                this.window.present_with_time (timestamp);
+            if (timestamp >= 0) {
+                this.window.present_with_time ((uint32) (timestamp / 1000000));
             }
             else {
                 this.window.present ();
             }
         }
 
-        public void show_preferences (uint32 timestamp = 0)
+        public void show_preferences (int64 timestamp = -1)
         {
             if (this.preferences_dialog == null)
             {
@@ -413,8 +416,8 @@ namespace Pomodoro
                 this.preferences_dialog = preferences_dialog;
             }
 
-            if (timestamp > 0) {
-                this.preferences_dialog.present_with_time (timestamp);
+            if (timestamp >= 0) {
+                this.preferences_dialog.present_with_time ((uint32) (timestamp / 1000000));
             }
             else {
                 this.preferences_dialog.present ();
@@ -508,7 +511,7 @@ namespace Pomodoro
                                           GLib.Variant?     parameter)
         {
             try {
-                this.service.skip ();
+                this.timer_service.skip ();
             }
             catch (GLib.Error error) {
             }
@@ -518,22 +521,25 @@ namespace Pomodoro
                                                GLib.Variant?     parameter)
         {
             try {
-                this.service.set_state (parameter.get_string (), 0.0);
+                this.timer_service.set_state (parameter.get_string ());
             }
             catch (GLib.Error error) {
+                // TODO: log warning
             }
         }
 
-        private void activate_timer_switch_state (GLib.SimpleAction action,
-                                                  GLib.Variant? parameter)
-        {
-            try {
-                this.service.set_state (parameter.get_string (),
-                                        this.timer.state.timestamp);
-            }
-            catch (GLib.Error error) {
-            }
-        }
+        // TODO: rename to swap_state?
+        // private void activate_timer_switch_state (GLib.SimpleAction action,
+        //                                           GLib.Variant?     parameter)
+        // {
+        //     try {
+        //         // this.service.set_state (parameter.get_string (),
+        //         //                         this.timer.state.timestamp);
+        //     }
+        //     catch (GLib.Error error) {
+        //         // TODO: log warning
+        //     }
+        // }
 
         private void setup_actions ()
         {
@@ -601,29 +607,33 @@ namespace Pomodoro
 
             base.startup ();
 
-            this.restore_timer ();
+            // TODO: Handle async
+
+            this.session_manager.restore_async.begin ();
 
             this.setup_resources ();
             this.setup_actions ();
             this.setup_repository ();
             this.setup_capabilities ();
             this.setup_desktop_extension ();
-            this.setup_plugins.begin ((obj, res) => {
-                this.setup_plugins.end (res);
 
-                GLib.Idle.add (() => {
-                    // TODO: shouldn't these be enabled by settings?!
-                    this.capabilities.enable ("notifications");
-                    this.capabilities.enable ("indicator");
-                    this.capabilities.enable ("accelerator");
-                    this.capabilities.enable ("hide-system-notifications");
-                    this.capabilities.enable ("idle-monitor");
-
-                    this.release ();
-
-                    return GLib.Source.REMOVE;
-                });
-            });
+            // this.setup_plugins.begin ((obj, res) => {
+            //     this.setup_plugins.end (res);
+            //
+            //     GLib.Idle.add (() => {
+            //         // TODO: shouldn't these be enabled by settings?!
+            //         this.capabilities.enable ("notifications");
+            //         this.capabilities.enable ("indicator");
+            //         this.capabilities.enable ("accelerator");
+            //         this.capabilities.enable ("hide-system-notifications");
+            //         this.capabilities.enable ("idle-monitor");
+            //
+            //         this.release ();
+            //
+            //         return GLib.Source.REMOVE;
+            //     });
+            // });
+            this.release ();
         }
 
         /**
@@ -711,19 +721,21 @@ namespace Pomodoro
         {
             this.hold ();
 
-            this.save_timer ();
-
             foreach (var window in this.get_windows ()) {
                 this.remove_window (window);
             }
 
+            // TODO: handle async
+
+            this.session_manager.save_async.begin ();
+
             this.capabilities.disable_all ();
 
-            var engine = Peas.Engine.get_default ();
+            // var engine = Peas.Engine.get_default ();
 
-            foreach (var plugin_info in engine.get_plugin_list ()) {
-                engine.try_unload_plugin (plugin_info);
-            }
+            // foreach (var plugin_info in engine.get_plugin_list ()) {
+            //     engine.try_unload_plugin (plugin_info);
+            // }
 
             try {
                 if (this.adapter != null) {
@@ -768,12 +780,12 @@ namespace Pomodoro
                 if (Options.skip) {
                     this.timer.skip ();
                 }
-                else if (Options.extend && this.timer.state.duration > 0.0) {
-                    this.timer.state.duration += 60.0;
+                else if (Options.extend && this.timer.duration > 0) {
+                    this.timer.duration += 60 * 1000000;
                 }
 
                 if (Options.pause_resume) {
-                    if (this.timer.is_paused) {
+                    if (this.timer.is_paused ()) {
                         this.timer.resume ();
                     }
                     else {
@@ -809,8 +821,12 @@ namespace Pomodoro
 
             if (this.timer == null) {
                 this.timer = Pomodoro.Timer.get_default ();
-                this.timer.notify["is-paused"].connect (this.on_timer_is_paused_notify);
-                this.timer.state_changed.connect_after (this.on_timer_state_changed);
+                // this.timer.changed.connect (this.on_timer_changed);
+            }
+
+            if (this.session_manager == null) {
+                this.session_manager = Pomodoro.SessionManager.get_default ();
+                this.session_manager.enter_time_block.connect (this.on_enter_time_block);
             }
 
             if (this.settings == null) {
@@ -819,12 +835,14 @@ namespace Pomodoro
                 this.settings.changed.connect (this.on_settings_changed);
             }
 
-            if (this.service == null) {
+            if (this.service == null || this.timer_service == null) {
                 this.hold ();
-                this.service = new Pomodoro.Service (connection, this.timer);
+                this.service = new Pomodoro.ApplicationService (connection, this);
+                this.timer_service = new Pomodoro.TimerService (connection, this.timer);
 
                 try {
                     connection.register_object ("/org/gnomepomodoro/Pomodoro", this.service);
+                    connection.register_object ("/org/gnomepomodoro/Pomodoro/Timer", this.timer_service);
                 }
                 catch (GLib.IOError error) {
                     GLib.warning ("%s", error.message);
@@ -852,94 +870,97 @@ namespace Pomodoro
             }
         }
 
-        private void save_timer ()
-        {
-            var state_settings = Pomodoro.get_settings ()
-                                         .get_child ("state");
-
-            this.timer.save (state_settings);
-        }
-
-        private void restore_timer ()
-        {
-            var state_settings = Pomodoro.get_settings ()
-                                         .get_child ("state");
-
-            this.timer.restore (state_settings);
-        }
-
         private void on_settings_changed (GLib.Settings settings,
                                           string        key)
         {
-            var state_duration = this.timer.state_duration;
+            // TODO: Consider removing this
+            //       Changing settings shouldn't affect current timer state
+
+            var duration_seconds = 0.0;
 
             switch (key)
             {
                 case "pomodoro-duration":
-                    if (this.timer.state is Pomodoro.PomodoroState) {
-                        state_duration = settings.get_double (key);
+                    if (this.timer.state == Pomodoro.State.POMODORO) {
+                        duration_seconds = settings.get_double (key);
                     }
                     break;
 
                 case "short-break-duration":
-                    if (this.timer.state is Pomodoro.ShortBreakState) {
-                        state_duration = settings.get_double (key);
+                    if (this.timer.state == Pomodoro.State.SHORT_BREAK) {
+                        duration_seconds = settings.get_double (key);
                     }
                     break;
 
                 case "long-break-duration":
-                    if (this.timer.state is Pomodoro.LongBreakState) {
-                        state_duration = settings.get_double (key);
+                    if (this.timer.state == Pomodoro.State.LONG_BREAK) {
+                        duration_seconds = settings.get_double (key);
                     }
                     break;
 
-                case "enabled-plugins":
+                case "enabled-plugins":  // TODO: remove
                     this.load_plugins ();
 
                     break;
             }
 
-            if (state_duration != this.timer.state_duration)
+            if (duration_seconds > 0.0)
             {
-                this.timer.state_duration = double.max (state_duration, this.timer.elapsed);
+                this.timer.duration = int64.max (
+                    (int64) Math.floor (duration_seconds * USEC_PER_SEC),
+                    this.timer.get_elapsed ());
             }
         }
 
-        private void on_timer_is_paused_notify ()
-        {
-            this.save_timer ();
-        }
-
-        /**
-         * Save timer state, assume user is idle when break is completed.
-         */
-        private void on_timer_state_changed (Pomodoro.Timer      timer,
-                                             Pomodoro.TimerState state,
-                                             Pomodoro.TimerState previous_state)
+        private void on_enter_time_block (Pomodoro.TimeBlock time_block)
         {
             this.hold ();
-            this.save_timer ();
 
-            if (this.timer.is_paused)
-            {
-                this.timer.resume ();
-            }
+            // TODO: deduplicate calls
+            // TODO: only save if time blocks have changed
+            // TODO: schedule task with GLib.Priority.LOW
+            this.session_manager.save_async.begin ((obj, res) => {
+                try {
+                    this.session_manager.save_async.end (res);
+                }
+                catch (GLib.Error error) {
+                    GLib.warning ("Error while saving session: %s", error.message);
+                }
 
-            if (!(previous_state is Pomodoro.DisabledState))
-            {
-                var entry = new Pomodoro.Entry.from_state (previous_state);
-                entry.repository = this.repository;
-                entry.save_async.begin ((obj, res) => {
-                    try {
-                        entry.save_async.end (res);
-                    }
-                    catch (GLib.Error error) {
-                        GLib.warning ("Error while saving entry: %s", error.message);
-                    }
-
-                    this.release ();
-                });
-            }
+                this.release ();
+            });
         }
+
+        // /**
+        //  * Save timer state, assume user is idle when break is completed.
+        //  */
+        // private void on_timer_state_changed (Pomodoro.Timer      timer,
+        //                                      Pomodoro.TimerState state,
+        //                                      Pomodoro.TimerState previous_state)
+        // {
+        //     this.hold ();
+        //     this.session_manager.save ();
+
+        //     if (this.timer.is_paused)
+        //     {
+        //         this.timer.resume ();
+        //     }
+
+        //     if (!(previous_state is Pomodoro.DisabledState))
+        //     {
+        //         var entry = new Pomodoro.Entry.from_state (previous_state);
+        //         entry.repository = this.repository;
+        //         entry.save_async.begin ((obj, res) => {
+        //             try {
+        //                 entry.save_async.end (res);
+        //             }
+        //             catch (GLib.Error error) {
+        //                 GLib.warning ("Error while saving entry: %s", error.message);
+        //             }
+
+        //             this.release ();
+        //         });
+        //     }
+        // }
     }
 }

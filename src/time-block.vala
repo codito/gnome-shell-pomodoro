@@ -1,23 +1,3 @@
-/*
- * Copyright (c) 2011-2015 gnome-pomodoro contributors
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Authors: Arun Mahapatra <pratikarun@gmail.com>
- *          Kamil Prusko <kamilprusko@gmail.com>
- */
-
 using GLib;
 
 
@@ -38,68 +18,6 @@ namespace Pomodoro
     internal const double SHORT_TO_LONG_BREAK_THRESHOLD = 0.50;
 
 
-    // public enum Reason
-    // {
-    //     UNKNOWN = 0,
-    //     TIMER = 1,
-    //     USER = 2
-    // }
-
-
-    // /**
-    //  * Pomodoro.Pause
-    //  *
-    //  * By a pause we referr to an undefined state within a time block.
-    //  */
-    // public struct Pause
-    // {
-    //     public int64 timestamp;
-    //     public int64 duration = -1;  // -1 if it's ongoing
-
-    //     public Pause (int64 timestamp)
-    //                   requires (timestamp > 0)
-    //     {
-    //         this.timestamp = timestamp;
-    //     }
-
-        // public bool is_finished ()
-        // {
-        //     return this.duration >= 0;
-        // }
-
-    //     public void finish (int64 timestamp = Pomodoro.get_current_time ())
-    //     {
-    //         this.duration = int64.max (timestamp - this.timestamp, 0);
-    //     }
-    // }
-
-
-    // /**
-    //  * Pomodoro.TimeBlockType
-    //  *
-    //  * We operate within predefined time blocks / timer states. We treat UNDEFINED time blocks somewhat
-    //  * similar to regular ones. It simplifies detection of idle time ("idle" in a sense that timer is not running).
-    //  */
-    // public enum TimeBlockType
-    // {
-    //     UNDEFINED = 0,  // aka stopped
-    //     POMODORO = 1,
-    //     SHORT_BREAK = 2,  // TODO: combine SHORT_BREAK and LONG_BREAK into BREAK?
-    //     LONG_BREAK = 3
-    // }
-
-
-    // public enum TimeBlockStatus
-    // {
-    //     SCHEDULED = 0,
-    //     STARTED = 1,
-    //     ENDED = 2,
-    //     CANCELED = 3
-    // }
-
-
-    // public delegate void ForeachTimeBlockFunc (Pomodoro.TimeBlock block);
-
     private void ensure_timestamp (ref int64 timestamp)
     {
         if (timestamp < 0) {
@@ -107,69 +25,65 @@ namespace Pomodoro
         }
     }
 
-    private enum TimeBlockConflict
+    public enum TimeBlockConflict
     {
         KEEP_START = 0,
         KEEP_END = 1
     }
 
-    // public errordomain TimeBlockError
-    // {
-    //     MISSING_BOUNDS
-    // }
-
-    private const int64 MIN_TIMESTAMP = int64.MIN;
-    private const int64 MAX_TIMESTAMP = int64.MAX;
-
 
     /**
-     * Pomodoro.TimeBlock
-     *
      * Class describes an block of time - state, start and end time.
      * Blocks may have parent/child relationships. Currently its only used to define pauses, though class is kept
      * angnostic about it. A child block may exceed its parent time range. After a child block gets defined `end` time,
      * the parent block is update its `end` time.
      */
-    public class TimeBlock : GLib.Object
+    public class TimeBlock : GLib.InitiallyUnowned
     {
         // TODO !!!!! any change to a block should be propagated to parent blocks
         // TODO !!!!! use MIN_TIMESTAMP and MAX_TIMESTAMP instead of -1
 
 
+        public unowned Pomodoro.Session? session {
+            get {
+                return this._session;
+            }
+            set {
+                this._session = value;
+            }
+        }
+
         public Pomodoro.State state {
             get {
                 return this._state;
             }
+            // construct set;  // TODO
         }
 
-        // -1 value refers to -Infinity
+        public int64 state_duration {
+            get {
+                return this._state_duration;
+            }
+            set {
+                this._state_duration = value;
+            }
+        }
+
         public int64 start {
             get {
                 return this._start;
             }
             set {
                 this.set_range (value, this._end, Pomodoro.TimeBlockConflict.KEEP_START);
-
-                // this._start = this._end >= 0
-                //     ? int64.min (value, this._end)
-                //     : value;
-
-                // TODO: update this._duration
             }
         }
 
-        // -1 value refers to Infinity
         public int64 end {
             get {
                 return this._end;
             }
             set {
                 this.set_range (this._start, value, Pomodoro.TimeBlockConflict.KEEP_END);
-
-                // this._end = value >= 0
-                //     ? int64.max (value, this._start)
-                //     - 1;
-                // TODO: update this._duration
             }
         }
 
@@ -183,10 +97,6 @@ namespace Pomodoro
                     : -1;
             }
             set {
-                // if (this._is_finalized) {
-                //     return;
-                // }
-
                 if (this._start >= 0) {
                     this.set_range (this._start,
                                     this._start + value,
@@ -215,36 +125,27 @@ namespace Pomodoro
             }
         }
 
-        // public Pomodoro.Event? start_event {
-        //     get {
-        //         return this._start_source;
-        //     }
-        // }
-
-        // public Pomodoro.Event? end_event {
-        //     get {
-        //         return this._start_source;
-        //     }
-        // }
-
         // Gaps should be defined as a child of a state, with first item as most recent.
         // A gap should not extend the time of parent block, it will be capped if it does.
         private GLib.SList<Pomodoro.TimeBlock> children = null;
-        private unowned Pomodoro.TimeBlock _parent = null;
 
-        private Pomodoro.State  _state = State.UNDEFINED;
-        private Pomodoro.Source _source = Source.OTHER;
-        private int64           _start = -1;
-        private int64           _end = -1;
-        // private bool            _is_finalized = false;
+        private unowned Pomodoro.Session?   _session = null;
+        private unowned Pomodoro.TimeBlock? _parent = null;
+        private Pomodoro.State              _state = State.UNDEFINED;
+        private int64                       _state_duration = 0;
+        // private Pomodoro.Context         _context = null;
+        // private Pomodoro.Source          _source = Source.OTHER;
+        private int64                       _start = -1;
+        private int64                       _end = -1;
 
-        public TimeBlock (Pomodoro.State state = State.UNDEFINED,
-                          int64          start = -1,
-                          int64          end = -1)
+        public TimeBlock (Pomodoro.State    state = State.UNDEFINED,
+                          int64             state_duration = 0,
+                          int64             start = -1,
+                          int64             end = -1)
         {
-            // ensure_timestamp (ref start);
-
+            this._session = session;
             this._state = state;
+            this._state_duration = state_duration;
 
             this.set_range_internal (start, end, Pomodoro.TimeBlockConflict.KEEP_START);
 
@@ -279,10 +180,6 @@ namespace Pomodoro
                                int64                      end,
                                Pomodoro.TimeBlockConflict on_conflict = Pomodoro.TimeBlockConflict.KEEP_START)
         {
-            // if (this._is_finalized) {
-            //     return;
-            // }
-
             var old_start = this._start;
             var old_end = this._end;
             var old_duration = this.duration;
@@ -305,14 +202,6 @@ namespace Pomodoro
                 this.changed_range ();
             }
         }
-
-        // /**
-        //  * Return whether time block has been finalized, which prevents from changes.
-        //  */
-        // public bool is_finalized ()
-        // {
-        //     return this._is_finalized;
-        // }
 
         // /**
         //  * Return whether time block has bounds. It does not take into account children.
@@ -405,15 +294,10 @@ namespace Pomodoro
                 return 0.0;
             }
 
-            // ensure_timestamp (ref timestamp);
-            // if (timestamp < 0) {
-            //     timestamp = Pomodoro.get_current_time ();
-            // }
-
             var duration = this.duration;
 
             return duration > 0
-                ? this.calculate_elapsed (timestamp) / duration
+                ? this.get_elapsed (timestamp) / duration
                 : 0.0;
         }
 
@@ -467,83 +351,6 @@ namespace Pomodoro
         //     return children_elapsed;
         // }
 
-        /**
-         * Apply parent bounds
-         */
-        private void inherit_bounds ()
-        {
-            if (this._parent == null) {
-                return;
-            }
-
-            // this.unfinalize ();
-
-            var parent_start = this._parent.start;
-            var parent_end = this._parent.end;
-
-            this.set_range (
-                parent_start >= 0
-                    ? int64.max (this._start, parent_start)
-                    : this._start,
-                parent_end >= 0
-                    ? (this._end >= 0 ? int64.min (this._end, parent_end) : parent_end)
-                    : this._end
-            );
-        }
-
-
-
-        // /**
-        //  * TimeBlock.finalize()
-        //  *
-        //  * Finalization enforces that blocks have bounds and that there are no overlapping children.
-        //  * It finializes children first. Parent bounds may be extended. Overlapping children will be adjusted
-        //  * with KEEP_START policy.
-        //  *
-        //  * Any changes will mark block and its ancestors as unfinalized.
-        //  */
-        // public void finalize_1 () throws Pomodoro.TimeBlockError
-        // {
-        //     if (this._is_finalized) {
-        //         return;
-        //     }
-
-        //     if (!this.has_bounds (false)) {
-        //         throw new Pomodoro.TimeBlockError.MISSING_BOUNDS ("Block has no bounds");
-        //     }
-
-        //     var final_start = this._start;
-        //     var final_end = this._end;
-
-        //     this.children.@foreach ((child) => {
-        //         try {
-        //             child.finalize ();
-        //         }
-        //         catch (Pomodoro.TimeBlockError error) {
-        //             error.message = "Child has no bounds";
-        //             throw error;
-        //         }
-
-        //         final_start = int64.min (final_start, child.start);
-        //         final_end = int64.max (final_end, child.end);
-        //     });
-
-        //     this.set_range (final_start, final_end);
-
-        //     this._is_finalized = true;
-
-        //     this.finalized ();
-        // }
-
-        // public void unfinalize ()
-        // {
-        //     this._is_finalized = false;
-
-        //     if (this.parent != null) {
-        //         this.parent.unfinalize ();
-        //     }
-        // }
-
         private static int compare (Pomodoro.TimeBlock a,
                                     Pomodoro.TimeBlock b)
         {
@@ -552,27 +359,29 @@ namespace Pomodoro
 
         public void add_child (Pomodoro.TimeBlock child)
         {
-            // this.unfinalize ();
-
-            this.children.insert_sorted (child, this.compare);
+            this.children.insert_sorted (child, Pomodoro.TimeBlock.compare);
         }
 
         public void remove_child (Pomodoro.TimeBlock child)
         {
-            // this.unfinalize ();
-
             this.children.remove (child);
         }
 
         public Pomodoro.TimeBlock? get_last_child ()
         {
-            return this.children.first ();
+            unowned SList<Pomodoro.TimeBlock> link = this.children.last ();
+
+            return link != null ? link.data : null;
         }
 
-        public void @foreach (Pomodoro.Func<Pomodoro.TimeBlock> func)
+        public void foreach_child (GLib.Func<Pomodoro.TimeBlock> func)
         {
             this.children.@foreach (func);
         }
+
+
+
+
 
         // -----------------------------------------------------------------
 

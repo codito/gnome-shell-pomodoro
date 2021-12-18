@@ -40,7 +40,7 @@ namespace Pomodoro
 
         private bool update ()
         {
-            var progress = this.timer.score;
+            var progress = this.timer.get_session_progress ();
 
             if (this.progress != progress)
             {

@@ -50,16 +50,16 @@ namespace Pomodoro
             set_notnull ("datetime-local-string");
         }
 
-        public Entry.from_state (Pomodoro.TimerState state)
-        {
-            var datetime = new GLib.DateTime.from_unix_utc (
-                (int64) Math.floor (state.timestamp));
+        // public Entry.from_state (Pomodoro.TimerState state)
+        // {
+        //     var datetime = new GLib.DateTime.from_unix_utc (
+        //         (int64) Math.floor (state.timestamp));
 
-            this.state_name     = state.name;
-            this.state_duration = (int64) Math.floor (state.duration);
-            this.elapsed        = (int64) Math.floor (state.elapsed);
-            this.set_datetime (datetime);
-        }
+        //     this.state_name     = state.name;
+        //     this.state_duration = (int64) Math.floor (state.duration);
+        //     this.elapsed        = (int64) Math.floor (state.elapsed);
+        //     this.set_datetime (datetime);
+        // }
 
         public void set_datetime (GLib.DateTime value)
         {

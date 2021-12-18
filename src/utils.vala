@@ -24,8 +24,8 @@ namespace Pomodoro
 {
     public const double USEC_PER_SEC = 1000000.0;
 
-    private int64 reference_time = 0;
-    private int64 current_time = -1;
+    private int64 reference_time = -1;  // TODO: move to timer-progress-bar.vala
+    private int64 frozen_time = -1;
 
 
     private string format_time (int seconds)
@@ -52,42 +52,54 @@ namespace Pomodoro
     }
 
     /**
-     * Fake GLib.get_real_time (). Added for unittesting.
+     * Fake Pomodoro.get_current_time (). Added for unittesting.
      */
     public void freeze_time (int64 timestamp = Pomodoro.get_current_time ())
     {
-        this.current_time = timestamp;
+        Pomodoro.frozen_time = timestamp;
     }
 
+    /**
+     * Revert freeze_time() call
+     */
     public void unfreeze_time ()
     {
-        this.current_time = -1;
+        Pomodoro.frozen_time = -1;
     }
 
     /**
      * Returns the number of microseconds since January 1, 1970 UTC or frozen time
+     *
+     * TODO deprecated, use Timestamp.from_now()
      */
     public int64 get_current_time ()
     {
-        return this.current_time == -1
+        return Pomodoro.frozen_time == -1
                 ? GLib.get_real_time ()
-                : this.current_time;
+                : Pomodoro.frozen_time;
     }
 
+    /**
+     * Synchronize monotonic time with real time
+     *
+     * TODO move to timer-progress-bar.vala
+     */
     public void sync_monotonic_time ()
     {
-        reference_time = GLib.get_real_time () - GLib.get_monotonic_time ();
+        Pomodoro.reference_time = GLib.get_real_time () - GLib.get_monotonic_time ();
     }
 
     /**
      * Convert monotonic timestamp to real time, in microseconds
+     *
+     * TODO move to timer-progress-bar.vala
      */
     public int64 to_real_time (int64 monotonic_time)
     {
-        if (reference_time == 0) {
+        if (Pomodoro.reference_time == -1) {
             Pomodoro.sync_monotonic_time ();
         }
 
-        return monotonic_time + reference_time;
+        return monotonic_time + Pomodoro.reference_time;
     }
 }

@@ -22,7 +22,7 @@ namespace Pomodoro
         private bool update ()
         {
             var timestamp = Pomodoro.to_real_time (this.get_frame_clock ().get_frame_time ());
-            var progress = this.timer.state.calculate_progress (timestamp, this.timer.offset);
+            var progress = this.timer.get_progress (timestamp);
 
             if (this.progress != progress)
             {
@@ -41,7 +41,7 @@ namespace Pomodoro
             var radius = double.min (0.5 * double.min (width, height), 150.0);
             var perimeter = 2.0 * Math.PI * radius;
 
-            return (uint) Math.ceil (250.0 * this.timer.state_duration / perimeter);
+            return (uint) Math.ceil (250.0 * this.timer.duration / perimeter);
         }
 
         private void start_updating ()
@@ -123,7 +123,6 @@ namespace Pomodoro
                 blue=color.blue,
                 alpha=OUTLINE_ALPHA
             };
-            var is_stopped = this.timer.state is Pomodoro.DisabledState;
 
             bounds.init (center_x - radius, center_y - radius, 2.0f * radius, 2.0f * radius);
             outline.init_from_rect (bounds, radius);
@@ -137,7 +136,7 @@ namespace Pomodoro
                                     { outline_width, outline_width, outline_width, outline_width },
                                     { outline_color, outline_color, outline_color, outline_color });
 
-            if (!is_stopped)
+            if (this.timer.is_running ())
             {
                 var progress = this.progress;
                 var progress_angle_from = - 0.5 * Math.PI - 2.0 * Math.PI * progress.clamp (0.000001, 1.0);

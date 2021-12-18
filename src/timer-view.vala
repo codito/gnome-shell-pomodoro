@@ -35,11 +35,7 @@ namespace Pomodoro
 
         private void update_css_classes ()
         {
-            var is_stopped = this.timer.state is Pomodoro.DisabledState;
-            var is_paused = this.timer.is_paused;
-            var is_running = !(is_stopped || is_paused);
-
-            if (is_running) {
+            if (this.timer.is_running ()) {
                 this.timer_state_menubutton.add_css_class ("timer-running");
                 this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
@@ -53,8 +49,8 @@ namespace Pomodoro
 
         private void update_buttons_stack ()
         {
-            var is_stopped = this.timer.state is Pomodoro.DisabledState;
-            var is_paused = this.timer.is_paused;
+            var is_stopped = this.timer.is_stopped ();
+            var is_paused = this.timer.is_paused ();
             var child = this.buttons_grid.get_first_child ();
 
             while (child != null) {
@@ -91,30 +87,9 @@ namespace Pomodoro
 
         private void on_timer_state_notify ()
         {
-            switch (this.timer.state.name)
-            {
-                case "null":
-                    this.timer_state_menubutton.label = _("Stopped");
-                    break;
+            this.timer_state_menubutton.label = this.timer.state.get_label ();
 
-                case "pomodoro":
-                    this.timer_state_menubutton.label = _("Pomodoro");
-                    break;
-
-                case "short-break":
-                    this.timer_state_menubutton.label = _("Short Break");
-                    break;
-
-                case "long-break":
-                    this.timer_state_menubutton.label = _("Long Break");
-                    break;
-
-                default:
-                    this.timer_state_menubutton.label = "";
-                    break;
-            }
-
-            if (this.timer.state is Pomodoro.BreakState) {
+            if (this.timer.state.is_break ()) {
                 this.timer_skip_button.tooltip_text = _("Start pomodoro");
             }
             else {

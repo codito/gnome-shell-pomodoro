@@ -63,7 +63,7 @@ namespace Pomodoro
 
             this.state_action = new GLib.SimpleAction.stateful ("state",
                                                                 GLib.VariantType.STRING,
-                                                                new GLib.Variant.string (this.timer.state.name));
+                                                                new GLib.Variant.string (this.timer.state.to_string ()));
             this.state_action.activate.connect (this.activate_state);
             this.add_action (this.state_action);
 
@@ -75,8 +75,8 @@ namespace Pomodoro
             this.rewind_action.activate.connect (this.activate_rewind);
             this.add_action (this.rewind_action);
 
-            this.timer.state_changed.connect_after (this.on_timer_state_changed);
-            this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            this.timer.changed.connect (this.on_timer_changed);
+            // this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
 
             this.update_action_states ();
         }
@@ -95,30 +95,19 @@ namespace Pomodoro
 
         private void update_action_states ()
         {
-            var is_disabled = this.timer.state is Pomodoro.DisabledState;
-            var is_paused = this.timer.is_paused;
+            var is_stopped = this.timer.is_stopped ();
+            var is_paused = this.timer.is_paused ();
 
-            this.start_action.set_enabled (is_disabled);
-            this.stop_action.set_enabled (!is_disabled);
-            this.pause_action.set_enabled (!is_disabled && !is_paused);
-            this.resume_action.set_enabled (!is_disabled && is_paused);
-            this.skip_action.set_enabled (!is_disabled);
-            this.state_action.set_state (new GLib.Variant.string (this.timer.state.name));
+            this.start_action.set_enabled (is_stopped);
+            this.stop_action.set_enabled (!is_stopped);
+            this.pause_action.set_enabled (!is_stopped && !is_paused);
+            this.resume_action.set_enabled (!is_stopped && is_paused);
+            this.state_action.set_state (new GLib.Variant.string (this.timer.state.to_string ()));
         }
 
-        private void on_timer_state_changed (Pomodoro.TimerState state,
-                                             Pomodoro.TimerState previous_state)
+        private void on_timer_changed (Pomodoro.Timer timer)
         {
             this.update_action_states ();
-        }
-
-        private void on_timer_is_paused_notify ()
-        {
-            var is_disabled = this.timer.state is Pomodoro.DisabledState;
-            var is_paused = this.timer.is_paused;
-
-            this.pause_action.set_enabled (!is_disabled && !is_paused);
-            this.resume_action.set_enabled (!is_disabled && is_paused);
         }
 
         private void activate_start (GLib.SimpleAction action,
@@ -154,18 +143,15 @@ namespace Pomodoro
         private void activate_rewind (GLib.SimpleAction action,
                                       GLib.Variant?     parameter)
         {
-            this.timer.rewind (60.0);
+            this.timer.rewind (60 * 1000000);
         }
 
         private void activate_state (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            var state = Pomodoro.TimerState.lookup (parameter.get_string ());
-
-            if (state != null)
-            {
-                this.timer.state = state;
-            }
+            this.timer.set_state (
+                Pomodoro.State.from_string (parameter.get_string ())
+            );
         }
     }
 }

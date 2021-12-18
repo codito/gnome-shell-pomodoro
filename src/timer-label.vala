@@ -36,25 +36,21 @@ namespace Pomodoro
 
         private void update_css_classes ()
         {
-            var is_stopped = this.timer.state is Pomodoro.DisabledState;
-            var is_paused = this.timer.is_paused;
-            var is_running = !(is_stopped || is_paused);
-
-            if (is_running) {
+            if (this.timer.is_running ()) {
                 this.add_css_class ("timer-running");
             }
             else {
                 this.remove_css_class ("timer-running");
             }
 
-            if (is_paused) {
+            if (this.timer.is_paused ()) {
                 this.add_css_class ("timer-paused");
             }
             else {
                 this.remove_css_class ("timer-paused");
             }
 
-            if (is_stopped) {
+            if (this.timer.is_stopped ()) {
                 this.add_css_class ("timer-stopped");
             }
             else {
@@ -91,11 +87,11 @@ namespace Pomodoro
             uint minutes;
             uint seconds;
 
-            if (this.timer.state is Pomodoro.DisabledState) {
-                remaining = Pomodoro.PomodoroState.get_default_duration ();
+            if (this.timer.is_stopped ()) {
+                remaining = (uint) Pomodoro.State.POMODORO.get_default_duration ().clamp (0, uint.MAX);
             }
             else {
-                remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
+                remaining = (uint) double.max (Math.ceil (this.timer.get_remaining ()), 0.0);
             }
 
             minutes = remaining / 60;

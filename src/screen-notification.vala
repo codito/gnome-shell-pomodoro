@@ -60,22 +60,22 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Label seconds_label;
 
-        // private uint                   fade_in_timeout_id   = 0;
-        // private uint                   fade_out_timeout_id  = 0;
-        private unowned Pomodoro.Timer timer;
-        private ulong                  timer_elapsed_id     = 0;
-        private uint                   close_on_activity_id = 0;
-        private uint32                 last_event_time      = 0;
-        private double                 last_motion_x        = -1.0;
-        private double                 last_motion_y        = -1.0;
-        private bool                   _pass_through        = true;
+        // private uint        fade_in_timeout_id   = 0;
+        // private uint        fade_out_timeout_id  = 0;
+        private Pomodoro.Timer timer;
+        // private ulong          timer_elapsed_id     = 0;
+        private uint           close_on_activity_id = 0;
+        private uint32         last_event_time      = 0;
+        private double         last_motion_x        = -1.0;
+        private double         last_motion_y        = -1.0;
+        private bool           _pass_through        = true;
 
         construct
         {
             this.timer = Pomodoro.Timer.get_default ();
-            this.timer.state_changed.connect (this.on_timer_state_changed);
+            // this.timer.changed.connect (this.on_timer_changed); // TODO: only update timer label during break
 
-            this.on_timer_state_changed ();
+            // this.on_timer_state_changed ();
 
             this.fullscreen ();
         }
@@ -126,30 +126,29 @@ namespace Pomodoro
         //     style_context.add_class ("hidden");
         // }
 
-        private void on_timer_state_changed ()
-        {
-            if (this.timer_elapsed_id != 0) {
-                this.timer.disconnect (this.timer_elapsed_id);
-                this.timer_elapsed_id = 0;
-            }
+        // private void on_timer_changed ()
+        // {
+        //     if (this.timer_elapsed_id != 0) {
+        //         this.timer.disconnect (this.timer_elapsed_id);
+        //         this.timer_elapsed_id = 0;
+        //     }
+        //
+        //     if (this.timer.state.is_break ()) {
+        //         this.timer_elapsed_id = this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
+        //
+        //         this.on_timer_elapsed_notify ();
+        //     }
+        // }
 
-            // TODO: connect to elapsed signal when this widget is visible
-            if (this.timer.state is Pomodoro.BreakState) {
-                this.timer_elapsed_id = this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
-
-                this.on_timer_elapsed_notify ();
-            }
-        }
-
-        private void on_timer_elapsed_notify ()
-        {
-            var remaining = (uint) double.max (Math.ceil (this.timer.remaining), 0.0);
-            var minutes   = remaining / 60;
-            var seconds   = remaining % 60;
-
-            this.minutes_label.label = "%02u".printf (minutes);
-            this.seconds_label.label = "%02u".printf (seconds);
-        }
+        // private void on_timer_elapsed_notify ()
+        // {
+        //     var remaining = (uint) double.max (Math.ceil ((double) this.timer.get_remaining () / 1000000), 0.0);
+        //     var minutes   = remaining / 60;
+        //     var seconds   = remaining % 60;
+        //
+        //     this.minutes_label.label = "%02u".printf (minutes);
+        //     this.seconds_label.label = "%02u".printf (seconds);
+        // }
 
         // public override void show ()
         // {
