@@ -8,25 +8,17 @@ namespace Pomodoro
      */
     public enum State
     {
-        UNDEFINED = 0,  // TODO: change back to NULL?
+        UNDEFINED = 0,
         POMODORO = 1,
         SHORT_BREAK = 2,
         LONG_BREAK = 3;
-
-        // public static Pomodoro.State lookup (string name)
-        // {
-        //     switch (name)
-        //     {
-        //         case "":
-        //     }
-        // }
 
         public string to_string ()
         {
             switch (this)
             {
                 case UNDEFINED:
-                    return "null";  // TODO: change this?
+                    return "null";  // TODO: change to "undefined"
 
                 case POMODORO:
                     return "pomodoro";
@@ -46,7 +38,7 @@ namespace Pomodoro
         {
             switch (state)
             {
-                case "null":
+                case "null":  // TODO: change to "undefined"
                     return UNDEFINED;
 
                 case "pomodoro":

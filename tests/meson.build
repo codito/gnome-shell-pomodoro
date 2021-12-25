@@ -1,39 +1,32 @@
-# gnome_pomodoro_test_vala_sources = [
-#   'tests.vala',
-#   'test-application.vala',
-#   'test-capability.vala',
-#   'test-capability-group.vala',
-#   'test-capability-manager.vala',
-#   'test-time-block.vala',
-#   'test-timer.vala',
-# ]
-
-# test_executable = executable(
-#   'gnome-pomodoro-test-executable',
-#   gnome_pomodoro_test_vala_sources,
-#   dependencies: gnome_pomodoro_lib_dep,
-# )
-
-# test(
-#   'gnome-pomodoro-tests',
-#   test_executable,
-# )
-
-
-tests_lib_static = static_library(
+libtests = static_library(
   'tests',
-  'tests.vala',
-  dependencies: gnome_pomodoro_lib_dep,
+  'common.vala',
+  dependencies: libgnome_pomodoro_dep,
 )
 
-test(
-  'test-time-block',
-  executable(
-    'test-time-block-executable',
-    'test-time-block.vala',
-    dependencies: gnome_pomodoro_lib_dep,
-    link_with: tests_lib_static,
+test_names = [
+  # 'application',
+  # 'capability',
+  # 'capability-group',
+  # 'capability-manager',
+  'time-block',
+  'timer',
+  'session',
+  'session-manager',
+  # 'utils',
+]
+
+foreach test_name : test_names
+  test_sources = ['test-@0@.vala'.format(test_name)]
+  executable_name = 'test-@0@'.format(test_name)
+  test(
+    test_name,
+    executable(
+      executable_name,
+      test_sources,
+      dependencies: libgnome_pomodoro_dep,
+      link_with: libtests,
+    )
   )
-)
-
+endforeach
 

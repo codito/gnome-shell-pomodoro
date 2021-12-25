@@ -18,9 +18,9 @@
  *
  */
 
-namespace Pomodoro
+namespace Tests
 {
-    public class CapabilityGroupTest : Pomodoro.TestSuite
+    public class CapabilityGroupTest : Tests.TestSuite
     {
         public CapabilityGroupTest ()
         {
@@ -112,4 +112,14 @@ namespace Pomodoro
             assert (capability_removed_count == 0);
         }
     }
+}
+
+
+public static int main (string[] args)
+{
+    Tests.init (args);
+
+    return Tests.run (
+        new Tests.CapabilityGroupTest ()
+    );
 }

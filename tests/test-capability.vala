@@ -18,9 +18,9 @@
  *
  */
 
-namespace Pomodoro
+namespace Tests
 {
-    public class CapabilityTest : Pomodoro.TestSuite
+    public class CapabilityTest : Tests.TestSuite
     {
         private int enable_count;
         private int disable_count;
@@ -105,4 +105,14 @@ namespace Pomodoro
             assert (this.disable_count == 1);
         }
     }
+}
+
+
+public static int main (string[] args)
+{
+    Tests.init (args);
+
+    return Tests.run (
+        new Tests.CapabilityTest ()
+    );
 }

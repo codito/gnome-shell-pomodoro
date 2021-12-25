@@ -18,9 +18,9 @@
  *
  */
 
-namespace Pomodoro
+namespace Tests
 {
-    public class CapabilityManagerTest : Pomodoro.TestSuite
+    public class CapabilityManagerTest : Tests.TestSuite
     {
         public CapabilityManagerTest ()
         {
@@ -283,4 +283,14 @@ namespace Pomodoro
             assert (!capability.enabled);
         }
     }
+}
+
+
+public static int main (string[] args)
+{
+    Tests.init (args);
+
+    return Tests.run (
+        new Tests.CapabilityManagerTest ()
+    );
 }

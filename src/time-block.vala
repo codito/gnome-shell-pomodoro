@@ -53,6 +53,15 @@ namespace Pomodoro
             }
         }
 
+        // public uint cycle_id {
+        //     get {
+        //         return this._cycle;
+        //     }
+        //     set {
+        //         this._cycle = value;
+        //     }
+        // }
+
         public Pomodoro.State state {
             get {
                 return this._state;
@@ -129,6 +138,7 @@ namespace Pomodoro
         // A gap should not extend the time of parent block, it will be capped if it does.
         private GLib.SList<Pomodoro.TimeBlock> children = null;
 
+        // private uint                        _cycle = 0;
         private unowned Pomodoro.Session?   _session = null;
         private unowned Pomodoro.TimeBlock? _parent = null;
         private Pomodoro.State              _state = State.UNDEFINED;

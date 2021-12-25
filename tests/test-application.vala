@@ -18,9 +18,9 @@
  *
  */
 
-namespace Pomodoro
+namespace Tests
 {
-    public class ApplicationTest : Pomodoro.TestSuite
+    public class ApplicationTest : Tests.TestSuite
     {
         public ApplicationTest ()
         {
@@ -62,4 +62,14 @@ namespace Pomodoro
 //            /* TODO */
 //        }
     }
+}
+
+
+public static int main (string[] args)
+{
+    Tests.init (args);
+
+    return Tests.run (
+        new Tests.ApplicationTest ()
+    );
 }

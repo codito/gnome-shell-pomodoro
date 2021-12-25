@@ -23,7 +23,7 @@
 using GLib;
 
 
-namespace Pomodoro
+namespace Tests
 {
     public delegate void TestCaseFunc ();
 
@@ -33,12 +33,12 @@ namespace Pomodoro
     {
         public string name;
 
-        private Pomodoro.TestCaseFunc func;
-        private Pomodoro.TestSuite test_suite;
+        private Tests.TestCaseFunc func;
+        private Tests.TestSuite test_suite;
 
-        public TestSuiteAdaptor (string                      name,
-                                 owned Pomodoro.TestCaseFunc test_case_func,
-                                 Pomodoro.TestSuite          test_suite)
+        public TestSuiteAdaptor (string                   name,
+                                 owned Tests.TestCaseFunc test_case_func,
+                                 Tests.TestSuite          test_suite)
         {
             this.name = name;
             this.func = (owned) test_case_func;
@@ -68,7 +68,7 @@ namespace Pomodoro
     public abstract class TestSuite : GLib.Object
     {
         private GLib.TestSuite g_test_suite;
-        private TestSuiteAdaptor[] adaptors = new TestSuiteAdaptor[0];
+        private Tests.TestSuiteAdaptor[] adaptors = new Tests.TestSuiteAdaptor[0];
 
         construct {
             this.g_test_suite = new GLib.TestSuite (this.get_name ());
@@ -82,7 +82,8 @@ namespace Pomodoro
             return this.g_test_suite;
         }
 
-        public void add_test (string name, owned Pomodoro.TestCaseFunc func)
+        public void add_test (string name,
+                              owned Tests.TestCaseFunc func)
         {
             var adaptor = new TestSuiteAdaptor (name, (owned) func, this);
             this.adaptors += adaptor;
@@ -112,7 +113,7 @@ namespace Pomodoro
             }
         }
 
-        public void add (Pomodoro.TestSuite test_suite) {
+        public void add (Tests.TestSuite test_suite) {
             this.root_suite.add_suite (test_suite.get_g_test_suite ());
         }
 
@@ -171,7 +172,7 @@ namespace Pomodoro
                 GLib.error ("Error creating temporary directory for test files: %s".printf (error.message));
             }
 
-            this.setup_settings ();
+            // this.setup_settings ();  // TODO FIXME
         }
 
         public virtual void global_teardown ()
@@ -181,6 +182,7 @@ namespace Pomodoro
                 var delete_tmp_result = 0;
 
                 try {
+                    // TODO: there must be a better way
                     GLib.Process.spawn_command_line_sync (
                                             "rm -rf %s".printf (tmp_dir_path),
                                             null,
@@ -258,35 +260,41 @@ namespace Pomodoro
 
         }
     }
-}
 
+    public static void init (string[] args)
+    {
+        Gtk.init ();
+        GLib.Test.init (ref args);
+    }
 
+    public static int run (Tests.TestSuite test_suite, ...)
+    {
+        var test_runner = new Tests.TestRunner ();
+        test_runner.add (test_suite);
 
-public static int main (string[] args)
-{
-    Gtk.init ();
-    GLib.Test.init (ref args);
+        var arguments_list = va_list ();
+        while (true) {
+            Tests.TestSuite? extra_test_suite = arguments_list.arg ();
+            if (extra_test_suite == null) {
+                break;  // end of the list
+            }
 
-    var tests = new Pomodoro.TestRunner ();
-    // tests.add (new Pomodoro.ApplicationTest ());
-    // tests.add (new Pomodoro.CapabilityTest ());
-    // tests.add (new Pomodoro.CapabilityGroupTest ());
-    // tests.add (new Pomodoro.CapabilityManagerTest ());
-    // tests.add (new Pomodoro.TimeBlockTest ());
-    // tests.add (new Pomodoro.TimerTest ());
+            test_runner.add (extra_test_suite);
+        }
 
-    var mainloop = new GLib.MainLoop ();
-    var exit_status = 0;
+        var mainloop = new GLib.MainLoop ();
+        var exit_status = 0;
 
-    GLib.Idle.add (() => {
-        exit_status = tests.run ();
+        GLib.Idle.add (() => {
+            exit_status = test_runner.run ();
 
-        mainloop.quit ();
+            mainloop.quit ();
 
-        return false;
-    });
+            return false;
+        });
 
-    mainloop.run ();
+        mainloop.run ();
 
-    return exit_status;
+        return exit_status;
+    }
 }

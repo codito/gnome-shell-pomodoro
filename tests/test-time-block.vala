@@ -1,6 +1,6 @@
-namespace Pomodoro
+namespace Tests
 {
-    public class TimeBlockTest : Pomodoro.TestSuite
+    public class TimeBlockTest : Tests.TestSuite
     {
         public TimeBlockTest ()
         {
@@ -43,7 +43,6 @@ namespace Pomodoro
 
         public void test_new ()
         {
-
         }
 
         public void test_state ()
@@ -118,7 +117,6 @@ namespace Pomodoro
 
         public void test_get_last_child ()
         {
-
         }
 
         public void test_foreach_child ()
@@ -131,4 +129,14 @@ namespace Pomodoro
 
         }
     }
+}
+
+
+public static int main (string[] args)
+{
+    Tests.init (args);
+
+    return Tests.run (
+        new Tests.TimeBlockTest ()
+    );
 }

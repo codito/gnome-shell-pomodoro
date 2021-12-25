@@ -1,4 +1,5 @@
-libgnome_pomodoro_vala_sources = [
+# Common library
+libgnome_pomodoro_sources = files(
   'about-dialog.vala',
   'accelerator.vala',
   'aggregated-entry.vala',
@@ -17,6 +18,7 @@ libgnome_pomodoro_vala_sources = [
   'screen-notification.vala',
   'service.vala',
   'session.vala',
+  'session-entry.vala',
   'session-manager.vala',
   'settings.vala',
   'source.vala',
@@ -27,6 +29,8 @@ libgnome_pomodoro_vala_sources = [
   'stats-week-page.vala',
   'stats-month-page.vala',
   'time-block.vala',
+  'time-block-entry.vala',
+  'timeline.vala',
   'timer.vala',
   'timer-action-group.vala',
   'timer-label.vala',
@@ -36,12 +40,11 @@ libgnome_pomodoro_vala_sources = [
   'timestamp.vala',
   'utils.vala',
   'window.vala',
-  gnome_pomodoro_generated_sources,
-]
+)
 
-libgnome_pomodoro = shared_library(
+libgnome_pomodoro = static_library(
   'gnome-pomodoro',
-  libgnome_pomodoro_vala_sources,
+  [libgnome_pomodoro_sources, gnome_pomodoro_generated_sources],
   dependencies: [
     gio_dep,
     gobject_dep,
@@ -50,15 +53,11 @@ libgnome_pomodoro = shared_library(
     libm_dep,
     peas_dep,
     sqlite_dep,
-#    pangocairo_dep,
   ],
-  # include config.h
-  include_directories: incs,
-  version: '0.0.0',
-  install: true,
+  include_directories: config_h_dir,
 )
 
-gnome_pomodoro_lib_dep = declare_dependency(
+libgnome_pomodoro_dep = declare_dependency(
   link_with: libgnome_pomodoro,
   dependencies: [
     gio_dep,
@@ -70,22 +69,22 @@ gnome_pomodoro_lib_dep = declare_dependency(
   include_directories: [
     # Include gnome-pomodoro.h
     include_directories('.'),
-    # Include config.h
-    include_directories('..'),
   ],
 )
 
-gnome_pomodoro_vala_sources = [
+
+# The gnome-pomodoro binary
+gnome_pomodoro_sources = files(
   'main.vala',
-]
+)
 
 executable(
   'gnome-pomodoro',
-  gnome_pomodoro_vala_sources,
+  gnome_pomodoro_sources,
   dependencies: [
-    gnome_pomodoro_lib_dep,
+    libgnome_pomodoro_dep,
     posix_dep,
   ],
-  include_directories: incs,
+  include_directories: config_h_dir,
   install: true,
 )

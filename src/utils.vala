@@ -22,10 +22,10 @@ using GLib;
 
 namespace Pomodoro
 {
-    public const double USEC_PER_SEC = 1000000.0;
+    public const double USEC_PER_SEC = 1000000.0;  // TODO: remove, use Timestamp.from_seconds() and Timestamp.to_seconds()
 
     private int64 reference_time = -1;  // TODO: move to timer-progress-bar.vala
-    private int64 frozen_time = -1;
+    // private int64 frozen_time = -1;
 
 
     private string format_time (int seconds)
@@ -51,21 +51,21 @@ namespace Pomodoro
         return str;
     }
 
-    /**
-     * Fake Pomodoro.get_current_time (). Added for unittesting.
-     */
-    public void freeze_time (int64 timestamp = Pomodoro.get_current_time ())
-    {
-        Pomodoro.frozen_time = timestamp;
-    }
+    // /**
+    //  * Fake Pomodoro.get_current_time (). Added for unittesting.
+    //  */
+    // public void freeze_time (int64 timestamp = Pomodoro.get_current_time ())
+    // {
+    //     Pomodoro.frozen_time = timestamp;
+    // }
 
-    /**
-     * Revert freeze_time() call
-     */
-    public void unfreeze_time ()
-    {
-        Pomodoro.frozen_time = -1;
-    }
+    // /**
+    //  * Revert freeze_time() call
+    //  */
+    // public void unfreeze_time ()
+    // {
+    //     Pomodoro.frozen_time = -1;
+    // }
 
     /**
      * Returns the number of microseconds since January 1, 1970 UTC or frozen time
@@ -74,9 +74,7 @@ namespace Pomodoro
      */
     public int64 get_current_time ()
     {
-        return Pomodoro.frozen_time == -1
-                ? GLib.get_real_time ()
-                : Pomodoro.frozen_time;
+        return Pomodoro.Timestamp.from_now ();
     }
 
     /**

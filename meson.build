@@ -132,7 +132,7 @@ configure_file(
 )
 
 # Include the config.h we just generated
-incs = include_directories('.')
+config_h_dir = include_directories('.')
 
 subdir('po')
 subdir('data')

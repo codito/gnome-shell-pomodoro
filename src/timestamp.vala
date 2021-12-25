@@ -7,16 +7,20 @@ namespace Pomodoro.Timestamp
     public const int64 MIN = int64.MIN;
     public const int64 MAX = int64.MAX;
 
+    private int64 frozen_time = -1;
+
     // TODO: can be a macro
     public int64 from_now ()
     {
-        return GLib.get_real_time ();
+        return frozen_time < 0
+                ? GLib.get_real_time ()
+                : frozen_time;
     }
 
     // TODO: can be a macro
-    public int64 from_seconds (int64 seconds)
+    public int64 from_seconds (double seconds)
     {
-        return seconds * 1000000;
+        return (int64) Math.round (seconds * 1000000.0);
     }
 
     // public int64 from_monotonic_timestamp (int64 monotonic_timestamp)
@@ -30,9 +34,9 @@ namespace Pomodoro.Timestamp
     // }
 
     // TODO: can be a macro
-    public int64 to_seconds (int64 timestamp)
+    public double to_seconds (int64 timestamp)
     {
-        return timestamp / 1000000;
+        return ((double) timestamp) / 1000000.0;
     }
 
     // TODO
@@ -58,7 +62,7 @@ namespace Pomodoro.Timestamp
     }
 
     public int64 add (int64 timestamp,
-                      int64 value)
+                      int64 interval)
     {
         // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
 
@@ -68,23 +72,23 @@ namespace Pomodoro.Timestamp
 
         // FIXME: we assume here that `timestamp > 0`
 
-        if (value >= 0) {
-            return value < MAX - timestamp
-                ? timestamp + value
+        if (interval >= 0) {
+            return interval < MAX - timestamp
+                ? timestamp + interval
                 : MAX;
         }
         else {
-            return -value < MIN + timestamp
-                ? timestamp + value
+            return -interval < MIN + timestamp
+                ? timestamp + interval
                 : MIN;
         }
     }
 
     // TODO: can be a macro
     public int64 subtract (int64 timestamp,
-                           int64 value)
+                           int64 interval)
     {
-        return add (timestamp, -value);
+        return add (timestamp, -interval);
 
         // if (this.is_infinite ()) {
         //     return this;
@@ -112,4 +116,40 @@ namespace Pomodoro.Timestamp
 
         // TODO
     // }
+
+    //
+    // Functions for unit tests
+    //
+
+    /**
+     * Fake Pomodoro.get_current_time (). Added for unittesting.
+     */
+    public void freeze (int64 timestamp = -1)
+    {
+        if (timestamp < 0) {
+            timestamp = Pomodoro.Timestamp.from_now ();
+        }
+
+        frozen_time = timestamp;
+    }
+
+    /**
+     * Revert freeze() call
+     */
+    public void unfreeze ()
+    {
+        frozen_time = -1;
+    }
+
+    /**
+     * Advance frozen time
+     */
+    public void tick (int64 interval)
+    {
+        if (frozen_time >= 0) {
+            frozen_time += interval;
+        }
+    }
+
+
 }

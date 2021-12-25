@@ -6,8 +6,10 @@ namespace Pomodoro
     /**
      * Pomodoro.Session class.
      *
-     * As a "session" we call a series of time blocks including a long break.
-     * End of a long break or inactivity marks the end of a session.
+     * As a "session" we call time from starting the timer to time it got reset.
+     *
+     * As a "cycle" we call a series of time blocks including a long break.
+     * End of a long break or inactivity marks the end of a cycle.
      *
      * Session is responsible for:
      * - advising the timer as to when to take a long break
@@ -21,6 +23,12 @@ namespace Pomodoro
 
         private GLib.List<Pomodoro.TimeBlock> time_blocks;
         private Pomodoro.TimeBlock? current_time_block = null;
+
+        public Session.undefined (int64 timestamp = -1)
+        {
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED, timestamp);
+            this.add_time_block (time_block);
+        }
 
         // public static unowned Pomodoro.Session get_current ()
         // {
@@ -72,8 +80,20 @@ namespace Pomodoro
             // TODO
         }
 
-        public void add_time_block (Pomodoro.TimeBlock time_block)
+        // public void lookup_time_block (int time_block_id)
+        // {
+        // }
+
+        /**
+         * It can mean scheduling or adding already passed time block.
+         */
+        public void add_time_block (Pomodoro.TimeBlock time_block)  // TODO: specify behavior on_conflict
         {
+            this.time_blocks.append (time_block);  // TODO: insert sorted
+
+            if (this.current_time_block == null) {
+                this.current_time_block = time_block;
+            }
         }
 
         public void remove_time_block (Pomodoro.TimeBlock time_block)
@@ -98,6 +118,33 @@ namespace Pomodoro
         public unowned Pomodoro.TimeBlock? get_previous_time_block (Pomodoro.TimeBlock? time_block = null)
         {
             return null;
+        }
+
+        public void foreach_time_block (GLib.Func<unowned Pomodoro.TimeBlock> func)
+        {
+            this.time_blocks.@foreach (func);
+        }
+
+        public bool has_started (int64 timestamp = -1)
+        {
+            var first_time_block = this.get_first_time_block ();
+
+            if (first_time_block != null) {
+                return first_time_block.has_started (timestamp);
+            }
+
+            return false;
+        }
+
+        public bool has_ended (int64 timestamp = -1)
+        {
+            var last_time_block = this.get_first_time_block ();
+
+            if (last_time_block != null) {
+                return last_time_block.has_ended (timestamp);
+            }
+
+            return false;
         }
 
         public signal void enter_time_block (Pomodoro.TimeBlock time_block)
