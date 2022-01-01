@@ -112,10 +112,12 @@ namespace Pomodoro
         {
             if (this.screen_notification == null) {
                 this.screen_notification = new Pomodoro.ScreenNotification ();
-                ((Gtk.Widget) this.screen_notification).destroy.connect (() => {
+                ((Gtk.Widget) this.screen_notification).destroy.connect (() => {  // TODO: change to unmap signal
+                    var current_time_block = this.session_manager.current_time_block;
+
                     this.screen_notification = null;
 
-                    if (!this.timer.is_paused () && this.timer.state.is_break ()) {
+                    if (!this.timer.is_paused () && current_time_block.state.is_break ()) {
                         this.show_pomodoro_end_notification ();
                     }
                 });
@@ -150,8 +152,10 @@ namespace Pomodoro
 
         private void show_pomodoro_end_notification ()
         {
+            var current_time_block = this.session_manager.current_time_block;
+
             // TODO: resident notifications won't be updated, might be better not to display scheduled time
-            var remaining = (int) Math.floor (this.timer.get_remaining () / 1000000);
+            var remaining = (int) Math.floor (this.timer.calculate_remaining () / 1000000);
             var minutes   = (int) Math.round ((double) remaining / 60.0);
             var seconds   = (int) Math.floor (remaining % 60);
             var body      = remaining > 45
@@ -160,7 +164,7 @@ namespace Pomodoro
                   : ngettext ("You have %d second",
                               "You have %d seconds", seconds).printf (seconds);
 
-            var notification = new GLib.Notification ((this.timer.state == Pomodoro.State.SHORT_BREAK)
+            var notification = new GLib.Notification ((current_time_block.state == Pomodoro.State.SHORT_BREAK)
                                                       ? _("Take a break")
                                                       : _("Take a longer break"));
             notification.set_body (body);
@@ -177,7 +181,7 @@ namespace Pomodoro
             {
                 notification.set_default_action ("app.show-screen-notification");
 
-                if (this.timer.state == Pomodoro.State.SHORT_BREAK) {
+                if (current_time_block.state == Pomodoro.State.SHORT_BREAK) {
                     notification.add_button_with_target_value (_("Lengthen it"),
                                                                "app.timer-switch-state",
                                                                new GLib.Variant.string ("long-break"));
@@ -200,10 +204,12 @@ namespace Pomodoro
         private void on_settings_changed (GLib.Settings settings,
                                           string        key)
         {
+            var current_time_block = this.session_manager.current_time_block;
+
             switch (key)
             {
                 case "show-screen-notifications":
-                    if (this.timer.state.is_break ()) {
+                    if (current_time_block.state.is_break ()) {
                         this.notify_pomodoro_end ();
                     }
 

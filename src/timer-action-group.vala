@@ -39,7 +39,7 @@ namespace Pomodoro
         {
             this.timer = timer;
 
-            timer.set_data<GLib.ActionGroup> ("action-group", this as GLib.ActionGroup);
+            // timer.set_data<GLib.ActionGroup> ("action-group", this as GLib.ActionGroup);
 
             this.start_action = new GLib.SimpleAction ("start", null);
             this.start_action.activate.connect (this.activate_start);
@@ -57,15 +57,11 @@ namespace Pomodoro
             this.resume_action.activate.connect (this.activate_resume);
             this.add_action (this.resume_action);
 
-            this.skip_action = new GLib.SimpleAction ("skip", null);
-            this.skip_action.activate.connect (this.activate_skip);
-            this.add_action (this.skip_action);
-
-            this.state_action = new GLib.SimpleAction.stateful ("state",
-                                                                GLib.VariantType.STRING,
-                                                                new GLib.Variant.string (this.timer.state.to_string ()));
-            this.state_action.activate.connect (this.activate_state);
-            this.add_action (this.state_action);
+            // this.state_action = new GLib.SimpleAction.stateful ("state",
+            //                                                     GLib.VariantType.STRING,
+            //                                                     new GLib.Variant.string (this.timer.state.to_string ()));
+            // this.state_action.activate.connect (this.activate_state);
+            // this.add_action (this.state_action);
 
             this.skip_action = new GLib.SimpleAction ("skip", null);
             this.skip_action.activate.connect (this.activate_skip);
@@ -81,17 +77,17 @@ namespace Pomodoro
             this.update_action_states ();
         }
 
-        public static GLib.ActionGroup for_timer (Pomodoro.Timer timer)
-        {
-            var action_group = timer.get_data<GLib.ActionGroup> ("action-group");
+        // public static GLib.ActionGroup for_timer (Pomodoro.Timer timer)
+        // {
+        //     var action_group = timer.get_data<GLib.ActionGroup> ("action-group");
+            // TODO: cleanup on dispose?
 
-            if (action_group == null)
-            {
-                action_group = new TimerActionGroup (timer);
-            }
+        //     if (action_group == null) {
+        //         action_group = new TimerActionGroup (timer);
+        //     }
 
-            return action_group;
-        }
+        //     return action_group;
+        // }
 
         private void update_action_states ()
         {
@@ -102,10 +98,13 @@ namespace Pomodoro
             this.stop_action.set_enabled (!is_stopped);
             this.pause_action.set_enabled (!is_stopped && !is_paused);
             this.resume_action.set_enabled (!is_stopped && is_paused);
-            this.state_action.set_state (new GLib.Variant.string (this.timer.state.to_string ()));
+            this.skip_action.set_enabled (!is_stopped);
+            this.rewind_action.set_enabled (!is_stopped);
+            // this.state_action.set_state (new GLib.Variant.string (this.timer.state.to_string ()));
         }
 
-        private void on_timer_changed (Pomodoro.Timer timer)
+        private void on_timer_changed (Pomodoro.TimerState current_state,
+                                       Pomodoro.TimerState previous_state)
         {
             this.update_action_states ();
         }
@@ -135,7 +134,7 @@ namespace Pomodoro
         }
 
         private void activate_skip (GLib.SimpleAction action,
-                                      GLib.Variant?     parameter)
+                                    GLib.Variant?     parameter)
         {
             this.timer.skip ();
         }
@@ -143,15 +142,17 @@ namespace Pomodoro
         private void activate_rewind (GLib.SimpleAction action,
                                       GLib.Variant?     parameter)
         {
+            // TODO: take microseconds from param
+
             this.timer.rewind (60 * 1000000);
         }
 
-        private void activate_state (GLib.SimpleAction action,
-                                     GLib.Variant?     parameter)
-        {
-            this.timer.set_state (
-                Pomodoro.State.from_string (parameter.get_string ())
-            );
-        }
+        // private void activate_state (GLib.SimpleAction action,
+        //                              GLib.Variant?     parameter)
+        // {
+        //     this.timer.set_state (
+        //         Pomodoro.State.from_string (parameter.get_string ())
+        //     );
+        // }
     }
 }

@@ -1,37 +1,123 @@
 namespace Pomodoro
 {
     /**
-     * SessionManager initializes, manages and advances sessions. It also manages manages time blocks for the sessions.
+     * SessionManager manages and advances time-blocks and sessions.
      */
     public class SessionManager : GLib.Object
     {
         private static unowned Pomodoro.SessionManager? instance = null;
 
-        private Pomodoro.Timer timer;
-        private Pomodoro.Session current_session;
-        private Pomodoro.TimeBlock current_time_block;
+        public Pomodoro.Timer timer { get; construct; }
 
+        [CCode(notify = false)]
+        public unowned Pomodoro.TimeBlock current_time_block {
+            get {
+                return this._current_time_block;
+            }
+            set {
+                var previous_time_block = this._current_time_block;
+
+                if (previous_time_block != value) {
+                    this._current_time_block = value;
+
+                    if (previous_time_block != null) {
+                        this.leave_time_block (previous_time_block);
+                    }
+
+                    if (value != null && this._current_time_block == value) {
+                        this.enter_time_block (value);
+                    }
+                }
+
+                // var previous_time_block = this.timer.time_block;
+
+                // unowned Pomodoro.Session? previous_session = previous_time_block != null
+                //     ? previous_time_block.session
+                //     : null;
+
+                // if (previous_time_block != value) {
+                //     this.timer.time_block = value;  // TODO: notify
+
+                //     this.notify_property ("current-time-block");
+
+                //     if (previous_session != value.session) {
+                //         this.notify_property ("current-session");
+                //     }
+                // }
+            }
+        }
+
+        [CCode(notify = false)]
+        public unowned Pomodoro.Session current_session {
+            get {
+                return this._current_session;
+                // return this.current_time_block.session;
+            }
+            set {
+                assert_not_reached ();
+
+                // var current_time_block = this._current_time_block;
+
+                // if (value == null) {
+                // }
+
+                // if (this.current_time_block.session != value) {
+                //     this.current_time_block = value.get_first_time_block ();  // TODO: create undefined time-block if null
+                // }
+            }
+        }
+
+        /**
+         * Keep current session and time-block to track whether they have changed.
+         * `Timer.time_block` keeps the master value.
+         */
+        private Pomodoro.TimeBlock? _current_time_block = null;
+        private Pomodoro.Session? _current_session = null;
+        private Pomodoro.State _current_state = Pomodoro.State.UNDEFINED;
+
+        public SessionManager ()
+        {
+            GLib.Object (
+                timer: Pomodoro.Timer.get_default ()
+            );
+        }
+
+        public SessionManager.with_timer (Pomodoro.Timer timer)
+        {
+            GLib.Object (
+                timer: timer
+            );
+        }
+
+        construct
+        {
+            // this.timer.notify["time-block"].connect (this.on_timer_time_block_notify);
+
+            // this.on_timer_time_block_notify ();
+        }
 
         ~SessionManager ()
         {
             if (Pomodoro.SessionManager.instance == null) {
                 Pomodoro.SessionManager.instance = null;
             }
+
+            // this.timer.notify["time-block"].disconnect (this.on_timer_time_block_notify);
         }
 
-        construct
-        {
-            this.timer = Pomodoro.Timer.get_default ();
-        }
+        // construct
+        // {
+        //     this.timer = Pomodoro.Timer.get_default ();
+        // }
 
-        public static unowned Pomodoro.SessionManager get_default ()
+        public static unowned Pomodoro.SessionManager? get_default ()
         {
             // TODO / FIXME instance and get_default both are unowned, is it ok?
 
-            if (Pomodoro.SessionManager.instance == null) {
-                var session_manager = new Pomodoro.SessionManager ();
-                session_manager.set_default ();
-            }
+            // if (Pomodoro.SessionManager.instance == null) {
+            //     var session_manager = new Pomodoro.SessionManager ();
+            //     session_manager.set_default ();
+            // }
 
             return Pomodoro.SessionManager.instance;
         }
@@ -47,12 +133,21 @@ namespace Pomodoro
             // });
         }
 
-
-        public void reset (double timestamp = Pomodoro.get_current_time ())
+        public void reset (int64 timestamp = -1)
         {
             // TODO
         }
 
+        public void advance (int64 timestamp = -1)
+        {
+            // TODO
+        }
+
+        public void advance_to (Pomodoro.State state,
+                                int64          timestamp = -1)
+        {
+            // TODO
+        }
 
         private Pomodoro.Session resolve_next_session ()
         {
@@ -243,7 +338,18 @@ namespace Pomodoro
 
         public signal void enter_time_block (Pomodoro.TimeBlock time_block)
         {
-            // TODO: set time_block as current
+            // time_block.changed.connect ();  // TODO: monitor time-block changes
+
+            // TODO: set timer state
+            // this.timer.time_block = value;
+
+            var previous_state = this._current_state;
+
+            if (time_block.state != previous_state) {
+                this._current_state = time_block.state;
+
+                this.state_changed (this._current_state, previous_state);
+            }
         }
 
         public signal void leave_time_block (Pomodoro.TimeBlock time_block)
@@ -255,5 +361,34 @@ namespace Pomodoro
             this.current_session = next_time_block.session;
             this.current_time_block = next_time_block;
         }
+
+        public signal void state_changed (Pomodoro.State current_state,
+                                          Pomodoro.State previous_state);
+
+        // private void on_timer_time_block_notify ()
+        // {
+            // TODO: warn if time_block was changed through
+
+            // var previous_time_block = this._current_time_block;
+            // var previous_session = this._current_session;
+
+            // print ("# A\n");
+
+            // this._current_time_block = this.timer.time_block;
+
+            // print ("# B\n");
+
+            // this._current_session = current_time_block != null ? current_time_block.session : null;
+
+            // print ("# C\n");
+
+            // if (this._current_time_block != previous_time_block) {
+            //     this.notify_property ("current-time-block");
+            // }
+
+            // if (this._current_session != previous_session) {
+            //     this.notify_property ("current-session");
+            // }
+        // }
     }
 }

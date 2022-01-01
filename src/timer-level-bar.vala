@@ -1,5 +1,6 @@
 namespace Pomodoro
 {
+    // TODO: rename to SessionProgressBar
     public class TimerLevelBar : Gtk.Widget
     {
         private const float LINE_WIDTH = 6.0f;
@@ -40,7 +41,7 @@ namespace Pomodoro
 
         private bool update ()
         {
-            var progress = this.timer.get_session_progress ();
+            var progress = 0.0;  // this.timer.get_session_progress ();  // TODO
 
             if (this.progress != progress)
             {

@@ -18,12 +18,12 @@ namespace Pomodoro
     internal const double SHORT_TO_LONG_BREAK_THRESHOLD = 0.50;
 
 
-    private void ensure_timestamp (ref int64 timestamp)
-    {
-        if (timestamp < 0) {
-            timestamp = Pomodoro.get_current_time ();
-        }
-    }
+    // private void ensure_timestamp (ref int64 timestamp)
+    // {
+    //     if (timestamp < 0) {
+    //         timestamp = Pomodoro.get_current_time ();
+    //     }
+    // }
 
     public enum TimeBlockConflict
     {
@@ -38,35 +38,25 @@ namespace Pomodoro
      * angnostic about it. A child block may exceed its parent time range. After a child block gets defined `end` time,
      * the parent block is update its `end` time.
      */
-    public class TimeBlock : GLib.InitiallyUnowned
+    public class TimeBlock : GLib.Object  // GLib.InitiallyUnowned
     {
         // TODO !!!!! any change to a block should be propagated to parent blocks
         // TODO !!!!! use MIN_TIMESTAMP and MAX_TIMESTAMP instead of -1
 
+        public unowned Pomodoro.Session session { get; set; }
 
-        public unowned Pomodoro.Session? session {
-            get {
-                return this._session;
-            }
-            set {
-                this._session = value;
-            }
-        }
-
-        // public uint cycle_id {
+        // public unowned Pomodoro.Session session {
         //     get {
-        //         return this._cycle;
+        //         return this._session;
         //     }
         //     set {
-        //         this._cycle = value;
+        //         this._session = value;
         //     }
         // }
 
         public Pomodoro.State state {
-            get {
-                return this._state;
-            }
-            // construct set;  // TODO
+            get;
+            construct;
         }
 
         public int64 state_duration {
@@ -85,6 +75,7 @@ namespace Pomodoro
             set {
                 this.set_range (value, this._end, Pomodoro.TimeBlockConflict.KEEP_START);
             }
+            // default = Pomodoro.Timestamp.MIN;
         }
 
         public int64 end {
@@ -94,6 +85,7 @@ namespace Pomodoro
             set {
                 this.set_range (this._start, value, Pomodoro.TimeBlockConflict.KEEP_END);
             }
+            // default = Pomodoro.Timestamp.MAX;
         }
 
         // Beware that `duration` has a few edge cases:
@@ -139,25 +131,25 @@ namespace Pomodoro
         private GLib.SList<Pomodoro.TimeBlock> children = null;
 
         // private uint                        _cycle = 0;
-        private unowned Pomodoro.Session?   _session = null;
+        // private Pomodoro.Session?           _session = null;
         private unowned Pomodoro.TimeBlock? _parent = null;
-        private Pomodoro.State              _state = State.UNDEFINED;
+        // private Pomodoro.State              _state = State.UNDEFINED;
         private int64                       _state_duration = 0;
         // private Pomodoro.Context         _context = null;
         // private Pomodoro.Source          _source = Source.OTHER;
-        private int64                       _start = -1;
-        private int64                       _end = -1;
+        private int64                       _start = Pomodoro.Timestamp.MIN;
+        private int64                       _end = Pomodoro.Timestamp.MAX;
 
-        public TimeBlock (Pomodoro.State    state = State.UNDEFINED,
-                          int64             state_duration = 0,
-                          int64             start = -1,
-                          int64             end = -1)
+        public TimeBlock (Pomodoro.State state)
         {
-            this._session = session;
-            this._state = state;
-            this._state_duration = state_duration;
+            GLib.Object (
+                state: state
+            );
+            // this._state = state;
 
-            this.set_range_internal (start, end, Pomodoro.TimeBlockConflict.KEEP_START);
+            this._state_duration = state.get_default_duration ();
+
+        //     this.set_range_internal (start, end, Pomodoro.TimeBlockConflict.KEEP_START);
 
             // this.children = null;
         }
@@ -361,8 +353,8 @@ namespace Pomodoro
         //     return children_elapsed;
         // }
 
-        private static int compare (Pomodoro.TimeBlock a,
-                                    Pomodoro.TimeBlock b)
+        public static int compare (Pomodoro.TimeBlock a,
+                                   Pomodoro.TimeBlock b)
         {
             return - ((int) (a.start > b.start) - (int) (a.start < b.start));  // in descending order
         }

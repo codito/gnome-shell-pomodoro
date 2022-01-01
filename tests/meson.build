@@ -26,7 +26,13 @@ foreach test_name : test_names
       test_sources,
       dependencies: libgnome_pomodoro_dep,
       link_with: libtests,
-    )
+    ),
+    env: [
+      'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+      'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+      'G_MESSAGES_DEBUG=all',
+    ],
+    suite: 'tests',
   )
 endforeach
 

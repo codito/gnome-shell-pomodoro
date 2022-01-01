@@ -34,7 +34,7 @@ namespace Tests
         public string name;
 
         private Tests.TestCaseFunc func;
-        private Tests.TestSuite test_suite;
+        private Tests.TestSuite    test_suite;
 
         public TestSuiteAdaptor (string                   name,
                                  owned Tests.TestCaseFunc test_case_func,
@@ -45,19 +45,23 @@ namespace Tests
             this.test_suite = test_suite;
         }
 
-        public void setup (void* fixture) {
+        public void setup (void* fixture)
+        {
             this.test_suite.setup ();
         }
 
-        public void run (void* fixture) {
+        public void run (void* fixture)
+        {
             this.func ();
         }
 
-        public void teardown (void* fixture) {
+        public void teardown (void* fixture)
+        {
             this.test_suite.teardown ();
         }
 
-        public GLib.TestCase get_g_test_case () {
+        public GLib.TestCase get_g_test_case ()
+        {
             return new GLib.TestCase (this.name,
                                       this.setup,
                                       this.run,
@@ -70,15 +74,18 @@ namespace Tests
         private GLib.TestSuite g_test_suite;
         private Tests.TestSuiteAdaptor[] adaptors = new Tests.TestSuiteAdaptor[0];
 
-        construct {
+        construct
+        {
             this.g_test_suite = new GLib.TestSuite (this.get_name ());
         }
 
-        public string get_name () {
+        public string get_name ()
+        {
             return this.get_type ().name ();
         }
 
-        public GLib.TestSuite get_g_test_suite () {
+        public GLib.TestSuite get_g_test_suite ()
+        {
             return this.g_test_suite;
         }
 
@@ -91,10 +98,12 @@ namespace Tests
             this.g_test_suite.add (adaptor.get_g_test_case ());
         }
 
-        public virtual void setup () {
+        public virtual void setup ()
+        {
         }
 
-        public virtual void teardown () {
+        public virtual void teardown ()
+        {
         }
     }
 
@@ -113,7 +122,8 @@ namespace Tests
             }
         }
 
-        public void add (Tests.TestSuite test_suite) {
+        public void add (Tests.TestSuite test_suite)
+        {
             this.root_suite.add_suite (test_suite.get_g_test_suite ());
         }
 

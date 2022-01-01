@@ -22,7 +22,7 @@ namespace Pomodoro
         private bool update ()
         {
             var timestamp = Pomodoro.to_real_time (this.get_frame_clock ().get_frame_time ());
-            var progress = this.timer.get_progress (timestamp);
+            var progress = this.timer.calculate_progress (timestamp);
 
             if (this.progress != progress)
             {

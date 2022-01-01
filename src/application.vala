@@ -517,16 +517,16 @@ namespace Pomodoro
             }
         }
 
-        private void activate_timer_set_state (GLib.SimpleAction action,
-                                               GLib.Variant?     parameter)
-        {
-            try {
-                this.timer_service.set_state (parameter.get_string ());
-            }
-            catch (GLib.Error error) {
+        // private void activate_timer_set_state (GLib.SimpleAction action,
+        //                                        GLib.Variant?     parameter)
+        // {
+        //     try {
+        //         this.timer_service.set_state (parameter.get_string ());
+        //     }
+        //     catch (GLib.Error error) {
                 // TODO: log warning
-            }
-        }
+        //     }
+        // }
 
         // TODO: rename to swap_state?
         // private void activate_timer_switch_state (GLib.SimpleAction action,
@@ -577,9 +577,17 @@ namespace Pomodoro
             action.activate.connect (this.activate_timer_skip);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("timer-set-state", GLib.VariantType.STRING);
-            action.activate.connect (this.activate_timer_set_state);
-            this.add_action (action);
+            // TODO: timer-extend (by one minute)
+
+            // TODO: replace uses of `timer-skip` with actions:
+            // - start-pomodoro
+            // - take-break
+            // - take-short-break
+            // - take-long-break
+
+            // action = new GLib.SimpleAction ("timer-set-state", GLib.VariantType.STRING);
+            // action.activate.connect (this.activate_timer_set_state);
+            // this.add_action (action);
 
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
@@ -768,7 +776,12 @@ namespace Pomodoro
                 }
 
                 if (Options.start_stop) {
-                    this.timer.toggle ();
+                    if (!this.timer.is_running ()) {
+                        this.timer.start ();
+                    }
+                    else {
+                        this.timer.stop ();
+                    }
                 }
                 else if (Options.start) {
                     this.timer.start ();
@@ -859,7 +872,6 @@ namespace Pomodoro
             base.dbus_unregister (connection, object_path);
 
             if (this.timer != null) {
-                this.timer.destroy ();
                 this.timer = null;
             }
 
@@ -876,40 +888,42 @@ namespace Pomodoro
             // TODO: Consider removing this
             //       Changing settings shouldn't affect current timer state
 
+            var current_time_block = this.session_manager.current_time_block;
             var duration_seconds = 0.0;
 
             switch (key)
             {
                 case "pomodoro-duration":
-                    if (this.timer.state == Pomodoro.State.POMODORO) {
+                    if (current_time_block.state == Pomodoro.State.POMODORO) {
                         duration_seconds = settings.get_double (key);
                     }
                     break;
 
                 case "short-break-duration":
-                    if (this.timer.state == Pomodoro.State.SHORT_BREAK) {
+                    if (current_time_block.state == Pomodoro.State.SHORT_BREAK) {
                         duration_seconds = settings.get_double (key);
                     }
                     break;
 
                 case "long-break-duration":
-                    if (this.timer.state == Pomodoro.State.LONG_BREAK) {
+                    if (current_time_block.state == Pomodoro.State.LONG_BREAK) {
                         duration_seconds = settings.get_double (key);
                     }
                     break;
 
-                case "enabled-plugins":  // TODO: remove
-                    this.load_plugins ();
+                // case "enabled-plugins":  // TODO: remove
+                //     this.load_plugins ();
 
-                    break;
+                //     break;
             }
 
-            if (duration_seconds > 0.0)
-            {
-                this.timer.duration = int64.max (
-                    (int64) Math.floor (duration_seconds * USEC_PER_SEC),
-                    this.timer.get_elapsed ());
-            }
+            // TODO: pop uo in-app notification whether to apply settings to current pomodoro/break
+            // if (duration_seconds > 0.0)
+            // {
+            //     this.timer.duration = int64.max (
+            //         (int64) Math.floor (duration_seconds * USEC_PER_SEC),
+            //         this.timer.get_elapsed ());
+            // }
         }
 
         private void on_enter_time_block (Pomodoro.TimeBlock time_block)

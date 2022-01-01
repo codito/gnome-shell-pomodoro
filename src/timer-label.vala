@@ -91,7 +91,7 @@ namespace Pomodoro
                 remaining = (uint) Pomodoro.State.POMODORO.get_default_duration ().clamp (0, uint.MAX);
             }
             else {
-                remaining = (uint) double.max (Math.ceil (this.timer.get_remaining ()), 0.0);
+                remaining = (uint) double.max (Math.ceil (this.timer.calculate_remaining ()), 0.0);
             }
 
             minutes = remaining / 60;
@@ -131,17 +131,20 @@ namespace Pomodoro
 
             base.map ();
 
-            if (this.timer_elapsed_id == 0) {
-                this.timer_elapsed_id = this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
-            }
+            // TODO
+            // if (this.timer_elapsed_id == 0) {
+            //     this.timer_elapsed_id = this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
+            // }
 
-            if (this.timer_notify_state_id == 0) {
-                this.timer_notify_state_id = this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            }
+            // TODO
+            // if (this.timer_notify_state_id == 0) {
+            //     this.timer_notify_state_id = this.timer.notify["state"].connect_after (this.on_timer_state_notify);
+            // }
 
-            if (this.timer_notify_is_paused_id == 0) {
-                this.timer_notify_is_paused_id = this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
-            }
+            // TODO
+            // if (this.timer_notify_is_paused_id == 0) {
+            //     this.timer_notify_is_paused_id = this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            // }
 
             if (this.settings_changed_id == 0) {
                 this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);

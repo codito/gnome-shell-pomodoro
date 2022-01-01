@@ -19,18 +19,18 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.GestureDrag drag_gesture;
 
-        private Pomodoro.Timer timer;
-        private ulong          timer_notify_state_id = 0;
-        private ulong          timer_notify_is_paused_id = 0;
+        private Pomodoro.Timer          timer;
+        private Pomodoro.SessionManager session_manager;
+        private ulong                   session_manager_state_changed_id = 0;
+        private ulong                   timer_notify_is_paused_id = 0;
 
         construct
         {
-            var timer = Pomodoro.Timer.get_default ();
+            this.timer           = Pomodoro.Timer.get_default ();
+            this.session_manager = Pomodoro.SessionManager.get_default ();
+            this.layout_manager  = new Gtk.BinLayout ();
 
-            this.timer = timer;
-            this.layout_manager = new Gtk.BinLayout ();
-
-            this.insert_action_group ("timer", this.timer.get_action_group ());
+            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
         }
 
         private void update_css_classes ()
@@ -74,9 +74,9 @@ namespace Pomodoro
 
         private void disconnect_signals ()
         {
-            if (this.timer_notify_state_id != 0) {
-                this.timer.disconnect (this.timer_notify_state_id);
-                this.timer_notify_state_id = 0;
+            if (this.session_manager_state_changed_id != 0) {
+                this.session_manager.disconnect (this.session_manager_state_changed_id);
+                this.session_manager_state_changed_id = 0;
             }
 
             if (this.timer_notify_is_paused_id != 0) {
@@ -85,11 +85,12 @@ namespace Pomodoro
             }
         }
 
-        private void on_timer_state_notify ()
+        private void on_session_manager_state_changed (Pomodoro.State current_state,
+                                                       Pomodoro.State previous_state)
         {
-            this.timer_state_menubutton.label = this.timer.state.get_label ();
+            this.timer_state_menubutton.label = current_state.get_label ();
 
-            if (this.timer.state.is_break ()) {
+            if (current_state.is_break ()) {
                 this.timer_skip_button.tooltip_text = _("Start pomodoro");
             }
             else {
@@ -165,12 +166,13 @@ namespace Pomodoro
 
         public override void map ()
         {
-            this.on_timer_state_notify ();
+            var current_time_block = this.session_manager.current_time_block;
+            this.on_session_manager_state_changed (current_time_block.state, current_time_block.state);
 
             base.map ();
 
-            if (this.timer_notify_state_id == 0) {
-                this.timer_notify_state_id = this.timer.notify["state"].connect_after (this.on_timer_state_notify);
+            if (this.session_manager_state_changed_id == 0) {
+                this.session_manager_state_changed_id = this.session_manager.state_changed.connect (this.on_session_manager_state_changed);
             }
 
             if (this.timer_notify_is_paused_id == 0) {

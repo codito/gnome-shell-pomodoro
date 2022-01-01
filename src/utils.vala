@@ -27,6 +27,12 @@ namespace Pomodoro
     private int64 reference_time = -1;  // TODO: move to timer-progress-bar.vala
     // private int64 frozen_time = -1;
 
+    private void ensure_timestamp (ref int64 timestamp)
+    {
+        if (timestamp < 0) {
+            timestamp = Pomodoro.Timestamp.from_now ();
+        }
+    }
 
     private string format_time (int seconds)
     {

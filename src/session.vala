@@ -22,12 +22,17 @@ namespace Pomodoro
         // }
 
         private GLib.List<Pomodoro.TimeBlock> time_blocks;
-        private Pomodoro.TimeBlock? current_time_block = null;
 
         public Session.undefined (int64 timestamp = -1)
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED, timestamp);
-            this.add_time_block (time_block);
+            if (timestamp < 0) {
+                timestamp = Pomodoro.Timestamp.from_now ();
+            }
+
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+            time_block.start = timestamp;
+
+            this.append_time_block (time_block);
         }
 
         // public static unowned Pomodoro.Session get_current ()
@@ -85,24 +90,42 @@ namespace Pomodoro
         // }
 
         /**
-         * It can mean scheduling or adding already passed time block.
+         * Schedule time-block preserving its start time.
+         *
+         * TODO: handle conflicts
          */
-        public void add_time_block (Pomodoro.TimeBlock time_block)  // TODO: specify behavior on_conflict
+        public void schedule_time_block (Pomodoro.TimeBlock time_block)  // TODO: specify behavior on_conflict
         {
-            this.time_blocks.append (time_block);  // TODO: insert sorted
+            // insert_sorted (owned G data, CompareFunc<G> compare_func);
 
-            if (this.current_time_block == null) {
-                this.current_time_block = time_block;
-            }
+            this.time_blocks.insert_sorted (time_block, Pomodoro.TimeBlock.compare);
+
+            time_block.session = this;
+        }
+
+        /**
+         * Add the time-block and align it with the last block.
+         */
+        public void append_time_block (Pomodoro.TimeBlock time_block)
+        {
+            var last_time_block = this.get_last_time_block ();
+
+            this.time_blocks.append (time_block);
+
+            // TODO
+            // if (last_time_block != null) {
+            //     time_block.shift (last_time_block.end - time_block.start);
+            // }
+
+            time_block.session = this;
         }
 
         public void remove_time_block (Pomodoro.TimeBlock time_block)
+                                       requires (time_block.session == this)
         {
-        }
+            // TODO
 
-        public unowned Pomodoro.TimeBlock? get_current_time_block ()
-        {
-            return this.current_time_block;
+            time_block.session = null;
         }
 
         public unowned Pomodoro.TimeBlock? get_first_time_block ()
@@ -110,13 +133,29 @@ namespace Pomodoro
             return this.time_blocks.nth_data (0);
         }
 
+        public unowned Pomodoro.TimeBlock? get_last_time_block ()
+        {
+            unowned GLib.List<Pomodoro.TimeBlock> last_link = this.time_blocks.last ();
+
+            return last_link != null ? last_link.data : null;
+        }
+
         public unowned Pomodoro.TimeBlock? get_next_time_block (Pomodoro.TimeBlock? time_block = null)
         {
+            if (time_block == null) {
+                // return first
+                return this.time_blocks.nth_data (0);
+            }
+
             return null;
         }
 
         public unowned Pomodoro.TimeBlock? get_previous_time_block (Pomodoro.TimeBlock? time_block = null)
         {
+            if (time_block == null) {
+                // return last
+            }
+
             return null;
         }
 

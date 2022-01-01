@@ -32,7 +32,7 @@ namespace Tests
         /**
          * Check constructor `Session()`.
          *
-         * Expect it to be empty.
+         * Expect session not to have any time-blocks yet.
          */
         public void test_new ()
         {
@@ -53,7 +53,7 @@ namespace Tests
         /**
          * Check constructor `Session.undefined()`.
          *
-         * Expect session to have one undefined time block.
+         * Expect session to have one undefined time-block.
          */
         public void test_new_undefined ()
         {
@@ -61,7 +61,16 @@ namespace Tests
             var session = new Pomodoro.Session.undefined (timestamp);
 
             assert (session.has_started (timestamp));
+            assert (!session.has_started (timestamp - 1));
             assert (!session.has_ended (timestamp));
+
+            var first_time_block = session.get_first_time_block ();
+            assert (first_time_block != null);
+            assert (first_time_block.state == Pomodoro.State.UNDEFINED);
+
+            var last_time_block = session.get_last_time_block ();
+            assert (last_time_block != null);
+            assert (last_time_block == first_time_block);
         }
 
     }

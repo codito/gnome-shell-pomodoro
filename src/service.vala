@@ -236,7 +236,7 @@ namespace Pomodoro
 
         private void on_timer_changed (Pomodoro.Timer timer)
         {
-            this.changed (serialize_timer_properties (timer));
+            this.changed (serialize_timer_state (timer));
         }
 
         public signal void changed (GLib.HashTable<string, GLib.Variant> state);
@@ -298,9 +298,9 @@ namespace Pomodoro
         // }
 
         // [Description(nick = "age in years", blurb = "This is the person's age in years")]
-        public string state {  // TODO: make this as an object?
-            owned get { return this.timer.state.to_string (); }
-        }
+        // public string state {  // TODO: make this as an object?
+        //     owned get { return this.timer.state.to_string (); }
+        // }
 
         // public double state_duration {
         //     get { return this.timer.state.duration; }
@@ -323,6 +323,10 @@ namespace Pomodoro
         {
             this.timer = timer;
             this.timer.changed.connect (this.on_timer_changed);
+            this.timer.finished.connect (this.on_timer_finished);
+            this.timer.synchronize.connect (this.on_timer_synchronize);
+
+            // TODO: disconnect handlers at exit
         }
 
         public void start () throws GLib.Error
@@ -352,6 +356,8 @@ namespace Pomodoro
             this.timer.skip ();
         }
 
+        // TODO: rewind()
+
         // TODO: Timer.reset() should work differently than SessionManager.reset()
         // Reset timer and current session.
         // If timer is stopped then it remains so.
@@ -363,7 +369,7 @@ namespace Pomodoro
 
         public int64 get_elapsed (int64 timestamp = -1) throws GLib.Error
         {
-            return this.timer.get_elapsed (timestamp);
+            return this.timer.calculate_elapsed (timestamp);
         }
 
         // public get_state () throws GLib.Error
@@ -372,9 +378,9 @@ namespace Pomodoro
         // }
 
         // Method for jumping to a desired state
-        public void set_state (string state_name) throws Error
-        {
-            var state = Pomodoro.State.from_string (state_name);
+        // public void set_state (string state_name) throws Error
+        // {
+        //     var state = Pomodoro.State.from_string (state_name);
 
             // if (state == null) {
             //     throw new GLib.Error ("Unrecognized state name: '%s'".printf (state_name));
@@ -382,61 +388,73 @@ namespace Pomodoro
 
             // TODO
             // this.timer.state = state;
-        }
+        // }
 
         // Modify timer state. Client is not aware of state_duration of other states, so its use is likely
         // limited to modifying the current state, for usecases like:
         //   - extending or shorting state duration,
         //   - resetting the elapsed time.
-        public void set_state_full (string state_name,
-                                    int64  state_duration,
-                                    int64  elapsed = 0,
-                                    bool   is_paused = false) throws GLib.Error
-        {
-            var state = Pomodoro.State.from_string (state_name);
+        // public void set_state_full (string state_name,
+        //                             int64  state_duration,
+        //                             int64  elapsed = 0,
+        //                             bool   is_paused = false) throws GLib.Error
+        // {
+        //     var state = Pomodoro.State.from_string (state_name);
 
             // if (state == null) {
             //     throw GLib.Error ("Unrecognized state name: '%s'".printf (state_name));
             // }
 
-            if (elapsed < 0) {
-                throw new Pomodoro.TimerServiceError.INVALID_ELAPSED ("Elapsed time can't be negative");
-            }
+        //     if (elapsed < 0) {
+        //         throw new Pomodoro.TimerServiceError.INVALID_ELAPSED ("Elapsed time can't be negative");
+        //     }
 
             // if (state != null) {
             //     // TODO: we should inhibit this.on_timer_state_changed until all properties are set
             //     this.timer.state = state;
             // }
             // TODO
-        }
+        // }
 
         // Signal emitted by gnome-pomodoro asking clients to update all data.
         // It may be due to state change or due to system events like resuming from suspend.
         public signal void synchronize ();
 
+        public signal void finished ();
+
         // "changed" signal is emmited if one of timer params have changed.
         public signal void changed (GLib.HashTable<string, GLib.Variant> data);
 
 
-        private static GLib.HashTable<string, GLib.Variant> serialize_timer_properties (Pomodoro.Timer timer)
+        private static GLib.HashTable<string, GLib.Variant> serialize_timer_state (Pomodoro.Timer timer)
         {
             // var time_block_data = new GLib.HashTable<string, GLib.Variant> (str_hash, str_equal);
             // time_block_data.insert ("state", new GLib.Variant.string (timer.state.to_string ()));
 
             var data = new GLib.HashTable<string, GLib.Variant> (str_hash, str_equal);
             // data.insert ("time-block", new GLib.Variant.int64 ());
-            data.insert ("state", new GLib.Variant.string (timer.state.to_string ()));
+            // data.insert ("state", new GLib.Variant.string (timer.state.to_string ()));
             data.insert ("duration", new GLib.Variant.int64 (timer.duration));
-            data.insert ("timestamp", new GLib.Variant.int64 (timer.timestamp));
-            data.insert ("offset", new GLib.Variant.int64 (timer.offset));
+            // data.insert ("timestamp", new GLib.Variant.int64 (timer.timestamp));
+            // data.insert ("offset", new GLib.Variant.int64 (timer.offset));
             data.insert ("is-paused", new GLib.Variant.boolean (timer.is_paused ()));
 
             return data;
         }
 
-        private void on_timer_changed (Pomodoro.Timer timer)
+        private void on_timer_changed ()
         {
-            this.changed (serialize_timer_properties (timer));
+            this.changed (serialize_timer_state (this.timer));
+        }
+
+        private void on_timer_finished ()
+        {
+            this.finished ();
+        }
+
+        private void on_timer_synchronize ()
+        {
+            this.synchronize ();
         }
     }
 
