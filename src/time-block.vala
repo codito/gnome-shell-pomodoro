@@ -3,28 +3,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    /* Minimum time in seconds for pomodoro to get scored. */
-    internal const double MIN_POMODORO_TIME = 60.0;
-
-    /* Minimum progress for pomodoro to be considered for a long break. Higer values means
-       the timer is more strict about completing pomodoros. */
-    internal const double POMODORO_THRESHOLD = 0.90;
-
-    /* Acceptable score value that can be missed during cycle. */
-    internal const double MISSING_SCORE_THRESHOLD = 0.50;
-
-    /* Minimum progress for long break to get accepted. It's in reference to duration of a short break,
-       or more precisely it's a ratio between duration of a short break and a long break. */
-    internal const double SHORT_TO_LONG_BREAK_THRESHOLD = 0.50;
-
-
-    // private void ensure_timestamp (ref int64 timestamp)
-    // {
-    //     if (timestamp < 0) {
-    //         timestamp = Pomodoro.get_current_time ();
-    //     }
-    // }
-
     public enum TimeBlockConflict
     {
         KEEP_START = 0,
@@ -387,17 +365,16 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var start_timestamp = this.start;
+            var start_time = this.start;
 
-            if (start_timestamp == Pomodoro.Timestamp.MIN) {
-                start_timestamp = timestamp;
+            if (start_time == Pomodoro.Timestamp.MIN) {
+                start_time = timestamp;
             }
 
             return Pomodoro.TimerState () {
                 duration = this.state.get_default_duration (),  // TODO: should be state_duration
-                start_timestamp = start_timestamp,
-                stop_timestamp = Pomodoro.Timestamp.UNDEFINED,
-                change_timestamp = int64.min (this.end, timestamp),
+                started_time = start_time,
+                stopped_time = Pomodoro.Timestamp.UNDEFINED,
                 is_finished = false
             };
         }

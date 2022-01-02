@@ -1,5 +1,20 @@
 namespace Pomodoro
 {
+    /* Minimum time in seconds for pomodoro to get scored. */
+    internal const double MIN_POMODORO_TIME = 60.0;
+
+    /* Minimum progress for pomodoro to be considered for a long break. Higer values means
+       the timer is more strict about completing pomodoros. */
+    internal const double POMODORO_THRESHOLD = 0.90;
+
+    /* Acceptable score value that can be missed during cycle. */
+    internal const double MISSING_SCORE_THRESHOLD = 0.50;
+
+    /* Minimum progress for long break to get accepted. It's in reference to duration of a short break,
+       or more precisely it's a ratio between duration of a short break and a long break. */
+    internal const double SHORT_TO_LONG_BREAK_THRESHOLD = 0.50;
+
+
     /**
      * SessionManager manages and advances time-blocks and sessions.
      */

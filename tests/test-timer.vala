@@ -33,9 +33,8 @@ namespace Tests
         return Pomodoro.TimerState () {
             duration = duration,
             offset = 0,
-            start_timestamp = Pomodoro.Timestamp.UNDEFINED,
-            stop_timestamp = now,
-            change_timestamp = now,
+            started_time = Pomodoro.Timestamp.UNDEFINED,
+            stopped_time = now,
             is_finished = false,
             user_data = user_data
         };
@@ -56,9 +55,8 @@ namespace Tests
         return Pomodoro.TimerState () {
             duration = duration,
             offset = now - timestamp - elapsed,
-            start_timestamp = timestamp,
-            stop_timestamp = Pomodoro.Timestamp.UNDEFINED,
-            change_timestamp = now,
+            started_time = timestamp,
+            stopped_time = Pomodoro.Timestamp.UNDEFINED,
             is_finished = false,
             user_data = user_data
         };
@@ -79,9 +77,8 @@ namespace Tests
         return Pomodoro.TimerState () {
             duration = duration,
             offset = now - timestamp - elapsed,
-            start_timestamp = timestamp,
-            stop_timestamp = now,
-            change_timestamp = now,
+            started_time = timestamp,
+            stopped_time = now,
             is_finished = false,
             user_data = user_data
         };
@@ -102,9 +99,8 @@ namespace Tests
         return Pomodoro.TimerState () {
             duration = duration,
             offset = now - timestamp - elapsed,
-            start_timestamp = timestamp,
-            stop_timestamp = now,
-            change_timestamp = now,
+            started_time = timestamp,
+            stopped_time = now,
             is_finished = true,
             user_data = user_data
         };
@@ -149,9 +145,8 @@ namespace Tests
             var expected_state = Pomodoro.TimerState () {
                 duration = 1,
                 offset = 2,
-                start_timestamp = 3,
-                stop_timestamp = 4,
-                change_timestamp = 5,
+                started_time = 3,
+                stopped_time = 4,
                 is_finished = true,
                 user_data = GLib.MainContext.@default()
             };
@@ -187,9 +182,35 @@ namespace Tests
             this.add_test ("is_finished",
                            this.test_is_finished);
 
+            // TODO: calculate_elapsed for more states
+            // this.add_test ("calculate_elapsed__initial_state",
+            //                this.test_calculate_elapsed__initial_state);
             this.add_test ("calculate_elapsed__started_state",
                            this.test_calculate_elapsed__started_state);
-            // TODO: calculate_elapsed for more states
+            // this.add_test ("calculate_elapsed__stopped_state",
+            //                this.test_calculate_elapsed__stopped_state);
+            // this.add_test ("calculate_elapsed__finished_state",
+            //                this.test_calculate_elapsed__finished_state);
+
+            // TODO
+            // this.add_test ("calculate_remaining__initial_state",
+            //                this.test_calculate_remaining__initial_state);
+            // this.add_test ("calculate_remaining__started_state",
+            //                this.test_calculate_remaining__started_state);
+            // this.add_test ("calculate_remaining__stopped_state",
+            //                this.test_calculate_remaining__stopped_state);
+            // this.add_test ("calculate_remaining__finished_state",
+            //                this.test_calculate_remaining__finished_state);
+
+            // TODO
+            // this.add_test ("calculate_progress__initial_state",
+            //                this.test_calculate_progress__initial_state);
+            // this.add_test ("calculate_progress__started_state",
+            //                this.test_calculate_progress__started_state);
+            // this.add_test ("calculate_progress__stopped_state",
+            //                this.test_calculate_progress__stopped_state);
+            // this.add_test ("calculate_progress__finished_state",
+            //                this.test_calculate_progress__finished_state);
 
             this.add_test ("reset",
                            this.test_reset);
@@ -212,12 +233,26 @@ namespace Tests
             this.add_test ("stop__finished_state",
                            this.test_stop__finished_state);
 
+            // TODO
+            // this.add_test ("finish__initial_state",
+            //                this.test_finish__initial_state);
+            // this.add_test ("finish__started_state",
+            //                this.test_finish__started_state);
+            // this.add_test ("finish__stopped_state",
+            //                this.test_finish__stopped_state);
+            // this.add_test ("finish__finished_state",
+            //                this.test_finish__finished_state);
+
             this.add_test ("finished_signal__0s",
                            this.test_finished_signal__0s);
             this.add_test ("finished_signal__1s",
                            this.test_finished_signal__1s);
             this.add_test ("finished_signal__3s",
                            this.test_finished_signal__3s);
+
+            // TODO
+            // this.add_test ("synchronize_signal",
+            //                this.test_synchronize_signal);
         }
 
         public override void setup ()
@@ -397,19 +432,19 @@ namespace Tests
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (
-                    timer.calculate_elapsed (timer.state.start_timestamp - Pomodoro.Interval.MINUTE)
+                    timer.calculate_elapsed (timer.state.started_time - Pomodoro.Interval.MINUTE)
                 ),
                 new GLib.Variant.int64 (0)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (
-                    timer.calculate_elapsed (timer.state.start_timestamp + Pomodoro.Interval.MINUTE)
+                    timer.calculate_elapsed (timer.state.started_time + Pomodoro.Interval.MINUTE)
                 ),
                 new GLib.Variant.int64 (Pomodoro.Interval.MINUTE)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (
-                    timer.calculate_elapsed (timer.state.start_timestamp + timer.duration + Pomodoro.Interval.MINUTE)
+                    timer.calculate_elapsed (timer.state.started_time + timer.duration + Pomodoro.Interval.MINUTE)
                 ),
                 new GLib.Variant.int64 (timer.duration)
             );
@@ -424,7 +459,7 @@ namespace Tests
             assert_cmpvariant (
                 new GLib.Variant.int64 (
                     timer_with_offset.calculate_elapsed (
-                        timer_with_offset.state.start_timestamp + timer_with_offset.state.offset + Pomodoro.Interval.MINUTE
+                        timer_with_offset.state.started_time + timer_with_offset.state.offset + Pomodoro.Interval.MINUTE
                     )
                 ),
                 new GLib.Variant.int64 (Pomodoro.Interval.MINUTE)
@@ -432,7 +467,7 @@ namespace Tests
             assert_cmpvariant (
                 new GLib.Variant.int64 (
                     timer_with_offset.calculate_elapsed (
-                        timer_with_offset.state.start_timestamp + 5 * Pomodoro.Interval.MINUTE
+                        timer_with_offset.state.started_time + 5 * Pomodoro.Interval.MINUTE
                     )
                 ),
                 new GLib.Variant.int64 (4 * Pomodoro.Interval.MINUTE)
@@ -451,9 +486,8 @@ namespace Tests
                 Pomodoro.TimerState () {
                     duration = expected_state.duration,
                     offset = 1,
-                    start_timestamp = 2,
-                    stop_timestamp = 3,
-                    change_timestamp = 4,
+                    started_time = 2,
+                    stopped_time = 3,
                     is_finished = true
                 }
             );
@@ -481,9 +515,8 @@ namespace Tests
 
             var initial_state = create_initial_state ();
             var expected_state = initial_state.copy ();
-            expected_state.start_timestamp = now + 5 * Pomodoro.Interval.MINUTE;
-            expected_state.stop_timestamp = Pomodoro.Timestamp.UNDEFINED;
-            expected_state.change_timestamp = now + 5 * Pomodoro.Interval.MINUTE;
+            expected_state.started_time = now + 5 * Pomodoro.Interval.MINUTE;
+            expected_state.stopped_time = Pomodoro.Timestamp.UNDEFINED;
 
             var timer = new Pomodoro.Timer.with_state (initial_state);
             Pomodoro.Timestamp.tick (5 * Pomodoro.Interval.MINUTE);
@@ -539,8 +572,7 @@ namespace Tests
             );
             var expected_state = stopped_state.copy ();
             expected_state.offset += 1 * Pomodoro.Interval.MINUTE;
-            expected_state.stop_timestamp = Pomodoro.Timestamp.UNDEFINED;
-            expected_state.change_timestamp += 1 * Pomodoro.Interval.MINUTE;
+            expected_state.stopped_time = Pomodoro.Timestamp.UNDEFINED;
 
             var timer = new Pomodoro.Timer.with_state (stopped_state);
             Pomodoro.Timestamp.tick (1 * Pomodoro.Interval.MINUTE);
@@ -620,8 +652,7 @@ namespace Tests
 
             var started_state = create_started_state ();
             var expected_state = started_state.copy ();
-            expected_state.stop_timestamp = now + 5 * Pomodoro.Interval.MINUTE;
-            expected_state.change_timestamp = now + 5 * Pomodoro.Interval.MINUTE;
+            expected_state.stopped_time = now + 5 * Pomodoro.Interval.MINUTE;
 
             var timer = new Pomodoro.Timer.with_state (started_state);
             Pomodoro.Timestamp.tick (5 * Pomodoro.Interval.MINUTE);
