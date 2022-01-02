@@ -39,8 +39,6 @@ namespace Pomodoro
         {
             this.timer = timer;
 
-            // timer.set_data<GLib.ActionGroup> ("action-group", this as GLib.ActionGroup);
-
             this.start_action = new GLib.SimpleAction ("start", null);
             this.start_action.activate.connect (this.activate_start);
             this.add_action (this.start_action);
@@ -71,23 +69,11 @@ namespace Pomodoro
             this.rewind_action.activate.connect (this.activate_rewind);
             this.add_action (this.rewind_action);
 
-            this.timer.changed.connect (this.on_timer_changed);
+            this.timer.state_changed.connect (this.on_timer_changed);
             // this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
 
             this.update_action_states ();
         }
-
-        // public static GLib.ActionGroup for_timer (Pomodoro.Timer timer)
-        // {
-        //     var action_group = timer.get_data<GLib.ActionGroup> ("action-group");
-            // TODO: cleanup on dispose?
-
-        //     if (action_group == null) {
-        //         action_group = new TimerActionGroup (timer);
-        //     }
-
-        //     return action_group;
-        // }
 
         private void update_action_states ()
         {

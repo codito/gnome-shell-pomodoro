@@ -148,6 +148,12 @@ namespace Pomodoro.Timestamp
         frozen_time = UNDEFINED;
     }
 
+    public bool is_frozen ()
+    {
+        return frozen_time != UNDEFINED;
+    }
+
+
     /**
      * Advance frozen time
      */

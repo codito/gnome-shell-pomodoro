@@ -59,16 +59,16 @@ namespace Pomodoro
             construct;
         }
 
-        public int64 state_duration {
-            get {
-                return this._state_duration;
-            }
-            set {
-                this._state_duration = value;
-            }
-        }
+        // public int64 state_duration {  // TODO: rename to remaining
+        //     get {
+        //         return this._state_duration;
+        //     }
+        //     set {
+        //         this._state_duration = value;
+        //     }
+        // }
 
-        public int64 start {
+        public int64 start {  // TODO: rename to start_time
             get {
                 return this._start;
             }
@@ -78,7 +78,7 @@ namespace Pomodoro
             // default = Pomodoro.Timestamp.MIN;
         }
 
-        public int64 end {
+        public int64 end {  // TODO: rename to end_time
             get {
                 return this._end;
             }
@@ -91,7 +91,7 @@ namespace Pomodoro
         // Beware that `duration` has a few edge cases:
         //  - when time block is infinite (`end` < 0 or `start` < 0) it returns -1
         //  - when one of the child is infinite, it returns duration according to its `end` and not the childs
-        public int64 duration {
+        public int64 duration {  // TODO: change to scheduled_duration
             get {
                 return this._start >= 0 && this._end >= 0
                     ? this._end - this._start
@@ -383,6 +383,24 @@ namespace Pomodoro
 
 
 
+        public Pomodoro.TimerState to_timer_state (int64 timestamp = -1)
+        {
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            var start_timestamp = this.start;
+
+            if (start_timestamp == Pomodoro.Timestamp.MIN) {
+                start_timestamp = timestamp;
+            }
+
+            return Pomodoro.TimerState () {
+                duration = this.state.get_default_duration (),  // TODO: should be state_duration
+                start_timestamp = start_timestamp,
+                stop_timestamp = Pomodoro.Timestamp.UNDEFINED,
+                change_timestamp = int64.min (this.end, timestamp),
+                is_finished = false
+            };
+        }
 
 
         // -----------------------------------------------------------------

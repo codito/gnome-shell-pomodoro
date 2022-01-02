@@ -7,8 +7,10 @@ namespace Tests
         public SessionManagerTest ()
         {
             this.add_test ("new", this.test_new);
-            // this.add_test ("new_with_timer", this.test_new_with_timer);
-            // this.add_test ("test_set_current_time_block", this.test_set_current_time_block);
+            this.add_test ("new_with_timer", this.test_new_with_timer);
+
+            this.add_test ("set_current_session", this.test_set_current_session);
+            this.add_test ("set_current_time_block", this.test_set_current_time_block);
         }
 
         public override void setup ()
@@ -32,14 +34,19 @@ namespace Tests
             // settings.revert ();
         }
 
+
+        /*
+         * Tests for constructors
+         */
+
         public void test_new ()
         {
             var session_manager = new Pomodoro.SessionManager ();
 
             assert_true (session_manager.timer == Pomodoro.Timer.get_default ());
             assert_true (session_manager.timer.is_default ());
-
-            // TODO: check current session / time-block
+            assert_null (session_manager.current_session);
+            assert_null (session_manager.current_time_block);
         }
 
         public void test_new_with_timer ()
@@ -49,8 +56,22 @@ namespace Tests
 
             assert_true (session_manager.timer == timer);
             assert_true (!session_manager.timer.is_default ());
+            assert_null (session_manager.current_session);
+            assert_null (session_manager.current_time_block);
+        }
 
-            // TODO: check current session / time-block
+
+        /*
+         * Tests for properties
+         */
+
+        public void test_set_current_session ()
+        {
+            var session = new Pomodoro.Session.undefined ();
+
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
         }
 
         public void test_set_current_time_block ()
@@ -74,76 +95,105 @@ namespace Tests
 
             // Set new time-block. Expect notify signals to be emitted
             session_manager.current_time_block = time_block;
-            assert_true (timer.duration == time_block.state_duration);
-            assert_true (timer.state.start_timestamp == time_block.start);
-            assert_true (timer.state.offset == 0);
-
-            assert_true (notify_current_time_block_emitted == 1);
-            assert_true (notify_current_session_emitted == 1);
+            assert_cmpvariant (
+                time_block.to_timer_state ().to_variant (),
+                timer.state.to_variant ()
+            );
+            // assert_true (timer.duration == time_block.state_duration);
+            // assert_true (timer.timestamp == time_block.start);
+            // assert_true (timer.offset == 0);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
 
             // Set current time-block. Expect signals not to be emitted
             notify_current_time_block_emitted = 0;
             notify_current_session_emitted = 0;
             session_manager.current_time_block = session_manager.current_time_block;
-            assert_true (notify_current_time_block_emitted == 0);
-            assert_true (notify_current_session_emitted == 0);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 0);
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 0);
 
             // Set new time-block within same session. Expect notify["current-session"] not to be emitted
             notify_current_time_block_emitted = 0;
             notify_current_session_emitted = 0;
             session_manager.current_time_block = session_manager.current_time_block;
-            assert_true (notify_current_time_block_emitted == 1);
-            assert_true (notify_current_session_emitted == 0);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 0);
 
             // Set current time-block with new session. Expect notify["current-session"] to be emitted
             notify_current_time_block_emitted = 0;
             notify_current_session_emitted = 0;
             session_manager.current_time_block = session_manager.current_time_block;
-            assert_true (notify_current_time_block_emitted == 1);
-            assert_true (notify_current_session_emitted == 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
         }
 
-        public void test_timer_start ()
+
+        /*
+         * Tests for methods
+         */
+
+        public void test_initialize_session ()
         {
             var timer = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
+            // TODO
         }
 
-        public void test_timer_stop ()
-        {
-            var timer = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+        // public void test_advance_to ()
+        // {
+            // TODO
+        // }
 
-        }
+        // public void test_advance ()
+        // {
+            // TODO
+        // }
 
-        public void test_timer_pause ()
-        {
-            var timer = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-        }
 
-        public void test_timer_resume ()
-        {
-            var timer = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-        }
+        // public void test_timer_start ()
+        // {
+        //     var timer = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-        public void test_timer_rewind ()
-        {
-            var timer = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+        // }
 
-        }
+        // public void test_timer_stop ()
+        // {
+        //     var timer = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-        public void test_timer_skip ()
-        {
-            var timer = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+        // }
 
-        }
+        // public void test_timer_pause ()
+        // {
+        //     var timer = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+        // }
+
+        // public void test_timer_resume ()
+        // {
+        //     var timer = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+        // }
+
+        // public void test_timer_rewind ()
+        // {
+        //     var timer = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+        // }
+
+        // public void test_timer_skip ()
+        // {
+        //     var timer = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+        // }
     }
 }
 

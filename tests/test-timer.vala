@@ -110,6 +110,31 @@ namespace Tests
         };
     }
 
+    private bool wait_timer (Pomodoro.Timer timer)
+                             requires (!Pomodoro.Timestamp.is_frozen ())
+    {
+        var main_context = GLib.MainContext.@default ();
+        var timeout = (uint) (timer.calculate_remaining () / 1000 + 2000);
+        var timeout_id = (uint) 0;
+        var success = true;
+
+        timeout_id = GLib.Timeout.add (timeout, () => {
+            timeout_id = 0;
+            success = false;
+
+            return GLib.Source.REMOVE;
+        });
+
+        while (success && timer.is_running ()) {
+            main_context.iteration (true);
+        }
+
+        GLib.Source.remove (timeout_id);
+
+        return success;
+    }
+
+
 
     public class TimerStateTest : Tests.TestSuite
     {
@@ -186,6 +211,13 @@ namespace Tests
                            this.test_stop__stopped_state);
             this.add_test ("stop__finished_state",
                            this.test_stop__finished_state);
+
+            this.add_test ("finished_signal__0s",
+                           this.test_finished_signal__0s);
+            this.add_test ("finished_signal__1s",
+                           this.test_finished_signal__1s);
+            this.add_test ("finished_signal__3s",
+                           this.test_finished_signal__3s);
         }
 
         public override void setup ()
@@ -672,6 +704,86 @@ namespace Tests
          */
         // TODO
 
+
+        /*
+         * Tests for .finish()
+         */
+        // TODO
+
+
+
+        /*
+         * Tests for signals
+         */
+
+        public void test_finished_signal__0s ()
+        {
+            Pomodoro.Timestamp.unfreeze ();
+
+            var timer = new Pomodoro.Timer (0);
+
+            var finished_emitted = 0;
+            timer.finished.connect (() => {
+                finished_emitted++;
+            });
+
+            timer.start ();
+            assert_false (timer.is_running ());
+            assert_true (timer.is_finished ());
+            assert_true (wait_timer (timer));
+            assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
+
+            timer.start ();
+            assert_false (timer.is_running ());
+            assert_true (timer.is_finished ());
+            assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
+        }
+
+        public void test_finished_signal__1s ()
+        {
+            Pomodoro.Timestamp.unfreeze ();
+
+            var timer = new Pomodoro.Timer (1 * Pomodoro.Interval.SECOND);
+
+            var finished_emitted = 0;
+            timer.finished.connect (() => {
+                finished_emitted++;
+            });
+
+            timer.start ();
+            assert_true (timer.is_running ());
+            assert_false (timer.is_finished ());
+            assert_true (wait_timer (timer));
+            assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
+
+            timer.start ();
+            assert_false (timer.is_running ());
+            assert_true (timer.is_finished ());
+            assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
+        }
+
+        public void test_finished_signal__3s ()
+        {
+            Pomodoro.Timestamp.unfreeze ();
+
+            var timer = new Pomodoro.Timer (3 * Pomodoro.Interval.SECOND);
+
+            var finished_emitted = 0;
+            timer.finished.connect (() => {
+                finished_emitted++;
+            });
+
+            timer.start ();
+            assert_true (timer.is_running ());
+            assert_false (timer.is_finished ());
+            assert_true (wait_timer (timer));
+            assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
+
+            timer.start ();
+            assert_false (timer.is_running ());
+            assert_true (timer.is_finished ());
+            assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
+        }
     }
 }
 

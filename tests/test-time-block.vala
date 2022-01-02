@@ -4,8 +4,17 @@ namespace Tests
     {
         public TimeBlockTest ()
         {
-            this.add_test ("new", this.test_new);
-            this.add_test ("set_session", this.test_set_session);
+            this.add_test ("new__undefined",
+                           this.test_new__undefined);
+            this.add_test ("new__pomodoro",
+                           this.test_new__pomodoro);
+            this.add_test ("new__short_break",
+                           this.test_new__short_break);
+            this.add_test ("new__long_break",
+                           this.test_new__long_break);
+
+            this.add_test ("set_session",
+                           this.test_set_session);
 
             // this.add_test ("state", this.test_state);
             // this.add_test ("start", this.test_start);
@@ -43,23 +52,59 @@ namespace Tests
             // settings.revert ();
         }
 
-        private void _test_new (Pomodoro.State state)
+
+        /*
+         * Tests for constructors
+         */
+
+        public void test_new__undefined ()
         {
+            var state = Pomodoro.State.UNDEFINED;
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            assert_true (time_block.state_duration == state.get_default_duration ());
+            // assert_true (time_block.state_duration == state.get_default_duration ());
             assert_true (time_block.start == Pomodoro.Timestamp.MIN);
             assert_true (time_block.end == Pomodoro.Timestamp.MAX);
         }
 
-        public void test_new ()
+        public void test_new__pomodoro ()
         {
-            this._test_new (Pomodoro.State.UNDEFINED);
-            this._test_new (Pomodoro.State.POMODORO);
-            this._test_new (Pomodoro.State.SHORT_BREAK);
-            this._test_new (Pomodoro.State.LONG_BREAK);
+            var state = Pomodoro.State.POMODORO;
+            var time_block = new Pomodoro.TimeBlock (state);
+
+            assert_true (time_block.state == state);
+            // assert_true (time_block.state_duration == state.get_default_duration ());
+            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
         }
+
+        public void test_new__short_break ()
+        {
+            var state = Pomodoro.State.SHORT_BREAK;
+            var time_block = new Pomodoro.TimeBlock (state);
+
+            assert_true (time_block.state == state);
+            // assert_true (time_block.state_duration == state.get_default_duration ());
+            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
+        }
+
+        public void test_new__long_break ()
+        {
+            var state = Pomodoro.State.LONG_BREAK;
+            var time_block = new Pomodoro.TimeBlock (state);
+
+            assert_true (time_block.state == state);
+            // assert_true (time_block.state_duration == state.get_default_duration ());
+            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
+        }
+
+
+        /*
+         * Tests for properties
+         */
 
         // TODO: remove, should be set at construct level
         public void test_set_session ()
@@ -109,6 +154,24 @@ namespace Tests
         public void test_parent ()
         {
 
+        }
+
+
+        /*
+         * Tests for methods
+         */
+
+        public void to_timer_state ()
+        {
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            var expected_timer_state = Pomodoro.TimerState () {
+
+            };
+
+            assert_cmpvariant (
+                time_block.to_timer_state ().to_variant (),
+                expected_timer_state.to_variant ()
+            );
         }
 
         public void test_set_range ()

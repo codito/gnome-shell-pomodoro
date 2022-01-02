@@ -63,7 +63,7 @@ namespace Pomodoro
             // this.cancellable = new GLib.Cancellable ();
 
             this.timer = timer;
-            this.timer.changed.connect (this.on_timer_changed);
+            this.timer.state_changed.connect (this.on_timer_changed);
         }
 
         public void set_state (string name,
@@ -322,7 +322,7 @@ namespace Pomodoro
                              Pomodoro.Timer       timer)
         {
             this.timer = timer;
-            this.timer.changed.connect (this.on_timer_changed);
+            this.timer.state_changed.connect (this.on_timer_state_changed);
             this.timer.finished.connect (this.on_timer_finished);
             this.timer.synchronize.connect (this.on_timer_synchronize);
 
@@ -442,7 +442,7 @@ namespace Pomodoro
             return data;
         }
 
-        private void on_timer_changed ()
+        private void on_timer_state_changed ()
         {
             this.changed (serialize_timer_state (this.timer));
         }
