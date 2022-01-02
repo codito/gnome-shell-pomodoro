@@ -17,14 +17,12 @@ namespace Tests
                            this.test_set_session);
 
             // this.add_test ("state", this.test_state);
-            // this.add_test ("start", this.test_start);
-            // this.add_test ("end", this.test_end);
+            // this.add_test ("start_time", this.test_start_time);
+            // this.add_test ("end_time", this.test_end_time);
             // this.add_test ("duration", this.test_duration);
             // this.add_test ("parent", this.test_parent);
-            // this.add_test ("set_range", this.test_set_range);
+            // this.add_test ("schedule", this.test_schedule);
             // this.add_test ("has_bounds", this.test_has_bounds);
-            // this.add_test ("has_started", this.test_has_started);
-            // this.add_test ("has_ended", this.test_has_ended);
             // this.add_test ("get_elapsed", this.test_get_elapsed);
             // this.add_test ("get_remaining", this.test_get_remaining);
             // this.add_test ("get_progress", this.test_get_progress);
@@ -64,8 +62,8 @@ namespace Tests
 
             assert_true (time_block.state == state);
             // assert_true (time_block.state_duration == state.get_default_duration ());
-            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
+            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
 
         public void test_new__pomodoro ()
@@ -75,8 +73,8 @@ namespace Tests
 
             assert_true (time_block.state == state);
             // assert_true (time_block.state_duration == state.get_default_duration ());
-            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
+            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
 
         public void test_new__short_break ()
@@ -86,8 +84,8 @@ namespace Tests
 
             assert_true (time_block.state == state);
             // assert_true (time_block.state_duration == state.get_default_duration ());
-            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
+            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
 
         public void test_new__long_break ()
@@ -97,8 +95,8 @@ namespace Tests
 
             assert_true (time_block.state == state);
             // assert_true (time_block.state_duration == state.get_default_duration ());
-            assert_true (time_block.start == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end == Pomodoro.Timestamp.MAX);
+            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
+            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
 
 
@@ -136,12 +134,12 @@ namespace Tests
 
         }
 
-        public void test_start ()
+        public void test_start_time ()
         {
 
         }
 
-        public void test_end ()
+        public void test_end_time ()
         {
 
         }
@@ -174,29 +172,24 @@ namespace Tests
             );
         }
 
-        public void test_set_range ()
-        {
+        // public void test_schedule ()
+        // {
+        // }
 
-        }
+        // public void test_has_bounds ()
+        // {
+        // }
 
-        public void test_has_bounds ()
-        {
+        // public void test_has_started ()
+        // {
+        // }
 
-        }
-
-        public void test_has_started ()
-        {
-
-        }
-
-        public void test_has_ended ()
-        {
-
-        }
+        // public void test_has_ended ()
+        // {
+        // }
 
         public void test_get_elapsed ()
         {
-
         }
 
         public void test_get_remaining ()
@@ -228,7 +221,7 @@ namespace Tests
 
         }
 
-        public void test_changed_range_signal ()
+        public void test_scheduled_signal ()
         {
 
         }

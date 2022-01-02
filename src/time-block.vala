@@ -46,50 +46,46 @@ namespace Pomodoro
         //     }
         // }
 
-        public int64 start {  // TODO: rename to start_time
+        public int64 start_time {
             get {
-                return this._start;
+                return this._start_time;
             }
             set {
-                this.set_range (value, this._end, Pomodoro.TimeBlockConflict.KEEP_START);
+                this.schedule (value, this._end_time, Pomodoro.TimeBlockConflict.KEEP_START);
             }
-            // default = Pomodoro.Timestamp.MIN;
         }
 
-        public int64 end {  // TODO: rename to end_time
+        public int64 end_time {
             get {
-                return this._end;
+                return this._end_time;
             }
             set {
-                this.set_range (this._start, value, Pomodoro.TimeBlockConflict.KEEP_END);
+                this.schedule (this._start_time, value, Pomodoro.TimeBlockConflict.KEEP_END);
             }
-            // default = Pomodoro.Timestamp.MAX;
         }
 
         // Beware that `duration` has a few edge cases:
         //  - when time block is infinite (`end` < 0 or `start` < 0) it returns -1
         //  - when one of the child is infinite, it returns duration according to its `end` and not the childs
-        public int64 duration {  // TODO: change to scheduled_duration
+        public int64 duration {  // TODO: change to calculate_duration
             get {
-                return this._start >= 0 && this._end >= 0
-                    ? this._end - this._start
-                    : -1;
+                return this._end_time - this._start_time;
             }
-            set {
-                if (this._start >= 0) {
-                    this.set_range (this._start,
-                                    this._start + value,
-                                    Pomodoro.TimeBlockConflict.KEEP_START);
-                }
-                else if (this._end >= 0) {
-                    this.set_range (this._end - value,
-                                    this._end,
-                                    Pomodoro.TimeBlockConflict.KEEP_END);
-                }
-                else {
-                    GLib.warning ("Can't change TimeBlock.duration when both start and end are not defined");
-                }
-            }
+            // set {
+            //     if (this._start_time >= 0) {
+            //         this.schedule (this._start_time,
+            //                         this._start_time + value,
+            //                         Pomodoro.TimeBlockConflict.KEEP_START);
+            //     }
+            //     else if (this._end_time >= 0) {
+            //         this.schedule (this._end_time - value,
+            //                         this._end_time,
+            //                         Pomodoro.TimeBlockConflict.KEEP_END);
+            //     }
+            //     else {
+            //         GLib.warning ("Can't change TimeBlock.duration when both start and end are not defined");
+            //     }
+            // }
         }
 
         public unowned Pomodoro.TimeBlock? parent {
@@ -115,8 +111,8 @@ namespace Pomodoro
         private int64                       _state_duration = 0;
         // private Pomodoro.Context         _context = null;
         // private Pomodoro.Source          _source = Source.OTHER;
-        private int64                       _start = Pomodoro.Timestamp.MIN;
-        private int64                       _end = Pomodoro.Timestamp.MAX;
+        private int64                       _start_time = Pomodoro.Timestamp.MIN;
+        private int64                       _end_time = Pomodoro.Timestamp.MAX;
 
         public TimeBlock (Pomodoro.State state)
         {
@@ -127,7 +123,7 @@ namespace Pomodoro
 
             this._state_duration = state.get_default_duration ();
 
-        //     this.set_range_internal (start, end, Pomodoro.TimeBlockConflict.KEEP_START);
+        //     this.schedule_internal (start, end, Pomodoro.TimeBlockConflict.KEEP_START);
 
             // this.children = null;
         }
@@ -139,38 +135,38 @@ namespace Pomodoro
         //     }
         // }
 
-        private void set_range_internal (int64                      start,
-                                         int64                      end,
-                                         Pomodoro.TimeBlockConflict on_conflict)
+        private void schedule_internal (int64                      start_time,
+                                        int64                      end_time,
+                                        Pomodoro.TimeBlockConflict on_conflict)  // TODO: remove on_conflict
         {
-            if (start >= 0 && end >= 0 && end < start) {
+            if (start_time >= 0 && end_time >= 0 && end_time < start_time) {
                 if (on_conflict == Pomodoro.TimeBlockConflict.KEEP_START) {
-                    end = start;
+                    end_time = start_time;
                 }
                 else {
-                    start = end;
+                    start_time = end_time;
                 }
             }
 
-            this._start = start >= 0 ? start : -1;
-            this._end = end >= 0 ? end : -1;
+            this._start_time = start_time.clamp (Pomodoro.Timestamp.MIN, Pomodoro.Timestamp.MAX);
+            this._end_time = end_time.clamp (Pomodoro.Timestamp.MIN, Pomodoro.Timestamp.MAX);
         }
 
-        public void set_range (int64                      start,
-                               int64                      end,
-                               Pomodoro.TimeBlockConflict on_conflict = Pomodoro.TimeBlockConflict.KEEP_START)
+        public void schedule (int64                      start_time,
+                              int64                      end_time,
+                              Pomodoro.TimeBlockConflict on_conflict = Pomodoro.TimeBlockConflict.KEEP_START)
         {
-            var old_start = this._start;
-            var old_end = this._end;
+            var old_start_time = this._start_time;
+            var old_end_time = this._end_time;
             var old_duration = this.duration;
 
-            this.set_range_internal (start, end, on_conflict);
+            this.schedule_internal (start_time, end_time, on_conflict);
 
-            if (this._start != old_start) {
+            if (this._start_time != old_start_time) {
                 this.notify_property ("start");
             }
 
-            if (this._end != old_end) {
+            if (this._end_time != old_end_time) {
                 this.notify_property ("end");
             }
 
@@ -178,8 +174,8 @@ namespace Pomodoro
                 this.notify_property ("duration");
             }
 
-            if (this._start != old_start || this._end != old_end) {
-                this.changed_range ();
+            if (this._start_time != old_start_time || this._end_time != old_end_time) {
+                this.scheduled ();
             }
         }
 
@@ -188,7 +184,7 @@ namespace Pomodoro
         //  */
         // public bool is_finite ()
         // {
-        //     return this._start >= 0 && this._end >= 0;
+        //     return this._start_time >= 0 && this._end_time >= 0;
         // }
 
         // /**
@@ -196,7 +192,7 @@ namespace Pomodoro
         //  */
         // public bool is_infinite ()
         // {
-        //     return this._start < 0 || this._end < 0;
+        //     return this._start_time < 0 || this._end_time < 0;
         // }
 
         /**
@@ -204,7 +200,7 @@ namespace Pomodoro
          */
         public bool has_bounds (bool include_children = false)
         {
-            if (this._start < 0 || this._end < 0) {
+            if (this._start_time < 0 || this._end_time < 0) {
                 return false;
             }
 
@@ -221,65 +217,98 @@ namespace Pomodoro
             return true;
         }
 
-        public bool has_started (int64 timestamp = -1)
+        public bool contains (int64 timestamp)  // TODO: rename to is_started
         {
-            if (this._start < 0) {
-                return true;
-            }
-
-            ensure_timestamp (ref timestamp);
-
-            return timestamp >= this._start;
+            return timestamp >= this._start_time && timestamp < this._end_time;
         }
 
-        public bool has_ended (int64 timestamp = -1)
-        {
-            if (this._end < 0) {
-                return false;
-            }
+        // public bool intersects (Pomodoro.TimeBlock )  // TODO: rename to is_started
+        // {
+        //     if (this._start_time < 0) {
+        //         return true;
+        //     }
+        // }
 
-            ensure_timestamp (ref timestamp);
+        // public bool has_started (int64 timestamp = -1)  // TODO: rename to is_scheduled
+        // {
+        //     if (this._start_time < 0) {
+        //         return true;
+        //     }
+        //
+        //     ensure_timestamp (ref timestamp);
+        //
+        //     return timestamp >= this._start_time;
+        // }
 
-            return this._end <= timestamp;
-        }
+        // public bool has_ended (int64 timestamp = -1)  // TODO: rename to is_finished
+        // {
+        //     if (this._end_time < 0) {
+        //         return false;
+        //     }
+        //
+        //     ensure_timestamp (ref timestamp);
+        //
+        //     return this._end_time <= timestamp;
+        // }
+
+        // public bool is_scheduled (int64 timestamp = -1)
+        // {
+        //     ensure_timestamp (ref timestamp);
+        //
+        //     return timestamp < this._start_time;
+        // }
+
+        // public bool is_finished (int64 timestamp = -1)
+        // {
+        //     ensure_timestamp (ref timestamp);
+        //
+        //     return timestamp >= this._end_time;
+        // }
+
+        // public bool is_in_progress (int64 timestamp = -1)
+        // {
+        //     ensure_timestamp (ref timestamp);
+        //
+        //     return timestamp >= this._start_time && timestamp < this._end_time;
+        // }
 
         // Note: result won't make sense if block has no `start`
-        public int64 get_elapsed (int64 timestamp = -1)
-        {
-            if (this._start < 0) {
-                return -1;
-            }
+        // public int64 calculate_elapsed (int64 timestamp = -1)
+        // {
+        //     if (this._start_time < 0) {
+        //         return -1;
+        //     }
 
-            ensure_timestamp (ref timestamp);
+        //     ensure_timestamp (ref timestamp);
 
-            return int64.max (timestamp - this._start, 0);
-        }
+        //     return int64.max (timestamp - this._start_time, 0);
+        // }
 
         // Note: result won't make sense if block has no `end`
-        public int64 get_remaining (int64 timestamp = -1)
-        {
-            if (this._end < 0) {
-                return -1;
-            }
+        // public int64 calculate_remaining (int64 timestamp = -1)
+        // {
+        //     if (this._end < 0) {
+        //         return -1;
+        //     }
 
-            ensure_timestamp (ref timestamp);
+        //     ensure_timestamp (ref timestamp);
 
-            return int64.max (this._end - timestamp, 0);
-        }
+        //     return int64.max (this._end_time - timestamp, 0);
+        // }
 
         // Note: result won't make sense if block have no bounds
-        public double get_progress (int64 timestamp = -1)
-        {
-            if (this._start < 0) {
-                return 0.0;
-            }
+        // public double calculate_progress (int64 timestamp = -1)
+        // {
+        //     if (this._start_time < 0) {
+        //         return 0.0;
+        //     }
 
-            var duration = this.duration;
+        //     var duration = this.duration;
 
-            return duration > 0
-                ? this.get_elapsed (timestamp) / duration
-                : 0.0;
-        }
+        //     return duration > 0
+        //         ? this.get_elapsed (timestamp) / duration
+        //         : 0.0;
+        // }
 
         // /**
         //  * Return sum of childrens durations.
@@ -334,7 +363,7 @@ namespace Pomodoro
         public static int compare (Pomodoro.TimeBlock a,
                                    Pomodoro.TimeBlock b)
         {
-            return - ((int) (a.start > b.start) - (int) (a.start < b.start));  // in descending order
+            return - ((int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time));  // in descending order
         }
 
         public void add_child (Pomodoro.TimeBlock child)
@@ -365,9 +394,9 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var start_time = this.start;
+            var start_time = this._start_time;
 
-            if (start_time == Pomodoro.Timestamp.MIN) {
+            if (start_time <= Pomodoro.Timestamp.MIN) {
                 start_time = timestamp;
             }
 
@@ -462,10 +491,10 @@ namespace Pomodoro
         }
         */
 
-        /**
-         *
-         */
-        public signal void changed_range ();
+        // /**
+        //  *
+        //  */
+        public signal void scheduled ();
 
         // public signal void finalized ();
 

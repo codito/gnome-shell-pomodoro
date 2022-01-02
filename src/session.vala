@@ -30,7 +30,7 @@ namespace Pomodoro
             }
 
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
-            time_block.start = timestamp;
+            time_block.start_time = timestamp;
 
             this.append_time_block (time_block);
         }
@@ -164,27 +164,27 @@ namespace Pomodoro
             this.time_blocks.@foreach (func);
         }
 
-        public bool has_started (int64 timestamp = -1)
-        {
-            var first_time_block = this.get_first_time_block ();
+        // public bool has_started (int64 timestamp = -1)
+        // {
+        //     var first_time_block = this.get_first_time_block ();
+        //
+        //     if (first_time_block != null) {
+        //         return first_time_block.has_started (timestamp);
+        //     }
+        //
+        //     return false;
+        // }
 
-            if (first_time_block != null) {
-                return first_time_block.has_started (timestamp);
-            }
-
-            return false;
-        }
-
-        public bool has_ended (int64 timestamp = -1)
-        {
-            var last_time_block = this.get_first_time_block ();
-
-            if (last_time_block != null) {
-                return last_time_block.has_ended (timestamp);
-            }
-
-            return false;
-        }
+        // public bool has_ended (int64 timestamp = -1)
+        // {
+        //     var last_time_block = this.get_first_time_block ();
+        //
+        //     if (last_time_block != null) {
+        //         return last_time_block.has_ended (timestamp);
+        //     }
+        //
+        //     return false;
+        // }
 
         public signal void enter_time_block (Pomodoro.TimeBlock time_block)
         {
