@@ -2,75 +2,100 @@ namespace Tests
 {
     public class SessionTest : Tests.TestSuite
     {
-        // int64 timestamp = 0;
+        private const uint POMODORO_DURATION = 1500;
+        private const uint SHORT_BREAK_DURATION = 300;
+        private const uint LONG_BREAK_DURATION = 900;
+        private const uint POMODOROS_PER_SESSION = 4;
 
         public SessionTest ()
         {
             this.add_test ("new", this.test_new);
-            this.add_test ("new-undefined", this.test_new_undefined);
+            this.add_test ("new-empty", this.test_new_empty);
         }
 
         public override void setup ()
         {
-            // Pomodoro.freeze_time ();
+            Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
 
-            // var settings = Pomodoro.get_settings ()
-            //                        .get_child ("preferences");
-            // settings.set_double ("pomodoro-duration", POMODORO_DURATION);
-            // settings.set_double ("short-break-duration", SHORT_BREAK_DURATION);
-            // settings.set_double ("long-break-duration", LONG_BREAK_DURATION);
-            // settings.set_double ("long-break-interval", LONG_BREAK_INTERVAL);
-            // settings.set_boolean ("pause-when-idle", false);
+            var settings = Pomodoro.get_settings ();
+            settings.set_uint ("pomodoro-duration", POMODORO_DURATION);
+            settings.set_uint ("short-break-duration", SHORT_BREAK_DURATION);
+            settings.set_uint ("long-break-duration", LONG_BREAK_DURATION);
+            settings.set_uint ("pomodoros-per-session", POMODOROS_PER_SESSION);
         }
 
         public override void teardown ()
         {
-            // var settings = Pomodoro.get_settings ();
-            // settings.revert ();
+            Pomodoro.Timestamp.unfreeze ();
+
+            var settings = Pomodoro.get_settings ();
+            settings.revert ();
         }
 
         /**
          * Check constructor `Session()`.
          *
-         * Expect session not to have any time-blocks yet.
+         * Expect session to have time-blocks defined according to settings.
          */
         public void test_new ()
         {
-            var timestamp = Pomodoro.Timestamp.from_now ();
+            var now = Pomodoro.Timestamp.tick (0);
             var session = new Pomodoro.Session ();
+            uint8[] states = {};
 
-            // assert (!session.has_started (timestamp));
-            // assert (!session.has_ended (timestamp));
-
-            var time_blocks_count = 0;
-            session.foreach_time_block (() => {
-                time_blocks_count++;
+            session.@foreach ((time_block) => {
+                states += (uint8) time_block.state;
             });
 
-            assert (time_blocks_count == 0);
+            assert_cmpmem (states, {
+                Pomodoro.State.POMODORO,
+                Pomodoro.State.SHORT_BREAK,
+                Pomodoro.State.POMODORO,
+                Pomodoro.State.SHORT_BREAK,
+                Pomodoro.State.POMODORO,
+                Pomodoro.State.SHORT_BREAK,
+                Pomodoro.State.POMODORO,
+                Pomodoro.State.LONG_BREAK
+            });
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.start_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.end_time),
+                new GLib.Variant.int64 (
+                    session.start_time + Pomodoro.Interval.SECOND * (
+                        POMODORO_DURATION * POMODOROS_PER_SESSION +
+                        SHORT_BREAK_DURATION * (POMODOROS_PER_SESSION - 1) +
+                        LONG_BREAK_DURATION
+                    )
+                )
+            );
         }
 
         /**
-         * Check constructor `Session.undefined()`.
+         * Check constructor `Session.empty()`.
          *
-         * Expect session to have one undefined time-block.
+         * Expect session not to have any time-blocks.
          */
-        public void test_new_undefined ()
+        public void test_new_empty ()
         {
-            var timestamp = Pomodoro.Timestamp.from_now ();
-            var session = new Pomodoro.Session.undefined (timestamp);
+            var session = new Pomodoro.Session.empty ();
 
-            // assert (session.has_started (timestamp));
-            // assert (!session.has_started (timestamp - 1));
-            // assert (!session.has_ended (timestamp));
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.start_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.MIN)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.end_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.MAX)
+            );
 
             var first_time_block = session.get_first_time_block ();
-            assert (first_time_block != null);
-            assert (first_time_block.state == Pomodoro.State.UNDEFINED);
+            assert_null (first_time_block);
 
             var last_time_block = session.get_last_time_block ();
-            assert (last_time_block != null);
-            assert (last_time_block == first_time_block);
+            assert_null (last_time_block);
         }
 
     }

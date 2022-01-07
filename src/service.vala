@@ -324,7 +324,7 @@ namespace Pomodoro
             this.timer = timer;
             this.timer.state_changed.connect (this.on_timer_state_changed);
             this.timer.finished.connect (this.on_timer_finished);
-            this.timer.synchronize.connect (this.on_timer_synchronize);
+            // this.timer.suspended.connect (this.on_timer_suspended);
 
             // TODO: disconnect handlers at exit
         }
@@ -418,7 +418,7 @@ namespace Pomodoro
 
         // Signal emitted by gnome-pomodoro asking clients to update all data.
         // It may be due to state change or due to system events like resuming from suspend.
-        public signal void synchronize ();
+        // public signal void synchronize ();
 
         public signal void finished ();
 
@@ -452,10 +452,10 @@ namespace Pomodoro
             this.finished ();
         }
 
-        private void on_timer_synchronize ()
-        {
-            this.synchronize ();
-        }
+        // private void on_timer_suspended ()
+        // {
+        //     this.synchronize ();
+        // }
     }
 
     [DBus (name = "org.gnomepomodoro.Pomodoro")]

@@ -1,9 +1,12 @@
+# Define a common library for all tests.
 libtests = static_library(
   'tests',
   'common.vala',
   dependencies: libgnome_pomodoro_dep,
 )
 
+
+# Define tests. Each test is a separate executable.
 test_names = [
   # 'application',
   # 'capability',

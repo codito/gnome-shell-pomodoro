@@ -76,15 +76,25 @@ namespace Pomodoro
     public class Timer : GLib.Object
     {
         /**
+         * Interval of the internal idle timeout.
+         */
+        private const uint IDLE_TIMEOUT_SECONDS = 2;
+
+        /**
          * Time that is within tolerance not to schedule a timeout.
          */
         private const int64 MIN_TIMEOUT = 125000;  // 0.125s
 
         /**
          * Remaining time at which we no longer can rely on an idle timeout, and a higher precision timeout
-         * should be scheduled.
+         * should be scheduled. Should be higher than IDLE_TIMEOUT_SECONDS.
          */
-        private const int64 MIN_IDLE_TIMEOUT = 1500000;  // 1.5s
+        private const int64 MIN_IDLE_TIMEOUT = 2500000;  // 2.5s
+
+        /**
+         * Ignore minor deviations from expected elapsed time.
+         */
+        private const int64 MIN_SUSPEND_DURATION = 5 * Pomodoro.Interval.SECOND;
 
         private static unowned Pomodoro.Timer? instance = null;
 
@@ -175,10 +185,11 @@ namespace Pomodoro
             }
         }
 
-        private uint  timeout_id = 0;
-        private int64 timeout_remaining = 0;  // TODO: replace with SynchronizationInfo structure?
-        private int64 last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
         private Pomodoro.TimerState _state;
+        private uint                timeout_id = 0;
+        private int64               last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
+        private int64               last_timeout_time = Pomodoro.Timestamp.UNDEFINED;
+        private int64               last_timeout_elapsed = 0;
 
 
         public Timer (int64 duration = 0,
@@ -298,7 +309,7 @@ namespace Pomodoro
                 new_state.started_time = timestamp;
             }
             else if (new_state.stopped_time >= 0) {
-                // continue already stopped timer
+                // resume timer
                 new_state.offset += timestamp - new_state.stopped_time;
             }
 
@@ -325,12 +336,16 @@ namespace Pomodoro
         }
 
         /**
-         * Rewind the timer or undo it if you pass negative value.
+         * Rewind the timer.
          *
-         * Call is ignored when the timer is finished.
+         * It resumes the timer if it's stopped, and umarks the finished flag. In any case it only shifts
+         * `state.offset`, not the `state.started_time` or `state.stopped_time`.
+         *
+         * You can only rewind timer backwards. To undo the action you need to push an archived `state`.
          */
-        public void rewind (int64 microseconds,
-                            int64 timestamp = -1)
+        private void rewind_internal (int64 microseconds,
+                                      bool  resume,
+                                      int64 timestamp = -1)
         {
             if (!this.is_started ()) {
                 return;
@@ -340,23 +355,35 @@ namespace Pomodoro
                 return;
             }
 
+            if (microseconds < 0) {
+                GLib.debug ("Ignoring call to rewind timer %.1fs into the future.",
+                            Pomodoro.Timestamp.to_seconds (microseconds));
+                return;
+            }
+
             Pomodoro.ensure_timestamp (ref timestamp);
 
+            var new_elapsed = int64.max (this.calculate_elapsed (timestamp) - microseconds, 0);
             var new_state = this._state.copy ();
-            if (new_state.stopped_time >= 0 && new_state.started_time >= 0) {
-                new_state.stopped_time = int64.max (new_state.stopped_time - microseconds, new_state.started_time);
+
+            if (resume && new_state.stopped_time >= 0) {
+                new_state.stopped_time = Pomodoro.Timestamp.UNDEFINED;
+                new_state.offset += timestamp - new_state.stopped_time;
             }
 
-            if (microseconds > 0) {
-                new_state.is_finished = false;
-            }
-
-            // TODO
-            new_state.offset = int64.max (this._state.offset - microseconds, 0);
+            new_state.offset = timestamp - new_state.started_time - new_elapsed;
+            new_state.is_finished = false;
 
             this.state = new_state;
+        }
 
-            // TODO: timer itself won't handle rewinding to a previous state
+        /**
+         * Rewind and resume timer
+         */
+        public void rewind (int64 microseconds,
+                            int64 timestamp = -1)
+        {
+            this.rewind_internal (microseconds, true, timestamp);
         }
 
         private void finish (int64 timestamp = -1)
@@ -386,6 +413,35 @@ namespace Pomodoro
             this.state = new_state;
         }
 
+        // TODO: Is there a better way to detect system suspension?
+        //       How gdm/screensaver knows when system woke up?
+        private bool check_suspended (int64 timestamp)
+                                      requires (this.last_timeout_time >= 0)
+        {
+            var elapsed = timestamp - this._state.started_time - this._state.offset;
+            var suspended_duration = timestamp - this.last_state_changed_time;
+
+            // MIN_SUSPEND_DURATION relates to a delay from expected elapsed time
+            if (suspended_duration < MIN_SUSPEND_DURATION + Pomodoro.Interval.SECOND * IDLE_TIMEOUT_SECONDS) {
+                this.last_timeout_time = timestamp;
+                this.last_timeout_elapsed = elapsed;
+
+                return false;
+            }
+            else {
+                GLib.debug ("Detected suspesion for %.1fs",
+                            (int) (Pomodoro.Timestamp.to_seconds (suspended_duration)));
+
+                var suspended_start_time = this.last_timeout_time;
+                var suspended_end_time = timestamp;
+
+                this.rewind_internal (suspended_duration, false, timestamp);
+                this.suspended (suspended_start_time, suspended_end_time);
+
+                return true;
+            }
+        }
+
         /**
          * Idle timeout.
          *
@@ -397,6 +453,10 @@ namespace Pomodoro
             var timestamp = Pomodoro.Timestamp.from_now ();
             var remaining = this.calculate_remaining (timestamp);
 
+            if (this.check_suspended (timestamp)) {
+                return GLib.Source.REMOVE;
+            }
+
             // Check if already finished
             if (remaining <= MIN_TIMEOUT) {
                 this.stop_timeout ();
@@ -405,24 +465,10 @@ namespace Pomodoro
                 return GLib.Source.REMOVE;
             }
 
-            // Emit synchronize signal if needed
-            this.timeout_remaining = this.timeout_remaining > 0
-                ? this.timeout_remaining - Pomodoro.Interval.SECOND
-                : remaining;
-
-            if ((remaining - this.timeout_remaining).abs () > Pomodoro.Interval.SECOND) {
-                this.timeout_remaining = remaining;
-                this.synchronize (
-                    // timestamp,
-                    // this.calculate_elapsed (timestamp),
-                    // this.is_running ()
-                );
-            }
-
             // Check whether to switch to a more precise timeout
             if (remaining <= MIN_IDLE_TIMEOUT) {
                 this.stop_timeout ();
-                this.do_start_timeout (remaining, timestamp);
+                this.start_timeout_internal (remaining, timestamp);
 
                 return GLib.Source.REMOVE;
             }
@@ -441,10 +487,14 @@ namespace Pomodoro
             var timestamp = Pomodoro.Timestamp.from_now ();
             var remaining = this.calculate_remaining (timestamp);
 
+            if (this.check_suspended (timestamp)) {
+                return GLib.Source.REMOVE;
+            }
+
             this.stop_timeout ();
 
             if (remaining > MIN_TIMEOUT) {
-                this.do_start_timeout (remaining, timestamp);
+                this.start_timeout_internal (remaining, timestamp);
             }
             else {
                 this.finish (timestamp);
@@ -453,11 +503,14 @@ namespace Pomodoro
             return GLib.Source.REMOVE;
         }
 
-        private void do_start_timeout (int64 remaining,
+        private void start_timeout_internal (int64 remaining,
                                        int64 timestamp)
         {
+            this.last_timeout_time = timestamp;
+            this.last_timeout_elapsed = this.calculate_elapsed (timestamp);
+
             if (remaining > MIN_IDLE_TIMEOUT) {
-                this.timeout_id = GLib.Timeout.add_seconds_full (GLib.Priority.DEFAULT_IDLE, 1, this.on_timeout_idle);
+                this.timeout_id = GLib.Timeout.add_seconds_full (GLib.Priority.DEFAULT_IDLE, IDLE_TIMEOUT_SECONDS, this.on_timeout_idle);
                 GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.Timer.on_timeout_idle");
             }
             else if (remaining > MIN_TIMEOUT) {
@@ -477,8 +530,8 @@ namespace Pomodoro
 
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            this.do_start_timeout (this.calculate_remaining (timestamp),
-                                   timestamp);
+            this.start_timeout_internal (this.calculate_remaining (timestamp),
+                                         timestamp);
         }
 
         private void stop_timeout ()
@@ -488,8 +541,10 @@ namespace Pomodoro
             }
 
             GLib.Source.remove (this.timeout_id);
+
             this.timeout_id = 0;
-            this.timeout_remaining = 0;
+            this.last_timeout_time = Pomodoro.Timestamp.UNDEFINED;
+            this.last_timeout_elapsed = 0;
         }
 
         private void update_timeout (int64 timestamp = -1)
@@ -502,6 +557,18 @@ namespace Pomodoro
             }
             else {
                 this.stop_timeout ();
+            }
+        }
+
+        /**
+         * Manually trigger internal timeout.
+         *
+         * Intended for tests.
+         */
+        public void tick ()
+        {
+            if (this.is_running ()) {
+                this.on_timeout_idle ();
             }
         }
 
@@ -563,15 +630,19 @@ namespace Pomodoro
             }
         }
 
-        /**
-         * It should be safe to increment elapsed time in `GLib.Timeout.add_seconds` callback.
-         * Just in case Timer tracks those any deviations and advises tickers to synchronize.
-         */
-        public signal void synchronize (
+        // /**
+        //  * Synchronize signal is emitted on small deviations from expected elapsed time.
+        //  * It should be safe to increment elapsed time in `GLib.Timeout.add_seconds` callback.
+        //  * Just in case Timer tracks those any deviations and advises tickers to synchronize.
+        //  */
+        // public signal void synchronize (int64 timestamp, int64 offset);
             // int64 timestamp,
             // int64 elapsed,
             // bool  is_running
-        );
+        // );
+
+        public signal void suspended (int64 start_time,
+                                      int64 end_time);
 
         /**
          * Emitted when countdown is close to zero or passed it.

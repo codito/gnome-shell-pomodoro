@@ -148,21 +148,24 @@ namespace Pomodoro
             // });
         }
 
+
+
+
         public void reset (int64 timestamp = -1)
         {
             // TODO
         }
 
-        public void advance (int64 timestamp = -1)
-        {
+        // public void advance (int64 timestamp = -1)
+        // {
             // TODO
-        }
+        // }
 
-        public void advance_to (Pomodoro.State state,
-                                int64          timestamp = -1)
-        {
+        // public void advance_to (Pomodoro.State state,
+        //                         int64          timestamp = -1)
+        // {
             // TODO
-        }
+        // }
 
         private Pomodoro.Session resolve_next_session ()
         {

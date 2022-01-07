@@ -67,7 +67,7 @@ namespace Tests
 
         public void test_set_current_session ()
         {
-            var session = new Pomodoro.Session.undefined ();
+            var session = new Pomodoro.Session.empty ();
 
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
@@ -76,7 +76,7 @@ namespace Tests
 
         public void test_set_current_time_block ()
         {
-            var session    = new Pomodoro.Session.undefined ();
+            var session    = new Pomodoro.Session.empty ();
             var time_block = session.get_first_time_block ();
             assert_true (time_block.session == session);
 

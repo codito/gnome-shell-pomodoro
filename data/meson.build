@@ -52,7 +52,7 @@ endif
 
 install_data(
   'org.gnomepomodoro.Pomodoro.gschema.xml',
-  install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
+  install_dir: gschema_dir,
 )
 
 compile_schemas = find_program('glib-compile-schemas', required: false)

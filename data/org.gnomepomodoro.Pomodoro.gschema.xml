@@ -1,32 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
   <schema id="org.gnomepomodoro.Pomodoro" path="/org/gnomepomodoro/Pomodoro/">
+    <!--
     <child name="preferences" schema="org.gnomepomodoro.Pomodoro.preferences"/>
     <child name="state" schema="org.gnomepomodoro.Pomodoro.state"/>
-  </schema>
+    -->
 
-  <schema id="org.gnomepomodoro.Pomodoro.preferences" path="/org/gnomepomodoro/Pomodoro/preferences/">
-    <key name="pomodoro-duration" type="d">
+    <key name="pomodoro-duration" type="u">
       <default>1500</default>
       <range min="1" max="36000"/>
       <summary>Pomodoro duration</summary>
       <description>Time in seconds you are supposed to be working.</description>
     </key>
-    <key name="short-break-duration" type="d">
+    <key name="short-break-duration" type="u">
       <default>300</default>
       <range min="1" max="36000"/>
       <summary>Short pause duration</summary>
       <description>Time in seconds you are supposed to take a short break.</description>
     </key>
-    <key name="long-break-duration" type="d">
+    <key name="long-break-duration" type="u">
       <default>900</default>
       <range min="1" max="36000"/>
       <summary>Long pause duration</summary>
       <description>Time in seconds you are supposed to take a longer break.</description>
     </key>
-    <key name="long-break-interval" type="d">
+    <key name="pomodoros-per-session" type="u">
       <default>4</default>
-      <summary>Long pause interval</summary>
+      <range min="1" max="10"/>
+      <summary>Number of pomodoros to a long break</summary>
+      <description>Number of pomodoros to a long break.</description>
+    </key>
+  </schema>
+
+<!--
+  <schema id="org.gnomepomodoro.Pomodoro.preferences" path="/org/gnomepomodoro/Pomodoro/preferences/">
+    <key name="pomodoro-duration" type="u">
+      <default>1500</default>
+      <range min="1" max="36000"/>
+      <summary>Pomodoro duration</summary>
+      <description>Time in seconds you are supposed to be working.</description>
+    </key>
+    <key name="short-break-duration" type="u">
+      <default>300</default>
+      <range min="1" max="36000"/>
+      <summary>Short pause duration</summary>
+      <description>Time in seconds you are supposed to take a short break.</description>
+    </key>
+    <key name="long-break-duration" type="u">
+      <default>900</default>
+      <range min="1" max="36000"/>
+      <summary>Long pause duration</summary>
+      <description>Time in seconds you are supposed to take a longer break.</description>
+    </key>
+    <key name="pomodoros-per-session" type="u">
+      <default>4</default>
+      <range min="1" max="10"/>
+      <summary>Number of pomodoros to a long break</summary>
       <description>Number of pomodoros to a long break.</description>
     </key>
     <key name="toggle-timer-key" type="as">
@@ -99,4 +128,6 @@
       <description>Default location for the "Open…" dialogues.</description>
     </key>
   </schema>
+-->
+
 </schemalist>

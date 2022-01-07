@@ -895,19 +895,19 @@ namespace Pomodoro
             {
                 case "pomodoro-duration":
                     if (current_time_block.state == Pomodoro.State.POMODORO) {
-                        duration_seconds = settings.get_double (key);
+                        duration_seconds = settings.get_uint (key);
                     }
                     break;
 
                 case "short-break-duration":
                     if (current_time_block.state == Pomodoro.State.SHORT_BREAK) {
-                        duration_seconds = settings.get_double (key);
+                        duration_seconds = settings.get_uint (key);
                     }
                     break;
 
                 case "long-break-duration":
                     if (current_time_block.state == Pomodoro.State.LONG_BREAK) {
-                        duration_seconds = settings.get_double (key);
+                        duration_seconds = settings.get_uint (key);
                     }
                     break;
 

@@ -160,12 +160,12 @@ namespace Pomodoro.Timestamp
     public int64 tick (int64 interval)
                        requires (interval >= 0)
     {
-        if (frozen_time >= 0) {
-            frozen_time += interval;
-            return frozen_time;
+        if (!is_frozen ()) {
+            freeze ();
         }
-        else {
-            return Pomodoro.Timestamp.from_now ();
-        }
+
+        frozen_time += interval;
+
+        return frozen_time;
     }
 }

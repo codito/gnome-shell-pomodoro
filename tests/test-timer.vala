@@ -106,13 +106,17 @@ namespace Tests
         };
     }
 
-    private bool wait_timer (Pomodoro.Timer timer)
+    private bool wait_timer (Pomodoro.Timer timer,
+                             uint           timeout = 0)
                              requires (!Pomodoro.Timestamp.is_frozen ())
     {
         var main_context = GLib.MainContext.@default ();
-        var timeout = (uint) (timer.calculate_remaining () / 1000 + 2000);
         var timeout_id = (uint) 0;
         var success = true;
+
+        if (timeout == 0) {
+            timeout = (uint) (timer.calculate_remaining () / 1000 + 2000);
+        }
 
         timeout_id = GLib.Timeout.add (timeout, () => {
             timeout_id = 0;
@@ -129,7 +133,6 @@ namespace Tests
 
         return success;
     }
-
 
 
     public class TimerStateTest : Tests.TestSuite
@@ -250,13 +253,13 @@ namespace Tests
             this.add_test ("finished_signal__3s",
                            this.test_finished_signal__3s);
 
-            this.add_test ("synchronize_signal",
-                           this.test_synchronize_signal);
+            this.add_test ("suspended_signal",
+                           this.test_suspended_signal);
         }
 
         public override void setup ()
         {
-            Pomodoro.Timestamp.freeze (Pomodoro.Interval.HOUR);
+            Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
         }
 
         public override void teardown ()
@@ -952,24 +955,200 @@ namespace Tests
          * Tests for .rewind()
          */
 
+        /**
+         * Rewinding an initial state should be ignored.
+         */
         public void test_rewind__initial_state ()
         {
-            // TODO
+            var timer = new Pomodoro.Timer.with_state (
+                create_initial_state ()
+            );
+            var expected_state = timer.state.copy ();
+
+            Pomodoro.Timestamp.tick (5 * Pomodoro.Interval.MINUTE);
+
+            timer.rewind (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                timer.state.to_variant (),
+                expected_state.to_variant ()
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (0)
+            );
+            assert_true (timer.is_stopped ());
+            assert_false (timer.is_started ());
+            assert_false (timer.is_running ());
+
+            // TODO: expect change signal not to be emitted
         }
 
+        /**
+         * Rewinding the timer expect to only alter the offset,
+         * not the started_time.
+         */
         public void test_rewind__started_state ()
         {
-            // TODO
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_started_state (
+                    20 * Pomodoro.Interval.MINUTE,
+                    5 * Pomodoro.Interval.MINUTE,
+                    now - 7 * Pomodoro.Interval.MINUTE
+                )
+            );
+            var expected_started_time = timer.state.started_time;
+
+            // Rewind -1 minute, expect it to be ignored
+            var expected_state = timer.state.copy ();
+            timer.rewind (-Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                timer.state.to_variant (),
+                expected_state.to_variant ()
+            );
+
+            // Rewind 1 minute
+            timer.rewind (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (expected_started_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (4 * Pomodoro.Interval.MINUTE)
+            );
+            assert_true (timer.is_running ());
+            assert_false (timer.is_stopped ());
+
+            // Rewind 5 minutes
+            timer.rewind (5 * Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (expected_started_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (0)
+            );
+            assert_true (timer.is_running ());
+            assert_false (timer.is_stopped ());
+
+            // TODO: expect change signal to be emitted
         }
 
+        /**
+         * Rewind a stopped timer.
+         *
+         * There is no one obvious way to perform a `rewind` here.
+         * Our take is to resume the timer and only alter `state.offset`.
+         */
         public void test_rewind__stopped_state ()
         {
-            // TODO
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_stopped_state (
+                    20 * Pomodoro.Interval.MINUTE,
+                    5 * Pomodoro.Interval.MINUTE,
+                    now - 7 * Pomodoro.Interval.MINUTE
+                )
+            );
+            var expected_started_time = timer.state.started_time;
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (5 * Pomodoro.Interval.MINUTE)
+            );
+
+
+            // Rewind -1 minute, expect it to be ignored
+            var expected_state = timer.state.copy ();
+            timer.rewind (-Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                timer.state.to_variant (),
+                expected_state.to_variant ()
+            );
+
+            // Rewind 1 minute
+            timer.rewind (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (expected_started_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (4 * Pomodoro.Interval.MINUTE)
+            );
+            assert_true (timer.is_running ());
+            assert_false (timer.is_stopped ());
+
+            // Rewind 5 minutes
+            timer.rewind (5 * Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (expected_started_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (0)
+            );
+            assert_true (timer.is_running ());
+            assert_false (timer.is_stopped ());
+
+            // TODO: expect change signal to be emitted
         }
 
         public void test_rewind__finished_state ()
         {
-            // TODO
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_finished_state (
+                    20 * Pomodoro.Interval.MINUTE,
+                    5 * Pomodoro.Interval.MINUTE,
+                    now - 7 * Pomodoro.Interval.MINUTE
+                )
+            );
+            var expected_started_time = timer.state.started_time;
+
+            // Rewind -1 minute, expect it to be ignored
+            var expected_state = timer.state.copy ();
+            timer.rewind (-Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                timer.state.to_variant (),
+                expected_state.to_variant ()
+            );
+
+            // Rewind 1 minute
+            timer.rewind (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (expected_started_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (4 * Pomodoro.Interval.MINUTE)
+            );
+            assert_true (timer.is_running ());
+            assert_false (timer.is_stopped ());
+            assert_false (timer.is_finished ());
+
+            // Rewind 5 minutes
+            timer.rewind (5 * Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (expected_started_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (0)
+            );
+            assert_true (timer.is_running ());
+            assert_false (timer.is_stopped ());
+            assert_false (timer.is_finished ());
+
+            // TODO: expect change signal to be emitted
         }
 
 
@@ -1051,9 +1230,53 @@ namespace Tests
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
         }
 
-        public void test_synchronize_signal ()
+        public void test_suspended_signal ()
         {
-            // TODO
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var state_changed_emitted = 0;
+            var state_changed_offset = (int64) 0;
+            var suspended_emitted = 0;
+            var suspended_start_time = (int64) 0;
+            var suspended_end_time = (int64) 0;
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_started_state (
+                    5 * Pomodoro.Interval.MINUTE,
+                    1 * Pomodoro.Interval.MINUTE,
+                    now - 2 * Pomodoro.Interval.MINUTE
+                )
+            );
+            timer.state_changed.connect ((current_state, previous_state) => {
+                state_changed_offset = current_state.offset;
+                state_changed_emitted++;
+            });
+            timer.suspended.connect ((start_time, end_time) => {
+                suspended_start_time = start_time;
+                suspended_end_time = end_time;
+                suspended_emitted++;
+            });
+
+            // Jump 10s into future
+            Pomodoro.Timestamp.tick (10 * Pomodoro.Interval.SECOND);
+            timer.tick ();
+
+            assert_true (timer.is_running ());
+            assert_cmpint (suspended_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (state_changed_emitted, GLib.CompareOperator.EQ, 1);
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.calculate_elapsed ()),
+                new GLib.Variant.int64 (1 * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (suspended_start_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (suspended_end_time),
+                new GLib.Variant.int64 (now + 10 * Pomodoro.Interval.SECOND)
+            );
         }
     }
 }

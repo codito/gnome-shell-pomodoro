@@ -35,12 +35,11 @@ namespace Tests
 
         public override void setup ()
         {
-            // var settings = Pomodoro.get_settings ()
-            //                        .get_child ("preferences");
-            // settings.set_double ("pomodoro-duration", POMODORO_DURATION);
-            // settings.set_double ("short-break-duration", SHORT_BREAK_DURATION);
-            // settings.set_double ("long-break-duration", LONG_BREAK_DURATION);
-            // settings.set_double ("long-break-interval", LONG_BREAK_INTERVAL);
+            // var settings = Pomodoro.get_settings ();
+            // settings.set_uint ("pomodoro-duration", POMODORO_DURATION);
+            // settings.set_uint ("short-break-duration", SHORT_BREAK_DURATION);
+            // settings.set_uint ("long-break-duration", LONG_BREAK_DURATION);
+            // settings.set_uint ("pomodoros-per-session", LONG_BREAK_INTERVAL);
             // settings.set_boolean ("pause-when-idle", false);
         }
 

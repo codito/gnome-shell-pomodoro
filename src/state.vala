@@ -17,9 +17,6 @@ namespace Pomodoro
         {
             switch (this)
             {
-                case UNDEFINED:
-                    return "null";  // TODO: change to "undefined"
-
                 case POMODORO:
                     return "pomodoro";
 
@@ -38,9 +35,6 @@ namespace Pomodoro
         {
             switch (state)
             {
-                case "null":  // TODO: change to "undefined"
-                    return UNDEFINED;
-
                 case "pomodoro":
                     return POMODORO;
 
@@ -84,30 +78,29 @@ namespace Pomodoro
 
         public int64 get_default_duration ()
         {
-            var settings = Pomodoro.get_settings ()
-                                   .get_child ("preferences");
-            double seconds;
+            var settings = Pomodoro.get_settings ();
+            uint seconds;
 
             switch (this)
             {
                 case POMODORO:
-                    seconds = settings.get_double ("pomodoro-duration");
+                    seconds = settings.get_uint ("pomodoro-duration");
                     break;
 
                 case SHORT_BREAK:
-                    seconds = settings.get_double ("short-break-duration");
+                    seconds = settings.get_uint ("short-break-duration");
                     break;
 
                 case LONG_BREAK:
-                    seconds = settings.get_double ("long-break-duration");
+                    seconds = settings.get_uint ("long-break-duration");
                     break;
 
                 default:
-                    seconds = 0.0;
+                    seconds = 0;
                     break;
             }
 
-            return (int64) Math.floor (seconds * USEC_PER_SEC);
+            return (int64) seconds * Pomodoro.Interval.SECOND;
         }
     }
 }
