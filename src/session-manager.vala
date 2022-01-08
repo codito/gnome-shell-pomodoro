@@ -20,7 +20,7 @@ namespace Pomodoro
      */
     public class SessionManager : GLib.Object
     {
-        private static unowned Pomodoro.SessionManager? instance = null;
+        private static Pomodoro.SessionManager? instance = null;
 
         public Pomodoro.Timer timer { get; construct; }
 
@@ -127,12 +127,10 @@ namespace Pomodoro
 
         public static unowned Pomodoro.SessionManager? get_default ()
         {
-            // TODO / FIXME instance and get_default both are unowned, is it ok?
-
-            // if (Pomodoro.SessionManager.instance == null) {
-            //     var session_manager = new Pomodoro.SessionManager ();
-            //     session_manager.set_default ();
-            // }
+            if (Pomodoro.SessionManager.instance == null) {
+                var session_manager = new Pomodoro.SessionManager ();
+                session_manager.set_default ();
+            }
 
             return Pomodoro.SessionManager.instance;
         }
@@ -140,6 +138,8 @@ namespace Pomodoro
         public void set_default ()
         {
             Pomodoro.SessionManager.instance = this;
+
+            // TODO: connect to Application to cleanup at exit
 
             // this.watch_closure (() => {
             //     if (Pomodoro.SessionManager.instance == session_manager) {

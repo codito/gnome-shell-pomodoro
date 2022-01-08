@@ -245,7 +245,7 @@ namespace Pomodoro
 
         private void on_timer_changed ()
         {
-            if (this.timer.is_stopped ()) {
+            if (!this.timer.is_started ()) {
                 this.withdraw_notifications ();
             }
 

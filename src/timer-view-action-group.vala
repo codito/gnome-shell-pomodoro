@@ -24,7 +24,8 @@ namespace Pomodoro
 {
     public class TimerViewActionGroup : GLib.SimpleActionGroup
     {
-        public Pomodoro.Timer timer { get; construct set; }
+        public Pomodoro.Timer timer { get; construct; }
+        public Pomodoro.SessionManager session_manager { get; construct; }
 
         private GLib.SimpleAction start_action;
         private GLib.SimpleAction stop_action;
@@ -35,9 +36,18 @@ namespace Pomodoro
         private GLib.SimpleAction skip_action;
         private GLib.SimpleAction rewind_action;
 
-        public TimerViewActionGroup (Pomodoro.Timer timer)
+        public TimerViewActionGroup (Pomodoro.SessionManager? session_manager = null)
         {
-            this.timer = timer;
+            if (session_manager == null) {
+                session_manager = Pomodoro.SessionManager.get_default ();
+            }
+
+            var timer = session_manager.timer;
+
+            GLib.Object (
+                timer: timer,
+                session_manager: session_manager
+            );
 
             this.start_action = new GLib.SimpleAction ("start", null);
             this.start_action.activate.connect (this.activate_start);
@@ -77,15 +87,16 @@ namespace Pomodoro
 
         private void update_action_states ()
         {
-            var is_stopped = this.timer.is_stopped ();
-            var is_paused = this.timer.is_paused ();
+            var is_started = this.timer.is_started ();
+            var is_paused = !this.timer.is_paused ();
 
-            this.start_action.set_enabled (is_stopped);
-            this.stop_action.set_enabled (!is_stopped);
-            this.pause_action.set_enabled (!is_stopped && !is_paused);
-            this.resume_action.set_enabled (!is_stopped && is_paused);
-            this.skip_action.set_enabled (!is_stopped);
-            this.rewind_action.set_enabled (!is_stopped);
+            this.start_action.set_enabled (!is_started);
+            this.stop_action.set_enabled (is_started);
+            this.pause_action.set_enabled (is_started && !is_paused);
+            this.resume_action.set_enabled (is_started && is_paused);
+            this.skip_action.set_enabled (is_started);
+            this.rewind_action.set_enabled (is_started);
+
             // this.state_action.set_state (new GLib.Variant.string (this.timer.state.to_string ()));
         }
 

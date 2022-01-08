@@ -30,7 +30,7 @@ namespace Pomodoro
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.layout_manager  = new Gtk.BinLayout ();
 
-            this.insert_action_group ("timer", new Pomodoro.TimerViewActionGroup (this.timer));
+            this.insert_action_group ("timer", new Pomodoro.TimerViewActionGroup ());
         }
 
         private void update_css_classes ()
@@ -49,7 +49,7 @@ namespace Pomodoro
 
         private void update_buttons_stack ()
         {
-            var is_stopped = this.timer.is_stopped ();
+            var is_stopped = !this.timer.is_started ();
             var is_paused = this.timer.is_paused ();
             var child = this.buttons_grid.get_first_child ();
 

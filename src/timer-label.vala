@@ -50,7 +50,7 @@ namespace Pomodoro
                 this.remove_css_class ("timer-paused");
             }
 
-            if (this.timer.is_stopped ()) {
+            if (!this.timer.is_started ()) {
                 this.add_css_class ("timer-stopped");
             }
             else {
@@ -87,7 +87,7 @@ namespace Pomodoro
             uint minutes;
             uint seconds;
 
-            if (this.timer.is_stopped ()) {
+            if (!this.timer.is_started ()) {
                 remaining = (uint) Pomodoro.State.POMODORO.get_default_duration ().clamp (0, uint.MAX);
             }
             else {
