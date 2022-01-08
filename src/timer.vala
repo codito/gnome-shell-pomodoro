@@ -33,7 +33,7 @@ namespace Pomodoro
         public int64 offset;
         public int64 started_time;
         public int64 paused_time;
-        public bool  is_finished;
+        public int64 finished_time;
         public void* user_data;
 
         public Pomodoro.TimerState copy ()
@@ -43,9 +43,39 @@ namespace Pomodoro
                 offset = this.offset,
                 started_time = this.started_time,
                 paused_time = this.paused_time,
-                is_finished = this.is_finished,
+                finished_time = this.finished_time,
                 user_data = this.user_data
             };
+        }
+
+        public bool is_valid ()
+        {
+            // Negative duration
+            if (this.duration < 0) {
+                return false;
+            }
+
+            // Finished, but not started
+            if (this.finished_time >= 0 && this.started_time < 0) {
+                return false;
+            }
+
+            // Finished and still paused
+            if (this.finished_time >= 0 && this.paused_time >= 0) {
+                return false;
+            }
+
+            // Paused before started
+            // if (this.paused_time >= 0 && this.paused_time < this.started_time) {
+            //     return false;
+            // }
+
+            // Finished before started
+            // if (this.finished_time >= 0 && this.finished_time < this.started_time) {
+            //     return false;
+            // }
+
+            return true;
         }
 
         /**
@@ -60,17 +90,13 @@ namespace Pomodoro
             builder.add ("{sv}", "offset", new GLib.Variant.int64 (this.offset));
             builder.add ("{sv}", "started_time", new GLib.Variant.int64 (this.started_time));
             builder.add ("{sv}", "paused_time", new GLib.Variant.int64 (this.paused_time));
-            builder.add ("{sv}", "is_finished", new GLib.Variant.boolean (this.is_finished));
+            builder.add ("{sv}", "finished_time", new GLib.Variant.int64 (this.finished_time));
             // builder.add ("{smh}", "user_data", this.user_data);
 
             return builder.end ();
         }
     }
 
-     // TODO: Change Timer API:
-     //   - stop  --> pause
-     //   - start --> resume/start
-     //   - reset --> stop
 
     /**
      * Timer class mimicks a physical countdown timer.
@@ -112,7 +138,7 @@ namespace Pomodoro
                 return this._state;
             }
             set {
-                // TODO: validate state
+                assert (value.is_valid ());
 
                 var previous_state = this._state;
 
@@ -137,7 +163,8 @@ namespace Pomodoro
                 }
 
                 if (value < 0) {
-                    // TODO: log warning
+                    GLib.debug ("Trying to set a negative timer duration (%.1fs).",
+                                Pomodoro.Timestamp.to_seconds (value));
                     value = 0;
                 }
 
@@ -145,7 +172,7 @@ namespace Pomodoro
                 new_state.duration = value;
 
                 if (new_state.duration > this._state.duration) {
-                    new_state.is_finished = false;
+                    new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
                 }
 
                 this.state = new_state;
@@ -180,16 +207,25 @@ namespace Pomodoro
                 return this._state.user_data;
             }
             construct set {
-                // TODO warn if changing a finished state
+                if (this.is_finished ()) {
+                    GLib.debug ("Trying to set timer user-data after it had finished");
+                }
 
-                var new_state = this.state.copy ();
+                var new_state = this._state.copy ();
                 new_state.user_data = value;
 
                 this.state = new_state;
             }
         }
 
-        private Pomodoro.TimerState _state;
+        private Pomodoro.TimerState _state = Pomodoro.TimerState () {
+            duration = 0,
+            offset = 0,
+            started_time = Pomodoro.Timestamp.UNDEFINED,
+            paused_time = Pomodoro.Timestamp.UNDEFINED,
+            finished_time = Pomodoro.Timestamp.UNDEFINED,
+            user_data = null
+        };
         private uint                timeout_id = 0;
         private int64               last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
         private int64               last_timeout_time = Pomodoro.Timestamp.UNDEFINED;
@@ -205,7 +241,7 @@ namespace Pomodoro
                 offset = 0,
                 started_time = Pomodoro.Timestamp.UNDEFINED,
                 paused_time = Pomodoro.Timestamp.UNDEFINED,
-                is_finished = false,
+                finished_time = Pomodoro.Timestamp.UNDEFINED,
                 user_data = user_data
             };
         }
@@ -213,9 +249,12 @@ namespace Pomodoro
         public Timer.with_state (Pomodoro.TimerState state)
         {
             this._state = state;
-            this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
 
-            this.update_timeout (this.last_state_changed_time);
+            if (this._state.started_time >= 0) {
+                this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
+
+                this.update_timeout (this.last_state_changed_time);
+            }
         }
 
         ~Timer ()
@@ -251,17 +290,6 @@ namespace Pomodoro
             return this.timeout_id != 0;
         }
 
-        // /**
-        //  * Return whether timer not been started yet.
-        //  *
-        //  * Notice it also return true when paused or finished.
-        //  */
-        // public bool is_stopped ()
-        // {
-        //     return this._state.started_time < 0;
-        //     // return this.is_paused ();
-        // }
-
         /**
          * Return whether timer has been started.
          */
@@ -275,7 +303,7 @@ namespace Pomodoro
          */
         public bool is_paused ()
         {
-            return this._state.paused_time >= 0 && this._state.started_time >= 0 && !this._state.is_finished;
+            return this._state.paused_time >= 0 && this._state.started_time >= 0 && this._state.finished_time < 0;
         }
 
         /**
@@ -285,7 +313,7 @@ namespace Pomodoro
          */
         public bool is_finished ()
         {
-            return this._state.is_finished;
+            return this._state.finished_time >= 0;
         }
 
 
@@ -301,7 +329,7 @@ namespace Pomodoro
                 offset = 0,
                 started_time = Pomodoro.Timestamp.UNDEFINED,
                 paused_time = Pomodoro.Timestamp.UNDEFINED,
-                is_finished = false,
+                finished_time = Pomodoro.Timestamp.UNDEFINED,
                 user_data = user_data
             };
         }
@@ -341,6 +369,9 @@ namespace Pomodoro
             this.state = new_state;
         }
 
+        /**
+         * Resume timer if paused.
+         */
         public void resume (int64 timestamp = -1)
         {
             if (!this.is_started () || this.is_finished () || !this.is_paused ()) {
@@ -355,51 +386,6 @@ namespace Pomodoro
 
             this.state = new_state;
         }
-
-        // public void stop (int64 timestamp = -1)
-        // {
-            // TODO: Consider changing current uses to .reset()
-            // assert_not_reached ();
-
-        //     this.reset (this.duration,
-        //                 this.user_data);
-        // }
-
-
-        // /**
-        //  * Rewind the timer.
-        //  *
-        //  * It resumes the timer if it's stopped, and umarks the finished flag. In any case it only shifts
-        //  * `state.offset`, not the `state.started_time` or `state.paused_time`.
-        //  *
-        //  * You can only rewind timer backwards. To undo the action you need to push an archived `state`.
-        //  */
-        // private void rewind_internal (int64 microseconds,
-        //                               bool  resume,
-        //                               int64 timestamp = -1)
-        // {
-
-        //     if (microseconds < 0) {
-        //         GLib.debug ("Ignoring call to rewind timer %.1fs into the future.",
-        //                     Pomodoro.Timestamp.to_seconds (microseconds));
-        //         return;
-        //     }
-
-        //     Pomodoro.ensure_timestamp (ref timestamp);
-
-        //     var new_elapsed = int64.max (this.calculate_elapsed (timestamp) - microseconds, 0);
-        //     var new_state = this._state.copy ();
-
-        //     if (resume && new_state.paused_time >= 0) {
-        //         new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
-        //         new_state.offset += timestamp - new_state.paused_time;
-        //     }
-
-        //     new_state.offset = timestamp - new_state.started_time - new_elapsed;
-        //     new_state.is_finished = false;
-
-        //     this.state = new_state;
-        // }
 
         /**
          * Rewind and resume timer
@@ -430,33 +416,41 @@ namespace Pomodoro
                 new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
+            if (new_state.finished_time >= 0) {
+                new_state.offset += timestamp - new_state.finished_time;
+                new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
+            }
+
             new_state.offset = timestamp - new_state.started_time - new_elapsed;
-            new_state.is_finished = false;
 
             this.state = new_state;
         }
 
+        /**
+         * Jump to end position. Mark state as "finished".
+         */
         public void skip (int64 timestamp = -1)
         {
-            if (!this.is_started ()) {
+            if (!this.is_started () || this.is_finished ()) {
                 return;
             }
 
             Pomodoro.ensure_timestamp (ref timestamp);
 
             var new_state = this._state.copy ();
+            new_state.finished_time = timestamp;
 
             if (new_state.paused_time >= 0) {
                 new_state.offset += timestamp - new_state.paused_time;
                 new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
-            // new_state.finished_time = timestamp;
-            new_state.is_finished = true;
-
             this.state = new_state;
         }
 
+        /**
+         * Mark state as "finished".
+         */
         private void finish (int64 timestamp = -1)
         {
             this.stop_timeout ();
@@ -468,17 +462,11 @@ namespace Pomodoro
             Pomodoro.ensure_timestamp (ref timestamp);
 
             var new_state = this._state.copy ();
-            new_state.is_finished = true;
+            new_state.finished_time = timestamp;
 
-            if (new_state.started_time < 0) {
-                new_state.started_time = timestamp;
-            }
-
-            if (new_state.paused_time < 0) {
-                new_state.paused_time = timestamp;
-            }
-            else {
-                // TODO: calculate offset
+            if (new_state.paused_time >= 0) {
+                new_state.offset += timestamp - new_state.paused_time;
+                new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
             this.state = new_state;
@@ -519,7 +507,6 @@ namespace Pomodoro
 
                 new_state.offset = timestamp - new_state.started_time - new_elapsed;
                 // new_state.paused_time = timestamp;  // TODO: after suspension timer should be paused, perhaps by a `suspended` handler
-                // new_state.is_finished = false;
 
                 this.state = new_state;
 
@@ -636,7 +623,7 @@ namespace Pomodoro
 
         private void update_timeout (int64 timestamp = -1)
         {
-            if (!this._state.is_finished
+            if (this._state.finished_time < 0
                 && this._state.started_time >= 0
                 && this._state.paused_time < 0)
             {
@@ -660,9 +647,10 @@ namespace Pomodoro
         }
 
         /**
-         * Calculate elapsed time
+         * Calculate elapsed time.
          *
-         * In an unlikely case when `timestamp < paused_time` the result will be estimated.
+         * It's only accurate when passing a current time. If you pass a historic time
+         * the result will be just an estimate.
          */
         public int64 calculate_elapsed (int64 timestamp = -1)
         {
@@ -676,16 +664,32 @@ namespace Pomodoro
                 timestamp = int64.min (this._state.paused_time, timestamp);
             }
 
+            if (this._state.finished_time >= 0) {
+                timestamp = int64.min (this._state.finished_time, timestamp);
+            }
+
             return (
                 timestamp - this._state.started_time - this._state.offset
             ).clamp (0, this._state.duration);
         }
 
+        /**
+         * Calculate remaining time.
+         *
+         * It's only accurate when passing a current time. If you pass a historic time
+         * the result will be just an estimate.
+         */
         public int64 calculate_remaining (int64 timestamp = -1)
         {
             return this._state.duration - this.calculate_elapsed (timestamp);
         }
 
+        /**
+         * Calculate progress.
+         *
+         * It's only accurate when passing a current time. If you pass a historic time
+         * the result will be just an estimate.
+         */
         public double calculate_progress (int64 timestamp = -1)
         {
             var elapsed = (double) this.calculate_elapsed (timestamp);
@@ -712,22 +716,14 @@ namespace Pomodoro
 
             this.update_timeout (this.last_state_changed_time);
 
-            if (current_state.is_finished && !previous_state.is_finished) {
+            if (current_state.finished_time >= 0 && previous_state.finished_time < 0) {
                 this.finished (current_state);
             }
         }
 
-        // /**
-        //  * Synchronize signal is emitted on small deviations from expected elapsed time.
-        //  * It should be safe to increment elapsed time in `GLib.Timeout.add_seconds` callback.
-        //  * Just in case Timer tracks those any deviations and advises tickers to synchronize.
-        //  */
-        // public signal void synchronize (int64 timestamp, int64 offset);
-            // int64 timestamp,
-            // int64 elapsed,
-            // bool  is_running
-        // );
-
+        /**
+         * Emitted after a system gets suspended.
+         */
         public signal void suspended (int64 start_time,
                                       int64 end_time);
 
@@ -747,40 +743,6 @@ namespace Pomodoro
         // --------------------------------------------------------------------------
 
         // TODO: remove these
-
-        // TODO: remove, it's equivalent to .finish()
-        // /**
-        //  * Jump to end, so that state is counted as finished.
-        //  *
-        //  * Call is ignored when the timer is finished.
-        //  */
-        // public void skip (int64 timestamp = -1)
-        // {
-        //     this.finish (timestamp);
-
-            // if (this.is_finished ()) {
-            //     return;
-            // }
-
-            // if (!this.is_started ()) {
-            //     return;
-            // }
-
-            // Pomodoro.ensure_timestamp (ref timestamp);
-
-            // this.stop_timeout ();
-            // this.state = Pomodoro.TimerState () {
-            //     duration = this.state.duration,
-            //     offset = this.state.offset,
-            //     started_time = this.state.started_time,
-            //     paused_time = timestamp,
-            //     is_finished = true
-            // };
-
-            // Normally "finished" signal is emited after reaching timeout.
-            // It's triggered manually.
-            // this.finished (this.state);
-        // }
 
         public void stop (int64 timestamp = -1)
         {

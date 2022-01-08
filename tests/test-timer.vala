@@ -35,7 +35,7 @@ namespace Tests
             offset = 0,
             started_time = Pomodoro.Timestamp.UNDEFINED,
             paused_time = Pomodoro.Timestamp.UNDEFINED,
-            is_finished = false,
+            finished_time = Pomodoro.Timestamp.UNDEFINED,
             user_data = user_data
         };
     }
@@ -57,7 +57,7 @@ namespace Tests
             offset = now - timestamp - elapsed,
             started_time = timestamp,
             paused_time = Pomodoro.Timestamp.UNDEFINED,
-            is_finished = false,
+            finished_time = Pomodoro.Timestamp.UNDEFINED,
             user_data = user_data
         };
     }
@@ -79,7 +79,7 @@ namespace Tests
             offset = now - timestamp - elapsed,
             started_time = timestamp,
             paused_time = now,
-            is_finished = false,
+            finished_time = Pomodoro.Timestamp.UNDEFINED,
             user_data = user_data
         };
     }
@@ -100,8 +100,8 @@ namespace Tests
             duration = duration,
             offset = now - timestamp - elapsed,
             started_time = timestamp,
-            paused_time = now,
-            is_finished = true,
+            paused_time = Pomodoro.Timestamp.UNDEFINED,
+            finished_time = now,
             user_data = user_data
         };
     }
@@ -150,7 +150,7 @@ namespace Tests
                 offset = 2,
                 started_time = 3,
                 paused_time = 4,
-                is_finished = true,
+                finished_time = 5,
                 user_data = GLib.MainContext.@default()
             };
             var state = expected_state.copy ();
@@ -203,15 +203,14 @@ namespace Tests
             this.add_test ("calculate_remaining__finished_state",
                            this.test_calculate_remaining__finished_state);
 
-            // TODO
-            // this.add_test ("calculate_progress__initial_state",
-            //                this.test_calculate_progress__initial_state);
-            // this.add_test ("calculate_progress__started_state",
-            //                this.test_calculate_progress__started_state);
-            // this.add_test ("calculate_progress__paused_state",
-            //                this.test_calculate_progress__paused_state);
-            // this.add_test ("calculate_progress__finished_state",
-            //                this.test_calculate_progress__finished_state);
+            this.add_test ("calculate_progress__initial_state",
+                           this.test_calculate_progress__initial_state);
+            this.add_test ("calculate_progress__started_state",
+                           this.test_calculate_progress__started_state);
+            this.add_test ("calculate_progress__paused_state",
+                           this.test_calculate_progress__paused_state);
+            this.add_test ("calculate_progress__finished_state",
+                           this.test_calculate_progress__finished_state);
 
             this.add_test ("reset",
                            this.test_reset);
@@ -725,6 +724,139 @@ namespace Tests
 
 
         /*
+         * Tests for .calculate_progress()
+         */
+
+        public void test_calculate_progress__initial_state ()
+        {
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_initial_state (
+                    20 * Pomodoro.Interval.MINUTE
+                )
+            );
+            assert_cmpvariant (
+                timer.calculate_progress (now - Pomodoro.Interval.MINUTE),
+                0.0
+            );
+            assert_cmpvariant (
+                timer.calculate_progress (now + Pomodoro.Interval.MINUTE),
+                0.0
+            );
+        }
+
+        public void test_calculate_progress__started_state ()
+        {
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_started_state (
+                    20 * Pomodoro.Interval.MINUTE
+                )
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (timer.state.started_time - Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                0.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (timer.state.started_time + Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                1.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (timer.state.started_time + timer.duration + Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                20.0 / 20.0
+            );
+
+            var timer_with_offset = new Pomodoro.Timer.with_state (
+                create_started_state (
+                    20 * Pomodoro.Interval.MINUTE,
+                    4 * Pomodoro.Interval.MINUTE,
+                    now - 5 * Pomodoro.Interval.MINUTE
+                )
+            );
+            assert_cmpfloat (
+                timer_with_offset.calculate_progress (
+                    timer_with_offset.state.started_time + timer_with_offset.state.offset + Pomodoro.Interval.MINUTE
+                ),
+                GLib.CompareOperator.EQ,
+                1.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer_with_offset.calculate_progress (
+                    timer_with_offset.state.started_time + 5 * Pomodoro.Interval.MINUTE
+                ),
+                GLib.CompareOperator.EQ,
+                4.0 / 20.0
+            );
+        }
+
+        public void test_calculate_progress__paused_state ()
+        {
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_paused_state (
+                    20 * Pomodoro.Interval.MINUTE,
+                    4 * Pomodoro.Interval.MINUTE,
+                    now - 5 * Pomodoro.Interval.MINUTE
+                )
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (now - Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                3.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (now),
+                GLib.CompareOperator.EQ,
+                4.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (now + Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                4.0 / 20.0
+            );
+        }
+
+        /**
+         * Timer duration should have precedence over marking timer as finished.
+         * Therefore, finished timer can still have some remaining time.
+         */
+        public void test_calculate_progress__finished_state ()
+        {
+            var now = Pomodoro.Timestamp.tick (0);
+
+            var timer = new Pomodoro.Timer.with_state (
+                create_finished_state (
+                    20 * Pomodoro.Interval.MINUTE,
+                    4 * Pomodoro.Interval.MINUTE,
+                    now - 5 * Pomodoro.Interval.MINUTE
+                )
+            );
+
+            assert_cmpfloat (
+                timer.calculate_progress (now - Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                3.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (now),
+                GLib.CompareOperator.EQ,
+                4.0 / 20.0
+            );
+            assert_cmpfloat (
+                timer.calculate_progress (now + Pomodoro.Interval.MINUTE),
+                GLib.CompareOperator.EQ,
+                4.0 / 20.0
+            );
+        }
+
+
+        /*
          * Tests for .reset()
          */
 
@@ -738,7 +870,7 @@ namespace Tests
                     offset = 1,
                     started_time = 2,
                     paused_time = 3,
-                    is_finished = true
+                    finished_time = 4
                 }
             );
             timer.reset (expected_state.duration);

@@ -404,7 +404,7 @@ namespace Pomodoro
                 duration = this.state.get_default_duration (),  // TODO: should be state_duration
                 started_time = start_time,
                 paused_time = Pomodoro.Timestamp.UNDEFINED,
-                is_finished = false
+                finished_time = Pomodoro.Timestamp.UNDEFINED
             };
         }
 
