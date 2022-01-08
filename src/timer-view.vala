@@ -30,7 +30,7 @@ namespace Pomodoro
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.layout_manager  = new Gtk.BinLayout ();
 
-            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
+            this.insert_action_group ("timer", new Pomodoro.TimerViewActionGroup (this.timer));
         }
 
         private void update_css_classes ()

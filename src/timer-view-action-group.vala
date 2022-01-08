@@ -22,7 +22,7 @@ using GLib;
 
 namespace Pomodoro
 {
-    public class TimerActionGroup : GLib.SimpleActionGroup
+    public class TimerViewActionGroup : GLib.SimpleActionGroup
     {
         public Pomodoro.Timer timer { get; construct set; }
 
@@ -35,7 +35,7 @@ namespace Pomodoro
         private GLib.SimpleAction skip_action;
         private GLib.SimpleAction rewind_action;
 
-        public TimerActionGroup (Pomodoro.Timer timer)
+        public TimerViewActionGroup (Pomodoro.Timer timer)
         {
             this.timer = timer;
 

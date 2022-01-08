@@ -86,7 +86,6 @@ namespace Pomodoro
             var settings = Pomodoro.get_settings ();
             var remaining_pomodoros = settings.get_uint ("pomodoros-per-session");
 
-            // this.clear ();
             this._start_time = timestamp;
             this._end_time = timestamp;
 
@@ -96,8 +95,6 @@ namespace Pomodoro
                     new Pomodoro.TimeBlock.with_start_time (Pomodoro.State.POMODORO, this._end_time)
                 );
                 remaining_pomodoros--;
-
-                // print ("\n#### start_time = %d\n", (int) (this._start_time / Pomodoro.Interval.SECOND));
 
                 if (remaining_pomodoros > 0) {
                     this.append_internal (
@@ -113,13 +110,20 @@ namespace Pomodoro
             }
         }
 
-        // private void extend ()
-        // {
-        // }
 
-        // private void shorten ()
-        // {
-        // }
+        /*
+         * Methods for modifying ongoing session
+         */
+
+        private void extend ()
+        {
+        }
+
+        private void shorten ()
+        {
+        }
+
+
 
 
 

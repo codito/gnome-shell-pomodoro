@@ -14,6 +14,7 @@ test_names = [
   # 'capability-manager',
   'time-block',
   'timer',
+  'timer-view-action-group',
   'session',
   'session-manager',
   # 'utils',

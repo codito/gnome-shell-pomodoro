@@ -10,7 +10,32 @@ namespace Tests
         public SessionTest ()
         {
             this.add_test ("new", this.test_new);
-            this.add_test ("new-empty", this.test_new_empty);
+            this.add_test ("new_empty", this.test_new_empty);
+
+            // TODO: Tests methods for modifying history
+            // this.add_test ("prepend", this.test_prepend);
+            // this.add_test ("append", this.test_append);
+            // this.add_test ("insert", this.test_insert);
+            // this.add_test ("insert_before", this.test_insert_before);
+            // this.add_test ("insert_after", this.test_insert_after);
+            // this.add_test ("replace", this.test_replace);
+
+            // TODO: Tests methods for modifying ongoing session
+            // this.add_test ("extend", this.test_extend);
+            // this.add_test ("shorten", this.test_shorten);
+
+            // TODO: Tests for signals
+            // this.add_test ("changed_signal", this.test_changed_signal);
+            // this.add_test ("time_block_added_signal", this.test_time_block_added_signal);
+            // this.add_test ("time_block_removed_signal", this.test_time_block_removed_signal);
+            // this.add_test ("time_block_changed_signal", this.test_time_block_changed_signal);
+
+            // TODO: Tests for propagating changes between blocks
+            // this.add_test ("time_block_set_start_time", this.test_time_block_set_start_time);
+            // this.add_test ("time_block_set_end_time", this.test_time_block_set_end_time);
+            // this.add_test ("time_block_set_time_range", this.test_time_block_set_end_time);
+
+            // TODO: methods for saving / restoring in db
         }
 
         public override void setup ()

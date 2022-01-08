@@ -32,7 +32,7 @@ libgnome_pomodoro_sources = files(
   'time-block-entry.vala',
   'timeline.vala',
   'timer.vala',
-  'timer-action-group.vala',
+  'timer-view-action-group.vala',
   'timer-label.vala',
   'timer-level-bar.vala',
   'timer-progress-bar.vala',
