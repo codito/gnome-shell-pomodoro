@@ -12,6 +12,7 @@ namespace Tests
             this.add_test ("new", this.test_new);
             this.add_test ("new_empty", this.test_new_empty);
 
+
             // TODO: Tests methods for modifying history
             // this.add_test ("prepend", this.test_prepend);
             // this.add_test ("append", this.test_append);

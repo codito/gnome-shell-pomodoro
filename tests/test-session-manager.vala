@@ -9,15 +9,24 @@ namespace Tests
             this.add_test ("new", this.test_new);
             this.add_test ("new_with_timer", this.test_new_with_timer);
 
-            this.add_test ("set_current_session", this.test_set_current_session);
-            this.add_test ("set_current_time_block", this.test_set_current_time_block);
+            // this.add_test ("set_current_session", this.test_set_current_session);
+            // this.add_test ("set_current_time_block", this.test_set_current_time_block);
+
+            // this.add_test ("timer_set_state", this.test_timer_set_state);
+            // this.add_test ("timer_set_duration", this.test_timer_set_duration);
+            // this.add_test ("timer_start", this.test_timer_start);
+            // this.add_test ("timer_pause", this.test_timer_pause);
+            // this.add_test ("timer_reset", this.test_timer_reset);
+            // this.add_test ("timer_skip", this.test_timer_reset);
+            // this.add_test ("timer_rewind", this.test_timer_reset);
+            // this.add_test ("timer_suspended", this.test_timer_suspended);
         }
 
         public override void setup ()
         {
             // default timer needs to be referenced somewhere
-            this.default_timer = new Pomodoro.Timer ();
-            this.default_timer.set_default ();
+            // this.default_timer = new Pomodoro.Timer ();
+            // this.default_timer.set_default ();
 
             // var settings = Pomodoro.get_settings ()
             //                        .get_child ("preferences");
@@ -41,10 +50,12 @@ namespace Tests
 
         public void test_new ()
         {
+            var default_timer = new Pomodoro.Timer ();
+            default_timer.set_default ();
+
             var session_manager = new Pomodoro.SessionManager ();
 
-            assert_true (session_manager.timer == Pomodoro.Timer.get_default ());
-            assert_true (session_manager.timer.is_default ());
+            assert_true (session_manager.timer == default_timer);
             assert_null (session_manager.current_session);
             assert_null (session_manager.current_time_block);
         }
@@ -69,9 +80,7 @@ namespace Tests
         {
             var session = new Pomodoro.Session.empty ();
 
-            var timer           = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-
+            var session_manager = new Pomodoro.SessionManager ();
         }
 
         public void test_set_current_time_block ()
@@ -80,7 +89,7 @@ namespace Tests
             var time_block = session.get_first_time_block ();
             assert_true (time_block.session == session);
 
-            var timer           = new Pomodoro.Timer ();
+            var timer = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
             var notify_current_time_block_emitted = 0;

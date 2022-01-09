@@ -66,14 +66,14 @@ namespace Pomodoro
             }
 
             // Paused before started
-            // if (this.paused_time >= 0 && this.paused_time < this.started_time) {
-            //     return false;
-            // }
+            if (this.paused_time >= 0 && this.paused_time < this.started_time) {
+                return false;
+            }
 
             // Finished before started
-            // if (this.finished_time >= 0 && this.finished_time < this.started_time) {
-            //     return false;
-            // }
+            if (this.finished_time >= 0 && this.finished_time < this.started_time) {
+                return false;
+            }
 
             return true;
         }

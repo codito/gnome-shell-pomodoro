@@ -109,6 +109,14 @@ namespace Pomodoro
             // this.timer.notify["time-block"].connect (this.on_timer_time_block_notify);
 
             // this.on_timer_time_block_notify ();
+
+            // Setup timer
+            this.timer.reset ();
+
+            // TODO: restore session
+
+
+            // TODO: connect timer signals
         }
 
         ~SessionManager ()

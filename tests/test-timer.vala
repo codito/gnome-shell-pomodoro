@@ -939,13 +939,6 @@ namespace Tests
         /**
          * Starting from paused state. Expect call to be ignored.
          */
-         // *
-         // * Scenario:
-         // *  - start timer
-         // *  - stop after 4 minutes
-         // *  - start after 1 minute
-         // *
-         // * Expect elapsed time still to be 4 minutes
         public void test_start__paused_state ()
         {
             var paused_state = create_paused_state (
@@ -963,30 +956,6 @@ namespace Tests
                 expected_state.to_variant ()
             );
             assert_false (timer.is_running ());
-
-            // var paused_state = create_paused_state (
-            //     20 * Pomodoro.Interval.MINUTE,
-            //     4 * Pomodoro.Interval.MINUTE
-            // );
-            // var expected_state = paused_state.copy ();
-            // expected_state.offset += 1 * Pomodoro.Interval.MINUTE;
-            // expected_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
-
-            // var timer = new Pomodoro.Timer.with_state (paused_state);
-            // Pomodoro.Timestamp.tick (1 * Pomodoro.Interval.MINUTE);
-            // timer.start ();
-
-            // assert_cmpvariant (
-            //     new GLib.Variant.int64 (timer.calculate_elapsed ()),
-            //     new GLib.Variant.int64 (4 * Pomodoro.Interval.MINUTE)
-            // );
-            // assert_cmpvariant (
-            //     timer.state.to_variant (),
-            //     expected_state.to_variant ()
-            // );
-            // assert_true (timer.is_started ());
-            // assert_true (timer.is_running ());
-            // assert_false (timer.is_finished ());
 
             // TODO: expect change signal to be emitted
         }
@@ -1007,7 +976,6 @@ namespace Tests
                 timer.state.to_variant (),
                 expected_state.to_variant ()
             );
-            // assert_true (timer.is_finished ());
             assert_false (timer.is_running ());
 
             // TODO: expect change signal not to be emitted
@@ -1034,10 +1002,7 @@ namespace Tests
                 timer.state.to_variant (),
                 expected_state.to_variant ()
             );
-            // assert_false (timer.is_started ());
-            // assert_false (timer.is_paused ());
             assert_false (timer.is_running ());
-            // assert_false (timer.is_finished ());
 
             // TODO: expect change signal to be emitted
         }
@@ -1113,9 +1078,6 @@ namespace Tests
                 timer.state.to_variant (),
                 expected_state.to_variant ()
             );
-            // assert_true (timer.is_started ());
-            // assert_true (timer.is_finished ());
-            // assert_false (timer.is_paused ());
             assert_false (timer.is_running ());
 
             // TODO: expect change signal not to be emitted
@@ -1152,28 +1114,18 @@ namespace Tests
          */
         public void test_resume__started_state ()
         {
-            // var now = Pomodoro.Timestamp.tick (0);
-
             var started_state = create_started_state ();
             var expected_state = started_state.copy ();
-            // expected_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             var timer = new Pomodoro.Timer.with_state (started_state);
             Pomodoro.Timestamp.tick (5 * Pomodoro.Interval.MINUTE);
             timer.resume ();
 
-            // assert_cmpvariant (
-            //     new GLib.Variant.int64 (timer.calculate_elapsed ()),
-            //     new GLib.Variant.int64 (5 * Pomodoro.Interval.MINUTE)
-            // );
             assert_cmpvariant (
                 timer.state.to_variant (),
                 expected_state.to_variant ()
             );
             assert_true (timer.is_running ());
-            // assert_true (timer.is_started ());
-            // assert_false (timer.is_paused ());
-            // assert_false (timer.is_finished ());
 
             // TODO: expect change signal not to be emitted
         }
@@ -1247,12 +1199,6 @@ namespace Tests
                 timer.state.to_variant (),
                 expected_state.to_variant ()
             );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (timer.calculate_elapsed ()),
-                new GLib.Variant.int64 (0)
-            );
-            // assert_false (timer.is_started ());
-            // assert_false (timer.is_paused ());
             assert_false (timer.is_running ());
 
             // TODO: expect change signal not to be emitted

@@ -62,6 +62,19 @@ if compile_schemas.found()
   )
 endif
 
+compiled_schemas = gnome.compile_schemas(
+  depend_files: 'org.gnomepomodoro.Pomodoro.gschema.xml'
+)
+
+# compiled_schemas = custom_target(
+#   'gschemas.compiled',
+#   input: 'org.gnomepomodoro.Pomodoro.gschema.xml',
+#   output: 'gschemas.compiled',
+#   command: [compile_schemas, meson.current_source_dir()],
+#   build_by_default: false
+# )
+
+
 subdir('icons')
 subdir('resources')
 subdir('sounds')
