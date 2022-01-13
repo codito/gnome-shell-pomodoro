@@ -138,7 +138,7 @@ namespace Pomodoro
                 return this._state;
             }
             set {
-                value = this.resolve_state (ref value);
+                this.resolve_state (ref value);
                 assert (value.is_valid ());
 
                 var previous_state = this._state;
@@ -713,11 +713,23 @@ namespace Pomodoro
         /**
          * Emitted before setting a new state.
          *
-         * It allows for fine-tuning the state without emitting state-changed signal.
+         * It allows for fine-tuning the state before emitting state-changed signal.
+         * Default handler ensures that state is valid.
          */
-        public signal Pomodoro.TimerState resolve_state (ref Pomodoro.TimerState state)
+        public signal void resolve_state (ref Pomodoro.TimerState state)
         {
-            return state;
+            if (state.started_time < 0) {
+                state.paused_time = Pomodoro.Timestamp.UNDEFINED;
+                state.finished_time = Pomodoro.Timestamp.UNDEFINED;
+            }
+
+            if (state.paused_time >= 0 && state.paused_time < state.started_time) {
+                state.paused_time = state.started_time;
+            }
+
+            if (state.finished_time >= 0 && state.finished_time < state.started_time) {
+                state.finished_time = state.started_time;
+            }
         }
 
         /**

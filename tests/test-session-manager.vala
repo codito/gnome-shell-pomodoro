@@ -41,7 +41,7 @@ namespace Tests
 
             // this.add_test ("timer_set_state", this.test_timer_set_state);
             // this.add_test ("timer_set_duration", this.test_timer_set_duration);
-            this.add_test ("timer_start", this.test_timer_start);
+            this.add_test ("timer_start__initialize_session", this.test_timer_start__initialize_session);
             // this.add_test ("timer_pause", this.test_timer_pause);
             // this.add_test ("timer_reset", this.test_timer_reset);
             // this.add_test ("timer_skip", this.test_timer_reset);
@@ -196,7 +196,7 @@ namespace Tests
          * Tests for calls performed on timer
          */
 
-        public void test_timer_start ()
+        public void test_timer_start__initialize_session ()
         {
             var timer = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
@@ -222,6 +222,9 @@ namespace Tests
             assert_true (session_manager.current_time_block == session_manager.current_session.get_first_time_block ());
             assert_true (session_manager.current_time_block.state == Pomodoro.State.POMODORO);
 
+            // TODO: check enter_time_block signal
+            // TODO: check leave_time_block signal
+
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.duration),
                 new GLib.Variant.int64 (POMODORO_DURATION * Pomodoro.Interval.SECOND)
@@ -229,6 +232,14 @@ namespace Tests
             assert_true (session_manager.timer.is_started ());
             assert_true (session_manager.timer.is_running ());
             assert_true (session_manager.timer.user_data == session_manager.current_time_block);
+
+            // Try to call timer.start() after a while. Expect call to be ignored.
+            // var session_manager.current_time_block
+
+            // Pomodoro.Timestamp.tick (Pomodro.Interval.MINUTE);
+            // timer.start ();
+
+            // session_manager.current_time_block
         }
 
         // public void test_timer_stop ()

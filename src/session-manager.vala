@@ -459,12 +459,6 @@ namespace Pomodoro
         //     this._current_time_block = null;
         // }
 
-        private bool can_continue_current_session (int64 timestamp)
-        {
-            // TODO
-
-            return true;
-        }
 
         /**
          * Determine whether to start a new session or continue current one.
@@ -579,10 +573,10 @@ namespace Pomodoro
             });
         }
 
-        private Pomodoro.TimerState on_timer_resolve_state (ref Pomodoro.TimerState state)
+        private void on_timer_resolve_state (ref Pomodoro.TimerState state)
         {
             if (this.inhibit_timer_signal_handlers > 0) {
-                return state;
+                return;
             }
 
             // var timestamp = this.timer.get_last_state_changed_time ();
@@ -592,7 +586,7 @@ namespace Pomodoro
             // Stopping the timer.
             if (state.started_time < 0) {
                 state.user_data = null;
-                return state;
+                return;
             }
 
             // Starting timer. Check if need to initialize a new session or a time-block.
@@ -604,7 +598,7 @@ namespace Pomodoro
 
                 state.duration = this._current_time_block.duration;  // TODO: Should not count gap times. At this point time-block should not have any gaps.
                 state.user_data = this._current_time_block;
-                return state;
+                return;
             }
 
             // TODO: Advance to a next time-block
@@ -616,8 +610,6 @@ namespace Pomodoro
             //     state.user_data = this.current_time_block;
             //     return state;
             // }
-
-            return state;
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
