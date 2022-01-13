@@ -34,6 +34,8 @@ namespace Pomodoro
     {
         if (Pomodoro.settings == null) {
             Pomodoro.settings = new GLib.Settings ("org.gnomepomodoro.Pomodoro");
+
+            // TODO: unset Pomodoro.settings at application exit
         }
 
         return Pomodoro.settings;

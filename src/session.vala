@@ -14,6 +14,11 @@ namespace Pomodoro
      */
     public class Session : GLib.Object
     {
+        /**
+         * Idle time after which session should no longer be continued, and new session should be created.
+         */
+        private const int64 EXPIRE_TIMEOUT = Pomodoro.Interval.HOUR;
+
         public int64 start_time {
             get {
                 return this._start_time;
@@ -35,6 +40,7 @@ namespace Pomodoro
         private GLib.List<Pomodoro.TimeBlock> time_blocks;
         private int64 _start_time = Pomodoro.Timestamp.MIN;
         private int64 _end_time = Pomodoro.Timestamp.MAX;
+        // private int64 finished_time = Pomodoro.Timestamp.UNDEFINED;
 
 
         /**
@@ -125,7 +131,76 @@ namespace Pomodoro
 
 
 
+        /**
+         * Continuing a session means manually selecting a state at given time
+         */
+        // public void @continue (Pomodoro.State state,
+        //                        int64          start_time)
+        // {
+        //     var time_block = new Pomodoro.TimeBlock.with_start_time (state, start_time);
 
+            // TODO
+            // this.time_blocks.insert_sorted (time_block);
+        // }
+
+        public void reschedule (Pomodoro.TimeBlock time_block,
+                                int64              start_time)
+        {
+            var offset = start_time - time_block.start_time;
+            var changing = false;
+
+            if (offset == 0) {
+                return;
+            }
+
+            this.time_blocks.@foreach ((scheduled_time_block) => {
+                if (scheduled_time_block == time_block) {
+                    changing = true;
+                }
+
+                if (changing) {
+                    scheduled_time_block.move_by (offset);
+                }
+            });
+        }
+
+        // public bool within (timestamp)
+        // {
+        //     var last_time_block = this.get_last_time_block ();
+
+        //     return this.finished_time >= 0;
+        // }
+
+        /**
+         * Trim ongoing time-block and remove sheduled time-blocks.
+         */
+        public void finish (int64 timestamp)
+        {
+            var changing = false;
+
+            this.time_blocks.@foreach ((time_block) => {
+                if (time_block.end_time <= timestamp) {
+                    return;
+                }
+
+                if (time_block.start_time >= timestamp && time_block.end_time > timestamp) {
+                    time_block.end_time = timestamp;
+                    return;
+                }
+
+                // TODO remove time-block
+            });
+        }
+
+
+        public bool is_expired (int64 timestamp = -1)
+        {
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            var last_time_block = this.get_last_time_block ();
+
+            return last_time_block != null && last_time_block.end_time + EXPIRE_TIMEOUT > timestamp;
+        }
 
         // private void on_time_block_added (Pomodoro.TimeBlock time_block)
         // {

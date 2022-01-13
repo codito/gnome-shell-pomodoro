@@ -138,6 +138,7 @@ namespace Pomodoro
                 return this._state;
             }
             set {
+                value = this.resolve_state (ref value);
                 assert (value.is_valid ());
 
                 var previous_state = this._state;
@@ -635,15 +636,26 @@ namespace Pomodoro
         }
 
         /**
-         * Manually trigger internal timeout.
+         * Manually trigger internal timeout, which performs checks and may mark state as finished.
          *
-         * Intended for tests.
+         * Intended for unit tests.
          */
         public void tick ()
         {
             if (this.is_running ()) {
                 this.on_timeout_idle ();
             }
+        }
+
+        /**
+         * Return time of a last state change.
+         *
+         * It's deliberate that "last_state_changed_time" is not a property, as we don't want emitting
+         * notify events for that.
+         */
+        public int64 get_last_state_changed_time ()
+        {
+            return this.last_state_changed_time;
         }
 
         /**
@@ -696,6 +708,16 @@ namespace Pomodoro
             var duration = (double) this._state.duration;
 
             return duration > 0.0 ? elapsed / duration : 0.0;
+        }
+
+        /**
+         * Emitted before setting a new state.
+         *
+         * It allows for fine-tuning the state without emitting state-changed signal.
+         */
+        public signal Pomodoro.TimerState resolve_state (ref Pomodoro.TimerState state)
+        {
+            return state;
         }
 
         /**

@@ -1,5 +1,17 @@
 namespace Tests
 {
+    private uint8[] list_session_states (Pomodoro.Session session)
+    {
+        uint8[] states = {};
+
+        session.@foreach ((time_block) => {
+            states += (uint8) time_block.state;
+        });
+
+        return states;
+    }
+
+
     public class SessionTest : Tests.TestSuite
     {
         private const uint POMODORO_DURATION = 1500;
@@ -67,22 +79,26 @@ namespace Tests
         {
             var now = Pomodoro.Timestamp.tick (0);
             var session = new Pomodoro.Session ();
-            uint8[] states = {};
 
-            session.@foreach ((time_block) => {
-                states += (uint8) time_block.state;
-            });
+            // uint8[] states = {};
 
-            assert_cmpmem (states, {
-                Pomodoro.State.POMODORO,
-                Pomodoro.State.SHORT_BREAK,
-                Pomodoro.State.POMODORO,
-                Pomodoro.State.SHORT_BREAK,
-                Pomodoro.State.POMODORO,
-                Pomodoro.State.SHORT_BREAK,
-                Pomodoro.State.POMODORO,
-                Pomodoro.State.LONG_BREAK
-            });
+            // session.@foreach ((time_block) => {
+            //     states += (uint8) time_block.state;
+            // });
+
+            assert_cmpmem (
+                list_session_states (session),
+                {
+                    Pomodoro.State.POMODORO,
+                    Pomodoro.State.SHORT_BREAK,
+                    Pomodoro.State.POMODORO,
+                    Pomodoro.State.SHORT_BREAK,
+                    Pomodoro.State.POMODORO,
+                    Pomodoro.State.SHORT_BREAK,
+                    Pomodoro.State.POMODORO,
+                    Pomodoro.State.LONG_BREAK
+                }
+            );
             assert_cmpvariant (
                 new GLib.Variant.int64 (session.start_time),
                 new GLib.Variant.int64 (now)

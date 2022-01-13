@@ -63,6 +63,9 @@ namespace Pomodoro
         // Beware that `duration` has a few edge cases:
         //  - when time block is infinite (`end` < 0 or `start` < 0) it returns -1
         //  - when one of the child is infinite, it returns duration according to its `end` and not the childs
+        /**
+         * Return time-block duration
+         */
         public int64 duration {  // TODO: change to calculate_duration
             get {
                 return this._end_time - this._start_time;
@@ -178,6 +181,24 @@ namespace Pomodoro
                 this.changed ();
             }
         }
+
+
+        // TODO: should this also move gap times?
+        public void move_to (int64 start_time)
+        {
+            this.set_time_range (start_time,
+                                 Pomodoro.Timestamp.add (start_time, this.duration));
+        }
+
+        // TODO: should this also move gap times?
+        public void move_by (int64 offset)
+        {
+            this.set_time_range (Pomodoro.Timestamp.add (this._start_time, offset),
+                                 Pomodoro.Timestamp.add (this._end_time, offset));
+        }
+
+
+
 
         // /**
         //  * Return whether time block has bounds. It does not take into account children.
@@ -390,23 +411,23 @@ namespace Pomodoro
 
 
 
-        public Pomodoro.TimerState to_timer_state (int64 timestamp = -1)
-        {
-            Pomodoro.ensure_timestamp (ref timestamp);
+        // public Pomodoro.TimerState to_timer_state (int64 timestamp = -1)
+        // {
+        //     Pomodoro.ensure_timestamp (ref timestamp);
 
-            var start_time = this._start_time;
+        //     var start_time = this._start_time;
 
-            if (start_time <= Pomodoro.Timestamp.MIN) {
-                start_time = timestamp;
-            }
+        //     if (start_time <= Pomodoro.Timestamp.MIN) {
+        //         start_time = timestamp;
+        //     }
 
-            return Pomodoro.TimerState () {
-                duration = this.state.get_default_duration (),  // TODO: should be state_duration
-                started_time = start_time,
-                paused_time = Pomodoro.Timestamp.UNDEFINED,
-                finished_time = Pomodoro.Timestamp.UNDEFINED
-            };
-        }
+        //     return Pomodoro.TimerState () {
+        //         duration = this.state.get_default_duration (),  // TODO: should be state_duration
+        //         started_time = start_time,
+        //         paused_time = Pomodoro.Timestamp.UNDEFINED,
+        //         finished_time = Pomodoro.Timestamp.UNDEFINED
+        //     };
+        // }
 
 
         // -----------------------------------------------------------------

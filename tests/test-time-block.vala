@@ -158,18 +158,18 @@ namespace Tests
          * Tests for methods
          */
 
-        public void to_timer_state ()
-        {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
-            var expected_timer_state = Pomodoro.TimerState () {
+        // public void to_timer_state ()
+        // {
+        //     var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+        //     var expected_timer_state = Pomodoro.TimerState () {
 
-            };
+        //     };
 
-            assert_cmpvariant (
-                time_block.to_timer_state ().to_variant (),
-                expected_timer_state.to_variant ()
-            );
-        }
+        //     assert_cmpvariant (
+        //         time_block.to_timer_state ().to_variant (),
+        //         expected_timer_state.to_variant ()
+        //     );
+        // }
 
         // public void test_schedule ()
         // {
