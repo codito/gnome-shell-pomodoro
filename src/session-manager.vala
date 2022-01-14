@@ -31,20 +31,10 @@ namespace Pomodoro
         public unowned Pomodoro.Session current_session {
             get {
                 return this._current_session;
-                // return this.current_time_block.session;
             }
             set {
-                // TODO
-                assert_not_reached ();
-
-                // var current_time_block = this._current_time_block;
-
-                // if (value == null) {
-                // }
-
-                // if (this.current_time_block.session != value) {
-                //     this.current_time_block = value.get_first_time_block ();  // TODO: create undefined time-block if null
-                // }
+                this.set_current_time_block_full (value,
+                                                  value != null ? value.get_first_time_block () : null);
             }
         }
 
@@ -54,38 +44,8 @@ namespace Pomodoro
                 return this._current_time_block;
             }
             set {
-                // TODO
-                assert_not_reached ();
-
-            //     var previous_time_block = this._current_time_block;
-
-            //     if (previous_time_block != value) {
-            //         this._current_time_block = value;
-
-            //         if (previous_time_block != null) {
-            //             this.leave_time_block (previous_time_block);
-            //         }
-
-            //         if (value != null && this._current_time_block == value) {
-            //             this.enter_time_block (value);
-            //         }
-                // }
-
-                // var previous_time_block = this.timer.time_block;
-
-                // unowned Pomodoro.Session? previous_session = previous_time_block != null
-                //     ? previous_time_block.session
-                //     : null;
-
-                // if (previous_time_block != value) {
-                //     this.timer.time_block = value;  // TODO: notify
-
-                //     this.notify_property ("current-time-block");
-
-                //     if (previous_session != value.session) {
-                //         this.notify_property ("current-session");
-                //     }
-                // }
+                this.set_current_time_block_full (value != null ? value.session : this._current_session,
+                                                  value);
             }
         }
 
@@ -530,8 +490,8 @@ namespace Pomodoro
         private void set_current_time_block_full (Pomodoro.Session?   session,
                                                   Pomodoro.TimeBlock? time_block)
         {
-            var previous_session     = this._current_session;
-            var previous_time_block  = this._current_time_block;
+            var previous_session    = this._current_session;
+            var previous_time_block = this._current_time_block;
 
             if (previous_time_block != null && time_block != previous_time_block) {
                 this.leave_time_block (previous_time_block);
@@ -541,8 +501,16 @@ namespace Pomodoro
                 this.leave_session (previous_session);
             }
 
-            this._current_session    = session;
+            this._current_session = session;
             this._current_time_block = time_block;
+
+            if (session != previous_session) {
+                this.notify_property ("current-session");
+            }
+
+            if (time_block != previous_time_block) {
+                this.notify_property ("current-time-block");
+            }
 
             // if (session != null && session != previous_session) {
             //     this.enter_session (session);

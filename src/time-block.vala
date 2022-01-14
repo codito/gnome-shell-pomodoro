@@ -9,7 +9,8 @@ namespace Pomodoro
      * angnostic about it. A child block may exceed its parent time range. After a child block gets defined `end` time,
      * the parent block is update its `end` time.
      */
-    public class TimeBlock : GLib.Object  // GLib.InitiallyUnowned
+    // public class TimeBlock : GLib.Object
+    public class TimeBlock : GLib.InitiallyUnowned
     {
         // TODO !!!!! any change to a block should be propagated to parent blocks
         // TODO !!!!! use MIN_TIMESTAMP and MAX_TIMESTAMP instead of -1

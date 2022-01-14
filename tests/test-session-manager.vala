@@ -36,8 +36,8 @@ namespace Tests
             this.add_test ("new", this.test_new);
             this.add_test ("new_with_timer", this.test_new_with_timer);
 
-            // this.add_test ("set_current_session", this.test_set_current_session);
-            // this.add_test ("set_current_time_block", this.test_set_current_time_block);
+            this.add_test ("set_current_session", this.test_set_current_session);
+            this.add_test ("set_current_time_block", this.test_set_current_time_block);
 
             // this.add_test ("timer_set_state", this.test_timer_set_state);
             // this.add_test ("timer_set_duration", this.test_timer_set_duration);
@@ -113,19 +113,12 @@ namespace Tests
 
         public void test_set_current_session ()
         {
-            var session = new Pomodoro.Session ();
-
-            var session_manager = new Pomodoro.SessionManager ();
-        }
-
-        public void test_set_current_time_block ()
-        {
-            var session    = new Pomodoro.Session ();
-            var time_block = session.get_first_time_block ();
-            assert_true (time_block.session == session);
-
-            var timer = new Pomodoro.Timer ();
+            var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            var session_1       = new Pomodoro.Session ();
+            var session_2       = new Pomodoro.Session.from_template ();
+
+            assert_nonnull (session_2.get_first_time_block ());
 
             var notify_current_time_block_emitted = 0;
             session_manager.notify["current-time-block"].connect (() => {
@@ -137,17 +130,69 @@ namespace Tests
                 notify_current_session_emitted++;
             });
 
-            // Set new time-block. Expect notify signals to be emitted
-            session_manager.current_time_block = time_block;
-            // assert_cmpvariant (
-            //     time_block.to_timer_state ().to_variant (),
-            //     timer.state.to_variant ()
-            // );
-            // assert_true (timer.duration == time_block.state_duration);
-            // assert_true (timer.timestamp == time_block.start);
-            // assert_true (timer.offset == 0);
-            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            // Set empty session. Expect to set session as current, despite having no time-block yet.
+            session_manager.current_session = session_1;
+            assert_true (session_manager.current_session == session_1);
+            assert_null (session_manager.current_time_block);
             assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 0);
+            // TODO: check enter- leave- events
+
+            // Set session with time-blocks. Expect to pick first time-block.
+            notify_current_session_emitted = 0;
+            notify_current_time_block_emitted = 0;
+            session_manager.current_session = session_2;
+            assert_true (session_manager.current_session == session_2);
+            assert_true (session_manager.current_time_block == session_2.get_first_time_block ());
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            // TODO: check enter- leave- events
+
+            // Set current-session with same session. Expect to it to be ignored.
+            notify_current_session_emitted = 0;
+            notify_current_time_block_emitted = 0;
+            session_manager.current_session = session_manager.current_session;
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 0);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 0);
+            // TODO: check enter- leave- events
+
+            // Set current-session to null.
+            notify_current_session_emitted = 0;
+            notify_current_time_block_emitted = 0;
+            session_manager.current_session = null;
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            // TODO: check enter- leave- events
+        }
+
+        public void test_set_current_time_block ()
+        {
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            var session         = new Pomodoro.Session.from_template ();
+            var time_block_1    = session.get_first_time_block ();
+            var time_block_2    = session.get_next_time_block (time_block_1);
+
+            assert_nonnull (time_block_1);
+            assert_nonnull (time_block_2);
+
+            var notify_current_time_block_emitted = 0;
+            session_manager.notify["current-time-block"].connect (() => {
+                notify_current_time_block_emitted++;
+            });
+
+            var notify_current_session_emitted = 0;
+            session_manager.notify["current-session"].connect (() => {
+                notify_current_session_emitted++;
+            });
+
+            // Set empty session. Expect to set session as current, despite having no time-block yet.
+            session_manager.current_time_block = time_block_1;
+            assert_true (session_manager.current_time_block == time_block_1);
+            assert_true (session_manager.current_session == session);
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            // TODO: check enter- leave- events
 
             // Set current time-block. Expect signals not to be emitted
             notify_current_time_block_emitted = 0;
@@ -156,19 +201,23 @@ namespace Tests
             assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 0);
             assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 0);
 
-            // Set new time-block within same session. Expect notify["current-session"] not to be emitted
+            // Set current-time-block within same session.
             notify_current_time_block_emitted = 0;
             notify_current_session_emitted = 0;
-            session_manager.current_time_block = session_manager.current_time_block;
+            session_manager.current_time_block = time_block_2;
+            assert_true (session_manager.current_time_block == time_block_2);
+            assert_true (session_manager.current_session == session);
             assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
             assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 0);
 
-            // Set current time-block with new session. Expect notify["current-session"] to be emitted
+            // Set current-time-block to null. Expect session not to be changed.
             notify_current_time_block_emitted = 0;
             notify_current_session_emitted = 0;
-            session_manager.current_time_block = session_manager.current_time_block;
+            session_manager.current_time_block = null;
+            assert_null (session_manager.current_time_block);
+            assert_true (session_manager.current_session == session);
             assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
-            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 0);
         }
 
 
@@ -287,12 +336,6 @@ namespace Tests
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
             session_manager.current_session = new Pomodoro.Session.from_template ();
 
-            // TODO: Instead of using Timer API, set current_session and current_time_block that ends now
-            // timer.start ();
-            // timer.reset ();
-            // assert_nonnull (session_manager.current_session);
-            // assert_null (session_manager.current_time_block);
-
             var previous_session = session_manager.current_session;
             var signals          = new string[0];
             timer.resolve_state.connect (() => { signals += "resolve-state"; });
@@ -303,11 +346,15 @@ namespace Tests
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
             Pomodoro.Timestamp.freeze (session_manager.current_time_block.end_time);
-            Pomodoro.Timestamp.tick (Pomodoro.Interval.HOUR);
+            Pomodoro.Timestamp.tick (Pomodoro.Session.EXPIRE_TIMEOUT);
             timer.start ();
 
             assert_true (session_manager.current_session != previous_session);
-            assert_cmpstrv (signals, {"leave-session", "resolve-state", "state-changed", "enter-session", "enter-time-block"});
+            assert_cmpstrv (signals, {
+                "leave-time-block", "leave-session",
+                "resolve-state", "state-changed",
+                "enter-session", "enter-time-block"
+            });
         }
 
         // public void test_timer_stop ()

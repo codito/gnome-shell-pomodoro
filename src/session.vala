@@ -17,7 +17,7 @@ namespace Pomodoro
         /**
          * Idle time after which session should no longer be continued, and new session should be created.
          */
-        private const int64 EXPIRE_TIMEOUT = Pomodoro.Interval.HOUR;
+        public const int64 EXPIRE_TIMEOUT = Pomodoro.Interval.HOUR;
 
         public int64 start_time {
             get {
@@ -334,23 +334,32 @@ namespace Pomodoro
             return last_link != null ? last_link.data : null;
         }
 
-        public unowned Pomodoro.TimeBlock? get_next_time_block (Pomodoro.TimeBlock? time_block = null)
-        {
-            if (time_block == null) {
-                // return first
-                return this.time_blocks.nth_data (0);
-            }
-
-            return null;
-        }
-
         public unowned Pomodoro.TimeBlock? get_previous_time_block (Pomodoro.TimeBlock? time_block = null)
         {
             if (time_block == null) {
-                // return last
+                return null;
             }
 
-            return null;
+            unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.find (time_block);
+            if (link == null || link.prev == null) {
+                return null;
+            }
+
+            return link.prev.data;
+        }
+
+        public unowned Pomodoro.TimeBlock? get_next_time_block (Pomodoro.TimeBlock? time_block = null)
+        {
+            if (time_block == null) {
+                return null;
+            }
+
+            unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.find (time_block);
+            if (link == null || link.next == null) {
+                return null;
+            }
+
+            return link.next.data;
         }
 
         private bool contains (Pomodoro.TimeBlock time_block)

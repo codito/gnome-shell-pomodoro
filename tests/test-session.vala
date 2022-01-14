@@ -32,6 +32,11 @@ namespace Tests
             // this.add_test ("insert_after", this.test_insert_after);
             // this.add_test ("replace", this.test_replace);
 
+            this.add_test ("get_first_time_block", this.test_get_first_time_block);
+            this.add_test ("get_last_time_block", this.test_get_last_time_block);
+            this.add_test ("get_next_time_block", this.test_get_next_time_block);
+            this.add_test ("get_previous_time_block", this.test_get_previous_time_block);
+
             // TODO: Tests methods for modifying ongoing session
             // this.add_test ("extend", this.test_extend);
             // this.add_test ("shorten", this.test_shorten);
@@ -136,6 +141,78 @@ namespace Tests
                         LONG_BREAK_DURATION
                     )
                 )
+            );
+        }
+
+        public void test_get_first_time_block ()
+        {
+            var time_blocks = new Pomodoro.TimeBlock[0];
+            var session     = new Pomodoro.Session.from_template ();
+            session.@foreach ((time_block) => {
+                time_blocks += time_block;
+            });
+
+            assert_true (session.get_first_time_block () == time_blocks[0]);
+
+            var empty_session = new Pomodoro.Session ();
+            assert_null (empty_session.get_first_time_block ());
+        }
+
+        public void test_get_last_time_block ()
+        {
+            var time_blocks = new Pomodoro.TimeBlock[0];
+            var session     = new Pomodoro.Session.from_template ();
+            session.@foreach ((time_block) => {
+                time_blocks += time_block;
+            });
+
+            assert_true (session.get_last_time_block () == time_blocks[7]);
+
+            var empty_session = new Pomodoro.Session ();
+            assert_null (empty_session.get_last_time_block ());
+        }
+
+        public void test_get_next_time_block ()
+        {
+            var time_blocks = new Pomodoro.TimeBlock[0];
+            var session     = new Pomodoro.Session.from_template ();
+            session.@foreach ((time_block) => {
+                time_blocks += time_block;
+            });
+
+            assert_true (
+                session.get_next_time_block (time_blocks[0]) == time_blocks[1]
+            );
+            assert_true (
+                session.get_next_time_block (time_blocks[1]) == time_blocks[2]
+            );
+            assert_null (
+                session.get_next_time_block (time_blocks[7])
+            );
+            assert_null (
+                session.get_next_time_block (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO))
+            );
+        }
+
+        public void test_get_previous_time_block ()
+        {
+            var time_blocks = new Pomodoro.TimeBlock[0];
+            var session     = new Pomodoro.Session.from_template ();
+            session.@foreach ((time_block) => {
+                time_blocks += time_block;
+            });
+
+            assert_true (
+                session.get_previous_time_block (time_blocks[2]) == time_blocks[1]
+            );
+            assert_true (
+                session.get_previous_time_block (time_blocks[1]) == time_blocks[0]
+            );
+            assert_null (
+                session.get_previous_time_block (time_blocks[0])
+            );
+            assert_null (
+                session.get_previous_time_block (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO))
             );
         }
     }
