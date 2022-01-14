@@ -42,20 +42,23 @@ namespace Tests
             // this.add_test ("timer_set_state", this.test_timer_set_state);
             // this.add_test ("timer_set_duration", this.test_timer_set_duration);
             this.add_test ("timer_start__initialize_session", this.test_timer_start__initialize_session);
+            this.add_test ("timer_start__ignore_call", this.test_timer_start__ignore_call);
+            this.add_test ("timer_start__expire_session", this.test_timer_start__expire_session);
+
             // this.add_test ("timer_pause", this.test_timer_pause);
             // this.add_test ("timer_reset", this.test_timer_reset);
             // this.add_test ("timer_skip", this.test_timer_reset);
             // this.add_test ("timer_rewind", this.test_timer_reset);
             // this.add_test ("timer_suspended", this.test_timer_suspended);
-
-            // Default timer needs to be referenced somewhere
-            this.default_timer = new Pomodoro.Timer ();
-            this.default_timer.set_default ();
         }
 
         public override void setup ()
         {
             Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
+
+            // Default timer needs to be referenced somewhere
+            this.default_timer = new Pomodoro.Timer ();
+            this.default_timer.set_default ();
 
             var settings = Pomodoro.get_settings ();
             settings.set_uint ("pomodoro-duration", POMODORO_DURATION);
@@ -196,10 +199,22 @@ namespace Tests
          * Tests for calls performed on timer
          */
 
+        /**
+         * Check timer.start() call for a timer managed by session manager.
+         *
+         * Expect session manager to resolve timer state into a POMODORO time-block.
+         */
         public void test_timer_start__initialize_session ()
         {
-            var timer = new Pomodoro.Timer ();
+            var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            var signals         = new string[0];
+            timer.resolve_state.connect (() => { signals += "resolve-state"; });
+            timer.state_changed.connect (() => { signals += "state-changed"; });
+            session_manager.enter_session.connect (() => { signals += "enter-session"; });
+            session_manager.enter_time_block.connect (() => { signals += "enter-time-block"; });
+            session_manager.leave_session.connect (() => { signals += "leave-session"; });
+            session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
             timer.start ();
 
@@ -221,10 +236,6 @@ namespace Tests
             assert_nonnull (session_manager.current_time_block);
             assert_true (session_manager.current_time_block == session_manager.current_session.get_first_time_block ());
             assert_true (session_manager.current_time_block.state == Pomodoro.State.POMODORO);
-
-            // TODO: check enter_time_block signal
-            // TODO: check leave_time_block signal
-
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.duration),
                 new GLib.Variant.int64 (POMODORO_DURATION * Pomodoro.Interval.SECOND)
@@ -233,13 +244,70 @@ namespace Tests
             assert_true (session_manager.timer.is_running ());
             assert_true (session_manager.timer.user_data == session_manager.current_time_block);
 
-            // Try to call timer.start() after a while. Expect call to be ignored.
-            // var session_manager.current_time_block
+            // Expect timer to be setup before enter-* signals are emitted.
+            assert_cmpstrv (signals, {"resolve-state", "state-changed", "enter-session", "enter-time-block"});
+        }
 
-            // Pomodoro.Timestamp.tick (Pomodro.Interval.MINUTE);
+        /**
+         * Call timer.start() while timer is already running. Expect call to be ignored.
+         */
+        public void test_timer_start__ignore_call ()
+        {
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            timer.start ();
+
+            var expected_time_block = session_manager.current_time_block;
+            var expected_state = timer.state.copy ();
+            var signals         = new string[0];
+            timer.resolve_state.connect (() => { signals += "resolve-state"; });
+            timer.state_changed.connect (() => { signals += "state-changed"; });
+            session_manager.enter_session.connect (() => { signals += "enter-session"; });
+            session_manager.enter_time_block.connect (() => { signals += "enter-time-block"; });
+            session_manager.leave_session.connect (() => { signals += "leave-session"; });
+            session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
+
+            Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
+            timer.start ();
+
+            assert_cmpvariant (
+                timer.state.to_variant (),
+                expected_state.to_variant ()
+            );
+            assert_true (session_manager.current_time_block == expected_time_block);
+            assert_cmpstrv (signals, {});
+        }
+
+        /**
+         * Start timer after 1h. Expect previous session to expire.
+         */
+        public void test_timer_start__expire_session ()
+        {
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            session_manager.current_session = new Pomodoro.Session ();
+
+            // TODO: Instead of using Timer API, set current_session and current_time_block that ends now
             // timer.start ();
+            // timer.reset ();
+            // assert_nonnull (session_manager.current_session);
+            // assert_null (session_manager.current_time_block);
 
-            // session_manager.current_time_block
+            var previous_session = session_manager.current_session;
+            var signals          = new string[0];
+            timer.resolve_state.connect (() => { signals += "resolve-state"; });
+            timer.state_changed.connect (() => { signals += "state-changed"; });
+            session_manager.enter_session.connect (() => { signals += "enter-session"; });
+            session_manager.enter_time_block.connect (() => { signals += "enter-time-block"; });
+            session_manager.leave_session.connect (() => { signals += "leave-session"; });
+            session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
+
+            Pomodoro.Timestamp.freeze (session_manager.current_time_block.end_time);
+            Pomodoro.Timestamp.tick (Pomodoro.Interval.HOUR);
+            timer.start ();
+
+            assert_true (session_manager.current_session != previous_session);
+            assert_cmpstrv (signals, {"leave-session", "resolve-state", "state-changed", "enter-session", "enter-time-block"});
         }
 
         // public void test_timer_stop ()

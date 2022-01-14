@@ -894,6 +894,7 @@ namespace Tests
         public void test_start__initial_state ()
         {
             var now = Pomodoro.Timestamp.tick (0);
+            var signals = new string[0];
 
             var initial_state = create_initial_state ();
             var expected_state = initial_state.copy ();
@@ -901,6 +902,9 @@ namespace Tests
             expected_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             var timer = new Pomodoro.Timer.with_state (initial_state);
+            timer.resolve_state.connect (() => { signals += "resolve-state"; });
+            timer.state_changed.connect (() => { signals += "state-changed"; });
+
             Pomodoro.Timestamp.tick (5 * Pomodoro.Interval.MINUTE);
             timer.start ();
 
@@ -910,8 +914,7 @@ namespace Tests
             );
             assert_true (timer.is_started ());
             assert_true (timer.is_running ());
-
-            // TODO: expect change signal to be emitted
+            assert_cmpstrv (signals, {"resolve-state", "state-changed"});
         }
 
         /**

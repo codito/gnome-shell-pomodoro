@@ -27,21 +27,123 @@ namespace Tests
 {
     public delegate void TestCaseFunc ();
 
-    public GLib.SettingsSchemaSource schema_source;
+    private string str_to_representation (string value)
+    {
+        return @"\"$value\"";
+    }
 
-    private class TestSuiteAdaptor
+    private string strv_to_representation (string[] value)
+    {
+        var string_builder = new GLib.StringBuilder ("[");
+        var length = value.length;
+
+        for (var index = 0; index < length; index++)
+        {
+            if (index > 0) {
+                string_builder.append (", ");
+            }
+            string_builder.append (str_to_representation (value[index]));
+        }
+
+        string_builder.append ("]");
+
+        return string_builder.str;
+    }
+
+    public void assert_cmpstrv (string[] value,
+                                string[] expected)
+    {
+        var length = value.length;
+
+        if (length != expected.length)
+        {
+            GLib.Test.message (
+                "Arrays have different length: %s != %s",
+                strv_to_representation (value),
+                strv_to_representation (expected)
+            );
+            GLib.Test.fail ();
+            return;
+        }
+
+        for (var index = 0; index < length; index++)
+        {
+            if (value[index] != expected[index]) {
+                GLib.Test.message (
+                    "Arrays are not equal: %s != %s",
+                    strv_to_representation (value),
+                    strv_to_representation (expected)
+                );
+                GLib.Test.fail ();
+                return;
+            }
+        }
+    }
+
+
+    /*
+    public struct SignalHandlerLogEntry
+    {
+        public int64               timestamp;
+        public unowned GLib.Object instance;
+        public string              signal_name;
+    }
+
+
+    public class SignalHandlerLog
+    {
+        public SignalHandlerLogEntry[] entries;
+
+        public SignalHandlerLog ()
+        {
+            this.entries = new SignalHandlerLogEntry[0];
+            // this.handlers = new GLib.HashTable<str, ulong> ();
+        }
+
+        public void clear ()
+        {
+            this.entries = new SignalHandlerLogEntry[0];
+        }
+
+        public void watch (GLib.Object instance,
+                           string      signal_name)
+        {
+            // public unowned GLib.Object instance;
+            // this.handlers[signal_name] = this.object.connect (signal_name);
+
+            instance.connect (@"signal::$signal_name", () => {
+                message (@"Emitted $signal_name");
+            });
+        }
+
+        public int count (GLib.Object instance,
+                          string      signal_name)
+        {
+            var count = 0;
+
+            return count;
+        }
+
+        // public string[] list (GLib.Object instance)
+        // {
+        // }
+    }
+    */
+
+
+    private class TestCase
     {
         public string name;
 
         private Tests.TestCaseFunc func;
         private Tests.TestSuite    test_suite;
 
-        public TestSuiteAdaptor (string                   name,
-                                 owned Tests.TestCaseFunc test_case_func,
-                                 Tests.TestSuite          test_suite)
+        public TestCase (string                   name,
+                         owned Tests.TestCaseFunc test_case_func,
+                         Tests.TestSuite          test_suite)
         {
-            this.name = name;
-            this.func = (owned) test_case_func;
+            this.name       = name;
+            this.func       = (owned) test_case_func;
             this.test_suite = test_suite;
         }
 
@@ -69,10 +171,11 @@ namespace Tests
         }
     }
 
+
     public abstract class TestSuite : GLib.Object
     {
-        private GLib.TestSuite g_test_suite;
-        private Tests.TestSuiteAdaptor[] adaptors = new Tests.TestSuiteAdaptor[0];
+        private GLib.TestSuite   g_test_suite;
+        private Tests.TestCase[] test_cases = new Tests.TestCase[0];
 
         construct
         {
@@ -89,13 +192,13 @@ namespace Tests
             return this.g_test_suite;
         }
 
-        public void add_test (string name,
+        public void add_test (string                   name,
                               owned Tests.TestCaseFunc func)
         {
-            var adaptor = new TestSuiteAdaptor (name, (owned) func, this);
-            this.adaptors += adaptor;
+            var test_case = new TestCase (name, (owned) func, this);
 
-            this.g_test_suite.add (adaptor.get_g_test_case ());
+            this.test_cases += test_case;
+            this.g_test_suite.add (test_case.get_g_test_case ());
         }
 
         public virtual void setup ()
@@ -107,169 +210,6 @@ namespace Tests
         }
     }
 
-    public class TestRunner : GLib.Object
-    {
-        private GLib.TestSuite root_suite;
-        private GLib.File tmp_dir;
-        private const string SCHEMA_FILE_NAME = "org.gnomepomodoro.Pomodoro.gschema.xml";
-
-        public TestRunner (GLib.TestSuite? root_suite = null)
-        {
-            if (root_suite == null) {
-                this.root_suite = GLib.TestSuite.get_root ();
-            } else {
-                this.root_suite = root_suite;
-            }
-        }
-
-        public void add (Tests.TestSuite test_suite)
-        {
-            this.root_suite.add_suite (test_suite.get_g_test_suite ());
-        }
-
-        private void setup_settings ()
-        {
-            Environment.set_variable ("GSETTINGS_BACKEND", "memory", true);
-            Environment.set_variable ("GSETTINGS_SCHEMA_DIR", this.tmp_dir.get_path (), true);
-
-            /* prepare temporary settings */
-            var target_schema_path = this.tmp_dir.get_path ();
-
-            try {
-                var top_builddir = TestRunner.get_top_builddir ();
-
-                var source_schema_file = GLib.File.new_for_path (
-                    Path.build_filename (top_builddir, "data", SCHEMA_FILE_NAME));
-
-                var target_schema_file = GLib.File.new_for_path (
-                    Path.build_filename (target_schema_path, SCHEMA_FILE_NAME));
-
-                source_schema_file.copy (target_schema_file,
-                                         GLib.FileCopyFlags.OVERWRITE);
-            }
-            catch (GLib.Error error) {
-                GLib.error ("Error copying schema file: %s", error.message);
-            }
-
-            var compile_schemas_result = 0;
-            try {
-                GLib.Process.spawn_command_line_sync (
-                            "glib-compile-schemas %s".printf (target_schema_path),
-                            null,
-                            null,
-                            out compile_schemas_result);
-            }
-            catch (GLib.SpawnError error) {
-                GLib.error (error.message);
-            }
-
-            if (compile_schemas_result != 0) {
-                GLib.error ("Could not compile schemas '%s'.", target_schema_path);
-            }
-        }
-
-        public virtual void global_setup ()
-        {
-            Environment.set_variable ("LANGUAGE", "C", true);
-
-            try {
-                this.tmp_dir = GLib.File.new_for_path (
-                        GLib.DirUtils.make_tmp ("gnome-pomodoro-test-XXXXXX"));
-
-
-            }
-            catch (GLib.Error error) {
-                GLib.error ("Error creating temporary directory for test files: %s".printf (error.message));
-            }
-
-            // this.setup_settings ();  // TODO FIXME
-        }
-
-        public virtual void global_teardown ()
-        {
-            if (this.tmp_dir != null) {
-                var tmp_dir_path = this.tmp_dir.get_path ();
-                var delete_tmp_result = 0;
-
-                try {
-                    // TODO: there must be a better way
-                    GLib.Process.spawn_command_line_sync (
-                                            "rm -rf %s".printf (tmp_dir_path),
-                                            null,
-                                            null,
-                                            out delete_tmp_result);
-                }
-                catch (GLib.SpawnError error) {
-                    GLib.warning (error.message);
-                }
-
-                if (delete_tmp_result != 0) {
-                    GLib.warning ("Could not delete temporary directory '%s'",
-                                  tmp_dir_path);
-                }
-            }
-        }
-
-        public int run ()
-        {
-            /* TODO: spawn a child process to tun tests, if it fails than we
-                     will be able to exit cleanly */
-
-            this.global_setup ();
-            var exit_status = GLib.Test.run ();
-            this.global_teardown ();
-
-            return exit_status;
-        }
-
-        private static string get_top_builddir ()
-        {
-            var builddir = Environment.get_variable ("top_builddir");
-
-            if (builddir == null)
-            {
-                var dir = GLib.File.new_for_path (Environment.get_current_dir ());
-
-                while (dir != null)
-                {
-                    var schema_path = GLib.Path.build_filename (dir.get_path (),
-                                                                "data",
-                                                                SCHEMA_FILE_NAME);
-
-                    if (GLib.FileUtils.test (schema_path, GLib.FileTest.IS_REGULAR)) {
-                        builddir = dir.get_path ();
-                        break;
-                    }
-
-                    dir = dir.get_parent ();
-                }
-            }
-
-            if (builddir == null)
-            {
-                builddir = "..";  /* fallback to parent dir, test should be ran
-                                     from 'tests' dir */
-            }
-
-            return builddir;
-        }
-    }
-
-    class TestsApplication : Gtk.Application
-    {
-        public TestsApplication ()
-        {
-            GLib.Object (
-                application_id: "org.gnomepomodoro.Tests",
-                flags: GLib.ApplicationFlags.FLAGS_NONE
-            );
-        }
-
-        construct
-        {
-
-        }
-    }
 
     public static void init (string[] args)
     {
@@ -277,34 +217,23 @@ namespace Tests
         GLib.Test.init (ref args);
     }
 
+
     public static int run (Tests.TestSuite test_suite, ...)
     {
-        var test_runner = new Tests.TestRunner ();
-        test_runner.add (test_suite);
-
         var arguments_list = va_list ();
+        var root_suite = GLib.TestSuite.get_root ();
+
+        root_suite.add_suite (test_suite.get_g_test_suite ());
+
         while (true) {
             Tests.TestSuite? extra_test_suite = arguments_list.arg ();
             if (extra_test_suite == null) {
                 break;  // end of the list
             }
 
-            test_runner.add (extra_test_suite);
+            root_suite.add_suite (extra_test_suite.get_g_test_suite ());
         }
 
-        var mainloop = new GLib.MainLoop ();
-        var exit_status = 0;
-
-        GLib.Idle.add (() => {
-            exit_status = test_runner.run ();
-
-            mainloop.quit ();
-
-            return false;
-        });
-
-        mainloop.run ();
-
-        return exit_status;
+        return GLib.Test.run ();
     }
 }

@@ -36,6 +36,20 @@ namespace Pomodoro
         public int64 finished_time;
         public void* user_data;
 
+        public TimerState ()
+        {
+            this.duration = 0;
+            this.offset = 0;
+            this.started_time = Pomodoro.Timestamp.UNDEFINED;
+            this.paused_time = Pomodoro.Timestamp.UNDEFINED;
+            this.finished_time = Pomodoro.Timestamp.UNDEFINED;
+            this.user_data = null;
+        }
+
+        /**
+         *
+         * Structs in vala are copied by default. This function is unnecesary.
+         */
         public Pomodoro.TimerState copy ()
         {
             return Pomodoro.TimerState () {
@@ -46,6 +60,16 @@ namespace Pomodoro
                 finished_time = this.finished_time,
                 user_data = this.user_data
             };
+        }
+
+        public bool equals (Pomodoro.TimerState other)
+        {
+            return this.duration == other.duration &&
+                   this.offset == other.offset &&
+                   this.started_time == other.started_time &&
+                   this.paused_time == other.paused_time &&
+                   this.finished_time == other.finished_time &&
+                   this.user_data == other.user_data;
         }
 
         public bool is_valid ()
@@ -95,6 +119,22 @@ namespace Pomodoro
 
             return builder.end ();
         }
+
+        public string to_representation ()
+        {
+            var representation = new GLib.StringBuilder ("TimerState (\n");
+            representation.append (@"    duration = $duration,\n");
+            representation.append (@"    offset = $offset,\n");
+            representation.append (@"    started_time = $started_time,\n");
+            representation.append (@"    paused_time = $paused_time,\n");
+            representation.append (@"    finished_time = $finished_time,\n");
+            representation.append (this.user_data == null
+                ? "    user_data = null\n"
+                : "    user_data = not null\n");
+            representation.append (")");
+
+            return representation.str;
+        }
     }
 
 
@@ -138,16 +178,21 @@ namespace Pomodoro
                 return this._state;
             }
             set {
+                if (this._state.equals (value)) {
+                    return;
+                }
+
+                // print ("\n@@@@ set Timer.state = %s\n", value.to_representation ());
+
                 this.resolve_state (ref value);
                 assert (value.is_valid ());
 
-                var previous_state = this._state;
-
-                this._state = value;
-
-                // TODO: notify properties?
-
-                this.state_changed (this._state, previous_state);
+                if (!this._state.equals (value)) {
+                    var previous_state = this._state;
+                    this._state = value;
+                    // TODO: notify properties?
+                    this.state_changed (this._state, previous_state);
+                }
             }
         }
 

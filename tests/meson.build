@@ -34,6 +34,7 @@ foreach test_name : test_names
       link_with: libtests,
     ),
     env: [
+      'LANGUAGE=C',
       'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
       'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
       'G_MESSAGES_DEBUG=debug',
