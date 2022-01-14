@@ -113,14 +113,14 @@ namespace Tests
 
         public void test_set_current_session ()
         {
-            var session = new Pomodoro.Session.empty ();
+            var session = new Pomodoro.Session ();
 
             var session_manager = new Pomodoro.SessionManager ();
         }
 
         public void test_set_current_time_block ()
         {
-            var session    = new Pomodoro.Session.empty ();
+            var session    = new Pomodoro.Session ();
             var time_block = session.get_first_time_block ();
             assert_true (time_block.session == session);
 
@@ -279,13 +279,13 @@ namespace Tests
         }
 
         /**
-         * Start timer after 1h. Expect previous session to expire.
+         * Start timer after 1h from last time-block. Expect previous session to expire.
          */
         public void test_timer_start__expire_session ()
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-            session_manager.current_session = new Pomodoro.Session ();
+            session_manager.current_session = new Pomodoro.Session.from_template ();
 
             // TODO: Instead of using Timer API, set current_session and current_time_block that ends now
             // timer.start ();

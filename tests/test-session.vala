@@ -22,8 +22,7 @@ namespace Tests
         public SessionTest ()
         {
             this.add_test ("new", this.test_new);
-            this.add_test ("new_empty", this.test_new_empty);
-
+            this.add_test ("new_from_template", this.test_new_from_template);
 
             // TODO: Tests methods for modifying history
             // this.add_test ("prepend", this.test_prepend);
@@ -73,12 +72,37 @@ namespace Tests
         /**
          * Check constructor `Session()`.
          *
-         * Expect session to have time-blocks defined according to settings.
+         * Expect session not to have any time-blocks.
          */
         public void test_new ()
         {
-            var now = Pomodoro.Timestamp.tick (0);
             var session = new Pomodoro.Session ();
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.start_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.MIN)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.end_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.MAX)
+            );
+
+            var first_time_block = session.get_first_time_block ();
+            assert_null (first_time_block);
+
+            var last_time_block = session.get_last_time_block ();
+            assert_null (last_time_block);
+        }
+
+        /**
+         * Check constructor `Session.from_template()`.
+         *
+         * Expect session to have time-blocks defined according to settings.
+         */
+        public void test_new_from_template ()
+        {
+            var now = Pomodoro.Timestamp.tick (0);
+            var session = new Pomodoro.Session.from_template ();
 
             // uint8[] states = {};
 
@@ -114,32 +138,6 @@ namespace Tests
                 )
             );
         }
-
-        /**
-         * Check constructor `Session.empty()`.
-         *
-         * Expect session not to have any time-blocks.
-         */
-        public void test_new_empty ()
-        {
-            var session = new Pomodoro.Session.empty ();
-
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session.start_time),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.MIN)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session.end_time),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.MAX)
-            );
-
-            var first_time_block = session.get_first_time_block ();
-            assert_null (first_time_block);
-
-            var last_time_block = session.get_last_time_block ();
-            assert_null (last_time_block);
-        }
-
     }
 }
 

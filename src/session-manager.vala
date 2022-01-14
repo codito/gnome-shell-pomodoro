@@ -190,7 +190,7 @@ namespace Pomodoro
 
         private Pomodoro.Session resolve_next_session ()
         {
-            var next_session = new Pomodoro.Session ();
+            var next_session = new Pomodoro.Session.from_template ();
 
             // TODO: schedule time blocks
 
@@ -436,7 +436,7 @@ namespace Pomodoro
         //     if (this._current_time_block == null) {
         //         // Initialize session and pick first time-block
         //         if (this._current_session == null) {
-        //             this._current_session = new Pomodoro.Session (timestamp);
+        //             this._current_session = new Pomodoro.Session.from_template (timestamp);
         //         }
         //
         //         this._current_time_block = this._current_session.get_first_time_block ();
@@ -469,7 +469,7 @@ namespace Pomodoro
         //     var current_session = this._current_session;
 
         //     if (current_session == null || !can_continue_current_session (timestamp)) {
-        //         current_session = new Pomodoro.Session (timestamp);
+        //         current_session = new Pomodoro.Session.from_template (timestamp);
         //     }
         //     else {
                 // TODO: check if we can attach time-block to current session, or start a new one
@@ -586,7 +586,7 @@ namespace Pomodoro
 
             // Try to pick next POMODORO within session
             if (session == null) {
-                session = new Pomodoro.Session (start_time);
+                session = new Pomodoro.Session.from_template (start_time);
                 time_block = session.get_first_time_block ();
                 // time_block = session.find_time_block (state, time_block);  // TODO
             }
@@ -704,7 +704,7 @@ namespace Pomodoro
             // Advancing states
             // if (current_state.user_data != this._current_time_block) {
             //     if (this._current_session == null) {
-            //         this._current_session = new Pomodoro.Session (state.start_time);
+            //         this._current_session = new Pomodoro.Session.from_template (state.start_time);
             //     }
             // }
         }

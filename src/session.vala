@@ -44,28 +44,36 @@ namespace Pomodoro
 
 
         /**
-         * Create session without predefined time-blocks.
+         * Create empty session.
          */
-        public Session (int64 timestamp = -1)
+        public Session ()
         {
             // var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
             // time_block.start_time = timestamp;
 
             // this.append (time_block);
-            this.populate (timestamp);
+            // this.populate (timestamp);
         }
 
-        /**
-         * Create session without predefined time-blocks.
-         */
-        public Session.empty ()
-        {
+        // /**
+        //  * Create session without predefined time-blocks.
+        //  */
+        // public Session.empty ()
+        // {
             // ensure_timestamp (ref timestamp);
 
             // var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
             // time_block.start_time = timestamp;
 
             // this.append (time_block);
+        // }
+
+        /**
+         * Create session with predefined time-blocks.
+         */
+        public Session.from_template (int64 timestamp = -1)
+        {
+            this.populate (timestamp);
         }
 
         private void clear ()
