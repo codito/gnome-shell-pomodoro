@@ -178,21 +178,20 @@ namespace Pomodoro
                 return this._state;
             }
             set {
-                if (this._state.equals (value)) {
-                    return;
-                }
-
-                // print ("\n@@@@ set Timer.state = %s\n", value.to_representation ());
-
-                this.resolve_state (ref value);
+                this.resolve_state_internal (ref value);
                 assert (value.is_valid ());
 
                 if (!this._state.equals (value)) {
                     var previous_state = this._state;
+
                     this._state = value;
+                    this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
+
                     // TODO: notify properties?
                     this.state_changed (this._state, previous_state);
                 }
+
+                // this.set_state_full (value);
             }
         }
 
@@ -272,11 +271,12 @@ namespace Pomodoro
             finished_time = Pomodoro.Timestamp.UNDEFINED,
             user_data = null
         };
-        private uint                timeout_id = 0;
-        private int64               last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
-        private int64               last_timeout_time = Pomodoro.Timestamp.UNDEFINED;
-        private int64               last_timeout_elapsed = 0;
-
+        private uint                 timeout_id = 0;
+        private int64                last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
+        private int64                last_timeout_time = Pomodoro.Timestamp.UNDEFINED;
+        private int64                last_timeout_elapsed = 0;
+        private bool                 resolving_state = false;
+        private Pomodoro.TimerState? state_to_resolve = null;
 
         public Timer (int64 duration = 0,
                       void* user_data = null)
@@ -309,6 +309,49 @@ namespace Pomodoro
                 Pomodoro.Timer.instance = null;
             }
         }
+
+        /**
+         * Resolve timer state.
+         *
+         * It's a wrapper for `this.resolve_state`, handling a possible recursion.
+         */
+        private void resolve_state_internal (ref Pomodoro.TimerState state)
+        {
+            var recursion_count = 0;
+
+            if (this.resolving_state) {
+                this.state_to_resolve = state;
+                return;
+            }
+
+            if (this._state.equals (state)) {
+                return;
+            }
+
+            this.resolving_state = true;
+
+            while (true)
+            {
+                this.resolve_state (ref state);
+
+                if (this.state_to_resolve == null) {
+                    break;
+                }
+
+                if (recursion_count > 100) {
+                    GLib.error ("Reached recursion limit while resolving Timer.state");
+                    break;
+                }
+
+                state = this.state_to_resolve;
+                this.state_to_resolve = null;
+
+                recursion_count++;
+            }
+
+            this.resolving_state = false;
+        }
+
 
         /**
          * Return a default timer or `null` if none is set.
@@ -378,6 +421,8 @@ namespace Pomodoro
                 finished_time = Pomodoro.Timestamp.UNDEFINED,
                 user_data = user_data
             };
+
+            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -396,6 +441,7 @@ namespace Pomodoro
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             this.state = new_state;
+            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -413,6 +459,7 @@ namespace Pomodoro
             new_state.paused_time = timestamp;
 
             this.state = new_state;
+            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -431,6 +478,7 @@ namespace Pomodoro
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             this.state = new_state;
+            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -470,6 +518,7 @@ namespace Pomodoro
             new_state.offset = timestamp - new_state.started_time - new_elapsed;
 
             this.state = new_state;
+            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -494,6 +543,30 @@ namespace Pomodoro
             this.state = new_state;
         }
 
+        // TODO: remove timestamp?
+        // private void set_state_full (Pomodoro.TimerState state,
+        //                              int64               timestamp = -1)
+        // {
+        //     if (this._state.equals (state)) {
+        //         return;
+        //     }
+
+            // Pomodoro.ensure_timestamp (ref timestamp);
+
+        //     this.resolve_state (ref state);
+        //     assert (state.is_valid ());
+
+        //     if (!this._state.equals (state)) {
+        //         var previous_state = this._state;
+
+        //         this._state = state;
+        //         this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
+
+                // TODO: notify properties?
+        //         this.state_changed (this._state, previous_state);
+        //     }
+        // }
+
         /**
          * Mark state as "finished".
          */
@@ -516,6 +589,7 @@ namespace Pomodoro
             }
 
             this.state = new_state;
+            // this.set_state_full (new_state, timestamp);
         }
 
         // TODO: Is there a better way to detect system suspension?
@@ -624,7 +698,7 @@ namespace Pomodoro
         }
 
         private void start_timeout_internal (int64 remaining,
-                                       int64 timestamp)
+                                             int64 timestamp)
         {
             this.last_timeout_time = timestamp;
             this.last_timeout_elapsed = this.calculate_elapsed (timestamp);
@@ -785,13 +859,13 @@ namespace Pomodoro
         {
             assert (current_state == this._state);
 
-            if (current_state.started_time > 0 && current_state.started_time > this.last_state_changed_time) {
-                this.last_state_changed_time = current_state.started_time;
-            }
+            // if (current_state.started_time > 0 && current_state.started_time > this.last_state_changed_time) {
+            //     this.last_state_changed_time = current_state.started_time;
+            // }
 
-            if (current_state.paused_time > 0 && current_state.paused_time > this.last_state_changed_time) {
-                this.last_state_changed_time = current_state.paused_time;
-            }
+            // if (current_state.paused_time > 0 && current_state.paused_time > this.last_state_changed_time) {
+            //     this.last_state_changed_time = current_state.paused_time;
+            // }
 
             this.update_timeout (this.last_state_changed_time);
 

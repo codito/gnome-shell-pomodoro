@@ -263,6 +263,9 @@ namespace Tests
             this.add_test ("state_changed_signal",
                            this.test_state_changed_signal);
 
+            this.add_test ("test_resolve_state_signal__recursion",
+                           this.test_resolve_state_signal__recursion);
+
             this.add_test ("finished_signal__0s",
                            this.test_finished_signal__0s);
             this.add_test ("finished_signal__1s",
@@ -1366,7 +1369,83 @@ namespace Tests
             // TODO
         }
 
-        public void test_finished_signal__0s ()
+        /**
+         * Check behavior of changing the state during resolve_state emission.
+         */
+        public void test_resolve_state_signal__recursion ()
+        {
+            var now                   = Pomodoro.Timestamp.tick (0);
+            var paused_state          = create_paused_state ();
+            var resolve_state_emitted = 0;
+
+            var timer = new Pomodoro.Timer.with_state (create_initial_state ());
+            timer.resolve_state.connect ((ref state) => {
+                resolve_state_emitted++;
+
+                if (resolve_state_emitted >= 100) {
+                    return;
+                }
+
+                if (state.started_time >= 0 && state.paused_time < 0) {
+                    timer.state = paused_state;
+                }
+            });
+
+            // Expect started state to be resolved into paused state
+            timer.start ();
+
+            assert_cmpint (resolve_state_emitted, GLib.CompareOperator.LT, 100);
+            assert_cmpvariant (
+                timer.state.to_variant (),
+                paused_state.to_variant ()
+            );
+
+            // var state_changed_emitted = 0;
+            // var state_changed_offset = (int64) 0;
+            // var suspended_emitted = 0;
+            // var suspended_start_time = (int64) 0;
+            // var suspended_end_time = (int64) 0;
+
+            // var timer = new Pomodoro.Timer.with_state (
+            //     create_started_state (
+            //         5 * Pomodoro.Interval.MINUTE,
+            //         1 * Pomodoro.Interval.MINUTE,
+            //         now - 2 * Pomodoro.Interval.MINUTE
+            //     )
+            // );
+            // timer.state_changed.connect ((current_state, previous_state) => {
+            //     state_changed_offset = current_state.offset;
+            //     state_changed_emitted++;
+            // });
+            // timer.suspended.connect ((start_time, end_time) => {
+            //     suspended_start_time = start_time;
+            //     suspended_end_time = end_time;
+            //     suspended_emitted++;
+            // });
+
+            // Jump 10s into future
+            // Pomodoro.Timestamp.tick (10 * Pomodoro.Interval.SECOND);
+            // timer.tick ();
+
+            // assert_true (timer.is_running ());
+            // assert_cmpint (suspended_emitted, GLib.CompareOperator.EQ, 1);
+            // assert_cmpint (state_changed_emitted, GLib.CompareOperator.EQ, 1);
+
+            // assert_cmpvariant (
+            //     new GLib.Variant.int64 (timer.calculate_elapsed ()),
+            //     new GLib.Variant.int64 (1 * Pomodoro.Interval.MINUTE)
+            // );
+            // assert_cmpvariant (
+            //     new GLib.Variant.int64 (suspended_start_time),
+            //     new GLib.Variant.int64 (now)
+            // );
+            // assert_cmpvariant (
+            //     new GLib.Variant.int64 (suspended_end_time),
+            //     new GLib.Variant.int64 (now + 10 * Pomodoro.Interval.SECOND)
+            // );
+        }
+
+        public void test_finished_signal__0s ()  // TODO: rename to test_timeout__0s
         {
             Pomodoro.Timestamp.unfreeze ();
 
