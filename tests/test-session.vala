@@ -109,12 +109,6 @@ namespace Tests
             var now = Pomodoro.Timestamp.tick (0);
             var session = new Pomodoro.Session.from_template ();
 
-            // uint8[] states = {};
-
-            // session.@foreach ((time_block) => {
-            //     states += (uint8) time_block.state;
-            // });
-
             assert_cmpmem (
                 list_session_states (session),
                 {

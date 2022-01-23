@@ -3,6 +3,40 @@ using GLib;
 
 namespace Pomodoro
 {
+    public class Gap
+    {
+        public int64 start_time;
+        public int64 end_time;
+
+
+        public Gap (int64 start_time,
+                    int64 end_time)
+        {
+            this.start_time = start_time;
+            this.end_time   = end_time;
+
+            this.normalize ();
+        }
+
+        public void normalize ()
+        {
+            if (this.start_time > this.end_time) {
+                var tmp = this.start_time;
+                this.start_time = this.end_time;
+                this.end_time = tmp;
+            }
+        }
+
+        public static int compare (Pomodoro.Gap a,
+                                   Pomodoro.Gap b)
+        {
+            // TODO: handle null values
+
+            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
+        }
+    }
+
+
     /**
      * Class describes an block of time - state, start and end time.
      * Blocks may have parent/child relationships. Currently its only used to define pauses, though class is kept
@@ -67,49 +101,33 @@ namespace Pomodoro
         /**
          * Return time-block duration
          */
-        public int64 duration {  // TODO: change to calculate_duration
+        public int64 duration {
             get {
-                return this._end_time - this._start_time;
-            }
-            // set {
-            //     if (this._start_time >= 0) {
-            //         this.schedule (this._start_time,
-            //                         this._start_time + value,
-            //                         Pomodoro.TimeBlockConflict.KEEP_START);
-            //     }
-            //     else if (this._end_time >= 0) {
-            //         this.schedule (this._end_time - value,
-            //                         this._end_time,
-            //                         Pomodoro.TimeBlockConflict.KEEP_END);
-            //     }
-            //     else {
-            //         GLib.warning ("Can't change TimeBlock.duration when both start and end are not defined");
-            //     }
-            // }
-        }
-
-        public unowned Pomodoro.TimeBlock? parent {
-            get {
-                return this._parent;
-            }
-            set {
-                if (this._parent != value) {
-                    // TODO: unparent properly, connect/disconnect signals
-                    this._parent = value;
-                }
+                // TODO: rewrite optimized version of this.calculate_remaining
+                return this.calculate_remaining (this._start_time);
             }
         }
 
-        // Gaps should be defined as a child of a state, with first item as most recent.
-        // A gap should not extend the time of parent block, it will be capped if it does.
-        private GLib.SList<Pomodoro.TimeBlock> children = null;
+        // public unowned Pomodoro.TimeBlock? parent {
+        //     get {
+        //         return this._parent;
+        //     }
+        //     set {
+        //         if (this._parent != value) {
+        //              // TODO: unparent properly, connect/disconnect signals
+        //             this._parent = value;
+        //         }
+        //     }
+        // }
 
-        private unowned Pomodoro.TimeBlock? _parent = null;
         // private int64                       _state_duration = 0;
         // private Pomodoro.Context         _context = null;
         // private Pomodoro.Source          _source = Source.OTHER;
         private int64                       _start_time = Pomodoro.Timestamp.MIN;
         private int64                       _end_time = Pomodoro.Timestamp.MAX;
+
+        public GLib.SList<Pomodoro.Gap> gaps = null;
+
 
         public TimeBlock (Pomodoro.State state)
         {
@@ -158,7 +176,7 @@ namespace Pomodoro
 
             var old_start_time = this._start_time;
             var old_end_time = this._end_time;
-            var old_duration = this._end_time - this._start_time;
+            // var old_duration = this._end_time - this._start_time;
             var changed = false;
 
             this._start_time = start_time;
@@ -174,9 +192,9 @@ namespace Pomodoro
                 changed = true;
             }
 
-            if (this._end_time - this._start_time != old_duration) {
-                this.notify_property ("duration");
-            }
+            // if (this._end_time - this._start_time != old_duration) {
+            //     this.notify_property ("duration");
+            // }
 
             if (changed) {
                 this.changed ();
@@ -184,20 +202,21 @@ namespace Pomodoro
         }
 
 
-        // TODO: should this also move gap times?
-        public void move_to (int64 start_time)
-        {
-            this.set_time_range (start_time,
-                                 Pomodoro.Timestamp.add (start_time, this.duration));
-        }
 
-        // TODO: should this also move gap times?
         public void move_by (int64 offset)
         {
             this.set_time_range (Pomodoro.Timestamp.add (this._start_time, offset),
                                  Pomodoro.Timestamp.add (this._end_time, offset));
+
+            // TODO: should this also move gap times?
         }
 
+        public void move_to (int64 start_time)
+        {
+            this.move_by (Pomodoro.Timestamp.subtract (start_time, this._start_time));
+
+            // TODO: should this also move gap times?
+        }
 
 
 
@@ -251,27 +270,27 @@ namespace Pomodoro
         //     }
         // }
 
-        // public bool has_started (int64 timestamp = -1)  // TODO: rename to is_scheduled
-        // {
-        //     if (this._start_time < 0) {
-        //         return true;
-        //     }
-        //
-        //     ensure_timestamp (ref timestamp);
-        //
-        //     return timestamp >= this._start_time;
-        // }
+        public bool has_started (int64 timestamp = -1)
+        {
+            if (this._start_time < 0) {
+                return true;
+            }
 
-        // public bool has_ended (int64 timestamp = -1)  // TODO: rename to is_finished
-        // {
-        //     if (this._end_time < 0) {
-        //         return false;
-        //     }
-        //
-        //     ensure_timestamp (ref timestamp);
-        //
-        //     return this._end_time <= timestamp;
-        // }
+            ensure_timestamp (ref timestamp);
+
+            return timestamp >= this._start_time;
+        }
+
+        public bool has_ended (int64 timestamp = -1)
+        {
+            if (this._end_time < 0) {
+                return false;
+            }
+
+            ensure_timestamp (ref timestamp);
+
+            return timestamp > this._end_time;
+        }
 
         // public bool is_scheduled (int64 timestamp = -1)
         // {
@@ -295,28 +314,63 @@ namespace Pomodoro
         // }
 
         // Note: result won't make sense if block has no `start`
-        // public int64 calculate_elapsed (int64 timestamp = -1)
-        // {
-        //     if (this._start_time < 0) {
-        //         return -1;
-        //     }
+        public int64 calculate_elapsed (int64 timestamp = -1)
+        {
+            Pomodoro.ensure_timestamp (ref timestamp);
 
-        //     ensure_timestamp (ref timestamp);
+            if (this._start_time >= timestamp || this._start_time >= this._end_time) {
+                return 0;
+            }
 
-        //     return int64.max (timestamp - this._start_time, 0);
-        // }
+            var range_start = this._start_time;
+            var range_end   = int64.min (this._end_time, timestamp);
+            var elapsed     = Pomodoro.Timestamp.subtract (range_end, range_start);
 
-        // Note: result won't make sense if block has no `end`
-        // public int64 calculate_remaining (int64 timestamp = -1)
-        // {
-        //     if (this._end < 0) {
-        //         return -1;
-        //     }
+            this.gaps.@foreach ((gap) => {
+                if (gap.end_time <= gap.start_time) {
+                    return;
+                }
 
-        //     ensure_timestamp (ref timestamp);
+                elapsed = Pomodoro.Timestamp.subtract (
+                    elapsed,
+                    Pomodoro.Timestamp.subtract (
+                        gap.end_time.clamp (range_start, range_end),
+                        gap.start_time.clamp (range_start, range_end)
+                    )
+                );
+            });
 
-        //     return int64.max (this._end_time - timestamp, 0);
-        // }
+            return elapsed;
+        }
+
+        public int64 calculate_remaining (int64 timestamp = -1)
+        {
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            if (timestamp >= this._end_time || this._start_time >= this._end_time) {
+                return 0;
+            }
+
+            var range_start = int64.max (this._start_time, timestamp);
+            var range_end   = this._end_time;
+            var remaining   = Pomodoro.Timestamp.subtract (range_end, range_start);
+
+            this.gaps.@foreach ((gap) => {
+                if (gap.end_time <= gap.start_time) {
+                    return;
+                }
+
+                remaining = Pomodoro.Timestamp.subtract (
+                    remaining,
+                    Pomodoro.Timestamp.subtract (
+                        gap.end_time.clamp (range_start, range_end),
+                        gap.start_time.clamp (range_start, range_end)
+                    )
+                );
+            });
+
+            return remaining;
+        }
 
         // Note: result won't make sense if block have no bounds
         // public double calculate_progress (int64 timestamp = -1)
@@ -385,30 +439,35 @@ namespace Pomodoro
         public static int compare (Pomodoro.TimeBlock a,
                                    Pomodoro.TimeBlock b)
         {
-            return - ((int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time));  // in descending order
+            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
         }
 
-        public void add_child (Pomodoro.TimeBlock child)
+        public void add_gap (Pomodoro.Gap gap)
         {
-            this.children.insert_sorted (child, Pomodoro.TimeBlock.compare);
+            this.gaps.insert_sorted (gap, Pomodoro.Gap.compare);
+
+            // TODO:
+            // - fix overlaps
+            // - monitor Gap.changed signal
+            // - make routine to sort and normalize gaps on Gap.changed
         }
 
-        public void remove_child (Pomodoro.TimeBlock child)
-        {
-            this.children.remove (child);
-        }
+        // public void remove_child (Pomodoro.TimeBlock child)
+        // {
+        //     this.children.remove (child);
+        // }
 
-        public Pomodoro.TimeBlock? get_last_child ()
-        {
-            unowned SList<Pomodoro.TimeBlock> link = this.children.last ();
+        // public Pomodoro.TimeBlock? get_last_child ()
+        // {
+        //     unowned SList<Pomodoro.TimeBlock> link = this.children.last ();
 
-            return link != null ? link.data : null;
-        }
+        //     return link != null ? link.data : null;
+        // }
 
-        public void foreach_child (GLib.Func<Pomodoro.TimeBlock> func)
-        {
-            this.children.@foreach (func);
-        }
+        // public void foreach_child (GLib.Func<Pomodoro.TimeBlock> func)
+        // {
+        //     this.children.@foreach (func);
+        // }
 
 
 

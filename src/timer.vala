@@ -857,7 +857,7 @@ namespace Pomodoro
         public signal void state_changed (Pomodoro.TimerState current_state,
                                           Pomodoro.TimerState previous_state)
         {
-            assert (current_state == this._state);
+            // assert (current_state == this._state);  // TODO?
 
             // if (current_state.started_time > 0 && current_state.started_time > this.last_state_changed_time) {
             //     this.last_state_changed_time = current_state.started_time;

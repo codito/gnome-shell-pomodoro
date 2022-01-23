@@ -53,6 +53,10 @@ namespace Tests
     public void assert_cmpstrv (string[] value,
                                 string[] expected)
     {
+        if (GLib.Test.failed ()) {
+            return;
+        }
+
         var length = value.length;
 
         if (length != expected.length)

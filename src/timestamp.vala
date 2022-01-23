@@ -96,12 +96,6 @@ namespace Pomodoro.Timestamp
                            int64 interval)
     {
         return add (timestamp, -interval);
-
-        // if (this.is_infinite ()) {
-        //     return this;
-        // }
-
-        // TODO
     }
 
     // public int64 multiply (int64 timestamp,
@@ -129,9 +123,9 @@ namespace Pomodoro.Timestamp
     //
 
     /**
-     * Fake Pomodoro.get_current_time (). Added for unittesting.
+     * Freeze Pomodoro.Timestamp.from_now () to current time. Added for unittesting.
      */
-    public void freeze (int64 timestamp = -1)
+    public void freeze (int64 timestamp = -1)  // TODO: remove arg, return frozen time
     {
         if (timestamp < 0) {
             timestamp = Pomodoro.Timestamp.from_now ();
@@ -141,9 +135,17 @@ namespace Pomodoro.Timestamp
     }
 
     /**
-     * Revert freeze() call
+     * Freeze Pomodoro.Timestamp.from_now () to a given value. Added for unittesting.
      */
-    public void unfreeze ()
+    public void freeze_to (int64 timestamp)
+    {
+        frozen_time = timestamp;
+    }
+
+    /**
+     * Revert freeze() call. Added for unittesting.
+     */
+    public void unfreeze ()  // TODO: rename to "thaw"
     {
         frozen_time = UNDEFINED;
     }
@@ -153,11 +155,10 @@ namespace Pomodoro.Timestamp
         return frozen_time != UNDEFINED;
     }
 
-
     /**
-     * Advance frozen time
+     * Advance frozen time. Added for unittesting.
      */
-    public int64 tick (int64 interval)
+    public int64 tick (int64 interval)  // TODO: rename to "skip"
                        requires (interval >= 0)
     {
         if (!is_frozen ()) {
