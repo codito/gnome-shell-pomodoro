@@ -32,14 +32,21 @@ foreach test_name : test_names
       test_sources,
       dependencies: libgnome_pomodoro_dep,
       link_with: libtests,
+      c_args: [
+        # '-DG_LOG_DOMAIN="Pomodoro"',
+        '-UG_DISABLE_ASSERT',
+        '-UG_DISABLE_CAST_CHECKS',
+      ],
     ),
     env: [
       'LANGUAGE=C',
       'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
       'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+      'G_DEBUG=gc-friendly',
       'G_MESSAGES_DEBUG=debug',
       'GSETTINGS_SCHEMA_DIR=@0@'.format(meson.build_root() / 'data'),
-      'GSETTINGS_BACKEND=memory'
+      'GSETTINGS_BACKEND=memory',
+      'MALLOC_CHECK_=2',
     ],
     suite: 'tests',
   )

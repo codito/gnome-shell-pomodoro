@@ -338,7 +338,7 @@ namespace Pomodoro
                     break;
                 }
 
-                if (recursion_count > 100) {
+                if (recursion_count > 1) {  // TODO: increase
                     GLib.error ("Reached recursion limit while resolving Timer.state");
                     break;
                 }

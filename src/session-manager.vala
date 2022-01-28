@@ -22,9 +22,6 @@ namespace Pomodoro
     {
         private static Pomodoro.SessionManager? instance = null;
 
-        private delegate void TimerContextFunc (Pomodoro.Timer timer);
-
-
         public Pomodoro.Timer timer { get; construct; }
 
 
@@ -65,9 +62,18 @@ namespace Pomodoro
         public unowned Pomodoro.TimeBlock current_time_block {
             get {
                 return this._current_time_block;
+
+                // return this.current_time_block_entered
+                //     ? this._current_time_block
+                //     : null;
             }
             set {
-                assert (value == null || value.session != null);
+                // assert (value == null || value.session != null);
+
+                if (value != null && value.session == null) {
+                    GLib.debug ("Ignoring call to set SessionManager.current_time_block with a time-block that is not assigned to any session.");
+                    return;
+                }
 
                 if (this._current_time_block == value) {
                     return;
@@ -79,16 +85,14 @@ namespace Pomodoro
             }
         }
 
-        private Pomodoro.TimeBlock? _current_time_block = null;
         private Pomodoro.Session?   _current_session = null;
-        private int                 block_timer_signal_handlers_count = 0;
+        private Pomodoro.TimeBlock? _current_time_block = null;
         private bool                current_time_block_entered = false;
         private bool                current_session_entered = false;
+        private Pomodoro.Session?   previous_session = null;
+        private Pomodoro.TimeBlock? previous_time_block = null;
+        private int                 timer_freeze_count = 0;
         // private Pomodoro.State      _current_state = Pomodoro.State.UNDEFINED;
-        // private Pomodoro.TimeBlock? previous_time_block = null;
-        // private Pomodoro.Session?   previous_session = null;
-        // private bool             has_pending_enter_session_signal = false;
-        // private bool             has_pending_enter_time_block_signal = false;
 
         public SessionManager ()
         {
@@ -106,15 +110,9 @@ namespace Pomodoro
 
         construct
         {
-            // this.timer.notify["time-block"].connect (this.on_timer_time_block_notify);
-
-            // this.on_timer_time_block_notify ();
-
-            // Setup timer
             this.timer.reset ();
             this.timer.resolve_state.connect (this.on_timer_resolve_state);
             this.timer.state_changed.connect (this.on_timer_state_changed);
-            // this.timer.state_changed.connect_after (this.on_timer_state_changed_after);
             this.timer.suspended.connect (this.on_timer_suspended);
         }
 
@@ -126,7 +124,6 @@ namespace Pomodoro
 
             // TODO: disconnect timer signals
         }
-
 
         private void set_current_time_block_internal (Pomodoro.Session?   session,
                                                       Pomodoro.TimeBlock? time_block)
@@ -159,28 +156,9 @@ namespace Pomodoro
                 }
             }
 
-            if (time_block != null) {
-                this.setup_timer ((timer) => {
-                    timer.state = Pomodoro.TimerState () {
-                        duration      = time_block.duration,
-                        offset        = 0,
-                        started_time  = Pomodoro.Timestamp.UNDEFINED,
-                        paused_time   = Pomodoro.Timestamp.UNDEFINED,
-                        finished_time = Pomodoro.Timestamp.UNDEFINED,
-                        user_data     = time_block
-                    };
-                });
-            }
-            else {
-                this.setup_timer ((timer) => {
-                    timer.reset ();
-                });
-            }
-
             if (this._current_session == previous_session && previous_session != session)
             {
                 if (previous_session != session) {
-                    // this.previous_session = this._current_session;
                     this._current_session = session;
 
                     this.notify_property ("current-session");
@@ -194,16 +172,45 @@ namespace Pomodoro
 
             if (this._current_time_block == previous_time_block)
             {
+                // timer-state will be refined later
+
                 if (time_block != previous_time_block) {
-                    // this.previous_time_block = this._current_time_block;
+                    this.previous_session    = this._current_time_block != null
+                        ? this._current_time_block.session
+                        : null;
+                    this.previous_time_block = this._current_time_block;
                     this._current_time_block = time_block;
 
                     this.notify_property ("current-time-block");
                 }
 
                 if (time_block != null) {
+                    var timestamp = Pomodoro.Timestamp.from_now ();  // TODO: fetch from Timer.get_last_state_changed_time ()
+
+                    debug ("freeze_timer #A");
+                    this.freeze_timer ();
+                    timer.state = Pomodoro.TimerState () {
+                        duration      = time_block.end_time - time_block.start_time,
+                        offset        = time_block.calculate_elapsed (timestamp),
+                        started_time  = time_block.start_time,
+                        paused_time   = Pomodoro.Timestamp.UNDEFINED,
+                        finished_time = Pomodoro.Timestamp.UNDEFINED,
+                        user_data     = time_block
+                    };
+
+                    // this.timer.start (time_block.start_time);
+                    this.thaw_timer ();
+                    debug ("thaw_timer #A");
+
                     this.current_time_block_entered = true;
                     this.enter_time_block (time_block);
+                }
+                else {
+                    debug ("freeze_timer #B");
+                    this.freeze_timer ();
+                    this.timer.reset ();
+                    this.thaw_timer ();
+                    debug ("thaw_timer #B");
                 }
             }
         }
@@ -232,21 +239,6 @@ namespace Pomodoro
         }
 
 
-
-
-        // public void reset (int64 timestamp = -1)
-        // {
-            // TODO
-        // }
-
-        // private Pomodoro.Session resolve_next_session ()
-        // {
-        //     var next_session = new Pomodoro.Session.from_template ();
-
-            // TODO: schedule time blocks
-
-        //     return next_session;
-        // }
 
         // TODO: store as json or in db?
         /**
@@ -305,77 +297,22 @@ namespace Pomodoro
          */
         public void restore ()
         {
-            // var state          = Pomodoro.TimerState.lookup (settings.get_string ("timer-state"));
-            // var is_paused      = settings.get_boolean ("timer-paused");
-            // var score          = settings.get_double ("timer-score");
-            // var last_timestamp = 0.0;
-            // var int64 timestamp = Pomodoro.get_current_time ();
-
-            // if (state != null)
-            // {
-            //     state.duration = settings.get_double ("timer-state-duration");
-            //     state.elapsed  = settings.get_double ("timer-elapsed");
-
-            //     var state_datetime = new DateTime.from_iso8601 (
-            //                        settings.get_string ("timer-state-date"), new TimeZone.local ());
-
-            //     var last_datetime = new DateTime.from_iso8601 (
-            //                        settings.get_string ("timer-date"), new TimeZone.local ());
-
-            //     if (state_datetime != null && last_datetime != null) {
-            //         state.timestamp = (double) state_datetime.to_unix ();
-            //         last_timestamp = (double) last_datetime.to_unix ();
-            //     }
-            //     else {
-            //         /* In case there is no valid state-date, elapsed time
-            //          * will be lost.
-            //          */
-            //         state = null;
-            //     }
-            // }
-
-            // if (state != null && timestamp - last_timestamp < TIME_TO_RESET_SCORE)
-            // {
-            //     this.freeze_notify ();
-            //     this.score = score;
-            //     this.set_state_full (state, last_timestamp);
-            //     this.pause (last_timestamp);
-            //     this.thaw_notify ();
-
-            //     this.update (timestamp);
-
-            //     if (is_paused) {
-            //         this.notify_property ("is-paused");
-            //     }
-            //     else {
-            //         this.resume (timestamp);
-            //     }
-            // }
-            // else {
-            //     this.reset (timestamp);
-            // }
+            // TODO
         }
 
 
-
-
-        private void setup_timer (TimerContextFunc func)
-                                  ensures (this.block_timer_signal_handlers_count >= 0)
+        private void freeze_timer ()
         {
-            this.block_timer_signal_handlers_count++;
+            this.timer_freeze_count++;
+        }
 
-            // TODO: we could block handlers https://valadoc.org/gobject-2.0/GLib.SignalHandler.html
-
-            func (this.timer);
-
-            this.block_timer_signal_handlers_count--;
+        private void thaw_timer ()
+                                 ensures (this.timer_freeze_count >= 0)
+        {
+            this.timer_freeze_count--;
         }
 
 
-
-
-
-        // TODO: rename to advance_to_state ()
 
         private Pomodoro.Session initialize_session (int64 timestamp)
         {
@@ -384,99 +321,23 @@ namespace Pomodoro
             return new Pomodoro.Session.from_template (timestamp);
         }
 
-        /**
-         * Either pick scheduled block as current or initialize new session.
-         */
-        // private void prepare_current_time_block (Pomodoro.State state,
-        //                                          int64          start_time)
-        //                                          ensures (this._current_session != null &&
-        //                                                   this._current_time_block != null)
-        // {
-        //     var session = this._current_session;
-        //     var time_block = this._current_time_block;
+        private void initialize_timer_state (ref Pomodoro.TimerState state,
+                                             int64                   timestamp)
+        {
+            var current_time_block = this._current_time_block;
 
-            // Check if session hasn't expired. Create a new session if necessary.
-        //     if (session != null && session.is_expired (start_time)) {
-        //         session = null;
-        //         time_block = null;
-        //     }
+            // Adjust timer state acording to current-time-block.
+            if (current_time_block != null) {
+                state.duration     = current_time_block.end_time - current_time_block.start_time;
+                state.offset       = current_time_block.calculate_elapsed (timestamp);
+                state.started_time = current_time_block.start_time;
+                state.user_data    = current_time_block;
+            }
+            else {
+                state.user_data = null;
+            }
+        }
 
-        //     if (time_block != null && time_block.state == state) {
-                // TODO extend current time-block, so that remaining time is 25 minutes
-        //         assert_not_reached ();
-                // TODO: return;
-        //     }
-
-            // Try to pick next POMODORO within session
-        //     if (session == null) {
-        //         session = new Pomodoro.Session.from_template (start_time);
-        //         time_block = session.get_first_time_block ();
-                // time_block = session.find_time_block (state, time_block);  // TODO
-        //     }
-        //     else {
-                // TODO: Check if session can be completed,
-                //       eg if we force POMODORO during a long break, it should start new session
-
-                // TODO select next POMODORO from session, remove time_blocks between current_time_block and chosen one
-        //         assert_not_reached ();
-                // this.time_blocks.find (time_block);
-        //     }
-
-            // Append new POMODORO if there there is none scheduled
-        //     if (time_block == null) {
-        //         time_block = new Pomodoro.TimeBlock.with_start_time (state, start_time);
-
-        //         session.insert_after (time_block, this._current_time_block);
-        //     }
-
-        //     if (this._current_time_block != null) {
-        //         this._current_time_block.end_time = int64.min (this._current_time_block.end_time,
-        //                                                        time_block.start_time);
-        //     }
-
-        //     this.set_current_time_block_internal (session, time_block);
-        // }
-
-
-
-        // private unowned Pomodoro.Session? get_current_session ()
-        // {
-        //     return this._current_session;
-        // }
-
-        // /**
-        //  * When timer is stopped `this._current_time_block` is set to null.
-        //  *
-        //  */
-        // private unowned Pomodoro.TimeBlock? get_current_time_block ()
-        // {
-        //     if (this._current_time_block == null &&
-        //         this.previous_time_block != null &&
-        //         this.previous_time_block.session == this._current_session)
-        //     {
-        //         return this.previous_time_block;
-        //     }
-        //     else {
-        //         return this._current_time_block;
-        //     }
-        // }
-
-        // private unowned Pomodoro.TimeBlock? get_next_time_block ()
-        // {
-        //     return this._current_session != null
-        //         ? this._current_session.get_next_time_block (this.get_current_time_block())
-        //         : null;
-        // }
-
-
-        // private bool is_scheduled (Pomodoro.TimeBlock time_block)
-        // {
-        //     time_block
-
-        //     index
-
-        //     return
-        // }
 
         private void reschedule (Pomodoro.Session session,
                                  int64            timestamp)
@@ -484,18 +345,28 @@ namespace Pomodoro
 
         }
 
-
         private void mark_current_time_block_ended (int64 timestamp)
         {
-            if (this._current_time_block != null && this._current_time_block.end_time > timestamp) {
+            if (this._current_time_block == null) {
+                return;
+            }
+
+            if (this._current_time_block.end_time > timestamp) {
                 this._current_time_block.end_time = timestamp;
             }
         }
 
         private void mark_current_session_ended (int64 timestamp)
         {
-            // TODO
-            assert_not_reached ();
+            if (this._current_session == null) {
+                return;
+            }
+
+            if (this._current_session == this._current_time_block.session) {
+                this._current_session.remove_after (this._current_time_block);
+            }
+
+            this.mark_current_time_block_ended (timestamp);
         }
 
         private void extend_current_time_block (int64 timestamp)
@@ -546,30 +417,8 @@ namespace Pomodoro
                 this.extend_current_time_block (timestamp);
             }
             else {
-                // var time_block_found = false;
-                // var skipping = true;
-                // Pomodoro.TimeBlock[] to_remove = {}
-
-                // this.mark_current_time_block_ended ();
-
-                // time_block.session.foreach_time_block ((_time_block) => {
-                //     if (_time_block == this._current_time_block) {
-                //         skipping = false;
-                //         return;
-                //     }
-
-                //     if (skipping) {
-                //         return;
-                //     }
-
-                //     if (_time_block == time_block) {
-                //         time_block_found = true;
-                //         skipping = true;
-                //         return;
-                //     }
-
-                //     to_remove += _time_block;
-                // });
+                this.mark_current_time_block_ended (timestamp);
+                // this.align_after (this._current_time_block);
 
                 while (true)
                 {
@@ -603,53 +452,6 @@ namespace Pomodoro
             }
 
             this.set_current_time_block_internal (session, time_block);
-
-
-            /*
-                var time_block_link = session.time_blocks.find (time_block);
-                var link            = time_block_link;
-                var offset          = Pomodoro.Timestamp.subtract (timestamp, link.data.start_time);
-
-                if (link != null) {
-                    // link.data.start_time = timestamp
-                    link = link.prev;
-
-                    while (link != null) {
-                        session.remove (link.data);
-
-                        link = link.prev;
-                    }
-                }
-
-                link = time_block_link;
-
-                while (link != null) {
-                    session.remove (link.data);
-
-                    link = link.next;
-                }
-
-
-                // time_blocks.@foreach ((_time_block) => {
-                //     _time_block.move_by (offset);
-                //     time_block.session.append (_time_block);
-                // });
-
-                // var time_blocks = time_block.session.time_blocks.copy ();
-                // tmp.remove_before (time_block);
-                // time_block.session.move_to (timestamp);
-
-                // var offset = this._current_time_block.end_time;
-
-                // time_block.session.remove_after (this._current_time_block);
-
-                // time_block.session.join (tmp);
-                // time_blocks.@foreach ((_time_block) => {
-                //     _time_block.move_by (offset);
-                //     time_block.session.append (_time_block);
-                // });
-            }
-            */
         }
 
         public void advance_to_state (Pomodoro.State state,
@@ -717,7 +519,6 @@ namespace Pomodoro
             }
 
             this.advance_to_time_block (next_time_block, timestamp);
-            // this.set_current_time_block_internal (next_session, next_time_block, timestamp);
         }
 
         public void advance (int64 timestamp = -1)
@@ -728,11 +529,6 @@ namespace Pomodoro
                 ? this._current_session.get_next_time_block (this._current_time_block)
                 : null;
             var next_session = next_time_block != null ? next_time_block.session : null;
-
-            // var next_session    = this._current_session;
-            // var next_time_block = next_session != null
-            //     ? next_session.get_next_time_block (this.get_current_time_block ())
-            //     : null;
 
             if (next_session == null || next_session.is_expired (timestamp)) {
                 next_session = this.initialize_session (timestamp);
@@ -754,49 +550,94 @@ namespace Pomodoro
 
         private void on_timer_resolve_state (ref Pomodoro.TimerState state)
         {
-            if (this.block_timer_signal_handlers_count > 0) {
+            debug ("on_timer_resolve_state");
+
+            var current_session    = this._current_session;
+            var current_time_block = this._current_time_block;
+            var timestamp          = this.timer.get_last_state_changed_time ();
+
+            if (this.timer_freeze_count > 0) {
                 return;
             }
 
-            // Nothing to resolve when state gets finished.
+            // Nothing to resolve when state gets paused or finished.
             // Advancing to a next time-block should be done after emitting `Timer.state_changed`.
-            if (state.finished_time >= 0) {
+            if (state.finished_time >= 0 || state.paused_time >= 0) {
                 return;
             }
 
-            // Stopping the timer.
-            if (state.started_time < 0 && this._current_time_block == null) {
+            // Stopping (resetting) the timer.
+            // Adjust state as if timer has already stopped. Session will be adjusted in state-changed.
+            if (state.started_time < 0) {
                 state.user_data = null;
                 return;
             }
 
+            debug("#X");
+
+            // Check if session has expired
+            if (current_session != null && !this.current_time_block_entered && current_session.is_expired (timestamp)) {
+                var next_session = this.initialize_session (state.started_time);
+                var next_time_block = current_session.get_first_time_block ();
+
+                debug("#A");
+
+                this.advance_to_time_block (next_time_block, state.started_time);
+
+                debug("#B");
+
+                this.initialize_timer_state (ref state, timestamp);
+
+                debug("#C");
+
+                return;
+                // current_session = this._current_session;
+                // current_time_block = this._current_time_block;
+            }
+
+            debug("#Y");
+
             // Starting the timer. Initialize a new session or a time-block.
-            if (state.started_time >= 0 && this._current_time_block == null) {
-                var timestamp = state.started_time;
+            if (current_time_block == null || !this.current_time_block_entered) {
+                debug("#D");
 
                 this.advance_to_state (Pomodoro.State.POMODORO, state.started_time);
 
-                state.started_time = timestamp;
-                state.user_data = this._current_time_block;
-                return;
+                debug("#E");
 
-                // state.duration = this._current_time_block.duration;  // TODO: Should not count gap times. At this point time-block should not have any gaps.
+                current_session = this._current_session;
+                current_time_block = this._current_time_block;
             }
 
-            state.user_data = this._current_time_block;
+            debug("#Z");
+
+            debug ("set timer state.. [begin]");
+            this.initialize_timer_state (ref state, timestamp);
+            debug ("set timer state.. [end]");
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
                                              Pomodoro.TimerState previous_state)
         {
-            if (this.block_timer_signal_handlers_count > 0) {
-                // TODO: emit leave_time_block and enter_time_block
+            debug ("on_timer_state_changed");
+
+            if (this.timer_freeze_count > 0) {
+                return;
+            }
+
+            // Advance to next state
+            if (current_state.finished_time >= 0) {
+                // TODO: pause state and wait for user activity
+
+                this.advance (current_state.finished_time);
                 return;
             }
 
             var timestamp = this.timer.get_last_state_changed_time ();
 
-/*  TODO
+
+
+        /*  TODO
             // TODO these are very similar, likely needs a refactor:
             //   - prepare_current_time_block
             //   - advance_to
@@ -818,7 +659,7 @@ namespace Pomodoro
                 // TODO: register pauses
                 return;
             }
-*/
+        */
 
 
             // TODO: emit leave_time_block and enter_time_block
@@ -843,26 +684,6 @@ namespace Pomodoro
             //     }
             // }
         }
-
-        // TODO: is it used?
-        // private void on_timer_state_changed_after (Pomodoro.TimerState current_state,
-        //                                            Pomodoro.TimerState previous_state)
-        // {
-            // var has_pending_enter_session_signal = this.has_pending_enter_session_signal;
-            // var has_pending_enter_time_block_signal = this.has_pending_enter_time_block_signal;
-        //     var current_session = this._current_session;
-        //     var current_time_block = this._current_time_block;
-
-            // if (has_pending_enter_session_signal && current_session != null) {
-            //     this.has_pending_enter_session_signal = false;
-            //     this.enter_session (current_session);
-            // }
-
-            // if (has_pending_enter_time_block_signal && current_time_block != null && current_time_block == this._current_time_block) {
-            //     this.has_pending_enter_time_block_signal = false;
-            //     this.enter_time_block (current_time_block);
-            // }
-        // }
 
         private void on_timer_suspended (int64 start_time,
                                          int64 end_time)
@@ -920,36 +741,6 @@ namespace Pomodoro
     }
 
 
-    // ------------------------------------------------------------------------
-
-
-        // private void on_timer_time_block_notify ()
-        // {
-            // TODO: warn if time_block was changed through
-
-            // var previous_time_block = this._current_time_block;
-            // var previous_session = this._current_session;
-
-            // print ("# A\n");
-
-            // this._current_time_block = this.timer.time_block;
-
-            // print ("# B\n");
-
-            // this._current_session = current_time_block != null ? current_time_block.session : null;
-
-            // print ("# C\n");
-
-            // if (this._current_time_block != previous_time_block) {
-            //     this.notify_property ("current-time-block");
-            // }
-
-            // if (this._current_session != previous_session) {
-            //     this.notify_property ("current-session");
-            // }
-        // }
-
-
         // public void mark_current_time_block_start (int64 timestamp)
         // {
         //     if (this._current_time_block == null) {
@@ -967,119 +758,5 @@ namespace Pomodoro
         //     this._current_time_block.end_time = timestamp;
         //     this._current_time_block = null;
         // }
-
-
-        // public void mark_current_time_block_end (int64 timestamp)
-        // {
-        //     if (this._current_time_block == null) {
-        //         return;
-        //     }
-
-        //     this._current_time_block.end_time = timestamp;
-        // }
-
-
-        /**
-         * Determine whether to start a new session or continue current one.
-         */
-        // private void resolve_current_session (int64 timestamp)
-        // {
-        //     var current_session = this._current_session;
-
-        //     if (current_session == null || !can_continue_current_session (timestamp)) {
-        //         current_session = new Pomodoro.Session.from_template (timestamp);
-        //     }
-        //     else {
-                // TODO: check if we can attach time-block to current session, or start a new one
-        //     }
-
-        //     if (this._current_session != null) {
-        //         this._current_session.finish (timestamp);
-        //     }
-
-        //     this._current_session = current_session;
-
-        //     this.resolve_current_time_block (state.started_time);
-        // }
-
-        /**
-         * Determine current time-block within current session.
-         */
-        // private void resolve_current_time_block (int64 timestamp)
-        // {
-        //     var current_session = this._current_session;
-        //     var current_time_block = this._current_time_block;
-
-        //     if (current_time_block != null &&
-        //         current_time_block.session == current_session)
-        //     {
-        //         current_time_block = current_session.get_next_time_block (this.current_time_block);
-        //     }
-        //     else {
-        //         current_time_block = current_session.get_first_time_block ();
-        //     }
-
-        //     if (this._current_time_block != current_time_block) {
-        //         current_session.reschedule (current_time_block, timestamp);
-
-        //         this._current_time_block = current_time_block;
-        //     }
-        // }
-
-
-
-        // TODO: Move to set_current_time_block
-        /*
-        private void set_current_time_block_full (Pomodoro.Session?   session,
-                                                  Pomodoro.TimeBlock? time_block)
-        {
-            var previous_session    = this._current_session;
-            var previous_time_block = this._current_time_block;
-
-            if (time_block == previous_time_block) {
-                return;
-            }
-
-            if (previous_time_block != null) {
-                this.leave_time_block (previous_time_block);
-            }
-
-            if (previous_session != null && session != previous_session) {
-                this.leave_session (previous_session);
-            }
-
-            this.previous_session = this._current_session;
-            this.previous_time_block = this._current_time_block;
-            this._current_session = session;
-            this._current_time_block = time_block;
-
-            if (session != previous_session) {
-                this.notify_property ("current-session");
-            }
-
-            this.notify_property ("current-time-block");
-
-            if (session != null && session != previous_session) {
-                this.has_pending_enter_session_signal = true;
-            }
-
-            if (time_block != null) {
-                this.has_pending_enter_time_block_signal = true;
-
-                this.timer.state = Pomodoro.TimerState () {
-                    duration      = time_block.duration,
-                    offset        = 0,
-                    started_time  = Pomodoro.Timestamp.UNDEFINED,
-                    paused_time   = Pomodoro.Timestamp.UNDEFINED,
-                    finished_time = Pomodoro.Timestamp.UNDEFINED,
-                    user_data     = time_block
-                };
-            }
-            else {
-                this.timer.reset ();
-            }
-        }
-        */
-
 
 }
