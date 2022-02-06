@@ -209,6 +209,16 @@ namespace Tests
                 session.get_previous_time_block (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO))
             );
         }
+
+        public void test_calculate_pomodoro_break_ratio ()
+        {
+            var session = new Pomodoro.Session ();
+
+            assert_cmpfloat_with_epsilon (
+                session.calculate_pomodoro_break_ratio (),
+                double.INFINITY,
+                0.0001);
+        }
     }
 }
 

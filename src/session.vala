@@ -307,6 +307,68 @@ namespace Pomodoro
         // }
 
 
+        private void sum_durations (out int64 pomodoros_duration,
+                                    out int64 breaks_duration)
+        {
+            pomodoros_duration = 0;
+            breaks_duration = 0;
+
+            this.time_blocks.@foreach ((time_block) => {
+                switch (time_block.state) {
+                    case Pomodoro.State.POMDORO:
+                        pomodoros_duration = Pomodoro.Timestamp.add (pomodoros_duration, time_block.duration);
+                        break;
+
+                    case Pomodoro.State.BREAK:
+                        breaks_duration = Pomodoro.Timestamp.add (breaks_duration, time_block.duration);
+                        break;
+
+                    default:
+                        break;
+                }
+            });
+        }
+
+        /**
+         *
+         */
+        public bool is_finished (int64 timestamp)
+        {
+
+        }
+
+        /*
+        public double calculate_pomodoro_break_ratio ()
+        {
+            var pomodoros_duration = 0.0;
+            var breaks_duration = 0.0;
+
+            this.time_blocks.@foreach ((time_block) => {
+                switch (time_block.state) {
+                    case Pomodoro.State.POMDORO:
+                        pomodoros_duration += (double) time_block.duration;
+                        break;
+
+                    case Pomodoro.State.BREAK:
+                        breaks_duration += (double) time_block.duration;
+                        break;
+
+                    default:
+                        break;
+                }
+            });
+
+            if (pomodoro_duration < 0.0) {
+                return 0.0;
+            }
+
+            if (breaks_duration == 0.0) {
+                return double.INFINITY;
+            }
+
+            return pomodoros_duration / breaks_duration;
+        }
+        */
 
         public unowned Pomodoro.TimeBlock? get_first_time_block ()
         {
@@ -318,6 +380,11 @@ namespace Pomodoro
             unowned GLib.List<Pomodoro.TimeBlock> last_link = this.time_blocks.last ();
 
             return last_link != null ? last_link.data : null;
+        }
+
+        public unowned Pomodoro.TimeBlock? get_nth_time_block (uint index)
+        {
+            return this.time_blocks.nth_data (index);
         }
 
         public unowned Pomodoro.TimeBlock? get_previous_time_block (Pomodoro.TimeBlock? time_block = null)

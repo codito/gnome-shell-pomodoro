@@ -176,20 +176,20 @@ namespace Tests
             assert_cmpstrv (signals, {"enter-session"});
             signals.resize (0);
 
-            // Set non-empty session. Expect first time-block to be picked.
+            // Set non-empty session. Expect current-time-block to become null.
             session_manager.current_session = session_2;
             assert_true (session_manager.current_session == session_2);
-            assert_true (session_manager.current_time_block == session_2.get_first_time_block ());
+            assert_null (session_manager.current_time_block);
             assert_cmpstrv (signals, {
-                "leave-session", "enter-session", "enter-time-block"
+                "leave-session", "enter-session"
             });
-            assert_true (timer.user_data == session_manager.current_time_block);
+            assert_null (timer.user_data);
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.duration),
-                new GLib.Variant.int64 (POMODORO_DURATION * Pomodoro.Interval.SECOND)
+                new GLib.Variant.int64 (0 * Pomodoro.Interval.SECOND)
             );
-            assert_true (timer.is_started ());
-            assert_true (timer.is_running ());
+            assert_false (timer.is_started ());
+            assert_false (timer.is_running ());
             signals.resize (0);
 
             // Set current-session with same session. Expect to it to be ignored.
@@ -199,10 +199,10 @@ namespace Tests
             // Set current-session to null.
             session_manager.current_session = null;
             assert_cmpstrv (signals, {
-                "leave-time-block", "leave-session"
+                "leave-session"
             });
             assert_null (timer.user_data);
-            assert_cmpvariant (  // FIXME
+            assert_cmpvariant (
                 new GLib.Variant.int64 (timer.duration),
                 new GLib.Variant.int64 (0 * Pomodoro.Interval.SECOND)
             );
@@ -249,9 +249,9 @@ namespace Tests
             session_manager.current_session = session_1;
             assert_true (session_manager.current_session == session_2);
             assert_cmpstrv (signals, {
-                "enter-session", "leave-session", "enter-session", "enter-time-block"
+                "enter-session", "leave-session", "enter-session"
             });
-            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 0);
             assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 2);
         }
 
@@ -295,9 +295,9 @@ namespace Tests
             session_manager.current_session = session_2;
             assert_true (session_manager.current_session == session_3);
             assert_cmpstrv (signals, {
-                "leave-time-block", "leave-session", "enter-session", "enter-time-block"
+                "leave-session", "enter-session"
             });
-            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (notify_current_time_block_emitted, GLib.CompareOperator.EQ, 0);
             assert_cmpint (notify_current_session_emitted, GLib.CompareOperator.EQ, 1);
         }
 
@@ -559,8 +559,13 @@ namespace Tests
             var signals         = new string[0];
 
             timer.start ();
+            assert_nonnull (session_manager.current_session);
+            assert_nonnull (session_manager.current_time_block);
+            assert_true (timer.is_started ());
+
             timer.reset ();
             assert_nonnull (session_manager.current_session);
+            assert_null (session_manager.current_time_block);
             assert_false (timer.is_started ());
 
             // timer.resolve_state.connect (() => { signals += "resolve-state"; });
@@ -579,8 +584,7 @@ namespace Tests
 
             assert_false (session_manager.current_session == expired_session);
             assert_cmpstrv (signals, {
-                "leave-time-block", "leave-session",
-                "enter-session", "enter-time-block"
+                "leave-session", "enter-session", "enter-time-block"
             });
             assert_nonnull (session_manager.current_time_block);
             assert_true (timer.is_started ());
@@ -621,7 +625,6 @@ namespace Tests
             });
 
             // Expect session manager to modify blocks end-time.
-            // assert_false (current_time_block.is_finished ());  // TODO
             assert_cmpvariant (
                 new GLib.Variant.int64 (current_time_block.end_time),
                 new GLib.Variant.int64 (now)
@@ -681,13 +684,53 @@ namespace Tests
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-            print ("\n\n################# start ()\n");
+            var session      = new Pomodoro.Session.from_template ();
+            var time_block_1 = session.get_nth_time_block (0);
+            var time_block_2 = session.get_nth_time_block (1);
+            var time_block_3 = session.get_nth_time_block (2);
+            var time_block_4 = session.get_last_time_block ();
 
+            session_manager.current_session = session;
+            assert_true (session_manager.current_session == session);
+
+            // Skip within session
             timer.start ();
+            assert_true (session_manager.current_session == session);
+            assert_true (session_manager.current_time_block == time_block_1);
 
-            var previous_time_block = session_manager.current_session.get_first_time_block ();
-            var expected_session    = session_manager.current_session;
-            var expected_time_block = expected_session.get_next_time_block (previous_time_block);
+            timer.skip ();
+            assert_true (session_manager.current_session == session);
+            assert_true (session_manager.current_time_block == time_block_2);
+
+            timer.skip ();
+            assert_true (session_manager.current_session == session);
+            assert_true (session_manager.current_time_block == time_block_3);
+
+            // TODO:
+            // - check signals emitted
+            // - check timer duration/elapsed
+            // - check time-block end-time/start-time
+
+            // Skip to next session
+            session_manager.current_time_block = time_block_4;
+            timer.skip ();
+            assert_false (session_manager.current_session == session);
+            assert_true (session_manager.current_time_block == session_manager.current_session.get_first_time_block ());
+
+
+            // while (var index=1; index <= 4 + 3; index++) {
+            //     var expected_time_block = expected_session.get_nth_time_block (index);
+
+            //     timer.skip ();
+            //     assert_true (session_manager.current_session == expected_session);
+            //     assert_true (session_manager.current_time_block == expected_time_block);
+            // }
+
+
+        /*
+            // var previous_time_block = session_manager.current_session.get_first_time_block ();
+            // var expected_session    = session_manager.current_session;
+            // var expected_time_block = expected_session.get_next_time_block (previous_time_block);
             var now                 = Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
             var signals             = new string[0];
             // timer.resolve_state.connect (() => { signals += "resolve-state"; });
@@ -697,9 +740,7 @@ namespace Tests
             session_manager.leave_session.connect (() => { signals += "leave-session"; });
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
-            print ("\n\n################# skip ()\n");
-
-            timer.skip ();
+            // TODO: FIXME
 
             // print ("\n##### timer = %s\n", timer.state.to_representation ());
             // assert_cmpstrv (signals, {"leave-time-block", "state-changed", "enter-time-block"});
@@ -729,6 +770,7 @@ namespace Tests
 
             // Expect timer to be setup before enter-* signals are emitted.
             // assert_cmpstrv (signals, {"state-changed", "enter-session", "enter-time-block"});
+        */
         }
     }
 }
