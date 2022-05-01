@@ -13,7 +13,6 @@ namespace Pomodoro
         UNDEFINED = 0,
         USER = 1,
         TIMER = 2,
-        IDLE_MONITOR = 3,
-        OTHER = 4
+        IDLE_MONITOR = 3
     }
 }

@@ -1,13 +1,14 @@
 {
     "app-id" : "org.gnomepomodoro.Pomodoro",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "40",
+    "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
     "command" : "gnome-pomodoro",
+    "tags" : [
+    ],
     "finish-args" : [
-        "--share=network",
         "--share=ipc",
-        "--socket=fallback-x11",
+        "--socket=x11",
         "--socket=wayland",
         "--talk-name=org.gnome.Shell",
         "--device=dri",
@@ -18,6 +19,7 @@
         "--filesystem=xdg-run/dconf",
         "--filesystem=~/.config/dconf:rw",
         "--talk-name=ca.desrt.dconf",
+        "--env=G_ENABLE_DIAGNOSTIC=1",
         "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
     ],
     "build-options" : {
@@ -112,6 +114,8 @@
             "name" : "gnome-pomodoro",
             "builddir" : true,
             "buildsystem" : "meson",
+            "config-opts" : [
+            ],
             "sources" : [
                 {
                     "type" : "file",

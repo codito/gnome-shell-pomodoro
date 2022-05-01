@@ -38,13 +38,10 @@ namespace Pomodoro
         }
 
         private GLib.List<Pomodoro.TimeBlock> time_blocks;
-        private int64 _start_time = Pomodoro.Timestamp.MIN;
-        private int64 _end_time = Pomodoro.Timestamp.MAX;
-        // private int64 finished_time = Pomodoro.Timestamp.UNDEFINED;
-
-        private int  changed_freeze_count = 0;
-        private bool changed_is_pending = false;
-
+        private int64                         _start_time = Pomodoro.Timestamp.MIN;
+        private int64                         _end_time = Pomodoro.Timestamp.MAX;
+        private int                           changed_freeze_count = 0;
+        private bool                          changed_is_pending = false;
 
         /**
          * Create empty session.
@@ -60,9 +57,6 @@ namespace Pomodoro
         {
             this.populate (timestamp);
         }
-
-
-
 
 
         /*
@@ -86,7 +80,7 @@ namespace Pomodoro
         /**
          * Insert time-blocks according to settings.
          */
-        private void populate (int64 timestamp = -1)
+        private void populate (int64 timestamp = -1)  // TODO: pass template spec
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -306,35 +300,39 @@ namespace Pomodoro
         //     return 0.0;
         // }
 
-
-        private void sum_durations (out int64 pomodoros_duration,
-                                    out int64 breaks_duration)
-        {
-            pomodoros_duration = 0;
-            breaks_duration = 0;
-
-            this.time_blocks.@foreach ((time_block) => {
-                switch (time_block.state) {
-                    case Pomodoro.State.POMDORO:
-                        pomodoros_duration = Pomodoro.Timestamp.add (pomodoros_duration, time_block.duration);
-                        break;
-
-                    case Pomodoro.State.BREAK:
-                        breaks_duration = Pomodoro.Timestamp.add (breaks_duration, time_block.duration);
-                        break;
-
-                    default:
-                        break;
-                }
-            });
-        }
+        // private void sum_durations (out int64 pomodoros_duration,
+        //                             out int64 breaks_duration)
+        // {
+        //     pomodoros_duration = 0;
+        //     breaks_duration = 0;
+        //
+        //     this.time_blocks.@foreach ((time_block) => {
+        //         switch (time_block.state) {
+        //             case Pomodoro.State.POMDORO:
+        //                 pomodoros_duration = Pomodoro.Timestamp.add (pomodoros_duration, time_block.duration);
+        //                 break;
+        //
+        //             case Pomodoro.State.BREAK:
+        //                 breaks_duration = Pomodoro.Timestamp.add (breaks_duration, time_block.duration);
+        //                 break;
+        //
+        //             default:
+        //                 break;
+        //         }
+        //     });
+        // }
 
         /**
          *
          */
         public bool is_finished (int64 timestamp)
         {
+            return false;  // TODO
+        }
 
+        public double calculate_pomodoro_break_ratio ()
+        {
+            return 0.0;  // TODO
         }
 
         /*
@@ -428,8 +426,6 @@ namespace Pomodoro
         }
 
 
-
-
         /*
          * Methods for editing time-blocks
          */
@@ -472,7 +468,7 @@ namespace Pomodoro
                     Pomodoro.Timestamp.add (last_time_block.end_time, time_block.duration)
                 );
 
-                // time_block.shift_to (this._end_time);
+                // time_block.move_to (this._end_time);
             }
 
             this.append_internal (time_block);

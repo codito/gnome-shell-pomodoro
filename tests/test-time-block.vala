@@ -137,28 +137,31 @@ namespace Tests
 
         public void test_state ()
         {
+            var time_block_1 = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            assert_true (time_block_1.state == Pomodoro.State.POMODORO);
 
+            var time_block_2 = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
+            assert_true (time_block_2.state == Pomodoro.State.BREAK);
+
+            var time_block_3 = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+            assert_true (time_block_3.state == Pomodoro.State.UNDEFINED);
         }
 
         public void test_start_time ()
         {
-
         }
 
         public void test_end_time ()
         {
-
         }
 
         public void test_duration ()
         {
-
         }
 
-        public void test_parent ()
-        {
-
-        }
+        // public void test_parent ()
+        // {
+        // }
 
 
         /*
@@ -357,26 +360,17 @@ namespace Tests
 
         }
 
-        public void test_add_child ()
+        public void test_add_gap ()
         {
 
         }
 
-        public void test_remove_child ()
+        public void test_remove_gap ()
         {
 
         }
 
-        public void test_get_last_child ()
-        {
-        }
-
-        public void test_foreach_child ()
-        {
-
-        }
-
-        public void test_scheduled_signal ()
+        public void test_changed_signal ()
         {
 
         }
