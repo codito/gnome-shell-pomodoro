@@ -3,9 +3,12 @@ using GLib;
 
 namespace Pomodoro
 {
-    public abstract class TimeBlockBase : GLib.InitiallyUnowned
+    public abstract class SimpleTimeBlock : GLib.InitiallyUnowned
     {
         public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
+
+        protected int64 _start_time = Pomodoro.Timestamp.MIN;
+        protected int64 _end_time = Pomodoro.Timestamp.MAX;
 
         public int64 start_time {
             get {
@@ -39,13 +42,9 @@ namespace Pomodoro
 
         public int64 duration {
             get {
-                return this._end_time - this._start_time;  // this.calculate_remaining (this._start_time);
+                return this._end_time - this._start_time;
             }
         }
-
-        protected int64 _start_time = Pomodoro.Timestamp.MIN;
-        protected int64 _end_time = Pomodoro.Timestamp.MAX;
-
 
         public void set_time_range (int64 start_time,
                                     int64 end_time)
@@ -77,12 +76,10 @@ namespace Pomodoro
             }
         }
 
-        public void move_by (int64 offset)
+        public virtual void move_by (int64 offset)
         {
             this.set_time_range (Pomodoro.Timestamp.add (this._start_time, offset),
                                  Pomodoro.Timestamp.add (this._end_time, offset));
-
-            // this.gaps.@foreach ((gap) => gap.move_by (offset));
         }
 
         public void move_to (int64 start_time)
@@ -101,133 +98,6 @@ namespace Pomodoro
         //     this.move_by (Pomodoro.Timestamp.subtract (start_time, this.start_time));
         // }
 
-        public virtual signal void changed ()
-        {
-        }
-    }
-
-    public class Gap : TimeBlockBase
-    {
-        public unowned Pomodoro.TimeBlock time_block { get; set; }
-
-        public Gap (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
-        {
-            GLib.Object (
-                source: source
-            );
-        }
-
-        public Gap.with_start_time (int64           start_time,
-                                    Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
-        {
-            GLib.Object (
-                source: source
-            );
-
-            this.set_time_range (start_time, this._end_time);
-        }
-
-        public static int compare (Pomodoro.Gap a,
-                                   Pomodoro.Gap b)
-        {
-            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
-        }
-
-        public override void changed ()
-        {
-            if (this.time_block != null) {
-                this.time_block.changed ();
-            }
-        }
-    }
-
-
-    /**
-     * Class describes an block of time - state, start and end time.
-     * Blocks may have parent/child relationships. Currently its only used to define pauses, though class is kept
-     * angnostic about it. A child block may exceed its parent time range. After a child block gets defined `end` time,
-     * the parent block is update its `end` time.
-     */
-    public class TimeBlock : TimeBlockBase
-    {
-        public unowned Pomodoro.Session session { get; set; }
-
-        public Pomodoro.State state { get; construct; }
-
-        // public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
-
-        // public int64 start_time {
-        //     get {
-        //         return this._start_time;
-        //     }
-        //     set {
-        //         if (value < this._end_time) {
-        //             this.set_time_range (value, this._end_time);
-        //         }
-        //         else {
-                    // TODO: log warning that change of `start-time` will affect `end-time`
-        //             this.set_time_range (value, value);
-        //         }
-        //     }
-        // }
-
-        // public int64 end_time {
-        //     get {
-        //         return this._end_time;
-        //     }
-        //     set {
-        //         if (value >= this._start_time) {
-        //             this.set_time_range (this._start_time, value);
-        //         }
-        //         else {
-                    // TODO: log warning that change of `end-time` will affect `start-time`
-        //             this.set_time_range (value, value);
-        //         }
-        //     }
-        // }
-
-        // Beware that `duration` has a few edge cases:
-        //  - when time block is infinite (`end` < 0 or `start` < 0) it returns -1
-        //  - when one of the child is infinite, it returns duration according to its `end` and not the childs
-        /**
-         * Return time-block duration
-         */
-        // public int64 duration {
-        //     get {
-        //         return this._end_time - this._start_time;
-                // return this.calculate_remaining (this._start_time);
-        //     }
-        // }
-
-        // private int64 _start_time = Pomodoro.Timestamp.MIN;
-        // private int64 _end_time = Pomodoro.Timestamp.MAX;
-
-        public GLib.SList<Pomodoro.Gap> gaps = null;
-
-
-        public TimeBlock (Pomodoro.State  state,
-                          Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
-        {
-            GLib.Object (
-                state: state,
-                source: source
-            );
-        }
-
-        public TimeBlock.with_start_time (Pomodoro.State  state,
-                                          int64           start_time,
-                                          Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
-        {
-            GLib.Object (
-                state: state,
-                source: source
-            );
-
-            this.set_time_range (
-                start_time,
-                Pomodoro.Timestamp.add (start_time, state.get_default_duration ())
-            );
-        }
 
         // public void set_time_range (int64 start_time,
         //                             int64 end_time)
@@ -355,8 +225,73 @@ namespace Pomodoro
         //     return timestamp >= this._start_time && timestamp < this._end_time;
         // }
 
-        public int64 calculate_real_duration ()
+        // public int64 calculate_real_duration ()
+        // {
+        // }
+
+        public static int compare (Pomodoro.SimpleTimeBlock a,
+                                   Pomodoro.SimpleTimeBlock b)
         {
+            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
+        }
+
+        public virtual Pomodoro.State to_state ()
+        {
+            return Pomodoro.State.UNDEFINED;
+        }
+
+        public virtual signal void changed ()
+        {
+        }
+    }
+
+    public class Gap : SimpleTimeBlock
+    {
+        public unowned Pomodoro.TimeBlock time_block { get; set; }
+
+        public Gap (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+        }
+
+        public Gap.with_start_time (int64           start_time,
+                                    Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+
+            this.set_time_range (start_time, this._end_time);
+        }
+
+        public override void changed ()
+        {
+            if (this.time_block != null) {
+                this.time_block.changed ();
+            }
+        }
+    }
+
+
+    /**
+     * A time-block that can be attached to session
+     */
+    public abstract class TimeBlock : SimpleTimeBlock
+    {
+        public unowned Pomodoro.Session session { get; set; }
+
+        public GLib.SList<Pomodoro.Gap> gaps = null;
+
+        public override void move_by (int64 offset)
+        {
+            // TODO: supress changed signal until gaps and self are both changed
+
+            this.gaps.@foreach ((gap) => gap.move_by (offset));
+
+            this.set_time_range (Pomodoro.Timestamp.add (this._start_time, offset),
+                                 Pomodoro.Timestamp.add (this._end_time, offset));
         }
 
         // TODO: add docstring, whether we clamp result
@@ -437,62 +372,6 @@ namespace Pomodoro
                 : 0.0;
         }
 
-        // /**
-        //  * Return sum of childrens durations.
-        //  */
-        // public int64 get_children_duration ()
-        // {
-        //     int64 children_duration = 0;
-
-        //     this.children.@foreach ((child) => {
-                // TODO: handle overlapping children
-
-        //         if (children_duration >= 0) {
-        //             if (child.has_bounds ()) {
-        //                 children_duration += child.duration;
-        //             }
-        //             else {
-        //                 children_duration = -1;
-        //             }
-        //         }
-        //     });
-
-        //     return children_duration;
-        // }
-
-        // /**
-        //  * Similar to .get_children_duration(), but counts elapsed time in case blocks have no `end`
-        //  *
-        //  * Return sum of childrens durations.
-        //  */
-        // public int64 get_children_elapsed (int64 timestamp = -1)
-        // {
-        //     int64 children_elapsed = 0;
-
-        //     ensure_timestamp (ref timestamp);
-            // if (timestamp < 0) {
-            //     timestamp = Pomodoro.get_current_time ();
-            // }
-
-        //     this.children.@foreach ((child) => {
-                // TODO: handle overlapping children
-
-        //         if (children_elapsed >= 0 ) {
-        //             children_elapsed += child.duration;
-        //         }
-
-        //         children_elapsed += child.get_elapsed (timestamp);
-        //     });
-
-        //     return children_elapsed;
-        // }
-
-        public static int compare (Pomodoro.TimeBlock a,
-                                   Pomodoro.TimeBlock b)
-        {
-            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
-        }
-
         public void add_gap (Pomodoro.Gap gap)
         {
             this.gaps.insert_sorted (gap, Pomodoro.Gap.compare);
@@ -524,10 +403,106 @@ namespace Pomodoro
         //     this.gaps.@foreach (func);
         // }
 
-        // public override signal void changed ()
-        // {
-        //     if (this.session)
-        // }
+        public override void changed ()
+        {
+            if (this.session != null) {
+                this.session.changed ();
+            }
+        }
+    }
+
+
+    /**
+     * Class describes an block of time - state, start and end time.
+     * Blocks may have parent/child relationships. Currently its only used to define pauses, though class is kept
+     * angnostic about it. A child block may exceed its parent time range. After a child block gets defined `end` time,
+     * the parent block is update its `end` time.
+     */
+    public class PomodoroTimeBlock : TimeBlock
+    {
+        public PomodoroTimeBlock (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+        }
+
+        public PomodoroTimeBlock.with_start_time (int64           start_time,
+                                                  Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+
+            this.set_time_range (
+                start_time,
+                Pomodoro.Timestamp.add (start_time, state.get_default_duration ())
+            );
+        }
+
+        public override Pomodoro.State to_state ()
+        {
+            return Pomodoro.State.POMODORO;
+        }
+    }
+
+    public class BreakTimeBlock : TimeBlock
+    {
+        // TODO: changing is_long_break should trigger changed signal
+        public bool is_long_break { get; set; }
+
+        public BreakTimeBlock (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+        }
+
+        public BreakTimeBlock.with_start_time (int64           start_time,
+                                               Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+
+            this.set_time_range (
+                start_time,
+                Pomodoro.Timestamp.add (start_time, state.get_default_duration ())
+            );
+        }
+
+        public override Pomodoro.State to_state ()
+        {
+            return Pomodoro.State.BREAK;
+        }
+    }
+
+    public class UndefinedTimeBlock : TimeBlock
+    {
+        public UndefinedTimeBlock (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+        }
+
+        public UndefinedTimeBlock.with_start_time (int64           start_time,
+                                                   Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        {
+            GLib.Object (
+                source: source
+            );
+
+            this.set_time_range (
+                start_time,
+                Pomodoro.Timestamp.add (start_time, state.get_default_duration ())
+            );
+        }
+
+        public override Pomodoro.State to_state ()
+        {
+            return Pomodoro.State.UNDEFINED;
+        }
     }
 
     /*
