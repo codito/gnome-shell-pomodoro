@@ -8,10 +8,8 @@ namespace Tests
                            this.test_new__undefined);
             this.add_test ("new__pomodoro",
                            this.test_new__pomodoro);
-            this.add_test ("new__short_break",
-                           this.test_new__short_break);
-            this.add_test ("new__long_break",
-                           this.test_new__long_break);
+            this.add_test ("new__break",
+                           this.test_new__break);
 
             this.add_test ("set_session",
                            this.test_set_session);
@@ -20,11 +18,17 @@ namespace Tests
                            this.test_calculate_elapsed__without_gaps);
             this.add_test ("calculate_elapsed__with_gaps",
                            this.test_calculate_elapsed__with_gaps);
+            this.add_test ("calculate_elapsed__with_gaps_overlapping",
+                           this.test_calculate_elapsed__with_gaps_overlapping);
 
             this.add_test ("calculate_remaining__without_gaps",
                            this.test_calculate_remaining__without_gaps);
             this.add_test ("calculate_remaining__with_gaps",
                            this.test_calculate_remaining__with_gaps);
+            this.add_test ("calculate_remaining__with_gaps_overlapping",
+                           this.test_calculate_remaining__with_gaps_overlapping);
+
+
 
             // this.add_test ("state", this.test_state);
             // this.add_test ("start_time", this.test_start_time);
@@ -67,7 +71,6 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            // assert_true (time_block.state_duration == state.get_default_duration ());
             assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
             assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
@@ -78,29 +81,16 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            // assert_true (time_block.state_duration == state.get_default_duration ());
             assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
             assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
 
-        public void test_new__short_break ()
+        public void test_new__break ()
         {
-            var state = Pomodoro.State.SHORT_BREAK;
+            var state = Pomodoro.State.BREAK;
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            // assert_true (time_block.state_duration == state.get_default_duration ());
-            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
-        }
-
-        public void test_new__long_break ()
-        {
-            var state = Pomodoro.State.LONG_BREAK;
-            var time_block = new Pomodoro.TimeBlock (state);
-
-            assert_true (time_block.state == state);
-            // assert_true (time_block.state_duration == state.get_default_duration ());
             assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
             assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
         }
@@ -147,19 +137,19 @@ namespace Tests
             assert_true (time_block_3.state == Pomodoro.State.UNDEFINED);
         }
 
-        public void test_start_time ()
-        {
-        }
+        // public void test_start_time ()
+        // {
+        // }
 
-        public void test_end_time ()
-        {
-        }
+        // public void test_end_time ()
+        // {
+        // }
 
-        public void test_duration ()
-        {
-        }
+        // public void test_duration ()
+        // {
+        // }
 
-        // public void test_parent ()
+        // public void test_session ()
         // {
         // }
 
@@ -200,7 +190,7 @@ namespace Tests
 
         public void test_calculate_elapsed__without_gaps ()
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+            var time_block = new Pomodoro.TimeBlock ();
             time_block.set_time_range (
                 5 * Pomodoro.Interval.MINUTE,
                 30 * Pomodoro.Interval.MINUTE);
@@ -229,14 +219,17 @@ namespace Tests
 
         public void test_calculate_elapsed__with_gaps ()
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
-            time_block.set_time_range (
-                5 * Pomodoro.Interval.MINUTE,
-                30 * Pomodoro.Interval.MINUTE);
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
-            var gap_1 = new Pomodoro.Gap (2 * Pomodoro.Interval.MINUTE, 9 * Pomodoro.Interval.MINUTE);  // 4 minutes
-            var gap_2 = new Pomodoro.Gap (15 * Pomodoro.Interval.MINUTE, 17 * Pomodoro.Interval.MINUTE);  // 2 minutes
-            var gap_3 = new Pomodoro.Gap (29 * Pomodoro.Interval.MINUTE, 35 * Pomodoro.Interval.MINUTE);  // 1 minute
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (5 * Pomodoro.Interval.MINUTE, 9 * Pomodoro.Interval.MINUTE);  // 4 minutes
+
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (15 * Pomodoro.Interval.MINUTE, 17 * Pomodoro.Interval.MINUTE);  // 2 minutes
+
+            var gap_3 = new Pomodoro.Gap ();
+            gap_3.set_time_range (29 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);  // 1 minute
 
             time_block.add_gap (gap_1);
             time_block.add_gap (gap_2);
@@ -276,13 +269,34 @@ namespace Tests
             );
         }
 
+        public void test_calculate_elapsed__with_gaps_overlapping ()
+        {
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
+
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (7 * Pomodoro.Interval.MINUTE, 11 * Pomodoro.Interval.MINUTE);  // 4 minutes
+
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (10 * Pomodoro.Interval.MINUTE, 13 * Pomodoro.Interval.MINUTE);  // 3 minutes, 1 minute ovrlapping
+
+            time_block.add_gap (gap_1);
+            time_block.add_gap (gap_2);
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.calculate_elapsed (gap_1.end_time)),
+                new GLib.Variant.int64 ((6 - 4) * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.calculate_elapsed (gap_2.end_time)),
+                new GLib.Variant.int64 ((8 - 4 - 3 + 1) * Pomodoro.Interval.MINUTE)
+            );
+        }
 
         public void test_calculate_remaining__without_gaps ()
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
-            time_block.set_time_range (
-                5 * Pomodoro.Interval.MINUTE,
-                30 * Pomodoro.Interval.MINUTE);
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
             assert_cmpvariant (
                 new GLib.Variant.int64 (time_block.calculate_remaining (time_block.start_time)),
@@ -309,13 +323,16 @@ namespace Tests
         public void test_calculate_remaining__with_gaps ()
         {
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
-            time_block.set_time_range (
-                5 * Pomodoro.Interval.MINUTE,
-                30 * Pomodoro.Interval.MINUTE);
+            time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
-            var gap_1 = new Pomodoro.Gap (2 * Pomodoro.Interval.MINUTE, 9 * Pomodoro.Interval.MINUTE);  // 4 minutes
-            var gap_2 = new Pomodoro.Gap (15 * Pomodoro.Interval.MINUTE, 17 * Pomodoro.Interval.MINUTE);  // 2 minutes
-            var gap_3 = new Pomodoro.Gap (29 * Pomodoro.Interval.MINUTE, 35 * Pomodoro.Interval.MINUTE);  // 1 minute
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (2 * Pomodoro.Interval.MINUTE, 9 * Pomodoro.Interval.MINUTE);  // 4 minutes
+
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (15 * Pomodoro.Interval.MINUTE, 17 * Pomodoro.Interval.MINUTE);  // 2 minutes
+
+            var gap_3 = new Pomodoro.Gap ();
+            gap_3.set_time_range (29 * Pomodoro.Interval.MINUTE, 35 * Pomodoro.Interval.MINUTE);  // 1 minute
 
             time_block.add_gap (gap_1);
             time_block.add_gap (gap_2);
@@ -355,25 +372,53 @@ namespace Tests
             );
         }
 
-        public void test_get_progress ()
+        public void test_calculate_remaining__with_gaps_overlapping ()
         {
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (7 * Pomodoro.Interval.MINUTE, 11 * Pomodoro.Interval.MINUTE);  // 4 minutes
+
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (10 * Pomodoro.Interval.MINUTE, 13 * Pomodoro.Interval.MINUTE);  // 3 minutes, 1 minute ovrlapping
+
+            time_block.add_gap (gap_1);
+            time_block.add_gap (gap_2);
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.calculate_remaining (gap_1.start_time)),
+                new GLib.Variant.int64 ((25 - 2 - 4 - 3 + 1) * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.calculate_remaining (gap_1.end_time)),
+                new GLib.Variant.int64 ((25 - 6 - 3 + 1) * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.calculate_remaining (gap_2.start_time)),
+                new GLib.Variant.int64 ((25 - 5 - 3) * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.calculate_remaining (gap_2.end_time)),
+                new GLib.Variant.int64 ((25 - 8) * Pomodoro.Interval.MINUTE)
+            );
         }
 
-        public void test_add_gap ()
-        {
+        // public void test_get_progress ()
+        // {
+        // }
 
-        }
+        // public void test_add_gap ()
+        // {
+        // }
 
-        public void test_remove_gap ()
-        {
+        // public void test_remove_gap ()
+        // {
+        // }
 
-        }
-
-        public void test_changed_signal ()
-        {
-
-        }
+        // public void test_changed_signal ()
+        // {
+        // }
     }
 }
 

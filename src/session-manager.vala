@@ -382,7 +382,7 @@ namespace Pomodoro
 
             // session.freeze_changed ();
             if (time_block.end_time < timestamp) {
-                var gap = new Pomodoro.Gap (time_block.end_time, timestamp);
+                var gap = new Pomodoro.Gap.with_start_time (time_block.end_time, timestamp);
 
                 time_block.end_time = timestamp + state_duration;
                 time_block.add_gap (gap);
