@@ -34,6 +34,11 @@ namespace Pomodoro.Timestamp
         return (int64) Math.round (seconds * (double) Pomodoro.Interval.SECOND);
     }
 
+    public int64 from_seconds_uint (uint seconds)
+    {
+        return (int64) seconds * Pomodoro.Interval.SECOND;
+    }
+
     // public int64 from_monotonic_timestamp (int64 monotonic_timestamp)
     // {
     //     return reference_time + monotonic_timestamp;
@@ -47,6 +52,11 @@ namespace Pomodoro.Timestamp
     public double to_seconds (int64 timestamp)
     {
         return ((double) timestamp) / ((double) Pomodoro.Interval.SECOND);
+    }
+
+    public uint to_seconds_uint (int64 timestamp)
+    {
+        return (uint) (timestamp / Pomodoro.Interval.SECOND).clamp (0, uint.MAX);
     }
 
     // TODO

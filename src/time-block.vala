@@ -52,6 +52,10 @@ namespace Pomodoro
             }
         }
 
+        public bool skipped {
+            get; set; default = false;
+        }
+
         public TimeBlock (Pomodoro.State  state = Pomodoro.State.UNDEFINED,
                           Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
         {
@@ -198,7 +202,7 @@ namespace Pomodoro
         }
 
         // Note: result won't make sense if block has no `start` or `end`
-        public double calculate_progress (int64 timestamp = -1)
+        public double calculate_progress (int64 timestamp = -1)  // TODO: is it used?
         {
             if (this._start_time < 0) {
                 return 0.0;
@@ -267,6 +271,22 @@ namespace Pomodoro
             return timestamp > this._end_time;
         }
 
+        // /**
+        //  * Whether time block should be included in metrics
+        //  */
+        // public bool is_significant ()
+        // {
+        //     if (this.state == Pomodoro.State.POMODORO && this.duration < Pomodoro.Interval.MINUTE) {
+        //         return false;
+        //     }
+        //
+        //     if (this.state == Pomodoro.State.BREAK && this.duration < 20 * Pomodoro.Interval.SECOND) {
+        //         return false;
+        //     }
+        //
+        //     return this.state != Pomodoro.State.UNDEFINED;
+        // }
+
         public static int compare (Pomodoro.TimeBlock a,
                                    Pomodoro.TimeBlock b)
         {
@@ -285,7 +305,6 @@ namespace Pomodoro
         {
             this.handle_changed ();
         }
-
 
         // /**
         //  * Return whether time block has bounds.

@@ -74,6 +74,14 @@ compiled_schemas = gnome.compile_schemas(
 #   build_by_default: false
 # )
 
+#compiled_schemas = custom_target(
+#  'gschemas.compiled',
+#  input: 'org.gnomepomodoro.Pomodoro.gschema.xml',
+#  output: 'gschemas.compiled',
+#  command: [compile_schemas, meson.current_build_dir()],
+#  # depends: enums_xml
+#  build_by_default: false
+#)
 
 subdir('icons')
 subdir('resources')

@@ -83,7 +83,7 @@ namespace Pomodoro
                    this == LONG_BREAK;
         }
 
-        public int64 get_default_duration ()
+        public int64 get_default_duration ()  // TODO: remove
         {
             var settings = Pomodoro.get_settings ();
             uint seconds;
@@ -110,6 +110,7 @@ namespace Pomodoro
             return (int64) seconds * Pomodoro.Interval.SECOND;
         }
 
+        /*
         public static int64 get_pomodoro_duration ()
         {
             var settings = Pomodoro.get_settings ();
@@ -133,6 +134,6 @@ namespace Pomodoro
 
             return (int64) seconds * Pomodoro.Interval.SECOND;
         }
-
+        */
     }
 }

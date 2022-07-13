@@ -219,6 +219,9 @@ namespace Tests
     {
         Gtk.init ();
         GLib.Test.init (ref args);
+
+        // Undo changes made by Test.init(), don't make warnings fatal
+        GLib.Log.set_always_fatal (GLib.LogLevelFlags.LEVEL_ERROR | GLib.LogLevelFlags.LEVEL_CRITICAL);
     }
 
 
@@ -229,7 +232,8 @@ namespace Tests
 
         root_suite.add_suite (test_suite.get_g_test_suite ());
 
-        while (true) {
+        while (true)
+        {
             Tests.TestSuite? extra_test_suite = arguments_list.arg ();
             if (extra_test_suite == null) {
                 break;  // end of the list

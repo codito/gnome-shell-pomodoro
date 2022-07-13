@@ -320,7 +320,7 @@ namespace Pomodoro
         {
             // TODO: in future we may want to align time-blocks according to agenda/scheduled events
 
-            return new Pomodoro.Session.from_template (timestamp);
+            return new Pomodoro.Session.from_template (Pomodoro.SessionTemplate (), timestamp);
         }
 
         private void initialize_timer_state (ref Pomodoro.TimerState state,

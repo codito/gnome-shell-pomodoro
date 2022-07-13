@@ -10,26 +10,33 @@ namespace Tests
     // }
 
 
-    private uint8[] list_session_states (Pomodoro.Session session)
-    {
-        uint8[] states = {};
+    // private uint8[] list_session_states (Pomodoro.Session session)
+    // {
+    //     uint8[] states = {};
 
-        session.@foreach ((time_block) => {
-            states += (uint8) time_block.state;
-        });
+    //     session.@foreach ((time_block) => {
+    //         states += (uint8) time_block.state;
+    //     });
 
-        return states;
-    }
+    //     return states;
+    // }
 
 
     public class SessionManagerTest : Tests.TestSuite
     {
-        private const uint POMODORO_DURATION = 1500;
-        private const uint SHORT_BREAK_DURATION = 300;
-        private const uint LONG_BREAK_DURATION = 900;
-        private const uint POMODOROS_PER_SESSION = 4;
+        // private const uint POMODORO_DURATION = 1500;
+        // private const uint SHORT_BREAK_DURATION = 300;
+        // private const uint LONG_BREAK_DURATION = 900;
+        // private const uint POMODOROS_PER_SESSION = 4;
 
         private Pomodoro.Timer default_timer;
+
+        private Pomodoro.SessionTemplate session_template = Pomodoro.SessionTemplate () {
+            pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
+            short_break_duration = 5 * Pomodoro.Interval.MINUTE,
+            long_break_duration = 15 * Pomodoro.Interval.MINUTE,
+            cycles = 4
+        };
 
         public SessionManagerTest ()
         {
@@ -89,11 +96,11 @@ namespace Tests
             this.default_timer = new Pomodoro.Timer ();
             this.default_timer.set_default ();
 
-            var settings = Pomodoro.get_settings ();
-            settings.set_uint ("pomodoro-duration", POMODORO_DURATION);
-            settings.set_uint ("short-break-duration", SHORT_BREAK_DURATION);
-            settings.set_uint ("long-break-duration", LONG_BREAK_DURATION);
-            settings.set_uint ("pomodoros-per-session", POMODOROS_PER_SESSION);
+            // var settings = Pomodoro.get_settings ();
+            // settings.set_uint ("pomodoro-duration", 1500);
+            // settings.set_uint ("short-break-duration", 300);
+            // settings.set_uint ("long-break-duration", 900);
+            // settings.set_uint ("pomodoros-per-session", 4);
             // settings.set_boolean ("pause-when-idle", false);
         }
 
@@ -167,7 +174,7 @@ namespace Tests
             timer.state_changed.connect (() => { state_changed_emitted++; });
 
             var session_1 = new Pomodoro.Session ();
-            var session_2 = new Pomodoro.Session.from_template ();
+            var session_2 = new Pomodoro.Session.from_template (this.session_template);
 
             // Set empty session. Expect session to be set as current despite having no time-blocks.
             session_manager.current_session = session_1;
@@ -237,8 +244,8 @@ namespace Tests
                 notify_current_time_block_emitted++;
             });
 
-            var session_1 = new Pomodoro.Session.from_template ();
-            var session_2 = new Pomodoro.Session.from_template ();
+            var session_1 = new Pomodoro.Session.from_template (this.session_template);
+            var session_2 = new Pomodoro.Session.from_template (this.session_template);
 
             session_manager.enter_session.connect (() => {
                 if (!handler_called) {
@@ -266,9 +273,9 @@ namespace Tests
             var notify_current_session_emitted = 0;
             var handler_called = false;
 
-            var session_1 = new Pomodoro.Session.from_template ();
-            var session_2 = new Pomodoro.Session.from_template ();
-            var session_3 = new Pomodoro.Session.from_template ();
+            var session_1 = new Pomodoro.Session.from_template (this.session_template);
+            var session_2 = new Pomodoro.Session.from_template (this.session_template);
+            var session_3 = new Pomodoro.Session.from_template (this.session_template);
             session_manager.current_session = session_1;
 
             // this.setup_signals (session_manager, ref signals);
@@ -328,11 +335,11 @@ namespace Tests
                 notify_current_time_block_emitted++;
             });
 
-            var session_1    = new Pomodoro.Session.from_template ();
+            var session_1    = new Pomodoro.Session.from_template (this.session_template);
             var time_block_1 = session_1.get_first_time_block ();
             var time_block_2 = session_1.get_next_time_block (time_block_1);
 
-            var session_2    = new Pomodoro.Session.from_template ();
+            var session_2    = new Pomodoro.Session.from_template (this.session_template);
             var time_block_3 = session_2.get_first_time_block ();
 
             // assert_nonnull (time_block_1);
@@ -404,7 +411,7 @@ namespace Tests
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-            var session         = new Pomodoro.Session.from_template ();
+            var session         = new Pomodoro.Session.from_template (this.session_template);
             var time_block      = session.get_first_time_block ();
 
             session_manager.current_time_block = time_block;
@@ -428,7 +435,7 @@ namespace Tests
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-            var session         = new Pomodoro.Session.from_template ();
+            var session         = new Pomodoro.Session.from_template (this.session_template);
             var time_block      = session.get_first_time_block ();
 
             session_manager.current_time_block = time_block;
@@ -491,25 +498,26 @@ namespace Tests
             timer.start ();
 
             assert_nonnull (session_manager.current_session);
-            assert_cmpmem (
-                list_session_states (session_manager.current_session),
-                {
-                    Pomodoro.State.POMODORO,
-                    Pomodoro.State.BREAK,
-                    Pomodoro.State.POMODORO,
-                    Pomodoro.State.BREAK,
-                    Pomodoro.State.POMODORO,
-                    Pomodoro.State.BREAK,
-                    Pomodoro.State.POMODORO,
-                    Pomodoro.State.BREAK
-                }
-            );
+            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
+            // assert_cmpmem (
+            //     list_session_states (session_manager.current_session),
+            //     {
+            //         Pomodoro.State.POMODORO,
+            //         Pomodoro.State.BREAK,
+            //         Pomodoro.State.POMODORO,
+            //         Pomodoro.State.BREAK,
+            //         Pomodoro.State.POMODORO,
+            //         Pomodoro.State.BREAK,
+            //         Pomodoro.State.POMODORO,
+            //         Pomodoro.State.BREAK
+            //     }
+            // );
             assert_nonnull (session_manager.current_time_block);
             assert_true (session_manager.current_time_block == session_manager.current_session.get_first_time_block ());
             assert_true (session_manager.current_time_block.state == Pomodoro.State.POMODORO);
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.duration),
-                new GLib.Variant.int64 (POMODORO_DURATION * Pomodoro.Interval.SECOND)
+                new GLib.Variant.int64 (this.session_template.pomodoro_duration)
             );
             // assert_true (timer.user_data == session_manager.current_time_block);
             assert_true (timer.is_started ());
@@ -684,7 +692,7 @@ namespace Tests
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-            var session      = new Pomodoro.Session.from_template ();
+            var session      = new Pomodoro.Session.from_template (this.session_template);
             var time_block_1 = session.get_nth_time_block (0);
             var time_block_2 = session.get_nth_time_block (1);
             var time_block_3 = session.get_nth_time_block (2);

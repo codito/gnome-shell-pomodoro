@@ -125,6 +125,10 @@ conf.set_quoted(
   'PACKAGE_BUGREPORT',
   package_bugreport,
 )
+conf.set_quoted(
+  'G_LOG_DOMAIN',
+  meson.project_name()
+)
 
 configure_file(
   output: 'config.h',
