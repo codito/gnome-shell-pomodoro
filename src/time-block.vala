@@ -43,6 +43,9 @@ namespace Pomodoro
             }
         }
 
+        /**
+         * `duration` of a time block, including gaps
+         */
         public int64 duration {
             get {
                 return this._end_time - this._start_time;
@@ -52,6 +55,10 @@ namespace Pomodoro
             }
         }
 
+        /**
+         * `skipped` is used externally to mark a time block that shouldn't be counted
+         */
+        // TODO: skipped gaps shouldn't be counted
         public bool skipped {
             get; set; default = false;
         }

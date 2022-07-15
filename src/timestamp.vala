@@ -168,7 +168,7 @@ namespace Pomodoro.Timestamp
     /**
      * Advance frozen time. Added for unittesting.
      */
-    public int64 tick (int64 interval)  // TODO: rename to "skip"
+    public int64 tick (int64 interval)  // TODO: rename to "skip" or "advance"
                        requires (interval >= 0)
     {
         if (!is_frozen ()) {

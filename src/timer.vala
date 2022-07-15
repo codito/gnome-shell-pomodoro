@@ -47,8 +47,10 @@ namespace Pomodoro
         }
 
         /**
+         * Make state copy
          *
-         * Structs in vala are copied by default. This function is unnecesary.
+         * This function is unnecesary. Structs in vala are copied by default. It's kept
+         * to bring more clarity to our code.
          */
         public Pomodoro.TimerState copy ()
         {
@@ -74,27 +76,27 @@ namespace Pomodoro
 
         public bool is_valid ()
         {
-            // Negative duration
+            // negative duration
             if (this.duration < 0) {
                 return false;
             }
 
-            // Finished, but not started
+            // finished, but not started
             if (this.finished_time >= 0 && this.started_time < 0) {
                 return false;
             }
 
-            // Finished and still paused
+            // finished and still paused
             if (this.finished_time >= 0 && this.paused_time >= 0) {
                 return false;
             }
 
-            // Paused before started
+            // paused before started
             if (this.paused_time >= 0 && this.paused_time < this.started_time) {
                 return false;
             }
 
-            // Finished before started
+            // finished before started
             if (this.finished_time >= 0 && this.finished_time < this.started_time) {
                 return false;
             }
@@ -120,6 +122,11 @@ namespace Pomodoro
             return builder.end ();
         }
 
+        /**
+         * Represent state as string.
+         *
+         * Used in tests.
+         */
         public string to_representation ()
         {
             var representation = new GLib.StringBuilder ("TimerState (\n");
@@ -190,8 +197,6 @@ namespace Pomodoro
                     // TODO: notify properties?
                     this.state_changed (this._state, previous_state);
                 }
-
-                // this.set_state_full (value);
             }
         }
 
@@ -253,7 +258,7 @@ namespace Pomodoro
             }
             construct set {
                 if (this.is_finished ()) {
-                    GLib.debug ("Trying to set timer user-data after it had finished");
+                    GLib.debug ("Trying to set timer user-data after it finished");
                 }
 
                 var new_state = this._state.copy ();
@@ -339,7 +344,7 @@ namespace Pomodoro
                 }
 
                 if (recursion_count > 1) {  // TODO: increase
-                    GLib.error ("Reached recursion limit while resolving Timer.state");
+                    GLib.error ("Reached recursion limit while resolving timer state");
                     break;
                 }
 
@@ -421,8 +426,6 @@ namespace Pomodoro
                 finished_time = Pomodoro.Timestamp.UNDEFINED,
                 user_data = user_data
             };
-
-            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -441,7 +444,6 @@ namespace Pomodoro
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             this.state = new_state;
-            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -459,7 +461,6 @@ namespace Pomodoro
             new_state.paused_time = timestamp;
 
             this.state = new_state;
-            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -478,7 +479,6 @@ namespace Pomodoro
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             this.state = new_state;
-            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -518,7 +518,6 @@ namespace Pomodoro
             new_state.offset = timestamp - new_state.started_time - new_elapsed;
 
             this.state = new_state;
-            // this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -543,30 +542,6 @@ namespace Pomodoro
             this.state = new_state;
         }
 
-        // TODO: remove timestamp?
-        // private void set_state_full (Pomodoro.TimerState state,
-        //                              int64               timestamp = -1)
-        // {
-        //     if (this._state.equals (state)) {
-        //         return;
-        //     }
-
-            // Pomodoro.ensure_timestamp (ref timestamp);
-
-        //     this.resolve_state (ref state);
-        //     assert (state.is_valid ());
-
-        //     if (!this._state.equals (state)) {
-        //         var previous_state = this._state;
-
-        //         this._state = state;
-        //         this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
-
-                // TODO: notify properties?
-        //         this.state_changed (this._state, previous_state);
-        //     }
-        // }
-
         /**
          * Mark state as "finished".
          */
@@ -589,7 +564,6 @@ namespace Pomodoro
             }
 
             this.state = new_state;
-            // this.set_state_full (new_state, timestamp);
         }
 
         // TODO: Is there a better way to detect system suspension?
@@ -610,7 +584,7 @@ namespace Pomodoro
                 return false;
             }
             else {
-                GLib.debug ("Detected suspesion for %.1fs",
+                GLib.debug ("Detected system suspension (%.1fs)",
                             (int) (Pomodoro.Timestamp.to_seconds (suspended_duration)));
 
                 var suspended_start_time = this.last_timeout_time;
@@ -759,7 +733,7 @@ namespace Pomodoro
          *
          * Intended for unit tests.
          */
-        public void tick ()
+        public void tick ()  // TODO: rename to check / check_updates / iterate?
         {
             if (this.is_running ()) {
                 this.on_timeout_idle ();
@@ -875,7 +849,7 @@ namespace Pomodoro
         }
 
         /**
-         * Emitted after a system gets suspended.
+         * Emitted after system wakes up from suspension.
          */
         public signal void suspended (int64 start_time,
                                       int64 end_time);

@@ -28,8 +28,6 @@ namespace Tests
                                    int64 duration = 10 * Pomodoro.Interval.MINUTE,
                                    void* user_data = null)
     {
-        var now = Pomodoro.Timestamp.from_now ();
-
         return Pomodoro.TimerState () {
             duration = duration,
             offset = 0,
@@ -1374,7 +1372,7 @@ namespace Tests
          */
         public void test_resolve_state_signal__recursion ()
         {
-            var now                   = Pomodoro.Timestamp.tick (0);
+            // var now                   = Pomodoro.Timestamp.tick (0);
             var paused_state          = create_paused_state ();
             var resolve_state_emitted = 0;
 

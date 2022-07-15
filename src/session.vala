@@ -58,10 +58,10 @@ namespace Pomodoro
      */
     public class Session : GLib.Object
     {
-        /**
-         * Idle time after which session should no longer be continued, and new session should be created.
-         */
-        public const int64 EXPIRE_TIMEOUT = Pomodoro.Interval.HOUR;
+        // /**
+        //  * Idle time after which session should no longer be continued, and new session should be created.
+        //  */
+        // public const int64 EXPIRE_TIMEOUT = Pomodoro.Interval.HOUR;
 
         public int64 start_time {
             get {
@@ -135,6 +135,7 @@ namespace Pomodoro
         private GLib.List<Pomodoro.TimeBlock> time_blocks;
         private int64                         _start_time = Pomodoro.Timestamp.MIN;
         private int64                         _end_time = Pomodoro.Timestamp.MAX;
+        private int64                         expiry_time = Pomodoro.Timestamp.UNDEFINED;
         // private GLib.List<Pomodoro.Cycle>     _cycles = null;
         private int                           changed_freeze_count = 0;
         private bool                          changed_is_pending = false;
@@ -615,16 +616,47 @@ namespace Pomodoro
         //     });
         // }
 
+        public void set_expiry_time (int64 timestamp = -1)
+        {
+            debug ("Session.set_expiry(%lld) %lld", timestamp, Pomodoro.Timestamp.from_now ());
 
+            // Pomodoro.ensure_timestamp (ref timestamp);
 
+            this.expiry_time = timestamp;
+        }
+
+        /**
+         * Check whether a session is suitable for reuse after being unused.
+         */
         public bool is_expired (int64 timestamp = -1)
         {
+            var original_timestamp = timestamp;
+
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var last_time_block = this.get_last_time_block ();
+            var result = this.expiry_time >= 0
+                ? timestamp >= this.expiry_time
+                : false;
+            debug ("Session.is_expired(%lld) = %s", original_timestamp, result ? "true" : "false");
 
-            return last_time_block != null && last_time_block.end_time + EXPIRE_TIMEOUT > timestamp;
+            return this.expiry_time >= 0
+                ? timestamp >= this.expiry_time
+                : false;
         }
+
+        // /**
+        //  * Check whether a session is suitable for reuse after being unused.
+        //  */
+        // public bool is_expired (int64 timestamp = -1)
+        // {
+        //     Pomodoro.ensure_timestamp (ref timestamp);
+        //
+        //     var last_time_block = this.get_last_time_block ();  // TODO: get last unskipped time-block?
+        //
+        //     return last_time_block != null
+        //         ? timestamp >= last_time_block.end_time + EXPIRE_TIMEOUT
+        //         : false;
+        // }
 
         private void emit_changed ()
         {
@@ -786,6 +818,11 @@ namespace Pomodoro
             }
 
             return link.next.data;
+        }
+
+        public int index (Pomodoro.TimeBlock time_block)
+        {
+            return this.time_blocks.index (time_block);
         }
 
         private bool contains (Pomodoro.TimeBlock time_block)
