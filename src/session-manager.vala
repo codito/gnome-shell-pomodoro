@@ -1,20 +1,5 @@
 namespace Pomodoro
 {
-    /* Minimum time in seconds for pomodoro to get scored. */
-    internal const double MIN_POMODORO_TIME = 60.0;
-
-    /* Minimum progress for pomodoro to be considered for a long break. Higer values means
-       the timer is more strict about completing pomodoros. */
-    internal const double POMODORO_THRESHOLD = 0.90;
-
-    /* Acceptable score value that can be missed during cycle. */
-    internal const double MISSING_SCORE_THRESHOLD = 0.50;
-
-    /* Minimum progress for long break to get accepted. It's in reference to duration of a short break,
-       or more precisely it's a ratio between duration of a short break and a long break. */
-    internal const double SHORT_TO_LONG_BREAK_THRESHOLD = 0.50;
-
-
     /**
      * SessionManager manages and advances time-blocks and sessions.
      */
@@ -365,19 +350,30 @@ namespace Pomodoro
             this.timer_freeze_count--;
         }
 
-
-
         private Pomodoro.Session initialize_session (int64 timestamp)
         {
             debug ("SessionManager.initialize_session");
+
             // TODO: in future we may want to align time-blocks according to agenda/scheduled events
 
-            return new Pomodoro.Session.from_template (Pomodoro.SessionTemplate (), timestamp);
+            var session = new Pomodoro.Session.from_template (Pomodoro.SessionTemplate (), timestamp);
+
+            session.@foreach (
+                time_block => {
+                    time_block.set_data<int64> ("intended-duration", time_block.duration);
+                    time_block.set_data<bool> ("completed", false);
+                    // time_block.set_data<bool> ("skipped", false);
+                }
+            );
+
+            return session;
         }
 
         private void initialize_timer_state (ref Pomodoro.TimerState state,
                                              int64                   timestamp)
         {
+            debug ("SessionManager.initialize_timer_state");
+
             var current_time_block = this._current_time_block;
 
             // Adjust timer state acording to current-time-block.
@@ -739,14 +735,19 @@ namespace Pomodoro
         {
             debug ("SessionManager.enter_session");
 
-            // TODO: monitor for session changes
+            // TODO
+            // this.current_session_expired_id = session.expired.connect (this.on_current_session_expired);
         }
 
         public signal void leave_session (Pomodoro.Session session)
         {
             debug ("SessionManager.leave_session");
 
-            // TODO disconnect session signals
+            // TODO
+            // if (this.current_session_expired_id != 0) {
+            //     session.disconnect (this.current_session_expired_id);
+            //     this.current_session_expired_id = 0;
+            // }
         }
 
         /**
@@ -757,9 +758,9 @@ namespace Pomodoro
         {
             debug ("SessionManager.enter_time_block");
 
-            if (time_block.skipped) {
-                GLib.warning ("Entering a time-block that has been skipped before");
-            }
+            // if (time_block.skipped) {
+            //     GLib.warning ("Entering a time-block that has been skipped before");
+            // }
 
             if (this.current_time_block_changed_id != 0) {
                 GLib.warning ("TimeBlock.changed signal handler has not been disconnected properly");

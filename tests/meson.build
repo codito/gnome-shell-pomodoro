@@ -24,6 +24,7 @@ test_names = [
   'timer-view-action-group',
   'session',
   'session-manager',
+  'session-manager-strategy',
   # 'utils',
 ]
 

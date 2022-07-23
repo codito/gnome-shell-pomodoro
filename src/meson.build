@@ -20,6 +20,7 @@ libgnome_pomodoro_sources = files(
   'session.vala',
   'session-entry.vala',
   'session-manager.vala',
+  'session-manager-strategy.vala',
   'settings.vala',
   'source.vala',
   'state.vala',

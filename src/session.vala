@@ -194,7 +194,7 @@ namespace Pomodoro
             {
                 time_block = link.data;
 
-                if (time_block.state == Pomodoro.State.POMODORO && !time_block.skipped)
+                if (time_block.state == Pomodoro.State.POMODORO)  // && !time_block.skipped)
                 {
                     cycle++;
 
@@ -500,7 +500,7 @@ namespace Pomodoro
 
             while (link != null)
             {
-                if (link.data.state == Pomodoro.State.POMODORO && !link.data.skipped) {
+                if (link.data.state == Pomodoro.State.POMODORO) {  // && !link.data.skipped) {
                     current_cycle = null;
                 }
 

@@ -59,9 +59,9 @@ namespace Pomodoro
          * `skipped` is used externally to mark a time block that shouldn't be counted
          */
         // TODO: skipped gaps shouldn't be counted
-        public bool skipped {
-            get; set; default = false;
-        }
+        // public bool skipped {
+        //     get; set; default = false;
+        // }
 
         public TimeBlock (Pomodoro.State  state = Pomodoro.State.UNDEFINED,
                           Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
