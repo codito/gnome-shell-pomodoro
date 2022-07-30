@@ -23,6 +23,58 @@ using GLib;
 
 namespace Pomodoro
 {
+    public enum TimerAction
+    {
+        NONE,
+        RESET,
+        START,
+        STOP,
+        PAUSE,
+        RESUME,
+        SKIP,
+        REWIND,
+        // SHORTEN,  // TODO: handle duration change
+        // EXTEND,
+        FINISH,
+        SUSPEND;  // TODO: treat suspend as PAUSE/RESUME
+
+        public string to_string ()
+        {
+            switch (this)
+            {
+                case NONE:
+                    return "none";
+
+                case RESET:
+                    return "reset";
+
+                case START:
+                    return "start";
+
+                case STOP:
+                    return "stop";
+
+                case PAUSE:
+                    return "pause";
+
+                case RESUME:
+                    return "resume";
+
+                case SKIP:
+                    return "rewind";
+
+                case FINISH:
+                    return "finish";
+
+                case SUSPEND:
+                    return "suspend";
+
+                default:
+                    return "";
+            }
+        }
+    }
+
     /**
      * Helper structure for changing several fields at once. Together they can be regarded as a timer state.
      */
@@ -185,18 +237,7 @@ namespace Pomodoro
                 return this._state;
             }
             set {
-                this.resolve_state_internal (ref value);
-                assert (value.is_valid ());
-
-                if (!this._state.equals (value)) {
-                    var previous_state = this._state;
-
-                    this._state = value;
-                    this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
-
-                    // TODO: notify properties?
-                    this.state_changed (this._state, previous_state);
-                }
+                this.set_state_full (value, Pomodoro.TimerAction.NONE);
             }
         }
 
@@ -225,6 +266,7 @@ namespace Pomodoro
                     new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
                 }
 
+                // TODO: log action: SHORTEN / EXTEND
                 this.state = new_state;
             }
         }
@@ -268,7 +310,7 @@ namespace Pomodoro
             }
         }
 
-        private Pomodoro.TimerState _state = Pomodoro.TimerState () {
+        private Pomodoro.TimerState  _state = Pomodoro.TimerState () {
             duration = 0,
             offset = 0,
             started_time = Pomodoro.Timestamp.UNDEFINED,
@@ -277,11 +319,13 @@ namespace Pomodoro
             user_data = null
         };
         private uint                 timeout_id = 0;
+        private Pomodoro.TimerAction last_action = Pomodoro.TimerAction.NONE;
         private int64                last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                last_timeout_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                last_timeout_elapsed = 0;
         private bool                 resolving_state = false;
         private Pomodoro.TimerState? state_to_resolve = null;
+        private int                  suspended_freeze_count = 0;
 
         public Timer (int64 duration = 0,
                       void* user_data = null)
@@ -306,12 +350,49 @@ namespace Pomodoro
 
                 this.update_timeout (this.last_state_changed_time);
             }
+
+            // TODO: determine last action?
+        }
+
+        construct
+        {
+            // freeze suspend detection in unittests
+            if (Pomodoro.Timestamp.is_frozen ()) {
+                this.freeze_suspended ();
+            }
         }
 
         ~Timer ()
         {
             if (Pomodoro.Timer.instance == null) {
                 Pomodoro.Timer.instance = null;
+            }
+        }
+
+        /**
+         * Try to change state and update fields related to state change
+         */
+        private void set_state_full (Pomodoro.TimerState  state,
+                                     Pomodoro.TimerAction action,
+                                     int64                timestamp = -1)
+        {
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            this.resolve_state_internal (ref state);
+            assert (state.is_valid ());
+
+            if (!this._state.equals (state))
+            {
+                var previous_state = this._state;
+
+                this._state = state;
+
+                // note that some actions won't be recorded
+                this.last_state_changed_time = timestamp;
+                this.last_action = action;
+
+                // TODO: notify properties?
+                this.state_changed (this._state, previous_state);
             }
         }
 
@@ -418,14 +499,17 @@ namespace Pomodoro
                            void* user_data = null)
                            requires (duration >= 0)
         {
-            this.state = Pomodoro.TimerState () {
-                duration = duration,
-                offset = 0,
-                started_time = Pomodoro.Timestamp.UNDEFINED,
-                paused_time = Pomodoro.Timestamp.UNDEFINED,
-                finished_time = Pomodoro.Timestamp.UNDEFINED,
-                user_data = user_data
-            };
+            this.set_state_full (
+                Pomodoro.TimerState () {
+                    duration = duration,
+                    offset = 0,
+                    started_time = Pomodoro.Timestamp.UNDEFINED,
+                    paused_time = Pomodoro.Timestamp.UNDEFINED,
+                    finished_time = Pomodoro.Timestamp.UNDEFINED,
+                    user_data = user_data
+                },
+                Pomodoro.TimerAction.RESET
+            );
         }
 
         /**
@@ -443,7 +527,7 @@ namespace Pomodoro
             new_state.started_time = timestamp;
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
-            this.state = new_state;
+            this.set_state_full (new_state, Pomodoro.TimerAction.START, timestamp);
         }
 
         /**
@@ -460,7 +544,7 @@ namespace Pomodoro
             var new_state = this._state.copy ();
             new_state.paused_time = timestamp;
 
-            this.state = new_state;
+            this.set_state_full (new_state, Pomodoro.TimerAction.PAUSE, timestamp);
         }
 
         /**
@@ -478,7 +562,7 @@ namespace Pomodoro
             new_state.offset += timestamp - new_state.paused_time;
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
-            this.state = new_state;
+            this.set_state_full (new_state, Pomodoro.TimerAction.RESUME, timestamp);
         }
 
         /**
@@ -517,7 +601,7 @@ namespace Pomodoro
 
             new_state.offset = timestamp - new_state.started_time - new_elapsed;
 
-            this.state = new_state;
+            this.set_state_full (new_state, Pomodoro.TimerAction.REWIND, timestamp);
         }
 
         /**
@@ -539,7 +623,7 @@ namespace Pomodoro
                 new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
-            this.state = new_state;
+            this.set_state_full (new_state, Pomodoro.TimerAction.SKIP, timestamp);
         }
 
         /**
@@ -563,7 +647,7 @@ namespace Pomodoro
                 new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
-            this.state = new_state;
+            this.set_state_full (new_state, Pomodoro.TimerAction.FINISH, timestamp);
         }
 
         // TODO: Is there a better way to detect system suspension?
@@ -573,11 +657,12 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var elapsed = timestamp - this._state.started_time - this._state.offset;
-            var suspended_duration = timestamp - this.last_state_changed_time;
-
             // MIN_SUSPEND_DURATION relates to a delay from expected elapsed time
-            if (suspended_duration < MIN_SUSPEND_DURATION + Pomodoro.Interval.SECOND * IDLE_TIMEOUT_SECONDS) {
+            var suspend_duration_threshold = MIN_SUSPEND_DURATION + Pomodoro.Interval.SECOND * IDLE_TIMEOUT_SECONDS;
+            var elapsed                    = timestamp - this._state.started_time - this._state.offset;
+            var suspended_duration         = timestamp - this.last_timeout_time;
+
+            if (this.suspended_freeze_count > 0 || suspended_duration < suspend_duration_threshold) {
                 this.last_timeout_time = timestamp;
                 this.last_timeout_elapsed = elapsed;
 
@@ -602,7 +687,7 @@ namespace Pomodoro
                 new_state.offset = timestamp - new_state.started_time - new_elapsed;
                 // new_state.paused_time = timestamp;  // TODO: after suspension timer should be paused, perhaps by a `suspended` handler
 
-                this.state = new_state;
+                this.set_state_full (new_state, Pomodoro.TimerAction.SUSPEND, timestamp);
 
                 this.suspended (suspended_start_time, suspended_end_time);
 
@@ -647,7 +732,7 @@ namespace Pomodoro
         /**
          * Precise timeout.
          *
-         * It's meant to be fired once at the ond of current time-block.
+         * It's meant to be fired once at the end of current time-block.
          */
         private bool on_timeout ()
                                  requires (this.timeout_id != 0)
@@ -729,9 +814,26 @@ namespace Pomodoro
         }
 
         /**
+         * Increment freeze counter for suspended signal.
+         */
+        public void freeze_suspended ()
+        {
+            this.suspended_freeze_count++;
+        }
+
+        /**
+         * Decrese freeze counter for suspended signal.
+         */
+        public void thaw_suspended ()
+        {
+            this.suspended_freeze_count--;
+        }
+
+        /**
          * Manually trigger internal timeout, which performs checks and may mark state as finished.
          *
          * Intended for unit tests.
+         * Beaware that jumping between timestamps may trigger sespended signal. Use freeze_suspended / thaw_suspended.
          */
         public void tick ()  // TODO: rename to check / check_updates / iterate?
         {
@@ -749,6 +851,11 @@ namespace Pomodoro
         public int64 get_last_state_changed_time ()
         {
             return this.last_state_changed_time;
+        }
+
+        public Pomodoro.TimerAction get_last_action ()
+        {
+            return this.last_action;
         }
 
         /**
@@ -801,6 +908,23 @@ namespace Pomodoro
             var duration = (double) this._state.duration;
 
             return duration > 0.0 ? elapsed / duration : 0.0;
+        }
+
+        /**
+         * Wait until timer finishes
+         *
+         * It will only have an effect after Timer.start() or after setting up timer state.
+         *
+         * Intended for unit tests.
+         */
+        public void run (GLib.Cancellable? cancellable = null)
+        {
+            var main_context = GLib.MainContext.@default ();
+
+            while (this.is_running () && (cancellable == null || !cancellable.is_cancelled ()))
+            {
+                main_context.iteration (true);
+            }
         }
 
         /**

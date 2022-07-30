@@ -59,6 +59,11 @@ namespace Pomodoro.Timestamp
         return (uint) (timestamp / Pomodoro.Interval.SECOND).clamp (0, uint.MAX);
     }
 
+    public uint to_milliseconds_uint (int64 timestamp)
+    {
+        return (uint) (timestamp / 1000).clamp (0, uint.MAX);
+    }
+
     // TODO
     // public GLib.Date to_date (int64 timestamp)
     // {

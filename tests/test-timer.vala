@@ -104,32 +104,33 @@ namespace Tests
         };
     }
 
-    private bool wait_timer (Pomodoro.Timer timer,
-                             uint           timeout = 0)
-                             requires (!Pomodoro.Timestamp.is_frozen ())
+    /**
+     * Wait until timer finishes
+     */
+    private bool run_timer_with_timeout (Pomodoro.Timer timer,
+                                         uint           timeout = 0)
+                                         requires (!Pomodoro.Timestamp.is_frozen ())
     {
-        var main_context = GLib.MainContext.@default ();
         var timeout_id = (uint) 0;
-        var success = true;
+        var cancellable = new GLib.Cancellable ();
 
         if (timeout == 0) {
-            timeout = (uint) (timer.calculate_remaining () / 1000 + 2000);
+            timeout = Pomodoro.Timestamp.to_milliseconds_uint (
+                timer.calculate_remaining () + 2 * Pomodoro.Interval.SECOND);
         }
 
         timeout_id = GLib.Timeout.add (timeout, () => {
             timeout_id = 0;
-            success = false;
+            cancellable.cancel ();
 
             return GLib.Source.REMOVE;
         });
 
-        while (success && timer.is_running ()) {
-            main_context.iteration (true);
-        }
+        timer.run (cancellable);
 
         GLib.Source.remove (timeout_id);
 
-        return success;
+        return !cancellable.is_cancelled ();
     }
 
 
@@ -1457,7 +1458,7 @@ namespace Tests
             timer.start ();
             assert_false (timer.is_running ());
             assert_true (timer.is_finished ());
-            assert_true (wait_timer (timer));
+            assert_true (run_timer_with_timeout (timer));
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
 
             timer.start ();
@@ -1480,7 +1481,7 @@ namespace Tests
             timer.start ();
             assert_true (timer.is_running ());
             assert_false (timer.is_finished ());
-            assert_true (wait_timer (timer));
+            assert_true (run_timer_with_timeout (timer));
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
 
             timer.start ();
@@ -1503,7 +1504,7 @@ namespace Tests
             timer.start ();
             assert_true (timer.is_running ());
             assert_false (timer.is_finished ());
-            assert_true (wait_timer (timer));
+            assert_true (run_timer_with_timeout (timer));
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
 
             timer.start ();
@@ -1539,25 +1540,33 @@ namespace Tests
                 suspended_emitted++;
             });
 
-            // Jump 10s into future
-            Pomodoro.Timestamp.tick (10 * Pomodoro.Interval.SECOND);
+            // Jump 1 minute into future
+            var expected_suspended_start_time = Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
             timer.tick ();
+            assert_true (timer.is_running ());
+            assert_cmpint (suspended_emitted, GLib.CompareOperator.EQ, 0);
+            assert_cmpint (state_changed_emitted, GLib.CompareOperator.EQ, 0);
 
+            // Jump 10s into future, check if suspended
+            var expected_suspended_end_time = Pomodoro.Timestamp.tick (10 * Pomodoro.Interval.SECOND);
+            timer.thaw_suspended ();
+            timer.tick ();
+            timer.freeze_suspended ();
             assert_true (timer.is_running ());
             assert_cmpint (suspended_emitted, GLib.CompareOperator.EQ, 1);
             assert_cmpint (state_changed_emitted, GLib.CompareOperator.EQ, 1);
 
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.calculate_elapsed ()),
-                new GLib.Variant.int64 (1 * Pomodoro.Interval.MINUTE)
+                new GLib.Variant.int64 (2 * Pomodoro.Interval.MINUTE)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (suspended_start_time),
-                new GLib.Variant.int64 (now)
+                new GLib.Variant.int64 (expected_suspended_start_time)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (suspended_end_time),
-                new GLib.Variant.int64 (now + 10 * Pomodoro.Interval.SECOND)
+                new GLib.Variant.int64 (expected_suspended_end_time)
             );
         }
     }
