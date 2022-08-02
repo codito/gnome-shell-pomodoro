@@ -7,11 +7,13 @@ namespace Pomodoro
     {
         public Pomodoro.State state { get; construct; default = Pomodoro.State.UNDEFINED; }
         public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
-        public unowned Pomodoro.Session session { get; set; }
+        public weak Pomodoro.Session session { get; set; }
 
         protected GLib.SList<Pomodoro.Gap> gaps = null;
-        protected int64 _start_time = Pomodoro.Timestamp.MIN;
-        protected int64 _end_time = Pomodoro.Timestamp.MAX;
+        protected int64                    _start_time = Pomodoro.Timestamp.MIN;
+        protected int64                    _end_time = Pomodoro.Timestamp.MAX;
+        private   int                      changed_freeze_count = 0;
+        private   bool                     changed_is_pending = false;
 
         public int64 start_time {
             get {
@@ -87,6 +89,37 @@ namespace Pomodoro
             );
         }
 
+        private void emit_changed ()
+        {
+            if (this.changed_freeze_count > 0) {
+                this.changed_is_pending = true;
+            }
+            else {
+                this.changed_is_pending = false;
+                this.changed ();
+            }
+        }
+
+        /**
+         * Increases the freeze count on this.
+         */
+        public void freeze_changed ()
+        {
+            this.changed_freeze_count++;
+        }
+
+        /**
+         * Decrease the freeze count on this.
+         */
+        public void thaw_changed ()
+        {
+            this.changed_freeze_count--;
+
+            if (this.changed_freeze_count == 0) {
+                this.emit_changed ();
+            }
+        }
+
         public void set_time_range (int64 start_time,
                                     int64 end_time)
         {
@@ -113,13 +146,14 @@ namespace Pomodoro
             }
 
             if (changed) {
-                this.changed ();
+                this.emit_changed ();
             }
         }
 
         public void move_by (int64 offset)
         {
             // TODO: supress changed signal until gaps and self are both changed
+            debug ("TimeBlock.move_by(%lld)", offset);
 
             this.gaps.@foreach ((gap) => gap.move_by (offset));
 
@@ -192,20 +226,6 @@ namespace Pomodoro
             });
 
             return remaining;
-        }
-
-        // TODO
-        public void thaw_changed ()
-        {
-
-        }
-
-        /**
-         * Increases the freeze count on this.
-         */
-        public void freeze_changed ()
-        {
-
         }
 
         // Note: result won't make sense if block has no `start` or `end`
@@ -300,7 +320,8 @@ namespace Pomodoro
             return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
         }
 
-        // TODO: remove once we can override "changed" handler in Gap.changed
+        // TODO: Vala causes issues with overriding default handler for "changed" signal when generating vapi.
+        //       Remove `handle_changed()` once we can override "changed" handler in Gap.changed.
         protected virtual void handle_changed ()
         {
             if (this.session != null) {
@@ -384,7 +405,8 @@ namespace Pomodoro
                 assert_not_reached ();
             }
         }
-        public new unowned Pomodoro.Session session {
+
+        public new weak Pomodoro.Session session {
             get {
                 return this.time_block != null ? this.time_block.session : null;
             }
@@ -392,7 +414,9 @@ namespace Pomodoro
                 assert_not_reached ();
             }
         }
-        public unowned Pomodoro.TimeBlock time_block { get; set; }
+
+        public weak Pomodoro.TimeBlock time_block { get; set; }
+
 
         public Gap (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
         {

@@ -15,19 +15,20 @@ namespace Pomodoro
         public Pomodoro.Timer timer { get; construct; }
 
         [CCode(notify = false)]
-        public Pomodoro.SessionManagerStrategy strategy {
+        public Pomodoro.SessionManagerStrategy? strategy {
             get {
                 return this._strategy;
             }
             set {
-                assert (value != null);
-
                 if (this._strategy == value) {
                     return;
                 }
 
                 this._strategy = value;
-                this._strategy.initialize (this);
+
+                if (this._strategy != null) {
+                    this._strategy.initialize (this);
+                }
 
                 this.notify_property ("strategy");
             }
@@ -146,17 +147,19 @@ namespace Pomodoro
         {
             this.timer.reset ();
 
-            if (this._strategy == null) {
+            // if (this._strategy == null) {
                 // TODO: choose from settings
-                this._strategy = new Pomodoro.StrictSessionManagerStrategy ();
-            }
+                // this._strategy = new Pomodoro.NullSessionManagerStrategy ();
+            // }
 
             this.timer_resolve_state_id = this.timer.resolve_state.connect (this.on_timer_resolve_state);
             this.timer_state_changed_id = this.timer.state_changed.connect (this.on_timer_state_changed);
             this.timer_suspended_id = this.timer.suspended.connect (this.on_timer_suspended);
             this.timer_finished_id = this.timer.finished.connect (this.on_timer_finished);
 
-            this._strategy.initialize (this);
+            if (this._strategy != null) {
+                this._strategy.initialize (this);
+            }
         }
 
         private void set_current_time_block_internal (Pomodoro.Session?   session,
@@ -305,7 +308,12 @@ namespace Pomodoro
             // });
         }
 
-
+        public unowned Pomodoro.TimeBlock? get_current_or_previous_time_block ()
+        {
+            return this._current_time_block != null
+                ? this._current_time_block
+                : this.previous_time_block;
+        }
 
         // TODO: store as json or in db?
         /**
@@ -493,10 +501,11 @@ namespace Pomodoro
             Pomodoro.ensure_timestamp (ref timestamp);
 
             if (time_block != null) {
-                debug("advance_to_time_block: %d", time_block.session.index(time_block));
+                debug("advance_to_time_block: %d", time_block.session.index (time_block));
             }
 
             if (time_block == this._current_time_block && !time_block.has_ended (timestamp)) {
+                debug("advance_to_time_block: extend_current_time_block");
                 this.extend_current_time_block (timestamp);
                 // this.bump_expiry_time (SESSION_EXPIRY_TIMEOUT);  // TODO: is it the best place to do bump expiry-time?
                 return;
@@ -676,7 +685,9 @@ namespace Pomodoro
 
             // var timestamp = this.timer.get_last_state_changed_time ();
 
-            this.strategy.handle_timer_state_changed (this.timer, current_state, previous_state);
+            if (this.strategy != null) {
+                this.strategy.handle_timer_state_changed (this.timer, current_state, previous_state);
+            }
 
             if (this.timer_freeze_count > 0) {
                 debug ("SessionManager.on_timer_state_changed: A");
@@ -729,7 +740,9 @@ namespace Pomodoro
 
         private void on_timer_finished (Pomodoro.TimerState state)
         {
-            this.strategy.handle_timer_finished (this.timer, state);
+            if (this.strategy != null) {
+                this.strategy.handle_timer_finished (this.timer, state);
+            }
         }
 
         private void on_current_time_block_changed (Pomodoro.TimeBlock time_block)
@@ -805,7 +818,9 @@ namespace Pomodoro
 
             this.current_time_block_changed_id = time_block.changed.connect (this.on_current_time_block_changed);
 
-            this.strategy.handle_session_manager_enter_time_block (this, time_block);
+            if (this.strategy != null) {
+                this.strategy.handle_session_manager_enter_time_block (this, time_block);
+            }
         }
 
         public signal void leave_time_block (Pomodoro.TimeBlock time_block)
@@ -817,7 +832,9 @@ namespace Pomodoro
                 this.current_time_block_changed_id = 0;
             }
 
-            this.strategy.handle_session_manager_leave_time_block (this, time_block);
+            if (this.strategy != null) {
+                this.strategy.handle_session_manager_leave_time_block (this, time_block);
+            }
         }
 
         public signal void state_changed (Pomodoro.State current_state,

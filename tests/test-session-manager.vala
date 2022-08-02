@@ -13,11 +13,11 @@ namespace Tests
     // private uint8[] list_session_states (Pomodoro.Session session)
     // {
     //     uint8[] states = {};
-
+    //
     //     session.@foreach ((time_block) => {
     //         states += (uint8) time_block.state;
     //     });
-
+    //
     //     return states;
     // }
 
@@ -760,7 +760,8 @@ namespace Tests
             session_manager.strategy = strategy_2;
             assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 2);
 
-            // session_manager.strategy = null;  // TODO expect error
+            session_manager.strategy = null;
+            assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 3);
         }
 
         /*
@@ -812,7 +813,11 @@ namespace Tests
             session_manager.leave_session.connect (() => { signals += "leave-session"; });
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
+            debug ("### A");
+
             timer.start ();
+
+            debug ("### B");
 
             assert_nonnull (session_manager.current_session);
             assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);

@@ -47,6 +47,19 @@ namespace Pomodoro
     }
 
 
+    internal class TimeBlockSessionData
+    {
+        public bool  started;
+        public bool  finished;
+        public int64 intended_duration;
+        public int64 elapsed;
+        public float score;
+        public ulong changed_id;
+        public ulong notify_start_time_id;
+        public ulong notify_end_time_id;
+    }
+
+
     /**
      * Pomodoro.Session class.
      *
@@ -86,57 +99,10 @@ namespace Pomodoro
             }
         }
 
-        // /**
-        //  * Number of cycles within a session.
-        //  *
-        //  * By a "cycle" we refer to a pair of Pomodoro and a Break. If a session starts with a break a cycle
-        //  * starts with a break.
-        //  */
-        // public GLib.List<Pomodoro.Cycle> cycles {
-        //     get {
-        //         if (this._cycles == null) {
-                    // TODO: should be done when modifying time blocks
-        //             this.update_cycles ();
-        //         }
-
-        //         return this._cycles;
-
-                // if (this._cycles)
-                // {
-                //     var cycles = 0U;
-                //     var first_state = Pomodoro.State.UNDEFINED;
-                //     unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.first ();
-
-                //     if (link != null)
-                //     {
-                //         first_state = link.data.state;
-                //         cycles++;
-                //     }
-
-                //     while (link != null)
-                //     {
-                //         if (link.prev != null &&
-                //             link.data.state != link.prev.data.state &&
-                //             link.data.state == first_state)
-                //         {
-                //             cycles++;
-                //         }
-
-                //         link = link.next;
-                //     }
-
-                //     this._cycles = (int) cycles;
-                // }
-
-                // return (uint) this._cycles;
-        //     }
-        // }
-
         private GLib.List<Pomodoro.TimeBlock> time_blocks;
         private int64                         _start_time = Pomodoro.Timestamp.MIN;
         private int64                         _end_time = Pomodoro.Timestamp.MAX;
         private int64                         expiry_time = Pomodoro.Timestamp.UNDEFINED;
-        // private GLib.List<Pomodoro.Cycle>     _cycles = null;
         private int                           changed_freeze_count = 0;
         private bool                          changed_is_pending = false;
 
@@ -173,6 +139,75 @@ namespace Pomodoro
             this.time_blocks = null;
             this._start_time = Pomodoro.Timestamp.MIN;
             this._end_time = Pomodoro.Timestamp.MAX;
+
+            // this.emit_changed ();
+        }
+
+        private void update_time_range ()
+        {
+            unowned Pomodoro.TimeBlock first_time_block = this.get_first_time_block ();
+            unowned Pomodoro.TimeBlock last_time_block = this.get_last_time_block ();
+
+            var old_duration = this._end_time - this._start_time;
+
+            var start_time = first_time_block != null
+                ? first_time_block.start_time
+                : Pomodoro.Timestamp.MIN;
+
+            var end_time = last_time_block != null
+                ? last_time_block.end_time
+                : Pomodoro.Timestamp.MAX;
+
+            if (this._start_time != start_time) {
+                this._start_time = start_time;
+                this.notify_property ("start-time");
+            }
+
+            if (this._end_time != end_time) {
+                this._end_time = end_time;
+                this.notify_property ("end-time");
+            }
+
+            if (this._end_time - this._start_time != old_duration) {
+                this.notify_property ("duration");
+            }
+        }
+
+        private void change_time_block (Pomodoro.TimeBlock                    time_block,
+                                        GLib.Func<unowned Pomodoro.TimeBlock> func)
+        {
+            debug ("change_time_block: A");
+
+            var data = time_block.get_data<Pomodoro.TimeBlockSessionData> ("session-data");
+
+            debug ("change_time_block: B");
+
+
+            // if (data.changed_id > 0) {
+            //     GLib.SignalHandler.block (time_block, data.changed_id);
+            // }
+
+            // if (data.notify_start_time_id > 0) {
+            //     GLib.SignalHandler.block (time_block, data.notify_start_time_id);
+            // }
+
+            // if (data.notify_end_time_id > 0) {
+            //     GLib.SignalHandler.block (time_block, data.notify_end_time_id);
+            // }
+
+            func (time_block);
+
+            // if (data.changed_id > 0) {
+            //     GLib.SignalHandler.unblock (time_block, data.changed_id);
+            // }
+
+            // if (data.notify_start_time_id > 0) {
+            //     GLib.SignalHandler.unblock (time_block, data.notify_start_time_id);
+            // }
+
+            // if (data.notify_end_time_id > 0) {
+            //     GLib.SignalHandler.unblock (time_block, data.notify_end_time_id);
+            // }
         }
 
         /**
@@ -180,8 +215,8 @@ namespace Pomodoro
          *
          * Only scheduled timeblocks should be adjusted to a new template.
          */
-        private void repopulate (Pomodoro.SessionTemplate template,
-                                 int64                    timestamp = -1)
+        private void repopulate_internal (Pomodoro.SessionTemplate template,
+                                          int64                    timestamp = -1)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -276,79 +311,74 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            if (!this.time_blocks.is_empty ()) {
-                this.repopulate (template, timestamp);
-                return;
-            }
-
             var remaining_cycles = template.cycles;
             Pomodoro.TimeBlock? time_block;
 
-            this._start_time = timestamp;
-            this._end_time = timestamp;
+            this.freeze_changed ();
 
-            while (remaining_cycles > 0)
+            if (this.time_blocks.is_empty ())
             {
-                remaining_cycles--;
+                this._start_time = timestamp;
+                this._end_time = timestamp;
 
-                time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
-                time_block.set_time_range (this._end_time, this._end_time + template.pomodoro_duration);
-                this.append_internal (time_block);
+                while (remaining_cycles > 0)
+                {
+                    remaining_cycles--;
 
-                time_block = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
-                time_block.set_time_range (
-                    this._end_time,
-                    this._end_time + (
-                        remaining_cycles != 0 ? template.short_break_duration : template.long_break_duration
-                    )
-                );
-                this.append_internal (time_block);
+                    time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+                    time_block.set_time_range (this._end_time, this._end_time + template.pomodoro_duration);
+                    this.append_internal (time_block);
+
+                    time_block = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
+                    time_block.set_time_range (
+                        this._end_time,
+                        this._end_time + (
+                            remaining_cycles != 0 ? template.short_break_duration : template.long_break_duration
+                        )
+                    );
+                    this.append_internal (time_block);
+                }
             }
+            else {
+                this.repopulate_internal (template, timestamp);
+            }
+
+            // this.update_time_range ();  // it's called after every addition / removal
+            this.thaw_changed ();
         }
 
-/*
-        public void populate (Pomodoro.SessionTemplate template,
-                              int64                    timestamp = -1)
+        /**
+         * Normalization ensures that following time-blocks align with each other.
+         */
+        public void normalize (int64 timestamp = -1)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var remaining_cycles = template.cycles;
-            // var remaining_cycles = Pomodoro.Settings.get_cycles_per_session ();
-            // var pomodoro_duration = Pomodoro.Settings.get_pomodoro_duration ();
-            // var short_break_duration = Pomodoro.Settings.get_short_break_duration ();
-            // var long_break_duration = Pomodoro.Settings.get_long_break_duration ();
+            this.freeze_changed ();
 
-            this._start_time = timestamp;
-            this._end_time = timestamp;
+            // TODO
 
-            while (remaining_cycles > 0)
-            {
-                remaining_cycles--;
-
-                var pomodoro = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
-                pomodoro.set_time_range (this._end_time, this._end_time + template.pomodoro_duration);
-                this.append_internal (pomodoro);
-
-                if (remaining_cycles != 0) {
-                    var short_break = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
-                    short_break.set_time_range (this._end_time, this._end_time + template.short_break_duration);
-                    this.append_internal (short_break);
-                }
-                else {
-                    var long_break = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
-                    long_break.set_time_range (this._end_time, this._end_time + template.long_break_duration);
-                    this.append_internal (long_break);
-                }
-            }
+            this.thaw_changed ();
         }
-        */
+
+        private void mark_time_block_started (Pomodoro.TimeBlock time_block)
+                                              requires (time_block.session == this)
+        {
+
+        }
+
+        private void mark_time_block_ended (Pomodoro.TimeBlock time_block)
+                                            requires (time_block.session == this)
+        {
+
+        }
 
         /**
          * Extend session by one cycle
          *
          * Only make changes to blocks scheduled into future.
          */
-        public void extend (int64 timestamp = -1)
+        public void extend (int64 timestamp = -1)  // TODO: rename to add_cycle?
         {
             var cycles = this.get_cycles ();
             var template = Pomodoro.SessionTemplate ();
@@ -366,7 +396,6 @@ namespace Pomodoro
             // this.populate (template, timestamp);
 
             // TODO
-
         }
 
         /**
@@ -374,7 +403,7 @@ namespace Pomodoro
          *
          * Only make changes to blocks scheduled into future.
          */
-        public void shorten (int64 timestamp = -1)
+        public void shorten (int64 timestamp = -1)  // TODO: rename to remove_cycle?
         {
             var cycles = this.get_cycles ();
             if (cycles.is_empty ()) {
@@ -394,11 +423,14 @@ namespace Pomodoro
 
         public void move_by (int64 offset)
         {
-            // TODO: freeze updated signal
-
             this.time_blocks.@foreach ((time_block) => {
-                time_block.move_by (offset);
+                this.change_time_block (time_block, () => {
+                    time_block.move_by (offset);
+                });
             });
+
+            // this.update_time_range ();
+            this.emit_changed ();
         }
 
         public void move_to (int64 timestamp)
@@ -425,11 +457,16 @@ namespace Pomodoro
 
             while (link != null)
             {
-                time_block = link.data;
-                time_block.move_by (link.next.data.start_time - time_block.end_time);
+                this.change_time_block (time_block, () => {
+                    time_block = link.data;
+                    time_block.move_by (link.next.data.start_time - time_block.end_time);
+                });
 
                 link = link.prev;
             }
+
+            // this.update_time_range ();
+            this.emit_changed ();
         }
 
         public void align_after (Pomodoro.TimeBlock? time_block)
@@ -447,31 +484,17 @@ namespace Pomodoro
 
             while (link != null)
             {
-                time_block = link.data;
-                time_block.move_to (link.prev.data.start_time);
-
-                link = link.next;
-            }
-        }
-
-        /*
-        private Pomodoro.State get_first_state ()
-        {
-            unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.first ();
-
-            while (link != null)
-            {
-                if (link.data.state != Pomodoro.State.UNDEFINED) {
-                    return link.data.state;
-                }
+                this.change_time_block (time_block, () => {
+                    time_block = link.data;
+                    time_block.move_to (link.prev.data.start_time);
+                });
 
                 link = link.next;
             }
 
-            return Pomodoro.State.POMODORO;
+            // this.update_time_range ();
+            this.emit_changed ();
         }
-        */
-
 
         /**
          * Split session into cycles.
@@ -582,40 +605,8 @@ namespace Pomodoro
         //     return session;
         // }
 
-        // TODO
-        // public void join (Pomodoro.Session other)
-        // {
-        //     other.move_to (this.end_time);
-        //     other.time_blocks.@foreach ((time_block) => {
-        //         this.time_blocks.append (time_block);
-        //     });
-        // }
 
-
-
-
-
-        // public void reschedule (Pomodoro.TimeBlock time_block,
-        //                         int64              start_time)
-        // {
-        //     var offset = start_time - time_block.start_time;
-        //     var changing = false;
-        //
-        //     if (offset == 0) {
-        //         return;
-        //     }
-        //
-        //     this.time_blocks.@foreach ((scheduled_time_block) => {
-        //         if (scheduled_time_block == time_block) {
-        //             changing = true;
-        //         }
-        //
-        //         if (changing) {
-        //             scheduled_time_block.move_by (offset);
-        //         }
-        //     });
-        // }
-
+        // TODO: remove, mark timeblocks as started
         public void set_expiry_time (int64 timestamp = -1)
         {
             debug ("Session.set_expiry(%lld) %lld", timestamp, Pomodoro.Timestamp.from_now ());
@@ -643,6 +634,8 @@ namespace Pomodoro
                 ? timestamp >= this.expiry_time
                 : false;
         }
+
+        // TODO: base expiry on TimeBlock.status
 
         // /**
         //  * Check whether a session is suitable for reuse after being unused.
@@ -926,9 +919,6 @@ namespace Pomodoro
             }
 
             this.time_blocks.remove_link (link);
-
-            time_block.session = null;
-
             this.time_block_removed (time_block);
         }
 
@@ -937,12 +927,23 @@ namespace Pomodoro
             unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.find (time_block);
 
             if (link == null) {
+                // TODO: warn that block does not belong to session
                 return;
             }
 
-            while (link.prev != null) {
-                this.time_blocks.remove_link (link.prev);
+            if (link.prev == null) {
+                return;
             }
+
+            this.freeze_changed ();
+
+            while (link.prev != null)
+            {
+                this.time_blocks.remove_link (link.prev);
+                this.time_block_removed (link.prev.data);
+            }
+
+            this.thaw_changed ();
         }
 
         public void remove_after (Pomodoro.TimeBlock time_block)
@@ -950,16 +951,108 @@ namespace Pomodoro
             unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.find (time_block);
 
             if (link == null) {
+                // TODO: warn that block does not belong to session
                 return;
             }
 
-            while (link.next != null) {
-                this.time_blocks.remove_link (link.next);
+            if (link.next == null) {
+                return;
             }
+
+            this.freeze_changed ();
+
+            while (link.next != null)
+            {
+                this.time_blocks.remove_link (link.next);
+                this.time_block_removed (link.next.data);
+            }
+
+            this.thaw_changed ();
         }
 
+        [Signal (run = "first")]
+        public signal void time_block_added (Pomodoro.TimeBlock time_block)
+        {
+            // TODO: we need a wrapper for time-block containing strategy data, handler ids and souch
 
+            var data = time_block.get_data<Pomodoro.TimeBlockSessionData> ("session-data");
 
+            var changed_id = time_block.changed.connect (() => {
+                this.emit_changed ();
+            });
+            time_block.set_data<ulong> ("changed-id", changed_id);
+
+            this.emit_changed ();
+        }
+
+        [Signal (run = "first")]
+        public signal void time_block_removed (Pomodoro.TimeBlock time_block)
+        {
+            var changed_id = time_block.get_data<ulong> ("changed-id");
+            GLib.SignalHandler.disconnect (time_block, changed_id);
+
+            time_block.session = null;
+
+            this.emit_changed ();
+        }
+
+        [Signal (run = "first")]
+        public signal void changed ()
+        {
+            this.update_time_range ();
+        }
+    }
+}
+
+    /*
+
+        [Signal (run = "first")]
+        public signal void time_block_added (Pomodoro.TimeBlock time_block)
+        {
+            // var changed_id = time_block.changed.connect (this.on_time_block_changed);
+            // var notify_start_time_id = time_block.notify["start-time"].connect (this.on_time_block_notify_start_time);
+            // var notify_end_time_id = time_block.notify["end-time"].connect (this.on_time_block_notify_end_time);
+
+            var changed_id = time_block.changed.connect (() => {
+                this.emit_changed ();
+            });
+            // var notify_start_time_id = time_block.notify["start-time"].connect (() => {
+            //     this.emit_changed ();
+            // });
+            // var notify_end_time_id = time_block.notify["end-time"].connect (() => {
+            //     this.emit_changed ();
+            // });
+
+            // TODO: we need a wrapper for time-block containing strategy data, handler ids and souch
+            time_block.set_data<ulong> ("changed-id", changed_id);
+            // time_block.set_data<ulong> ("notify-start-time-id", notify_start_time_id);
+            // time_block.set_data<ulong> ("notify-end-time-id", notify_end_time_id);
+
+            // this.update_time_range ();
+            this.emit_changed ();
+        }
+
+        [Signal (run = "first")]
+        public signal void time_block_removed (Pomodoro.TimeBlock time_block)
+        {
+            var changed_id = time_block.get_data<ulong> ("changed-id");
+            // var notify_start_time_id = time_block.get_data<ulong> ("notify-start-time-id");
+            // var notify_end_time_id = time_block.get_data<ulong> ("notify-end-time-id");
+
+            GLib.SignalHandler.disconnect (time_block, changed_id);
+            // GLib.SignalHandler.disconnect (time_block, notify_start_time_id);
+            // GLib.SignalHandler.disconnect (time_block, notify_end_time_id);
+
+            // GLib.SignalHandler.disconnect_by_func (time_block, this.on_time_block_changed, this);
+            // GLib.SignalHandler.disconnect_by_func (time_block, this.on_time_block_notify_start_time, this);
+            // GLib.SignalHandler.disconnect_by_func (time_block, this.on_time_block_notify_end_time, this);
+
+            time_block.session = null;
+
+            // this.update_time_range ();
+            this.emit_changed ();
+        }
+     */
 
 
         // public bool has_started (int64 timestamp = -1)
@@ -984,89 +1077,132 @@ namespace Pomodoro
         //     return false;
         // }
 
-
-
-
-
-
-
-
-
-
-
-        // private void on_time_block_added (Pomodoro.TimeBlock time_block)
-        // {
-        // }
-
-        // private void on_time_block_removed (Pomodoro.TimeBlock time_block)
-        // {
-        // }
-
+        /*
         private void on_time_block_changed (Pomodoro.TimeBlock time_block)
         {
+            this.emit_changed ();
         }
 
-        private void on_time_block_notify_start_time (Pomodoro.TimeBlock time_block)
+        private void on_time_block_notify_start_time (GLib.ParamSpec     param_spec)
         {
-            // TODO: sort time_blocks
+            // TODO: sort time_blocks?
 
-            unowned TimeBlock first_time_block = this.get_first_time_block ();
-
-            this._start_time = first_time_block.start_time;
+            // this.update_time_range ();
+            this.emit_changed ();
         }
 
-        private void on_time_block_notify_end_time (Pomodoro.TimeBlock time_block)
+        private void on_time_block_notify_end_time (GLib.ParamSpec     param_spec)
         {
-            // TODO: sort time_blocks
+            // TODO: sort time_blocks?
 
-            unowned TimeBlock last_time_block = this.get_first_time_block ();
-
-            this._end_time = last_time_block.end_time;
+            // this.update_time_range ();
+            this.emit_changed ();
         }
+        */
 
-
-
-
-
-        public signal void time_block_added (Pomodoro.TimeBlock time_block)
+/*
+        public void populate (Pomodoro.SessionTemplate template,
+                              int64                    timestamp = -1)
         {
-            // TODO: connect time_block
-            // time_block.changed.connect (this.on_time_block_changed);
+            Pomodoro.ensure_timestamp (ref timestamp);
 
-            // var start_time = int64.min (this._start_time, time_block.start_time);
-            // var end_time = int64.max (this._end_time, time_block.end_time);
+            var remaining_cycles = template.cycles;
+            // var remaining_cycles = Pomodoro.Settings.get_cycles_per_session ();
+            // var pomodoro_duration = Pomodoro.Settings.get_pomodoro_duration ();
+            // var short_break_duration = Pomodoro.Settings.get_short_break_duration ();
+            // var long_break_duration = Pomodoro.Settings.get_long_break_duration ();
 
-            // if (this._start_time != start_time) {
-            //     this._start_time = start_time;
-            //     this.notify_property ("start-time");
-                // changed = true;
-            // }
+            this._start_time = timestamp;
+            this._end_time = timestamp;
 
-            // if (this._end_time != end_time) {
-            //     this._end_time = end_time;
-            //     this.notify_property ("end-time");
-                // changed = true;
-            // }
+            while (remaining_cycles > 0)
+            {
+                remaining_cycles--;
 
-            // if (changed) {
-            //     this.changed ();
-            // }
+                var pomodoro = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+                pomodoro.set_time_range (this._end_time, this._end_time + template.pomodoro_duration);
+                this.append_internal (pomodoro);
+
+                if (remaining_cycles != 0) {
+                    var short_break = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
+                    short_break.set_time_range (this._end_time, this._end_time + template.short_break_duration);
+                    this.append_internal (short_break);
+                }
+                else {
+                    var long_break = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
+                    long_break.set_time_range (this._end_time, this._end_time + template.long_break_duration);
+                    this.append_internal (long_break);
+                }
+            }
         }
+        */
 
-        public signal void time_block_removed (Pomodoro.TimeBlock time_block)
-        {
-            // unowned TimeBlock first_time_block = this.get_first_time_block ();
-            // unowned TimeBlock last_time_block = this.get_last_time_block ();
 
-            // this._start_time = first_time_block != null
-            //     ? first_time_block.start_time
-            //     : Pomodoro.Timestamp.MIN;
+        // /**
+        //  * Number of cycles within a session.
+        //  *
+        //  * By a "cycle" we refer to a pair of Pomodoro and a Break. If a session starts with a break a cycle
+        //  * starts with a break.
+        //  */
+        // public GLib.List<Pomodoro.Cycle> cycles {
+        //     get {
+        //         if (this._cycles == null) {
+                    // TODO: should be done when modifying time blocks
+        //             this.update_cycles ();
+        //         }
 
-            // this._end_time = last_time_block != null
-            //     ? last_time_block.start_time
-            //     : Pomodoro.Timestamp.MAX;
-        }
+        //         return this._cycles;
 
-        public signal void changed ();
-    }
-}
+                // if (this._cycles)
+                // {
+                //     var cycles = 0U;
+                //     var first_state = Pomodoro.State.UNDEFINED;
+                //     unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.first ();
+
+                //     if (link != null)
+                //     {
+                //         first_state = link.data.state;
+                //         cycles++;
+                //     }
+
+                //     while (link != null)
+                //     {
+                //         if (link.prev != null &&
+                //             link.data.state != link.prev.data.state &&
+                //             link.data.state == first_state)
+                //         {
+                //             cycles++;
+                //         }
+
+                //         link = link.next;
+                //     }
+
+                //     this._cycles = (int) cycles;
+                // }
+
+                // return (uint) this._cycles;
+        //     }
+        // }
+
+
+        // public void reschedule (Pomodoro.TimeBlock time_block,
+        //                         int64              start_time)
+        // {
+        //     var offset = start_time - time_block.start_time;
+        //     var changing = false;
+        //
+        //     if (offset == 0) {
+        //         return;
+        //     }
+        //
+        //     this.time_blocks.@foreach ((scheduled_time_block) => {
+        //         if (scheduled_time_block == time_block) {
+        //             changing = true;
+        //         }
+        //
+        //         if (changing) {
+        //             scheduled_time_block.move_by (offset);
+        //         }
+        //     });
+        // }
+

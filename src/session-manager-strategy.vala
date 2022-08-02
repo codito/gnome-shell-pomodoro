@@ -15,14 +15,55 @@ namespace Pomodoro
        or more precisely it's a ratio between duration of a short break and a long break. */
     internal const double SHORT_TO_LONG_BREAK_THRESHOLD = 0.50;
 
+
+    /*
+    private void foreach_future_time_block (Pomodoro.Session    session,
+                                            Pomodoro.TimeBlock? current_or_previous_time_block,
+                                            GLib.Func<unowned Pomodoro.TimeBlock> func)
+    {
+        var current_or_previous_time_block;
+
+        if (current_or_previous_time_block != null && current_or_previous_time_block.session != session) {
+            current_or_previous_time_block = null;
+        }
+
+        // var skip_count = current_or_previous_time_block != null && this.session_manager.current_session == session
+        //     ? this.session_manager.current_session.index (current_or_previous_time_block)
+        //     : 0;
+        var skipping = current_or_previous_time_block != null;
+
+        session.freeze_changed ();
+        session.@foreach (time_block => {
+            if (skipping) {
+                if (time_block == current_or_previous_time_block) {
+                    skipping = false;
+                }
+            }
+            else {
+                time_block.move_to (previous_end_time);
+            }
+
+            previous_end_time = time_block.end_time;
+        });
+        session.thaw_changed ();
+    }
+    */
+
+
     /**
      * A "strategy" modifies a session according to timer changes.
      */
     public abstract class SessionManagerStrategy : GLib.Object
     {
-        public void initialize (Pomodoro.SessionManager session_manager)
+        protected weak Pomodoro.SessionManager session_manager;
+        protected weak Pomodoro.Timer          timer;
+
+        public virtual void initialize (Pomodoro.SessionManager session_manager)
         {
-            // TODO: initialize during init, so there is less spaghetti code
+            this.session_manager = session_manager;
+            this.timer           = session_manager.timer;
+
+            // TODO: setup handlers here, rather than exposing public methods
         }
 
         public virtual void handle_session_manager_enter_time_block (Pomodoro.SessionManager session_manager,
@@ -75,7 +116,59 @@ namespace Pomodoro
         public virtual void reschedule (Pomodoro.Session session,
                                         int64            timestamp = -1)
         {
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            var previous_end_time              = timestamp;
+            var current_or_previous_time_block = this.session_manager.get_current_or_previous_time_block ();
+            var skipping                       = current_or_previous_time_block != null;
+
+            // TODO: use time_bloc.has_started instead of sesion-manager
+
+            if (current_or_previous_time_block != null && current_or_previous_time_block.session != session) {
+                current_or_previous_time_block = null;
+                skipping = false;
+            }
+
+            session.freeze_changed ();
+            session.@foreach (time_block => {
+                if (skipping) {
+                    if (time_block == current_or_previous_time_block) {
+                        skipping = false;
+                    }
+                }
+                else {
+                    time_block.move_to (previous_end_time);
+                }
+
+                previous_end_time = time_block.end_time;
+            });
+            session.thaw_changed ();
         }
+
+
+            /*
+            // get index of a first future timeblock
+            var skip_count = current_or_previous_time_block != null && this.session_manager.current_session == session
+                ? this.session_manager.current_session.index (current_or_previous_time_block)
+                : 0;
+            debug ("reschedule: skip_count=%d", skip_count);
+
+            session.freeze_changed ();
+            session.@foreach (time_block => {
+                if (skip_count >= 0 && time_block.start_time < previous_end_time) {
+                    time_block.move_to (previous_end_time);
+                }
+
+                skip_count--;
+                previous_end_time = time_block.end_time;
+            });
+
+            // TODO: add extra cycles
+
+            session.thaw_changed ();
+            */
+
+
 
         // public void reschedule (Pomodoro.TimeBlock time_block,
         //                         int64              start_time)

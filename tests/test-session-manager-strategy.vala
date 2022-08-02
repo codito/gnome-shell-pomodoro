@@ -1,93 +1,5 @@
 namespace Tests
 {
-
-    /*
-     * Fixtures
-     */
-
-    /*
-    private Pomodoro.TimerState create_initial_state (
-                                   int64 duration = 10 * Pomodoro.Interval.MINUTE,
-                                   void* user_data = null)
-    {
-        return Pomodoro.TimerState () {
-            duration = duration,
-            offset = 0,
-            started_time = Pomodoro.Timestamp.UNDEFINED,
-            paused_time = Pomodoro.Timestamp.UNDEFINED,
-            finished_time = Pomodoro.Timestamp.UNDEFINED,
-            user_data = user_data
-        };
-    }
-
-    private Pomodoro.TimerState create_started_state (
-                                   int64 duration = 10 * Pomodoro.Interval.MINUTE,
-                                   int64 elapsed = 0 * Pomodoro.Interval.MINUTE,
-                                   int64 timestamp = -1,
-                                   void* user_data = null)
-    {
-        var now = Pomodoro.Timestamp.from_now ();
-
-        if (timestamp < 0) {
-            timestamp = now - elapsed;
-        }
-
-        return Pomodoro.TimerState () {
-            duration = duration,
-            offset = now - timestamp - elapsed,
-            started_time = timestamp,
-            paused_time = Pomodoro.Timestamp.UNDEFINED,
-            finished_time = Pomodoro.Timestamp.UNDEFINED,
-            user_data = user_data
-        };
-    }
-
-    private Pomodoro.TimerState create_paused_state (
-                                   int64 duration = 10 * Pomodoro.Interval.MINUTE,
-                                   int64 elapsed = 0 * Pomodoro.Interval.MINUTE,
-                                   int64 timestamp = -1,
-                                   void* user_data = null)
-    {
-        var now = Pomodoro.Timestamp.from_now ();
-
-        if (timestamp < 0) {
-            timestamp = now - elapsed;
-        }
-
-        return Pomodoro.TimerState () {
-            duration = duration,
-            offset = now - timestamp - elapsed,
-            started_time = timestamp,
-            paused_time = now,
-            finished_time = Pomodoro.Timestamp.UNDEFINED,
-            user_data = user_data
-        };
-    }
-
-    private Pomodoro.TimerState create_finished_state (
-                                   int64 duration = 10 * Pomodoro.Interval.MINUTE,
-                                   int64 elapsed = 10 * Pomodoro.Interval.MINUTE,
-                                   int64 timestamp = -1,
-                                   void* user_data = null)
-    {
-        var now = Pomodoro.Timestamp.from_now ();
-
-        if (timestamp < 0) {
-            timestamp = now - elapsed;
-        }
-
-        return Pomodoro.TimerState () {
-            duration = duration,
-            offset = now - timestamp - elapsed,
-            started_time = timestamp,
-            paused_time = Pomodoro.Timestamp.UNDEFINED,
-            finished_time = now,
-            user_data = user_data
-        };
-    }
-    */
-
-
     /*
      * Helpful functions
      */
@@ -108,15 +20,8 @@ namespace Tests
 
     public abstract class SessionManagerStrategyTest : Tests.TestSuite
     {
-        protected Pomodoro.Timer timer;
+        protected Pomodoro.Timer          timer;
         protected Pomodoro.SessionManager session_manager;
-
-        protected Pomodoro.SessionTemplate session_template = Pomodoro.SessionTemplate () {
-            pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-            short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-            long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-            cycles = 4
-        };
 
         public override void setup ()
         {
@@ -191,9 +96,52 @@ namespace Tests
         {
             var strategy        = new Pomodoro.StrictSessionManagerStrategy ();
             var session_manager = new Pomodoro.SessionManager ();
+            var session = new Pomodoro.Session.from_template (
+                Pomodoro.SessionTemplate () {
+                    pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
+                    short_break_duration = 5 * Pomodoro.Interval.MINUTE,
+                    long_break_duration = 15 * Pomodoro.Interval.MINUTE,
+                    cycles = 4
+                }
+            );
             session_manager.strategy = strategy;
+            session_manager.current_session = session;
+
+            Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
+            var expected_session_start_time = Pomodoro.Timestamp.from_now ();
+
+            debug ("expected_session_start_time = %lld", expected_session_start_time);
+
+            // reschedule whole session
+            strategy.reschedule (session);
+            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session_manager.current_session.start_time),
+                new GLib.Variant.int64 (expected_session_start_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session_manager.current_session.duration),
+                new GLib.Variant.int64 (130 * Pomodoro.Interval.MINUTE)
+            );
+
+            // reschedule future time blocks
+            session_manager.current_time_block = session.get_nth_time_block (0);
+            strategy.reschedule (session);
+            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session_manager.current_session.start_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.from_now ())
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session_manager.current_session.duration),
+                new GLib.Variant.int64 (130 * Pomodoro.Interval.MINUTE)
+            );
 
 
+            // Pomodoro.Timestamp.tick (25 * Pomodoro.Interval.MINUTE);
+            // session_manager.advance ();
+            // strategy.reschedule (session);
+            // assert_cmpuint (session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
         }
 
         public void test_reschedule__add_extra_cycle ()
@@ -212,7 +160,6 @@ namespace Tests
             session_manager.strategy = strategy;
 
             // TODO: Use manually SessionManager.advance() here
-
         }
 
         /**
@@ -416,15 +363,6 @@ namespace Tests
 
     public class AdaptiveSessionManagerStrategyTest : SessionManagerStrategyTest
     {
-        // private Pomodoro.Timer default_timer;
-
-        // private Pomodoro.SessionTemplate session_template = Pomodoro.SessionTemplate () {
-        //     pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-        //     short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-        //     long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-        //     cycles = 4
-        // };
-
         public AdaptiveSessionManagerStrategyTest ()
         {
             // this.add_test ("mark_time_block_completed",
@@ -468,77 +406,4 @@ public static int main (string[] args)
         new Tests.AdaptiveSessionManagerStrategyTest ()
     );
 }
-
-
-
-
-        /*
-        public void test_advance_time_blocks__exact ()
-        {
-            var timer           = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-            var strategy        = new Pomodoro.StrictSessionManagerStrategy ();
-            var session         = new Pomodoro.Session.from_template (
-                Pomodoro.SessionTemplate () {
-                    pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-                    short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-                    long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-                    cycles = 1
-                }
-            );
-
-            var time_block_1 = session.get_nth_time_block (0);
-            var time_block_2 = session.get_nth_time_block (1);
-
-            // setup and start first pomodoro
-            session_manager.strategy = strategy;
-            session_manager.current_session = session;
-            timer.start ();
-            assert_true (session_manager.current_time_block == time_block_1);
-            assert_false (is_completed (session_manager.current_time_block));
-
-            // advance to break
-            // expect pomodoro to be marked as completed
-            Pomodoro.Timestamp.tick (timer.calculate_remaining ());
-            timer.tick ();
-            assert_false (session_manager.current_time_block == time_block_1);
-            assert_true (session_manager.current_time_block == time_block_2);
-            assert_true (is_completed (time_block_1));
-            assert_false (is_completed (time_block_2));
-
-            // finish break
-            Pomodoro.Timestamp.tick (timer.calculate_remaining ());
-            timer.tick ();
-            assert_true (is_completed (time_block_2));
-        }
-        */
-
-        /*
-        public void test_advance_time_blocks__exact ()
-        {
-            var now        = Pomodoro.Timestamp.from_now ();
-            var timer      = new Pomodoro.Timer ();
-            var strategy   = new Pomodoro.StrictSessionManagerStrategy ();
-            var time_block = new Pomodoro.TimeBlock ();
-            time_block.set_time_range (now, now + Pomodoro.Interval.HOUR);
-
-            var session = new Pomodoro.Session ();
-            session.append (time_block);
-
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-            session_manager.strategy = strategy;
-            session_manager.current_session = session;
-
-            timer.start ();
-            assert_true (session_manager.current_time_block == time_block);
-            assert_false (is_completed (time_block));
-
-            // let time pass
-            // expect pomodoro to be marked as completed
-            Pomodoro.Timestamp.tick (timer.calculate_remaining ());
-            timer.tick ();
-            assert_false (session_manager.current_time_block == time_block);
-            assert_true (is_completed (time_block));
-        }
-        */
 
