@@ -77,8 +77,10 @@ namespace Tests
             // this.add_test ("set_current_time_block__mark_as_skipped",
             //                this.test_set_current_time_block__mark_as_skipped);
 
-            this.add_test ("set_strategy",
-                           this.test_set_strategy);
+            this.add_test ("set_strictness",
+                           this.test_set_strictness);
+            // this.add_test ("set_strategy",
+            //                this.test_set_strategy);
 
             // TODO:
             //  - expire_session__after_idle
@@ -736,33 +738,58 @@ namespace Tests
 
 
         /*
-         * Tests for strategy property
+         * Tests for strictness property
          */
-        public void test_set_strategy ()
+        public void test_set_strictness ()
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-            var strategy_1 = new Pomodoro.StrictSessionManagerStrategy ();
-            var strategy_2 = new Pomodoro.AdaptiveSessionManagerStrategy ();
-
-            var notify_strategy_emitted = 0;
-            session_manager.notify["strategy"].connect (() => {
-                notify_strategy_emitted++;
+            var notify_strictness_emitted = 0;
+            session_manager.notify["strictness"].connect (() => {
+                notify_strictness_emitted++;
             });
 
-            session_manager.strategy = strategy_1;
-            assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 1);
+            session_manager.strictness = Pomodoro.Strictness.STRICT;
+            assert_cmpint (notify_strictness_emitted, GLib.CompareOperator.EQ, 0);  // unchanged
 
-            session_manager.strategy = strategy_1;
-            assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 1);  // unchanged
+            session_manager.strictness = Pomodoro.Strictness.LENIENT;
+            assert_cmpint (notify_strictness_emitted, GLib.CompareOperator.EQ, 1);
 
-            session_manager.strategy = strategy_2;
-            assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 2);
-
-            session_manager.strategy = null;
-            assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 3);
+            session_manager.strictness = Pomodoro.Strictness.LENIENT;
+            assert_cmpint (notify_strictness_emitted, GLib.CompareOperator.EQ, 1);  // unchanged
         }
+
+
+        /*
+         * Tests for strategy property
+         */
+        // public void test_set_strategy ()
+        // {
+        //     var timer           = new Pomodoro.Timer ();
+        //     var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+        //     var strategy_1 = new Pomodoro.StrictSessionManagerStrategy ();
+        //     var strategy_2 = new Pomodoro.AdaptiveSessionManagerStrategy ();
+
+        //     var notify_strategy_emitted = 0;
+        //     session_manager.notify["strategy"].connect (() => {
+        //         notify_strategy_emitted++;
+        //     });
+
+        //     session_manager.strategy = strategy_1;
+        //     assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 1);
+
+        //     session_manager.strategy = strategy_1;
+        //     assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 1);  // unchanged
+
+        //     session_manager.strategy = strategy_2;
+        //     assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 2);
+
+        //     session_manager.strategy = null;
+        //     assert_cmpint (notify_strategy_emitted, GLib.CompareOperator.EQ, 3);
+        // }
+
 
         /*
          * Tests for methods

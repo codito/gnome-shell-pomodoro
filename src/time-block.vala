@@ -3,8 +3,63 @@ using GLib;
 
 namespace Pomodoro
 {
+    public enum TimeBlockStatus
+    {
+        // UNSCHEDULED,
+        SCHEDULED,
+        STARTED,
+        COMPLETED,
+        UNCOMPLETED;
+
+        // public bool has_started ()
+        // {
+        //     switch (this)
+        //     {
+        //         case STARTED:
+        //         case COMPLETED:
+        //         case UNCOMPLETED:
+        //             return true;
+        //
+        //         default:
+        //             return false;
+        //     }
+        // }
+    }
+
+    // /**
+    //  * Extra data managed by session or session manager
+    //  */
+    // public struct TimeBlockInternalData
+    // {
+        // TODO: Move TimeBlock.status here?
+
+        // public bool  started;
+        // public bool  finished;
+    //     public int64 intended_duration;
+    //     public int64 elapsed;
+    //     public float score;
+    //     public ulong changed_id;
+        // public ulong notify_start_time_id;
+        // public ulong notify_end_time_id;
+    // }
+
+
     public class TimeBlock : GLib.InitiallyUnowned
     {
+        // public struct InternalData  // Note: for some reason, vala doesent like it being internal
+        // {
+            // TODO: Move TimeBlock.status here?
+
+            // public bool  started;
+            // public bool  finished;
+        //     public int64 intended_duration;
+        //     public int64 elapsed;
+        //     public float score;
+        //     public ulong changed_id;
+            // public ulong notify_start_time_id;
+            // public ulong notify_end_time_id;
+        // }
+
         public Pomodoro.State state { get; construct; default = Pomodoro.State.UNDEFINED; }
         public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
         public weak Pomodoro.Session session { get; set; }
@@ -14,6 +69,13 @@ namespace Pomodoro
         protected int64                    _end_time = Pomodoro.Timestamp.MAX;
         private   int                      changed_freeze_count = 0;
         private   bool                     changed_is_pending = false;
+
+        // Internal data managed by session or session manager
+        // It would be cleaner if Session wrapped each time block with this extra data
+        // internal int64 intended_duration;
+        // internal int64 elapsed;
+        // internal float score;
+        // internal ulong changed_id;
 
         public int64 start_time {
             get {
@@ -58,12 +120,13 @@ namespace Pomodoro
         }
 
         /**
-         * `skipped` is used externally to mark a time block that shouldn't be counted
+         * `status` is used externally by a session manager
+         *
+         * It indicates whether time block really has started and whether it has been completed or skipped.
          */
-        // TODO: skipped gaps shouldn't be counted
-        // public bool skipped {
-        //     get; set; default = false;
-        // }
+        public Pomodoro.TimeBlockStatus status {
+            get; set; default = TimeBlockStatus.SCHEDULED;
+        }
 
         public TimeBlock (Pomodoro.State  state = Pomodoro.State.UNDEFINED,
                           Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
@@ -167,7 +230,7 @@ namespace Pomodoro
         }
 
         // Note: result won't make sense if block has no `start`
-        public int64 calculate_elapsed (int64 timestamp = -1)
+        public int64 calculate_elapsed (int64 timestamp = -1)  // TODO: is it used?
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -198,7 +261,7 @@ namespace Pomodoro
         }
 
         // Note: result won't make sense if block has no `end`
-        public int64 calculate_remaining (int64 timestamp = -1)
+        public int64 calculate_remaining (int64 timestamp = -1)  // TODO: is it used?
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -276,7 +339,7 @@ namespace Pomodoro
             this.gaps.@foreach (func);
         }
 
-        public bool has_started (int64 timestamp = -1)
+        public bool has_started (int64 timestamp = -1)  // TODO: rename to should_start
         {
             if (this._start_time < 0) {
                 return true;
@@ -287,7 +350,7 @@ namespace Pomodoro
             return timestamp >= this._start_time;
         }
 
-        public bool has_ended (int64 timestamp = -1)
+        public bool has_ended (int64 timestamp = -1)  // TODO: rename to should_end
         {
             if (this._end_time < 0) {
                 return false;
