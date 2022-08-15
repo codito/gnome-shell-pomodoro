@@ -1,6 +1,6 @@
 namespace Tests
 {
-    // private uint8[] list_session_states (Pomodoro.Session session)
+    // private uint8[] list_states (Pomodoro.Session session)
     // {
     //     uint8[] states = {};
 
@@ -12,13 +12,35 @@ namespace Tests
     // }
 
 
+    private void mark_time_blocks_completed (Pomodoro.Session session,
+                                             uint             n)
+    {
+        unowned Pomodoro.TimeBlock time_block;
+
+        for (var index = 0; index < n; index++)
+        {
+            time_block = session.get_nth_time_block (index);
+            time_block.status = Pomodoro.TimeBlockStatus.COMPLETED;
+        }
+    }
+
+
+    private uint count_pomodoros (Pomodoro.Session session)
+    {
+        var count = 0;
+
+        session.@foreach (time_block => {
+            if (time_block.state == Pomodoro.State.POMODORO) {
+                count++;
+            }
+        });
+
+        return count;
+    }
+
+
     public class SessionTest : Tests.TestSuite
     {
-        // private const uint POMODORO_DURATION = 1500;
-        // private const uint SHORT_BREAK_DURATION = 300;
-        // private const uint LONG_BREAK_DURATION = 900;
-        // private const uint CYCLES_PER_SESSION = 4;
-
         private Pomodoro.SessionTemplate session_template = Pomodoro.SessionTemplate () {
             pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
             short_break_duration = 5 * Pomodoro.Interval.MINUTE,
@@ -64,8 +86,15 @@ namespace Tests
             // this.add_test ("time_block_set_time_range", this.test_time_block_set_end_time);
 
             this.add_test ("reschedule__strict", this.test_reschedule__strict);
-            this.add_test ("reschedule__strict__with_first_time_block", this.test_reschedule__strict__with_first_time_block);
-            this.add_test ("reschedule__strict__add_extra_cycle", this.test_reschedule__strict__add_extra_cycle);
+            this.add_test ("reschedule__strict__after_started_pomodoro", this.test_reschedule__strict__after_started_pomodoro);
+            // this.add_test ("reschedule__strict__after_started_short_break", this.test_reschedule__strict__after_started_short_break);
+            this.add_test ("reschedule__strict__after_completed_pomodoro", this.test_reschedule__strict__after_completed_pomodoro);
+            this.add_test ("reschedule__strict__after_uncompleted_pomodoro", this.test_reschedule__strict__after_uncompleted_pomodoro);
+            // this.add_test ("reschedule__strict__after_completed_short_break", this.test_reschedule__strict__after_completed_short_break);
+            // this.add_test ("reschedule__strict__after_uncompleted_short_break", this.test_reschedule__strict__after_uncompleted_short_break);
+            this.add_test ("reschedule__strict__after_completed_long_break", this.test_reschedule__strict__after_completed_long_break);
+            this.add_test ("reschedule__strict__after_uncompleted_long_break", this.test_reschedule__strict__after_uncompleted_long_break);
+            this.add_test ("reschedule__strict__template_change", this.test_reschedule__strict__template_change);
 
             this.add_test ("reschedule__lenient", this.test_reschedule__lenient);
 
@@ -306,152 +335,225 @@ namespace Tests
             assert_cmpfloat_with_epsilon (
                 session.calculate_pomodoro_break_ratio (),
                 double.INFINITY,
-                0.0001);
+                0.0001
+            );
         }
 
         /**
-         * Check moving all time blocks to a given timestamp.
+         * Check moving all time blocks to a given timestamp when none of the blocks have started.
          */
         public void test_reschedule__strict ()
         {
-            var expected_start_time = Pomodoro.Timestamp.from_now () + Pomodoro.Interval.MINUTE;
-            var expected_duration = 130 * Pomodoro.Interval.MINUTE;
-
             var session = new Pomodoro.Session.from_template (this.session_template);
-            //     Pomodoro.SessionTemplate () {
-            //         pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-            //         short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-            //         long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-            //         cycles = 4
-            //     }
-            // );
+
+            var expected_session_start_time = Pomodoro.Timestamp.from_now () + Pomodoro.Interval.MINUTE;
+            var expected_session_duration = session.duration;
 
             session.reschedule (this.session_template,
-                                // null,
                                 Pomodoro.Strictness.STRICT,
-                                expected_start_time);
+                                expected_session_start_time);
 
+            assert_cmpuint (
+                count_pomodoros (session),
+                GLib.CompareOperator.EQ,
+                this.session_template.cycles
+            );
             assert_cmpvariant (
                 new GLib.Variant.int64 (session.start_time),
-                new GLib.Variant.int64 (expected_start_time)
+                new GLib.Variant.int64 (expected_session_start_time)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (session.duration),
-                new GLib.Variant.int64 (expected_duration)
+                new GLib.Variant.int64 (expected_session_duration)
             );
-            assert_cmpuint (session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
 
             // TODO: check emitted signals
         }
 
-            // Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
-            // var expected_session_start_time = Pomodoro.Timestamp.from_now ();
-            // debug ("expected_session_start_time = %lld", expected_session_start_time);
-
         /**
-         * Check moving only future time blocks to a given timestamp.
+         * Expect .reschedule() to not to affect a started time-block
          */
-        public void test_reschedule__strict__with_first_time_block ()
+        public void test_reschedule__strict__after_started_pomodoro ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
-            //     Pomodoro.SessionTemplate () {
-            //         pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-            //         short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-            //         long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-            //         cycles = 4
-            //     }
-            // );
-            var time_block = session.get_nth_time_block (2);
+            mark_time_blocks_completed (session, 2);
+
+            var pomodoro = session.get_nth_time_block (2);
+            pomodoro.status = Pomodoro.TimeBlockStatus.STARTED;
+
+            var short_break = session.get_next_time_block (pomodoro);
 
             var expected_session_start_time = session.start_time;
-            var expected_time_block_start_time = time_block.start_time + Pomodoro.Interval.MINUTE;
+            var expected_pomodoro_end_time = pomodoro.end_time;
+            var expected_short_break_start_time = short_break.start_time;
 
             session.reschedule (this.session_template,
-                                // time_block,
                                 Pomodoro.Strictness.STRICT,
-                                expected_time_block_start_time);
+                                pomodoro.start_time + Pomodoro.Interval.MINUTE);
+
+            assert_true (pomodoro.state == Pomodoro.State.POMODORO);
+            assert_true (short_break.state == Pomodoro.State.BREAK);
 
             assert_cmpvariant (
                 new GLib.Variant.int64 (session.start_time),
                 new GLib.Variant.int64 (expected_session_start_time)
             );
-
-            // TODO
-
-            // TODO: test with timestamp negative
+            assert_cmpvariant (
+                new GLib.Variant.int64 (pomodoro.end_time),
+                new GLib.Variant.int64 (expected_pomodoro_end_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (short_break.start_time),
+                new GLib.Variant.int64 (expected_short_break_start_time)
+            );
+            assert_cmpuint (
+                count_pomodoros (session),
+                GLib.CompareOperator.EQ,
+                this.session_template.cycles
+            );
         }
 
         /**
-         * If pomodoro blocks were not completed, expect extra cycles to be added.
+         * Check moving only future time blocks to a given timestamp.
          */
-        public void test_reschedule__strict__add_extra_cycle ()
+        public void test_reschedule__strict__after_completed_pomodoro ()
         {
-            var session = new Pomodoro.Session.from_template (
-                Pomodoro.SessionTemplate () {
-                    pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-                    short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-                    long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-                    cycles = 4
-                }
-            );
+            var session = new Pomodoro.Session.from_template (this.session_template);
 
+            var pomodoro = session.get_first_time_block ();
+            pomodoro.status = Pomodoro.TimeBlockStatus.COMPLETED;
+
+            var short_break = session.get_next_time_block (pomodoro);
+
+            var expected_session_start_time = pomodoro.start_time;
+            var expected_pomodoro_end_time = pomodoro.end_time;
+            var expected_short_break_start_time = pomodoro.end_time + Pomodoro.Interval.MINUTE;
+
+            session.reschedule (this.session_template,
+                                Pomodoro.Strictness.STRICT,
+                                expected_short_break_start_time);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.start_time),
+                new GLib.Variant.int64 (expected_session_start_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (pomodoro.end_time),
+                new GLib.Variant.int64 (expected_pomodoro_end_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (short_break.start_time),
+                new GLib.Variant.int64 (expected_short_break_start_time)
+            );
+            assert_cmpuint (
+                count_pomodoros (session),
+                GLib.CompareOperator.EQ,
+                this.session_template.cycles
+            );
+        }
+
+        /**
+         * Pomodoro hasn't been completed, expect extra cycle to be added.
+         */
+        public void test_reschedule__strict__after_uncompleted_pomodoro ()
+        {
+            var session = new Pomodoro.Session.from_template (this.session_template);
+
+            var pomodoro = session.get_first_time_block ();
+            pomodoro.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+
+            var expected_session_start_time = session.start_time;
+            var expected_pomodoro_end_time = pomodoro.end_time;
+
+            session.reschedule (this.session_template,
+                                Pomodoro.Strictness.STRICT,
+                                expected_pomodoro_end_time);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.start_time),
+                new GLib.Variant.int64 (expected_session_start_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (pomodoro.end_time),
+                new GLib.Variant.int64 (expected_pomodoro_end_time)
+            );
+            assert_cmpuint (
+                count_pomodoros (session),
+                GLib.CompareOperator.EQ,
+                this.session_template.cycles + 1
+            );
+        }
+
+        /**
+         * All blocks have been completed, expect .reschedule() to do nothing.
+         */
+        public void test_reschedule__strict__after_completed_long_break ()
+        {
+            var session = new Pomodoro.Session.from_template (this.session_template);
+            mark_time_blocks_completed (session, 8);
+
+            var expected_session_start_time = session.start_time;
+            var expected_session_end_time = session.end_time;
+            var timestamp = session.end_time + Pomodoro.Interval.MINUTE;
+
+            session.reschedule (this.session_template,
+                                Pomodoro.Strictness.STRICT,
+                                timestamp);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.start_time),
+                new GLib.Variant.int64 (expected_session_start_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (session.end_time),
+                new GLib.Variant.int64 (expected_session_end_time)
+            );
+            assert_cmpuint (
+                count_pomodoros (session),
+                GLib.CompareOperator.EQ,
+                this.session_template.cycles
+            );
+        }
+
+        public void test_reschedule__strict__after_uncompleted_long_break ()
+        {
+            var session = new Pomodoro.Session.from_template (this.session_template);
+            mark_time_blocks_completed (session, 7);
+
+            var long_break_1 = session.get_last_time_block ();
+            var expected_long_break_duration = long_break_1.duration;
+
+            long_break_1.duration = 3 * Pomodoro.Interval.MINUTE;
+            long_break_1.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+
+            session.reschedule (this.session_template,
+                                Pomodoro.Strictness.STRICT,
+                                long_break_1.end_time + Pomodoro.Interval.MINUTE);
+
+            var long_break_2 = session.get_last_time_block ();
+            assert_false (long_break_1 == long_break_2);
+
+            assert_true (long_break_1.state == Pomodoro.State.BREAK);
+            assert_true (long_break_2.state == Pomodoro.State.BREAK);
+            assert_true (long_break_1.status == Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_true (long_break_2.status == Pomodoro.TimeBlockStatus.SCHEDULED);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (long_break_2.duration),
+                new GLib.Variant.int64 (expected_long_break_duration)
+            );
+            assert_cmpuint (
+                count_pomodoros (session),
+                GLib.CompareOperator.EQ,
+                this.session_template.cycles + 1
+            );
+        }
+
+        public void test_reschedule__strict__template_change ()
+        {
             // TODO
         }
-
-/*
-            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session_manager.current_session.start_time),
-                new GLib.Variant.int64 (expected_session_start_time)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session_manager.current_session.duration),
-                new GLib.Variant.int64 (130 * Pomodoro.Interval.MINUTE)
-            );
-
-
-            sesssion.reschedule (session., Pomodoro.Strictness.STRICT, expected_session_start_time);
-            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session_manager.current_session.start_time),
-                new GLib.Variant.int64 (expected_session_start_time)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session_manager.current_session.duration),
-                new GLib.Variant.int64 (130 * Pomodoro.Interval.MINUTE)
-            );
-
-
-            // reschedule future time blocks
-            session_manager.current_time_block = session.get_nth_time_block (0);
-            strategy.reschedule (session);
-            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session_manager.current_session.start_time),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.from_now ())
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session_manager.current_session.duration),
-                new GLib.Variant.int64 (130 * Pomodoro.Interval.MINUTE)
-            );
-
-
-            // Pomodoro.Timestamp.tick (25 * Pomodoro.Interval.MINUTE);
-            // session_manager.advance ();
-            // strategy.reschedule (session);
-            // assert_cmpuint (session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
-        }
-*/
 
         public void test_reschedule__lenient ()
         {
             // TODO
         }
-
-        // public void test_reschedule_strict__add_extra_cycle ()
-        // {
-            // TODO
-        // }
     }
 }
 
