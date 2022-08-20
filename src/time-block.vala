@@ -387,9 +387,10 @@ namespace Pomodoro
         //       Remove `handle_changed()` once we can override "changed" handler in Gap.changed.
         protected virtual void handle_changed ()
         {
-            if (this.session != null) {
-                this.session.changed ();
-            }
+            // XXX: session manages changed signal itself
+            // if (this.session != null) {
+            //     this.session.changed ();
+            // }
         }
 
         public virtual signal void changed ()

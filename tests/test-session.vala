@@ -346,6 +346,10 @@ namespace Tests
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
 
+            var changed_emitted = 0;
+            session.changed.connect (() => {
+                changed_emitted++;
+            });
             var expected_session_start_time = Pomodoro.Timestamp.from_now () + Pomodoro.Interval.MINUTE;
             var expected_session_duration = session.duration;
 
@@ -366,8 +370,7 @@ namespace Tests
                 new GLib.Variant.int64 (session.duration),
                 new GLib.Variant.int64 (expected_session_duration)
             );
-
-            // TODO: check emitted signals
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
         }
 
         /**
@@ -383,6 +386,10 @@ namespace Tests
 
             var short_break = session.get_next_time_block (pomodoro);
 
+            var changed_emitted = 0;
+            session.changed.connect (() => {
+                changed_emitted++;
+            });
             var expected_session_start_time = session.start_time;
             var expected_pomodoro_end_time = pomodoro.end_time;
             var expected_short_break_start_time = short_break.start_time;
@@ -411,6 +418,7 @@ namespace Tests
                 GLib.CompareOperator.EQ,
                 this.session_template.cycles
             );
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
         }
 
         /**
@@ -425,6 +433,10 @@ namespace Tests
 
             var short_break = session.get_next_time_block (pomodoro);
 
+            var changed_emitted = 0;
+            session.changed.connect (() => {
+                changed_emitted++;
+            });
             var expected_session_start_time = pomodoro.start_time;
             var expected_pomodoro_end_time = pomodoro.end_time;
             var expected_short_break_start_time = pomodoro.end_time + Pomodoro.Interval.MINUTE;
@@ -449,6 +461,7 @@ namespace Tests
                 GLib.CompareOperator.EQ,
                 this.session_template.cycles
             );
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
         }
 
         /**
@@ -461,6 +474,10 @@ namespace Tests
             var pomodoro = session.get_first_time_block ();
             pomodoro.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
 
+            var changed_emitted = 0;
+            session.changed.connect (() => {
+                changed_emitted++;
+            });
             var expected_session_start_time = session.start_time;
             var expected_pomodoro_end_time = pomodoro.end_time;
 
@@ -480,6 +497,7 @@ namespace Tests
                 GLib.CompareOperator.EQ,
                 this.session_template.cycles + 1
             );
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
         }
 
         /**
@@ -490,9 +508,14 @@ namespace Tests
             var session = new Pomodoro.Session.from_template (this.session_template);
             mark_time_blocks_completed (session, 8);
 
+            var timestamp = session.end_time + Pomodoro.Interval.MINUTE;
+
+            var changed_emitted = 0;
+            session.changed.connect (() => {
+                changed_emitted++;
+            });
             var expected_session_start_time = session.start_time;
             var expected_session_end_time = session.end_time;
-            var timestamp = session.end_time + Pomodoro.Interval.MINUTE;
 
             session.reschedule (this.session_template,
                                 Pomodoro.Strictness.STRICT,
@@ -510,6 +533,7 @@ namespace Tests
                 GLib.CompareOperator.EQ,
                 this.session_template.cycles
             );
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
         }
 
         public void test_reschedule__strict__after_uncompleted_long_break ()
@@ -518,18 +542,22 @@ namespace Tests
             mark_time_blocks_completed (session, 7);
 
             var long_break_1 = session.get_last_time_block ();
-            var expected_long_break_duration = long_break_1.duration;
-
             long_break_1.duration = 3 * Pomodoro.Interval.MINUTE;
             long_break_1.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+
+            var expected_long_break_duration = this.session_template.long_break_duration;
+
+            var changed_emitted = 0;
+            session.changed.connect (() => {
+                changed_emitted++;
+            });
 
             session.reschedule (this.session_template,
                                 Pomodoro.Strictness.STRICT,
                                 long_break_1.end_time + Pomodoro.Interval.MINUTE);
 
             var long_break_2 = session.get_last_time_block ();
-            assert_false (long_break_1 == long_break_2);
-
+            assert_false (long_break_2 == long_break_1);
             assert_true (long_break_1.state == Pomodoro.State.BREAK);
             assert_true (long_break_2.state == Pomodoro.State.BREAK);
             assert_true (long_break_1.status == Pomodoro.TimeBlockStatus.UNCOMPLETED);
@@ -543,6 +571,7 @@ namespace Tests
                 GLib.CompareOperator.EQ,
                 this.session_template.cycles + 1
             );
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
         }
 
         public void test_reschedule__strict__template_change ()

@@ -46,8 +46,8 @@ namespace Pomodoro
                 }
 
                 this._strictness = value;
-                this.strategy = value.to_session_manager_strategy ();
-                this.strategy.initialize (this);
+                // this.strategy = value.to_session_manager_strategy ();
+                // this.strategy.initialize (this);
 
                 this.notify_property ("strictness");
             }
@@ -189,8 +189,8 @@ namespace Pomodoro
         {
             this.timer.reset ();
 
-            this.strategy = this._strictness.to_session_manager_strategy ();
-            this.strategy.initialize (this);
+            // this.strategy = this._strictness.to_session_manager_strategy ();
+            // this.strategy.initialize (this);
 
             this.timer_resolve_state_id = this.timer.resolve_state.connect (this.on_timer_resolve_state);
             this.timer_state_changed_id = this.timer.state_changed.connect (this.on_timer_state_changed);
@@ -737,8 +737,8 @@ namespace Pomodoro
                 return;
             }
 
-             assert (state.user_data == this._current_time_block);
-             assert (this.current_time_block_entered == (this._current_time_block != null));
+            assert (state.user_data == this._current_time_block);
+            assert (this.current_time_block_entered == (this._current_time_block != null));
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
@@ -748,7 +748,7 @@ namespace Pomodoro
 
             // var timestamp = this.timer.get_last_state_changed_time ();
 
-            this.strategy.handle_timer_state_changed (this.timer, current_state, previous_state);
+            // this.strategy.handle_timer_state_changed (this.timer, current_state, previous_state);
 
             if (this.timer_freeze_count > 0) {
                 debug ("SessionManager.on_timer_state_changed: A");
@@ -801,7 +801,7 @@ namespace Pomodoro
 
         private void on_timer_finished (Pomodoro.TimerState state)
         {
-            this.strategy.handle_timer_finished (this.timer, state);
+            // this.strategy.handle_timer_finished (this.timer, state);
         }
 
         private void on_current_time_block_changed (Pomodoro.TimeBlock time_block)
@@ -938,7 +938,7 @@ namespace Pomodoro
 
             this.current_time_block_changed_id = time_block.changed.connect (this.on_current_time_block_changed);
 
-            this.strategy.handle_session_manager_enter_time_block (this, time_block);
+            // this.strategy.handle_session_manager_enter_time_block (this, time_block);
         }
 
         public signal void leave_time_block (Pomodoro.TimeBlock time_block)
@@ -950,7 +950,7 @@ namespace Pomodoro
                 this.current_time_block_changed_id = 0;
             }
 
-            this.strategy.handle_session_manager_leave_time_block (this, time_block);
+            // this.strategy.handle_session_manager_leave_time_block (this, time_block);
         }
 
         public signal void state_changed (Pomodoro.State current_state,
