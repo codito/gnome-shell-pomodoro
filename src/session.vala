@@ -340,22 +340,69 @@ namespace Pomodoro
                 link = link.next;
             }
         }
+        */
+
+
+        private bool is_time_block_completed_strict (Pomodoro.TimeBlock time_block,
+                                                     bool  timer_has_finished,
+                                                     int64 intended_duration)
+        {
+            return timer_has_finished;
+        }
+
+        private bool is_time_block_completed_lenient (Pomodoro.TimeBlock time_block,
+                                                      bool               timer_has_finished,
+                                                      int64              intended_duration)
+        {
+            return timer_has_finished || time_block.duration >= Pomodoro.Interval.MINUTE;
+        }
+
+        /**
+         * Check whether timeblock has completed
+         *
+         * Called after time blocks had modified end-time.
+         */
+        private bool is_time_block_completed (Pomodoro.TimeBlock  time_block,
+                                              bool                timer_has_finished,
+                                              int64               intended_duration,
+                                              Pomodoro.Strictness strictness)
+        {
+            if (time_block.status == Pomodoro.TimeBlockStatus.COMPLETED) {
+                return true;
+            }
+
+            if (time_block.status == Pomodoro.TimeBlockStatus.UNCOMPLETED) {
+                return false;
+            }
+
+            // TODO: get child
+            // intended_duration
+
+            switch (strictness)
+            {
+                case Pomodoro.Strictness.STRICT:
+                    return this.is_time_block_completed_strict (time_block, timer_has_finished, intended_duration);
+
+                case Pomodoro.Strictness.LENIENT:
+                    return this.is_time_block_completed_lenient (time_block, timer_has_finished, intended_duration);
+
+                default:
+                    return timer_has_finished;
+            }
+        }
 
         public void mark_time_block_started (Pomodoro.TimeBlock time_block)
         {
-            this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.STARTED);
+            // TODO
+            // this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
         }
 
-        public void mark_time_block_completed (Pomodoro.TimeBlock time_block)
+        public void mark_time_block_ended (Pomodoro.TimeBlock time_block)
         {
-            this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.COMPLETED);
+            // TODO
+            // this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
         }
 
-        public void mark_time_block_uncompleted (Pomodoro.TimeBlock time_block)
-        {
-            this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
-        }
-        */
 
         /**
          * Schedule given child
@@ -512,7 +559,6 @@ namespace Pomodoro
         private void reschedule_lenient (Pomodoro.SessionTemplate template,
                                          int64                    timestamp)
         {
-
         }
 
         /**
@@ -524,6 +570,8 @@ namespace Pomodoro
                                 int64                    timestamp = -1)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
+
+            var success = false;
 
             debug ("------------------- reschedule begin -------------------");
 
@@ -544,6 +592,8 @@ namespace Pomodoro
             }
 
             debug ("-------------------- reschedule end --------------------");
+
+            this.rescheduled ();
 
             this.thaw_changed ();
         }
@@ -1127,6 +1177,8 @@ namespace Pomodoro
 
             this.update_time_range ();
         }
+
+        public signal void rescheduled ();
     }
 }
 

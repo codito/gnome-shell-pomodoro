@@ -1066,6 +1066,7 @@ namespace Tests
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            var now            = Pomodoro.Timestamp.from_now ();
 
             var session      = new Pomodoro.Session.from_template (this.session_template);
             var time_block_1 = session.get_nth_time_block (0);
@@ -1082,17 +1083,37 @@ namespace Tests
             assert_null (session_manager.current_time_block);
             assert_false (session_manager.current_session.is_expired ());
 
+            var rescheduled_emitted = 0;
+
+            session.rescheduled.connect (() => { rescheduled_emitted++; });
+
             // Skip within session
             debug ("Timer.start()");
             timer.start ();
             assert_true (session_manager.current_session == session);
             // assert_cmpint (session.index (session_manager.current_time_block), GLib.CompareOperator.EQ, 0);
             assert_true (session_manager.current_time_block == time_block_1);
+            assert_cmpint (rescheduled_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.start_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_true (time_block_1.status == Pomodoro.TimeBlockStatus.STARTED);
 
             debug ("Timer.skip()");
             timer.skip ();
             assert_true (session_manager.current_session == session);
             assert_true (session_manager.current_time_block == time_block_2);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.end_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_2.start_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_true (time_block_1.status == Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_true (time_block_2.status == Pomodoro.TimeBlockStatus.STARTED);
 
             debug ("Timer.skip()");
             timer.skip ();

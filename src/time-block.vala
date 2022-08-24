@@ -377,6 +377,48 @@ namespace Pomodoro
         //     return this.state != Pomodoro.State.UNDEFINED;
         // }
 
+        // private bool is_completed_strict (bool  timer_has_finished,
+        //                                   int64 intended_duration)
+        // {
+        //     return timer_has_finished;
+        // }
+
+        // private bool is_completed_lenient (bool  timer_has_finished,
+        //                                    int64 intended_duration)
+        // {
+        //     return timer_has_finished || this.duration >= Pomodoro.Interval.MINUTE;
+        // }
+
+        // /**
+        //  * Check whether timeblock has completed
+        //  *
+        //  * Called after time blocks had modified end-time.
+        //  */
+        // public bool is_completed (bool                timer_has_finished,
+        //                           int64               intended_duration,
+        //                           Pomodoro.Strictness strictness)
+        // {
+            // if (this.status == Pomodoro.TimeBlockStatus.COMPLETED) {
+            //     return true;
+            // }
+
+            // if (this.status == Pomodoro.TimeBlockStatus.UNCOMPLETED) {
+            //     return false;
+            // }
+
+        //     switch (strictness)
+        //     {
+        //         case Pomodoro.Strictness.STRICT:
+        //             return this.is_completed_strict (timer_has_finished, intended_duration);
+
+        //         case Pomodoro.Strictness.LENIENT:
+        //             return this.is_completed_lenient (timer_has_finished, intended_duration);
+
+        //         default:
+        //             return timer_has_finished;
+        //     }
+        // }
+
         public static int compare (Pomodoro.TimeBlock a,
                                    Pomodoro.TimeBlock b)
         {
