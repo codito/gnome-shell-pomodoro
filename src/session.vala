@@ -302,12 +302,67 @@ namespace Pomodoro
             // TODO: freeze_changed / thaw_changed
         }
 
-        /*
-        private void mark_time_block (Pomodoro.TimeBlock       time_block,
-                                      Pomodoro.TimeBlockStatus status)
+
+        // private bool is_time_block_completed_strict (Pomodoro.TimeBlock time_block,
+        //                                              bool  timer_has_finished,
+        //                                              int64 intended_duration)
+        // {
+        //     return timer_has_finished;
+        // }
+
+        // private bool is_time_block_completed_lenient (Pomodoro.TimeBlock time_block,
+        //                                               bool               timer_has_finished,
+        //                                               int64              intended_duration)
+        // {
+        //     return timer_has_finished || time_block.duration >= Pomodoro.Interval.MINUTE;
+        // }
+
+        // TODO: move logic to Session Manager
+        // /**
+        //  * Check whether timeblock has completed
+        //  *
+        //  * Called after time blocks had modified end-time.
+        //  */
+        // private bool is_time_block_completed (Pomodoro.TimeBlock  time_block,
+        //                                       bool                timer_has_finished,
+        //                                       int64               intended_duration,
+        //                                       Pomodoro.Strictness strictness)
+        // {
+        //     if (time_block.status == Pomodoro.TimeBlockStatus.COMPLETED) {
+        //         return true;
+        //     }
+
+        //     if (time_block.status == Pomodoro.TimeBlockStatus.UNCOMPLETED) {
+        //         return false;
+        //     }
+
+            // TODO: get child
+            // intended_duration
+
+        //     switch (strictness)
+        //     {
+        //         case Pomodoro.Strictness.STRICT:
+        //             return this.is_time_block_completed_strict (time_block, timer_has_finished, intended_duration);
+
+        //         case Pomodoro.Strictness.LENIENT:
+        //             return this.is_time_block_completed_lenient (time_block, timer_has_finished, intended_duration);
+
+        //         default:
+        //             return timer_has_finished;
+        //     }
+        // }
+
+
+
+        /**
+         * Set status for the time block and ensure previous time blocks has proper statuses too
+         *
+         * It's unlikely that we will need to change statuses of previous blocks.
+         */
+        private void set_time_block_status (Pomodoro.TimeBlock       time_block,
+                                            Pomodoro.TimeBlockStatus status)
         {
-            unowned GLib.List<Child>   link = this.children.first ();
-            unowned Pomodoro.TimeBlock time_block;
+            unowned GLib.List<Child> link = this.children.first ();
 
             if (!this.contains (time_block)) {
                 return;
@@ -323,85 +378,29 @@ namespace Pomodoro
                 else {
                     switch (link.data.time_block.status)
                     {
-                        case Pomodoro.TimeBlockStatus.STARTED:
-                            link.data.time_block.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+                        case Pomodoro.TimeBlockStatus.COMPLETED:
+                        case Pomodoro.TimeBlockStatus.UNCOMPLETED:
                             break;
 
-                        case Pomodoro.TimeBlockStatus.STARTED:
-                            link.data.time_block.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
-                            break;
+                        // case Pomodoro.TimeBlockStatus.IN_PROGRESS:
+                        //     link.data.time_block.status = link.data.time_block.is_completed (false, strictness, link.data.time_block.end_time)
+                        //         ? Pomodoro.TimeBlockStatus.COMPLETED
+                        //         : Pomodoro.TimeBlockStatus.UNCOMPLETED;
+                        //     break;
 
                         default:
+                            GLib.warning ("Changing previous time-block status to UNCOMPLETED.");
+                            link.data.time_block.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+
+                            // TODO: store time-block elapsed time as 0
                             break;
                     }
                 }
 
-                link.data.time_block.status = new_status;
                 link = link.next;
             }
         }
-        */
 
-
-        private bool is_time_block_completed_strict (Pomodoro.TimeBlock time_block,
-                                                     bool  timer_has_finished,
-                                                     int64 intended_duration)
-        {
-            return timer_has_finished;
-        }
-
-        private bool is_time_block_completed_lenient (Pomodoro.TimeBlock time_block,
-                                                      bool               timer_has_finished,
-                                                      int64              intended_duration)
-        {
-            return timer_has_finished || time_block.duration >= Pomodoro.Interval.MINUTE;
-        }
-
-        /**
-         * Check whether timeblock has completed
-         *
-         * Called after time blocks had modified end-time.
-         */
-        private bool is_time_block_completed (Pomodoro.TimeBlock  time_block,
-                                              bool                timer_has_finished,
-                                              int64               intended_duration,
-                                              Pomodoro.Strictness strictness)
-        {
-            if (time_block.status == Pomodoro.TimeBlockStatus.COMPLETED) {
-                return true;
-            }
-
-            if (time_block.status == Pomodoro.TimeBlockStatus.UNCOMPLETED) {
-                return false;
-            }
-
-            // TODO: get child
-            // intended_duration
-
-            switch (strictness)
-            {
-                case Pomodoro.Strictness.STRICT:
-                    return this.is_time_block_completed_strict (time_block, timer_has_finished, intended_duration);
-
-                case Pomodoro.Strictness.LENIENT:
-                    return this.is_time_block_completed_lenient (time_block, timer_has_finished, intended_duration);
-
-                default:
-                    return timer_has_finished;
-            }
-        }
-
-        public void mark_time_block_started (Pomodoro.TimeBlock time_block)
-        {
-            // TODO
-            // this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
-        }
-
-        public void mark_time_block_ended (Pomodoro.TimeBlock time_block)
-        {
-            // TODO
-            // this.mark_time_block (time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
-        }
 
 
         /**
@@ -413,7 +412,8 @@ namespace Pomodoro
                                      Pomodoro.SessionTemplate template,
                                      uint                     cycle,
                                      int64                    timestamp = -1)
-                                     requires (child.time_block.status == Pomodoro.TimeBlockStatus.SCHEDULED)
+                                     requires (child.time_block.status == Pomodoro.TimeBlockStatus.UNSCHEDULED ||
+                                               child.time_block.status == Pomodoro.TimeBlockStatus.SCHEDULED)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -562,7 +562,7 @@ namespace Pomodoro
         }
 
         /**
-         * Rescheduling will realign time blocks, it may create new blocks according to strictness and time blocks
+         * Rescheduling will realign time blocks. It may create new blocks according to strictness and time blocks
          * statuses.
          */
         public void reschedule (Pomodoro.SessionTemplate template,
@@ -597,6 +597,48 @@ namespace Pomodoro
 
             this.thaw_changed ();
         }
+
+        public void mark_time_block_started (Pomodoro.TimeBlock  time_block,
+                                             Pomodoro.TimerState timer_state)
+                                             requires (timer_state.user_data == time_block)
+        {
+            this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            if (timer_state.started_time > 0) {
+                time_block.start_time = timer_state.started_time;
+            }
+        }
+
+        public void mark_time_block_ended (Pomodoro.TimeBlock  time_block,
+                                           Pomodoro.TimerState timer_state)
+                                           requires (timer_state.user_data == time_block)
+
+        {
+            var completed = false;
+
+            if (timer_state.finished_time > 0) {
+                time_block.end_time = timer_state.finished_time;
+                completed = true;
+            }
+
+            // TODO store `elapsed` time
+
+            this.set_time_block_status (time_block,
+                                        completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED);
+        }
+
+        // public void mark_time_block_started (Pomodoro.TimeBlock time_block)
+        // {
+        //     this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
+        // }
+
+        // public void mark_time_block_ended (Pomodoro.TimeBlock time_block,
+        //                                    bool               completed)  // TODO: pass Timer or timer state instance instead of `completed`,
+                                                                          // TODO store `elapsed` time
+        // {
+        //     this.set_time_block_status (time_block,
+        //                                 completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED);
+        // }
 
         /**
          * Extend session by one cycle
@@ -1136,7 +1178,7 @@ namespace Pomodoro
             unowned Pomodoro.TimeBlock time_block = child.time_block;
 
             time_block.session = this;
-            // time_block.status = Pomodoro.TimeBlockStatus.SCHEDULED;
+            time_block.status = Pomodoro.TimeBlockStatus.SCHEDULED;
 
             if (child.changed_id == 0) {
                 child.changed_id = time_block.changed.connect (() => {

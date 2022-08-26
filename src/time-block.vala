@@ -5,17 +5,17 @@ namespace Pomodoro
 {
     public enum TimeBlockStatus
     {
-        // UNSCHEDULED,
+        UNSCHEDULED,
         SCHEDULED,
-        STARTED,
+        IN_PROGRESS,
         COMPLETED,
-        UNCOMPLETED;
+        UNCOMPLETED
 
         // public bool has_started ()
         // {
         //     switch (this)
         //     {
-        //         case STARTED:
+        //         case IN_PROGRESS:
         //         case COMPLETED:
         //         case UNCOMPLETED:
         //             return true;
@@ -26,40 +26,9 @@ namespace Pomodoro
         // }
     }
 
-    // /**
-    //  * Extra data managed by session or session manager
-    //  */
-    // public struct TimeBlockInternalData
-    // {
-        // TODO: Move TimeBlock.status here?
-
-        // public bool  started;
-        // public bool  finished;
-    //     public int64 intended_duration;
-    //     public int64 elapsed;
-    //     public float score;
-    //     public ulong changed_id;
-        // public ulong notify_start_time_id;
-        // public ulong notify_end_time_id;
-    // }
-
 
     public class TimeBlock : GLib.InitiallyUnowned
     {
-        // public struct InternalData  // Note: for some reason, vala doesent like it being internal
-        // {
-            // TODO: Move TimeBlock.status here?
-
-            // public bool  started;
-            // public bool  finished;
-        //     public int64 intended_duration;
-        //     public int64 elapsed;
-        //     public float score;
-        //     public ulong changed_id;
-            // public ulong notify_start_time_id;
-            // public ulong notify_end_time_id;
-        // }
-
         public Pomodoro.State state { get; construct; default = Pomodoro.State.UNDEFINED; }
         public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
         public weak Pomodoro.Session session { get; set; }
@@ -69,13 +38,6 @@ namespace Pomodoro
         protected int64                    _end_time = Pomodoro.Timestamp.MAX;
         private   int                      changed_freeze_count = 0;
         private   bool                     changed_is_pending = false;
-
-        // Internal data managed by session or session manager
-        // It would be cleaner if Session wrapped each time block with this extra data
-        // internal int64 intended_duration;
-        // internal int64 elapsed;
-        // internal float score;
-        // internal ulong changed_id;
 
         public int64 start_time {
             get {
@@ -125,7 +87,7 @@ namespace Pomodoro
          * It indicates whether time block really has started and whether it has been completed or skipped.
          */
         public Pomodoro.TimeBlockStatus status {
-            get; set; default = TimeBlockStatus.SCHEDULED;
+            get; set; default = TimeBlockStatus.UNSCHEDULED;
         }
 
         public TimeBlock (Pomodoro.State  state = Pomodoro.State.UNDEFINED,
@@ -361,64 +323,6 @@ namespace Pomodoro
             return timestamp > this._end_time;
         }
 
-        // /**
-        //  * Whether time block should be included in metrics
-        //  */
-        // public bool is_significant ()
-        // {
-        //     if (this.state == Pomodoro.State.POMODORO && this.duration < Pomodoro.Interval.MINUTE) {
-        //         return false;
-        //     }
-        //
-        //     if (this.state == Pomodoro.State.BREAK && this.duration < 20 * Pomodoro.Interval.SECOND) {
-        //         return false;
-        //     }
-        //
-        //     return this.state != Pomodoro.State.UNDEFINED;
-        // }
-
-        // private bool is_completed_strict (bool  timer_has_finished,
-        //                                   int64 intended_duration)
-        // {
-        //     return timer_has_finished;
-        // }
-
-        // private bool is_completed_lenient (bool  timer_has_finished,
-        //                                    int64 intended_duration)
-        // {
-        //     return timer_has_finished || this.duration >= Pomodoro.Interval.MINUTE;
-        // }
-
-        // /**
-        //  * Check whether timeblock has completed
-        //  *
-        //  * Called after time blocks had modified end-time.
-        //  */
-        // public bool is_completed (bool                timer_has_finished,
-        //                           int64               intended_duration,
-        //                           Pomodoro.Strictness strictness)
-        // {
-            // if (this.status == Pomodoro.TimeBlockStatus.COMPLETED) {
-            //     return true;
-            // }
-
-            // if (this.status == Pomodoro.TimeBlockStatus.UNCOMPLETED) {
-            //     return false;
-            // }
-
-        //     switch (strictness)
-        //     {
-        //         case Pomodoro.Strictness.STRICT:
-        //             return this.is_completed_strict (timer_has_finished, intended_duration);
-
-        //         case Pomodoro.Strictness.LENIENT:
-        //             return this.is_completed_lenient (timer_has_finished, intended_duration);
-
-        //         default:
-        //             return timer_has_finished;
-        //     }
-        // }
-
         public static int compare (Pomodoro.TimeBlock a,
                                    Pomodoro.TimeBlock b)
         {
@@ -498,6 +402,63 @@ namespace Pomodoro
         //
         //     return timestamp >= this._start_time && timestamp < this._end_time;
         // }
+
+
+
+
+        private bool is_completed_strict (bool  has_finished,
+                                          int64 intended_duration)
+        {
+            return has_finished;  // && this.elapsed >= intended_duration - 5 * Pomodoro.Interval.SECOND;
+        }
+
+        private bool is_completed_lenient (bool  has_finished,
+                                           int64 intended_duration,
+                                           int64 timestamp)
+        {
+            return has_finished || this.duration > 5 * Pomodoro.Interval.SECOND;
+        }
+
+        // TODO: move logic to Session Manager
+        /**
+         * Check whether timeblock has completed
+         *
+         * Called after time blocks had modified end-time.
+         */
+        public bool is_completed (bool                has_finished,
+                                  Pomodoro.Strictness strictness,
+                                  int64               timestamp = -1)
+        {
+            // if (this.status == Pomodoro.TimeBlockStatus.UNCOMPLETED) {
+            //     return false;
+            // }
+
+            // if (this.status == Pomodoro.TimeBlockStatus.COMPLETED) {
+            //     return true;
+            // }
+
+            if (this.session == null) {
+                return false;
+            }
+
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            // var session_data      = this.session.get_time_block_session_data (this);
+            // var intended_duration = session_data.intended_duration;
+            var intended_duration = this.calculate_elapsed (timestamp);  // TODO: fetch intended duration from session
+
+            switch (strictness)
+            {
+                case Pomodoro.Strictness.STRICT:
+                    return this.is_completed_strict (has_finished, intended_duration);
+
+                case Pomodoro.Strictness.LENIENT:
+                    return this.is_completed_lenient (has_finished, intended_duration, timestamp);
+
+                default:
+                    return has_finished;
+            }
+        }
     }
 
 

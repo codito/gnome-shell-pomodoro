@@ -382,7 +382,7 @@ namespace Tests
             mark_time_blocks_completed (session, 2);
 
             var pomodoro = session.get_nth_time_block (2);
-            pomodoro.status = Pomodoro.TimeBlockStatus.STARTED;
+            pomodoro.status = Pomodoro.TimeBlockStatus.IN_PROGRESS;
 
             var short_break = session.get_next_time_block (pomodoro);
 
