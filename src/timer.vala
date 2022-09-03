@@ -77,6 +77,8 @@ namespace Pomodoro
 
     /**
      * Helper structure for changing several fields at once. Together they can be regarded as a timer state.
+     *
+     * `user_data` in our use refers to a time block, but don't over use it.
      */
     [Immutable]
     public struct TimerState

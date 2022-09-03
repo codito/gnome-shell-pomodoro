@@ -9,7 +9,7 @@ namespace Pomodoro
         SCHEDULED,
         IN_PROGRESS,
         COMPLETED,
-        UNCOMPLETED
+        UNCOMPLETED;
 
         // public bool has_started ()
         // {
@@ -24,6 +24,30 @@ namespace Pomodoro
         //             return false;
         //     }
         // }
+
+        public string to_string ()
+        {
+            switch (this)
+            {
+                case UNSCHEDULED:
+                    return "unscheduled";
+
+                case SCHEDULED:
+                    return "scheduled";
+
+                case IN_PROGRESS:
+                    return "in-progress";
+
+                case COMPLETED:
+                    return "completed";
+
+                case UNCOMPLETED:
+                    return "uncompleted";
+
+                default:
+                    return "";
+            }
+        }
     }
 
 

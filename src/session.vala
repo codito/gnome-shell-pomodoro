@@ -302,6 +302,53 @@ namespace Pomodoro
             // TODO: freeze_changed / thaw_changed
         }
 
+        /**
+         * Remove all scheduled time-blocks, prevent session from further rescheduling.
+         *
+         * You should explicitly mark time blocks as ended before using finish().
+         */
+        public void finish (int64 timestamp = -1)
+        {
+            unowned GLib.List<Child> link = this.children.first ();
+
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            this.freeze_changed ();
+
+            while (link != null)
+            {
+                if (link.data.time_block.status == Pomodoro.TimeBlockStatus.UNSCHEDULED ||
+                    link.data.time_block.status == Pomodoro.TimeBlockStatus.SCHEDULED)
+                {
+                    this.truncate (link);
+                    break;
+                }
+
+                if (link.data.time_block.status == Pomodoro.TimeBlockStatus.IN_PROGRESS)
+                {
+                    GLib.warning ("Finishing a session with a time block still in progress.");
+
+                    // TODO?
+                    // var completed = link.data.time_block.is_completed (
+                    //     false,
+                    //     Pomodoro.Strictness.get_default (),
+                    //     timestamp
+                    // );
+                    // this.mark_time_block_ended (link.data.time_block, completed, timestamp);
+
+                    link.data.time_block.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+                }
+
+                link = link.next;
+            }
+
+            // this.remove_after (time_block);
+            // this.mark_current_time_block_ended (has_timer_finished, timestamp);
+
+            this.thaw_changed ();
+        }
+
+
 
         // private bool is_time_block_completed_strict (Pomodoro.TimeBlock time_block,
         //                                              bool  timer_has_finished,
@@ -598,34 +645,114 @@ namespace Pomodoro
             this.thaw_changed ();
         }
 
-        public void mark_time_block_started (Pomodoro.TimeBlock  time_block,
-                                             Pomodoro.TimerState timer_state)
-                                             requires (timer_state.user_data == time_block)
+        public void mark_time_block_started (Pomodoro.TimeBlock time_block,
+                                             int64              timestamp)
         {
+            assert (this.contains (time_block));
+            assert (timestamp > 0);
+
+            switch (time_block.status)
+            {
+                case Pomodoro.TimeBlockStatus.SCHEDULED:
+                    break;
+
+                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
+                    GLib.warning ("Time block is already marked as started");
+                    break;
+
+                default:
+                    GLib.error ("Unable to mark time block with status \"%s\" as started", time_block.status.to_string ());
+                    break;
+            }
+
             this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
 
-            if (timer_state.started_time > 0) {
-                time_block.start_time = timer_state.started_time;
-            }
+            time_block.move_to (timestamp);
         }
 
-        public void mark_time_block_ended (Pomodoro.TimeBlock  time_block,
-                                           Pomodoro.TimerState timer_state)
-                                           requires (timer_state.user_data == time_block)
-
+        public void mark_time_block_ended (Pomodoro.TimeBlock time_block,
+                                           bool               completed,
+                                           int64              timestamp)
         {
-            var completed = false;
+            assert (this.contains (time_block));
+            assert (timestamp > 0);
+            assert (timestamp >= time_block.start_time);
 
-            if (timer_state.finished_time > 0) {
-                time_block.end_time = timer_state.finished_time;
-                completed = true;
+            switch (time_block.status)
+            {
+                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
+                    break;
+
+                case Pomodoro.TimeBlockStatus.COMPLETED:
+                case Pomodoro.TimeBlockStatus.UNCOMPLETED:
+                    GLib.warning ("Time block is already marked as ended");
+                    break;
+
+                default:
+                    GLib.error ("Unable to mark time block with status \"%s\" as ended", time_block.status.to_string ());
+                    break;
             }
-
-            // TODO store `elapsed` time
 
             this.set_time_block_status (time_block,
                                         completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED);
+
+            time_block.end_time = timestamp;
         }
+
+        public void mark_gap_started (Pomodoro.TimeBlock time_block,
+                                      int64              timestamp)
+        {
+            // TODO
+        }
+
+        public void mark_gap_ended (Pomodoro.TimeBlock time_block,
+                                    int64              timestamp)
+        {
+            // TODO
+        }
+
+        // public void mark_time_block_started (Pomodoro.TimerState timer_state)
+        // {
+        //     var time_block = timer_state.user_data as Pomodoro.TimeBlock;
+
+        //     assert (this.contains (time_block));
+
+        //     this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+        //     if (timer_state.started_time > 0) {
+        //         time_block.start_time = timer_state.started_time;
+        //     }
+        // }
+
+        // public void mark_time_block_ended (Pomodoro.TimerState timer_state)
+
+        // {
+        //     var time_block = timer_state.user_data as Pomodoro.TimeBlock;
+        //     var completed = false;
+
+        //     assert (this.contains (time_block));
+
+        //     if (timer_state.finished_time > 0) {
+        //         time_block.end_time = timer_state.finished_time;
+        //         completed = true;
+        //     }
+
+            // TODO store `elapsed` time
+
+        //     this.set_time_block_status (time_block,
+        //                                 completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED);
+        // }
+
+        // public void mark_gap_started (Pomodoro.TimerState timer_state)
+        // {
+            // TODO
+        // }
+
+        // public void mark_gap_ended (Pomodoro.TimerState timer_state)
+        // {
+            // TODO
+        // }
+
 
         // public void mark_time_block_started (Pomodoro.TimeBlock time_block)
         // {
@@ -1010,6 +1137,11 @@ namespace Pomodoro
 
         private bool contains (Pomodoro.TimeBlock time_block)
         {
+            // TODO this should be enough
+            // if (time_block.session != this) {
+            //     return false;
+            // }
+
             unowned List<Child> link = this.find_link_by_time_block (time_block);
 
             return link != null;
