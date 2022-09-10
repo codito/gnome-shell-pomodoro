@@ -46,7 +46,7 @@ public int main (string[] args)
     Intl.textdomain (Config.GETTEXT_PACKAGE);
 
     GLib.Environment.set_application_name (_("Pomodoro"));
-    GLib.Environment.set_prgname (Config.PACKAGE_NAME);
+    GLib.Environment.set_prgname (Config.APPLICATION_ID);
 
     Posix.signal (Posix.Signal.INT, on_posix_signal);
     Posix.signal (Posix.Signal.TERM, on_posix_signal);

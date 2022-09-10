@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/org/gnomepomodoro/Pomodoro">
-    <file>database/version-1.sql</file>
+    <file compressed="true">database/version-1.sql</file>
+
     <file compressed="true" preprocess="xml-stripblanks">install-extension-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">menus.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences.ui</file>
@@ -14,15 +15,17 @@
     <file compressed="true" preprocess="xml-stripblanks">timer-label.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">timer-view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
-    <file>style.css</file>
-  </gresource>
-  <gresource prefix="/org/gnomepomodoro/Pomodoro">
-    <file>icons/scalable/actions/dark-theme-symbolic.svg</file>
-    <file>icons/scalable/actions/shrink-symbolic.svg</file>
-    <file>icons/scalable/actions/timer-pause-symbolic.svg</file>
-    <file>icons/scalable/actions/timer-rewind-symbolic.svg</file>
-    <file>icons/scalable/actions/timer-skip-symbolic.svg</file>
-    <file>icons/scalable/actions/timer-start-symbolic.svg</file>
-    <file>icons/scalable/actions/timer-stop-symbolic.svg</file>
+    <file compressed="true">style.css</file>
+    <file compressed="true">style-dark.css</file>
+    <file compressed="true">style-hc.css</file>
+    <file compressed="true">style-hc-dark.css</file>
+
+    <file preprocess="xml-stripblanks">icons/scalable/actions/dark-theme-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/shrink-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-pause-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-rewind-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-skip-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
   </gresource>
 </gresources>

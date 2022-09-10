@@ -26,7 +26,7 @@ namespace Pomodoro
     /**
      * Aggregate daily entries so that it's easier to display / analyse data.
      */
-    internal class AggregatedEntry : Gom.Resource
+    public class AggregatedEntry : Gom.Resource
     {
         public const string DATE_FORMAT = "%Y-%m-%d";
 

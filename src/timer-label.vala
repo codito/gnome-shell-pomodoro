@@ -12,8 +12,8 @@ namespace Pomodoro
         private unowned Pomodoro.MonospaceLabel seconds_label;
 
         private Pomodoro.Timer timer;
-        private GLib.Settings  settings;
-        private ulong          settings_changed_id = 0;
+        // private GLib.Settings  settings;
+        // private ulong          settings_changed_id = 0;
         private ulong          timer_elapsed_id = 0;
         private ulong          timer_notify_state_id = 0;
         private ulong          timer_notify_is_paused_id = 0;
@@ -23,7 +23,7 @@ namespace Pomodoro
             var timer = Pomodoro.Timer.get_default ();
 
             this.timer = timer;
-            this.settings = Pomodoro.get_settings ().get_child ("preferences");
+            // this.settings = Pomodoro.get_settings ().get_child ("preferences");
         }
 
         private void set_default_direction_ltr ()
@@ -75,27 +75,21 @@ namespace Pomodoro
                 this.timer_notify_is_paused_id = 0;
             }
 
-            if (this.settings_changed_id != 0) {
-                this.settings.disconnect (this.settings_changed_id);
-                this.settings_changed_id = 0;
-            }
+            // if (this.settings_changed_id != 0) {
+            //     this.settings.disconnect (this.settings_changed_id);
+            //     this.settings_changed_id = 0;
+            // }
         }
 
         private void on_timer_elapsed_notify ()
         {
-            uint remaining;
-            uint minutes;
-            uint seconds;
+            var remaining = Pomodoro.Timestamp.to_seconds_uint (
+                this.timer.is_started ()
+                ? this.timer.calculate_remaining ()
+                : Pomodoro.State.POMODORO.get_default_duration ());
 
-            if (!this.timer.is_started ()) {
-                remaining = (uint) Pomodoro.State.POMODORO.get_default_duration ().clamp (0, uint.MAX);
-            }
-            else {
-                remaining = (uint) double.max (Math.ceil (this.timer.calculate_remaining ()), 0.0);
-            }
-
-            minutes = remaining / 60;
-            seconds = remaining % 60;
+            var minutes = remaining / 60;
+            var seconds = remaining % 60;
 
             this.minutes_label.text = minutes.to_string ();
             this.seconds_label.text = "%02u".printf (seconds);
@@ -111,19 +105,19 @@ namespace Pomodoro
             this.update_css_classes ();
         }
 
-        private void on_settings_changed (GLib.Settings settings,
-                                          string        key)
-        {
-            switch (key)
-            {
-                case "pomodoro-duration":
-                    this.on_timer_elapsed_notify ();
-                    break;
-
-                default:
-                    break;
-            }
-        }
+        // private void on_settings_changed (GLib.Settings settings,
+        //                                   string        key)
+        // {
+        //     switch (key)
+        //     {
+        //         case "pomodoro-duration":
+        //             this.on_timer_elapsed_notify ();
+        //             break;
+        //
+        //         default:
+        //             break;
+        //     }
+        // }
 
         public override void map ()
         {
@@ -146,9 +140,9 @@ namespace Pomodoro
             //     this.timer_notify_is_paused_id = this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
             // }
 
-            if (this.settings_changed_id == 0) {
-                this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
-            }
+            // if (this.settings_changed_id == 0) {
+            //     this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
+            // }
         }
 
         public override void unmap ()

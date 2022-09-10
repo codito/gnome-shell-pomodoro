@@ -1,6 +1,9 @@
-gnome_pomodoro_generated_sources = gnome.compile_resources(
-  'gnome-pomodoro-generated',
+resources_sources = files(
   'resources.xml',
-  c_name: 'pomodoro',
+)
+resources = gnome.compile_resources(
+  'org.gnomepomodoro.Pomodoro',
+  resources_sources,
+  c_name: 'resources',
 )
 

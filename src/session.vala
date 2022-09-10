@@ -618,8 +618,6 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var success = false;
-
             debug ("------------------- reschedule begin -------------------");
 
             this.freeze_changed ();
@@ -662,7 +660,7 @@ namespace Pomodoro
 
                 default:
                     GLib.error ("Unable to mark time block with status \"%s\" as started", time_block.status.to_string ());
-                    break;
+                    // break;
             }
 
             this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
@@ -690,7 +688,7 @@ namespace Pomodoro
 
                 default:
                     GLib.error ("Unable to mark time block with status \"%s\" as ended", time_block.status.to_string ());
-                    break;
+                    // break;
             }
 
             this.set_time_block_status (time_block,

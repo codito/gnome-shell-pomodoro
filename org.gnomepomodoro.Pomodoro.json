@@ -4,14 +4,15 @@
     "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
     "command" : "gnome-pomodoro",
-    "tags" : [
-    ],
+    "tags" : [],
     "finish-args" : [
-        "--share=ipc",
-        "--socket=x11",
-        "--socket=wayland",
-        "--talk-name=org.gnome.Shell",
         "--device=dri",
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--device=dri",
+        "--talk-name=org.gnome.Shell",
+        "--talk-name=org.freedesktop.Notifications",
         "--socket=pulseaudio",
         "--socket=session-bus",
         "--filesystem=host",
@@ -44,25 +45,25 @@
     ],
     "modules" : [
         {
-            "name": "gsound",
+            "name" : "gsound",
             "buildsystem" : "meson",
-            "sources": [
+            "sources" : [
                 {
-                    "type": "git",
-                    "url": "https://gitlab.gnome.org/GNOME/gsound.git"
+                    "type" : "git",
+                    "url" : "https://gitlab.gnome.org/GNOME/gsound.git"
                 }
             ],
-            "modules": [
+            "modules" : [
                 {
-                    "name": "libcanberra",
-                    "sources": [
+                    "name" : "libcanberra",
+                    "sources" : [
                         {
-                            "type": "archive",
-                            "url": "http://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
-                            "sha256": "c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72"
+                            "type" : "archive",
+                            "url" : "http://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
+                            "sha256" : "c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72"
                         }
                     ],
-                    "config-opts": [
+                    "config-opts" : [
                         "--disable-alsa",
                         "--disable-null",
                         "--disable-oss"
@@ -114,8 +115,7 @@
             "name" : "gnome-pomodoro",
             "builddir" : true,
             "buildsystem" : "meson",
-            "config-opts" : [
-            ],
+            "config-opts" : [],
             "sources" : [
                 {
                     "type" : "file",

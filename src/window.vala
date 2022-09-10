@@ -44,7 +44,7 @@ namespace Pomodoro
     }
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
-    public class Window : Gtk.ApplicationWindow, Gtk.Buildable
+    public class Window : Adw.ApplicationWindow, Gtk.Buildable
     {
         // private const int MIN_WIDTH = 500;
         // private const int MIN_HEIGHT = 650;
@@ -77,8 +77,8 @@ namespace Pomodoro
 
         [GtkChild]
         private unowned Gtk.Stack stack;
-        [GtkChild]
-        private unowned Gtk.Revealer revealer;
+        // [GtkChild]
+        // private unowned Gtk.Revealer revealer;
 
 
         construct
@@ -134,18 +134,24 @@ namespace Pomodoro
 
         public bool shrinked {
             get {
-                return this.revealer.child_revealed;
+                return this.valign == Gtk.Align.START;
             }
         }
 
         public void shrink ()
         {
-            this.revealer.set_reveal_child (false);
+            this.resizable = false;
+            this.valign = Gtk.Align.START;
+            this.stack.visible = false;
+
+            // TODO: place controls into headerbar
         }
 
         public void unshrink ()
         {
-            this.revealer.set_reveal_child (true);
+            this.resizable = true;
+            this.valign = Gtk.Align.FILL;
+            this.stack.visible = true;
         }
 
         private void change_shrink_state (GLib.SimpleAction action,

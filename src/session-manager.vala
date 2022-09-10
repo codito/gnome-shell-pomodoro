@@ -33,7 +33,20 @@ namespace Pomodoro
 
         private static Pomodoro.SessionManager? instance = null;
 
-        public Pomodoro.Timer timer { get; construct; }
+        public Pomodoro.Timer timer {
+            get {
+                return this._timer;
+            }
+            construct {
+                this._timer = value;
+                this._timer.reset ();
+
+                this.timer_resolve_state_id = this._timer.resolve_state.connect (this.on_timer_resolve_state);
+                this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
+                this.timer_suspended_id = this._timer.suspended.connect (this.on_timer_suspended);
+                this.timer_finished_id = this._timer.finished.connect (this.on_timer_finished);
+            }
+        }
 
         [CCode(notify = false)]
         public Pomodoro.Strictness strictness {
@@ -132,6 +145,7 @@ namespace Pomodoro
             }
         }
 
+        private Pomodoro.Timer                   _timer;
         private Pomodoro.SessionTemplate         _session_template;
         private Pomodoro.Session?                _current_session = null;
         private Pomodoro.TimeBlock?              _current_time_block = null;
@@ -149,8 +163,12 @@ namespace Pomodoro
 
         public SessionManager ()
         {
+            var timer = Pomodoro.Timer.get_default ();
+
+            assert (timer != null);  // TODO remove, Timer.get_default () should always return instance
+
             GLib.Object (
-                timer: Pomodoro.Timer.get_default ()
+                timer: timer
             );
         }
 
@@ -163,15 +181,8 @@ namespace Pomodoro
 
         construct
         {
-            this.timer.reset ();
-
             // TODO: monitor settings and update it
             this._session_template = Pomodoro.SessionTemplate ();
-
-            this.timer_resolve_state_id = this.timer.resolve_state.connect (this.on_timer_resolve_state);
-            this.timer_state_changed_id = this.timer.state_changed.connect (this.on_timer_state_changed);
-            this.timer_suspended_id = this.timer.suspended.connect (this.on_timer_suspended);
-            this.timer_finished_id = this.timer.finished.connect (this.on_timer_finished);
         }
 
         private void set_current_time_block_internal (Pomodoro.Session?   session,

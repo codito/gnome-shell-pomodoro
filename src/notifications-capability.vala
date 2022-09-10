@@ -153,6 +153,9 @@ namespace Pomodoro
         private void show_pomodoro_end_notification ()
         {
             var current_time_block = this.session_manager.current_time_block;
+            if (current_time_block == null) {
+                return;
+            }
 
             // TODO: resident notifications won't be updated, might be better not to display scheduled time
             var remaining = (int) Math.floor (this.timer.calculate_remaining () / 1000000);
@@ -316,7 +319,7 @@ namespace Pomodoro
                 // this.timer = Pomodoro.Timer.get_default ();
                 // this.timer.changed.connect (this.on_timer_changed);
 
-                this.settings = Pomodoro.get_settings ().get_child ("preferences");
+                this.settings = Pomodoro.get_settings ();
                 this.settings.changed.connect (this.on_settings_changed);
 
                 // TODO

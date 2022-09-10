@@ -30,7 +30,7 @@ namespace Pomodoro
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.layout_manager  = new Gtk.BinLayout ();
 
-            this.insert_action_group ("timer", new Pomodoro.TimerViewActionGroup ());
+            // this.insert_action_group ("timer", new Pomodoro.TimerViewActionGroup ());
         }
 
         private void update_css_classes ()
@@ -167,7 +167,9 @@ namespace Pomodoro
         public override void map ()
         {
             var current_time_block = this.session_manager.current_time_block;
-            this.on_session_manager_state_changed (current_time_block.state, current_time_block.state);
+            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+
+            this.on_session_manager_state_changed (current_state, current_state);
 
             base.map ();
 

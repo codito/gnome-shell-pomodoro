@@ -23,7 +23,7 @@ using GLib;
 
 namespace Pomodoro
 {
-    internal class Entry : Gom.Resource
+    public class Entry : Gom.Resource
     {
         public int64 id { get; set; }
         /* Not very efficient to store state names, but seems more future proof
