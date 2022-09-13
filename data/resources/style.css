@@ -4,6 +4,14 @@
     100% { opacity: 1.0; }
 }
 
+.pomodoro-header-bar viewswitcher.wide indicatorbin {
+   opacity: 0;
+}
+
+.pomodoro-header-bar viewswitcher.wide label {
+    margin-left: -12px;
+    margin-right: 12px;
+}
 
 .keybinding {
     font-size: 16pt;

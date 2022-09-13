@@ -76,7 +76,7 @@ namespace Pomodoro
         private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
 
         [GtkChild]
-        private unowned Gtk.Stack stack;
+        private unowned Adw.ViewStack stack;
         // [GtkChild]
         // private unowned Gtk.Revealer revealer;
 
@@ -93,7 +93,18 @@ namespace Pomodoro
             //     this.default_page = "timer";
             // }
 
-            // this.stack.visible_child_name = this.default_page;
+            this.stack.notify["visible-child"].connect (() => {
+                this.update_title ();
+            });
+
+            this.update_title ();
+        }
+
+        private void update_title ()
+        {
+            var page = this.stack.get_page (this.stack.visible_child);
+
+            this.title = page != null ? page.title : _("Pomodoro");
         }
 
         /*

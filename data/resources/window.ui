@@ -85,18 +85,24 @@
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
     <property name="default-width">400</property>
     <property name="default-height">600</property>
-
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
 
         <child>
           <object class="AdwHeaderBar" id="header_bar">
-            <child type="title">
-              <object class="GtkStackSwitcher" id="stack_switcher">
+            <property name="centering-policy">strict</property>
+            <property name="title-widget">
+              <object class="AdwViewSwitcher" id="switcher">
                 <property name="stack">stack</property>
+                <property name="policy">wide</property>
+<!--                <property name="reveal">True</property>-->
               </object>
-            </child>
+            </property>
+            <style>
+              <class name="pomodoro-header-bar"/>
+            </style>
+
             <child type="end">
               <object class="GtkMenuButton">
                 <property name="icon-name">open-menu-symbolic</property>
@@ -116,13 +122,14 @@
             <property name="maximum-size">668</property>
             <property name="tightening-threshold">668</property>
             <child>
-              <object class="GtkStack" id="stack">
-                <property name="transition-type">crossfade</property>
-                <property name="transition-duration">100</property>
+              <object class="AdwViewStack" id="stack">
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
                 <child>
-                  <object class="GtkStackPage">
+                  <object class="AdwViewStackPage">
                     <property name="name">timer</property>
                     <property name="title" translatable="yes">Timer</property>
+                    <property name="icon-name">timer-symbolic</property>
                     <property name="child">
                       <!-- TODO -->
                       <object class="GtkLabel">
@@ -139,9 +146,10 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkStackPage">
+                  <object class="AdwViewStackPage">
                     <property name="name">stats</property>
                     <property name="title" translatable="yes">Stats</property>
+                    <property name="icon-name">stats-symbolic</property>
                     <property name="child">
                       <!-- TODO -->
                       <object class="GtkLabel">
