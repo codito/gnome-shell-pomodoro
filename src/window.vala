@@ -181,8 +181,9 @@ namespace Pomodoro
         private void change_dark_theme_state (GLib.SimpleAction action,
                                               GLib.Variant?     state)
         {
-            var gtk_settings = Gtk.Settings.get_default ();
-            gtk_settings.gtk_application_prefer_dark_theme = state.get_boolean ();
+            var style_manager = ((Adw.Application) this.application).style_manager;
+
+            style_manager.color_scheme = state.get_boolean () ? Adw.ColorScheme.FORCE_DARK : Adw.ColorScheme.DEFAULT;
 
             action.set_state (state);
         }
@@ -190,7 +191,7 @@ namespace Pomodoro
         private void setup_actions ()
         {
             var action_map = (GLib.ActionMap) this;
-            var gtk_settings = Gtk.Settings.get_default ();
+            var style_manager = ((Adw.Application) this.application).style_manager;
 
             GLib.SimpleAction action;
 
@@ -202,8 +203,9 @@ namespace Pomodoro
             //     action.set_enabled (!this.fullscreened);
             // });
 
+            var force_dark_theme = style_manager.color_scheme == Adw.ColorScheme.FORCE_DARK;
             action = new GLib.SimpleAction.stateful (
-                "dark-theme", null, new GLib.Variant.boolean (gtk_settings.gtk_application_prefer_dark_theme));
+                "dark-theme", null, new GLib.Variant.boolean (force_dark_theme));
             action.change_state.connect (this.change_dark_theme_state);
             action_map.add_action (action);
             // TODO: monitor gtk_application_prefer_dark_theme for changes
