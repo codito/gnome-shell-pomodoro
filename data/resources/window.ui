@@ -131,17 +131,11 @@
                     <property name="title" translatable="yes">Timer</property>
                     <property name="icon-name">timer-symbolic</property>
                     <property name="child">
-                      <!-- TODO -->
-                      <object class="GtkLabel">
-                        <property name="label">Timer</property>
-                      </object>
-                      <!--
                       <object class="PomodoroTimerView">
                         <style>
                           <class name="pomodoro-timer-view"/>
                         </style>
                       </object>
-                      -->
                     </property>
                   </object>
                 </child>
