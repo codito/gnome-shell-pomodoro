@@ -306,6 +306,7 @@
       </object><!-- box -->
     </child>
 
+    <!-- TODO: place GtkWindowHandle as background? -->
     <child>
       <object class="GtkGestureClick" id="click_gesture">
         <signal name="pressed" handler="on_pressed" swapped="no"/>

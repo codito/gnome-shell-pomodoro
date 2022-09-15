@@ -43,6 +43,10 @@ namespace Pomodoro
         }
     }
 
+    // public class Revealer : Gtk.Revealer
+    // {
+    // }
+
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
     public class Window : Adw.ApplicationWindow, Gtk.Buildable
     {
@@ -76,9 +80,13 @@ namespace Pomodoro
         private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
 
         [GtkChild]
+        private unowned Gtk.Stack mode_stack;
+        [GtkChild]
         private unowned Adw.ViewStack stack;
-        // [GtkChild]
-        // private unowned Gtk.Revealer revealer;
+        [GtkChild]
+        private unowned Gtk.Revealer revealer;
+
+        private Adw.Animation reveal_animation;
 
 
         construct
@@ -93,12 +101,29 @@ namespace Pomodoro
             //     this.default_page = "timer";
             // }
 
+            this.reveal_animation = new Adw.Animation ();  // TODO: destroy animation
+            this.reveal_animation.widget = this;
+
+
             this.stack.notify["visible-child"].connect (() => {
                 this.update_title ();
             });
 
+            // this.mode_stack.notify["transition-running"].connect (this.on_notify_transition_running);
+
             this.update_title ();
+            this.on_notify_transition_running ();
         }
+
+        ~Window {
+            this.reveal_animation = null;
+        }
+
+        // public new void get_preferred_size (out Gtk.Requisition minimum_size,
+        //                                     out Gtk.Requisition natural_size)
+        // {
+        //     this.mode_stack.get_preferred_size (out minimum_size, out natural_size);
+        // }
 
         private void update_title ()
         {
@@ -106,6 +131,8 @@ namespace Pomodoro
 
             this.title = page != null ? page.title : _("Pomodoro");
         }
+
+
 
         /*
         [GtkCallback]
@@ -145,24 +172,61 @@ namespace Pomodoro
 
         public bool shrinked {
             get {
-                return this.valign == Gtk.Align.START;
+                // return this.mode_stack.visible_child_name == "compact";
+                return this.revealer.reveal_child;
+            }
+            set {
+                if (value) {
+                    this.shrink ();
+                }
+                else {
+                    this.unshrink ();
+                }
+            }
+        }
+
+        private void on_notify_transition_running ()  //GLib.Object.PSpec pspec)
+        {
+            if (this.mode_stack.visible_child_name == "compact") {
+                // TODO: disable maximization
+                // TODO: disable full screen
+                // TODO: always on top?
+                this.resizable = false;
+            }
+
+            if (this.mode_stack.transition_running) {
+                this.valign = Gtk.Align.START;
+            }
+            else if (this.mode_stack.visible_child_name == "default") {
+                // this.box.set_size_request (-1, -1);
+
+                GLib.Idle.add_full (GLib.Priority.HIGH, () => {
+                    this.valign = Gtk.Align.FILL;
+                    this.resizable = true;
+
+                    return GLib.Source.REMOVE;
+                });
             }
         }
 
         public void shrink ()
         {
-            this.resizable = false;
-            this.valign = Gtk.Align.START;
-            this.stack.visible = false;
+            if (this.is_fullscreen ()) {
+                this.unfullscreen ();
+            }
 
-            // TODO: place controls into headerbar
+            if (this.is_maximized ()) {
+                this.unmaximize ();
+            }
+
+            // this.mode_stack.visible_child_name = "compact";
+            this.revealer.reveal_child = false;
         }
 
         public void unshrink ()
         {
-            this.resizable = true;
-            this.valign = Gtk.Align.FILL;
-            this.stack.visible = true;
+            // this.mode_stack.visible_child_name = "default";
+            this.revealer.reveal_child = true;
         }
 
         private void change_shrink_state (GLib.SimpleAction action,
@@ -199,6 +263,7 @@ namespace Pomodoro
                 "shrink", null, new GLib.Variant.boolean (false));
             action.change_state.connect (this.change_shrink_state);
             action_map.add_action (action);
+            // TODO: disable action if window is fullscreened or maximized
             // this.notify["fullscreened"].connect (() => {  // TODO: does not work
             //     action.set_enabled (!this.fullscreened);
             // });

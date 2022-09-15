@@ -85,79 +85,133 @@
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
     <property name="default-width">400</property>
     <property name="default-height">600</property>
+    <property name="valign">fill</property>
+
     <child>
-      <object class="GtkBox">
-        <property name="orientation">vertical</property>
+      <object class="GtkStack" id="mode_stack">
+        <property name="transition-type">crossfade</property>
+        <property name="transition-duration">3000</property>
+        <property name="interpolate-size">True</property>
+        <property name="hhomogeneous">False</property>
+        <property name="vhomogeneous">False</property>
+<!--        <property name="visible-child-name">full</property>-->
+<!--        <property name="valign">start</property>--><!-- TODO is it ok, or a bin is needed?-->
 
         <child>
-          <object class="AdwHeaderBar" id="header_bar">
-            <property name="centering-policy">strict</property>
-            <property name="title-widget">
-              <object class="AdwViewSwitcher" id="switcher">
-                <property name="stack">stack</property>
-                <property name="policy">wide</property>
-<!--                <property name="reveal">True</property>-->
+          <object class="GtkStackPage">
+            <property name="name">default</property>
+            <property name="child">
+              <object class="GtkBox" id="box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="AdwHeaderBar" id="header_bar">
+                    <property name="centering-policy">strict</property>
+                    <property name="title-widget">
+                      <object class="AdwViewSwitcher" id="switcher">
+                        <property name="stack">stack</property>
+                        <property name="policy">wide</property>
+                      </object>
+                    </property>
+                    <style>
+                      <class name="pomodoro-header-bar"/>
+                    </style>
+                    <child type="end">
+                      <object class="GtkMenuButton">
+                        <property name="icon-name">open-menu-symbolic</property>
+                        <property name="receives_default">False</property>
+                        <property name="menu-model">app_menu</property><!-- TODO: rename to window_menu -->
+                        <property name="focus-on-click">False</property>
+                        <!-- <property name="use-underline">1</property> TODO: does not work -->
+                        <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
+                      </object>
+                    </child>
+                  </object><!-- header_bar -->
+                </child>
+                <child>
+
+                  <!--
+                  <object class="GtkRevealer" id="revealer">
+                    <property name="transition-duration">300</property>
+                    <property name="transition-type">slide-up</property>
+                    <property name="child">
+                  -->
+
+                      <object class="AdwClamp">
+                        <!-- Update the panel size in CSS accordingly. -->
+                        <property name="maximum-size">668</property>
+                        <property name="tightening-threshold">668</property>
+                        <child>
+                          <object class="AdwViewStack" id="stack">
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <child>
+                              <object class="AdwViewStackPage">
+                                <property name="name">timer</property>
+                                <property name="title" translatable="yes">Timer</property>
+                                <property name="icon-name">timer-symbolic</property>
+                                <property name="child">
+                                  <object class="PomodoroTimerView">
+                                    <style>
+                                      <class name="pomodoro-timer-view"/>
+                                    </style>
+                                  </object>
+                                </property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwViewStackPage">
+                                <property name="name">stats</property>
+                                <property name="title" translatable="yes">Stats</property>
+                                <property name="icon-name">stats-symbolic</property>
+                                <property name="child">
+                                  <!-- TODO -->
+                                  <object class="GtkLabel">
+                                    <property name="label">Stats</property>
+                                  </object>
+                                </property>
+                              </object>
+                            </child>
+                          </object><!-- stack -->
+                        </child>
+                      </object><!-- clamp -->
+
+                  <!--
+                    </property>
+                  </object>
+                  -->
+
+                </child>
+              </object><!-- box -->
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage">
+            <property name="name">compact</property>
+            <property name="child">
+              <object class="AdwHeaderBar">
+                <property name="valign">start</property>
+                <property name="centering-policy">loose</property>
+                <child type="end">
+                  <object class="GtkMenuButton">
+                    <property name="icon-name">open-menu-symbolic</property>
+                    <property name="receives_default">False</property>
+                    <property name="menu-model">app_menu</property><!-- TODO: rename to window_menu -->
+                    <property name="focus-on-click">False</property>
+                    <!-- <property name="use-underline">1</property> TODO: does not work -->
+                    <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
+                  </object>
+
+<!--                  <object class="GtkButton">-->
+<!--                    <attribute name="verb-icon">shrink-symbolic</attribute>-->
+<!--                    <attribute name="action">win.shrink</attribute>-->
+<!--                  </object>-->
+                </child>
               </object>
             </property>
-            <style>
-              <class name="pomodoro-header-bar"/>
-            </style>
-
-            <child type="end">
-              <object class="GtkMenuButton">
-                <property name="icon-name">open-menu-symbolic</property>
-                <property name="receives_default">False</property>
-                <property name="menu-model">app_menu</property><!-- TODO: rename to window_menu -->
-                <property name="focus-on-click">False</property>
-                <!-- <property name="use-underline">1</property> TODO: does not work -->
-                <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
-              </object>
-            </child>
-          </object><!-- header_bar -->
+          </object>
         </child>
-
-        <child>
-          <object class="AdwClamp">
-            <!-- Update the panel size in CSS accordingly. -->
-            <property name="maximum-size">668</property>
-            <property name="tightening-threshold">668</property>
-            <child>
-              <object class="AdwViewStack" id="stack">
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="AdwViewStackPage">
-                    <property name="name">timer</property>
-                    <property name="title" translatable="yes">Timer</property>
-                    <property name="icon-name">timer-symbolic</property>
-                    <property name="child">
-                      <object class="PomodoroTimerView">
-                        <style>
-                          <class name="pomodoro-timer-view"/>
-                        </style>
-                      </object>
-                    </property>
-                  </object>
-                </child>
-                <child>
-                  <object class="AdwViewStackPage">
-                    <property name="name">stats</property>
-                    <property name="title" translatable="yes">Stats</property>
-                    <property name="icon-name">stats-symbolic</property>
-                    <property name="child">
-                      <!-- TODO -->
-                      <object class="GtkLabel">
-                        <property name="label">Stats</property>
-                      </object>
-                    </property>
-                  </object>
-                </child>
-              </object><!-- stack -->
-            </child>
-          </object><!-- clamp -->
-        </child>
-
-      </object>
+      </object><!-- mode_stack -->
     </child>
 
 <!--        <property name="can-focus">False</property>-->
