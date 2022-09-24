@@ -46,6 +46,7 @@ libgnome_pomodoro_dep = declare_dependency(
     gom_dep,
     gtk_dep,
     cairo_dep,
+    graphene_dep,
     libadwaita_dep,
     peas_dep,
   ],
@@ -60,6 +61,7 @@ libgnome_pomodoro_dep = declare_dependency(
 gnome_pomodoro_vala_sources = files(
   'about-dialog.vala',
   'accelerator.vala',
+  'aligned-stack.vala',
   'application.vala',
   'log-scale.vala',
   'main.vala',

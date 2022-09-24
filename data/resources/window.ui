@@ -88,21 +88,25 @@
     <property name="valign">fill</property>
 
     <child>
-      <object class="GtkStack" id="mode_stack">
-        <property name="transition-type">crossfade</property>
+      <object class="PomodoroAlignedStack" id="mode_stack">
+<!--        <property name="transition-type">crossfade</property>-->
         <property name="transition-duration">3000</property>
-        <property name="interpolate-size">True</property>
-        <property name="hhomogeneous">False</property>
-        <property name="vhomogeneous">False</property>
+<!--        <property name="interpolate-size">True</property>-->
+<!--        <property name="hhomogeneous">False</property>-->
+<!--        <property name="vhomogeneous">False</property>-->
 <!--        <property name="visible-child-name">full</property>-->
 <!--        <property name="valign">start</property>--><!-- TODO is it ok, or a bin is needed?-->
 
         <child>
+          <!--
           <object class="GtkStackPage">
             <property name="name">default</property>
             <property name="child">
+            -->
               <object class="GtkBox" id="box">
                 <property name="orientation">vertical</property>
+                <property name="halign">fill</property>
+                <property name="valign">fill</property>
                 <child>
                   <object class="AdwHeaderBar" id="header_bar">
                     <property name="centering-policy">strict</property>
@@ -129,13 +133,11 @@
                 </child>
                 <child>
 
-                  <!--
-                  <object class="GtkRevealer" id="revealer">
-                    <property name="transition-duration">300</property>
-                    <property name="transition-type">slide-up</property>
+<!--
+                  <object class="PomodoroRevealer" id="revealer">
+                    <property name="transition-duration">3000</property>
                     <property name="child">
-                  -->
-
+-->
                       <object class="AdwClamp">
                         <!-- Update the panel size in CSS accordingly. -->
                         <property name="maximum-size">668</property>
@@ -175,22 +177,32 @@
                         </child>
                       </object><!-- clamp -->
 
-                  <!--
+                    <!--
                     </property>
                   </object>
                   -->
 
                 </child>
               </object><!-- box -->
+            <!--
             </property>
           </object>
+          -->
         </child>
         <child>
+          <!--
           <object class="GtkStackPage">
             <property name="name">compact</property>
             <property name="child">
+            -->
               <object class="AdwHeaderBar">
+                <property name="halign">start</property>
                 <property name="valign">start</property>
+                <property name="vexpand">False</property>
+                <property name="vexpand-set">False</property>
+<!--                <property name="width-request">400</property>-->
+
+<!--                <property name="valign">start</property>-->
                 <property name="centering-policy">loose</property>
                 <child type="end">
                   <object class="GtkMenuButton">
@@ -208,8 +220,11 @@
 <!--                  </object>-->
                 </child>
               </object>
+
+            <!--
             </property>
           </object>
+          -->
         </child>
       </object><!-- mode_stack -->
     </child>

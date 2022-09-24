@@ -43,9 +43,6 @@ namespace Pomodoro
         }
     }
 
-    // public class Revealer : Gtk.Revealer
-    // {
-    // }
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
     public class Window : Adw.ApplicationWindow, Gtk.Buildable
@@ -80,13 +77,11 @@ namespace Pomodoro
         private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
 
         [GtkChild]
-        private unowned Gtk.Stack mode_stack;
+        private unowned Pomodoro.AlignedStack mode_stack;  // TODO: ewname to `stack`
         [GtkChild]
-        private unowned Adw.ViewStack stack;
-        [GtkChild]
-        private unowned Gtk.Revealer revealer;
-
-        private Adw.Animation reveal_animation;
+        private unowned Adw.ViewStack stack;  // TODO: rename to `view_stack`
+        // [GtkChild]
+        // private unowned Pomodoro.Revealer revealer;
 
 
         construct
@@ -101,22 +96,11 @@ namespace Pomodoro
             //     this.default_page = "timer";
             // }
 
-            this.reveal_animation = new Adw.Animation ();  // TODO: destroy animation
-            this.reveal_animation.widget = this;
-
-
             this.stack.notify["visible-child"].connect (() => {
                 this.update_title ();
             });
 
-            // this.mode_stack.notify["transition-running"].connect (this.on_notify_transition_running);
-
             this.update_title ();
-            this.on_notify_transition_running ();
-        }
-
-        ~Window {
-            this.reveal_animation = null;
         }
 
         // public new void get_preferred_size (out Gtk.Requisition minimum_size,
@@ -172,8 +156,9 @@ namespace Pomodoro
 
         public bool shrinked {
             get {
+                return this.mode_stack.visible_child_index > 0;
                 // return this.mode_stack.visible_child_name == "compact";
-                return this.revealer.reveal_child;
+                // return this.revealer.reveal_child;
             }
             set {
                 if (value) {
@@ -182,30 +167,6 @@ namespace Pomodoro
                 else {
                     this.unshrink ();
                 }
-            }
-        }
-
-        private void on_notify_transition_running ()  //GLib.Object.PSpec pspec)
-        {
-            if (this.mode_stack.visible_child_name == "compact") {
-                // TODO: disable maximization
-                // TODO: disable full screen
-                // TODO: always on top?
-                this.resizable = false;
-            }
-
-            if (this.mode_stack.transition_running) {
-                this.valign = Gtk.Align.START;
-            }
-            else if (this.mode_stack.visible_child_name == "default") {
-                // this.box.set_size_request (-1, -1);
-
-                GLib.Idle.add_full (GLib.Priority.HIGH, () => {
-                    this.valign = Gtk.Align.FILL;
-                    this.resizable = true;
-
-                    return GLib.Source.REMOVE;
-                });
             }
         }
 
@@ -219,16 +180,25 @@ namespace Pomodoro
                 this.unmaximize ();
             }
 
+            this.mode_stack.visible_child_index = 1;
             // this.mode_stack.visible_child_name = "compact";
-            this.revealer.reveal_child = false;
+            // this.revealer.reveal_child = false;
+            // this.resizable = false;  // TODO: bind this.revealer.reveal_child and resizable
+
+            // TODO: disable maximization
+            // TODO: disable full screen
+            // TODO: set always on top?
         }
 
         public void unshrink ()
         {
+            this.mode_stack.visible_child_index = 0;
             // this.mode_stack.visible_child_name = "default";
-            this.revealer.reveal_child = true;
+            // this.revealer.reveal_child = true;
+            // this.resizable = true;
         }
 
+        // TODO: can we bind action and this.revealer property?
         private void change_shrink_state (GLib.SimpleAction action,
                                           GLib.Variant?     state)
         {
@@ -281,6 +251,60 @@ namespace Pomodoro
             this.setup_actions ();
 
             base.parser_finished (builder);
+        }
+
+        public override Gtk.SizeRequestMode get_request_mode ()
+        {
+            return Gtk.SizeRequestMode.CONSTANT_SIZE;
+        }
+
+        /**
+         * Simplify measure function to make it more suitable for animating its size
+         */
+        public override void measure (Gtk.Orientation orientation,
+                                      int             for_size,
+                                      out int         minimum,
+                                      out int         natural,
+                                      out int         minimum_baseline,
+                                      out int         natural_baseline)
+        {
+            var child = this.get_first_child ();
+
+            if (child != null) {
+                child.measure (orientation,
+                               for_size,
+                               out minimum,
+                               out natural,
+                               out minimum_baseline,
+                               out natural_baseline);
+
+                warning ("### measure %s %d: %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), for_size, natural);
+            }
+        }
+
+        public override void size_allocate (int width,
+                                            int height,
+                                            int baseline)
+        {
+            // var child = this.get_first_child ();
+
+            // warning ("### size_allocate %dx%d", width, height);
+
+            // var child_allocation = Gtk.Allocation () {
+            //     x = 0,
+            //     y = 0,
+            //     width = width,
+            //     height = int.min (height, 500)
+            // };
+
+            // if (child != null)
+            // {
+            //     child.allocate_size (child_allocation, -1);
+            // }
+
+            height = int.min (height, 500);
+
+            base.size_allocate (width, height, baseline);
         }
     }
 
