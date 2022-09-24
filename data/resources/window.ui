@@ -196,7 +196,7 @@
             <property name="child">
             -->
               <object class="AdwHeaderBar">
-                <property name="halign">start</property>
+                <property name="halign">fill</property>
                 <property name="valign">start</property>
                 <property name="vexpand">False</property>
                 <property name="vexpand-set">False</property>

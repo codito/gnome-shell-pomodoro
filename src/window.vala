@@ -278,34 +278,29 @@ namespace Pomodoro
                                out minimum_baseline,
                                out natural_baseline);
 
-                warning ("### measure %s %d: %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), for_size, natural);
+                // warning ("### measure %s %d: %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), for_size, natural);
             }
         }
 
-        public override void size_allocate (int width,
-                                            int height,
-                                            int baseline)
-        {
-            // var child = this.get_first_child ();
+        // public override void size_allocate (int width,
+        //                                     int height,
+        //                                     int baseline)
+        // {
+        //     var child = this.get_first_child ();
+        //     var child_allocation = Gtk.Allocation () {
+        //         x = 0,
+        //         y = 0,
+        //         width = width,
+        //         height = height
+        //     };
 
-            // warning ("### size_allocate %dx%d", width, height);
+        //     if (child != null)
+        //     {
+        //         child.allocate_size (child_allocation, -1);
+        //     }
 
-            // var child_allocation = Gtk.Allocation () {
-            //     x = 0,
-            //     y = 0,
-            //     width = width,
-            //     height = int.min (height, 500)
-            // };
-
-            // if (child != null)
-            // {
-            //     child.allocate_size (child_allocation, -1);
-            // }
-
-            height = int.min (height, 500);
-
-            base.size_allocate (width, height, baseline);
-        }
+        //     base.size_allocate (width, height, baseline);
+        // }
     }
 
     /*
