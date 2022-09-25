@@ -1,5 +1,6 @@
 namespace Pomodoro
 {
+    // TODO: move to utils
     internal inline Gtk.Orientation opposite_orientation (Gtk.Orientation orientation)
     {
         return orientation == Gtk.Orientation.HORIZONTAL
@@ -10,30 +11,19 @@ namespace Pomodoro
     /**
      * Container for transitioning between widgets of varying sizes.
      *
-     * `Gtk.Stack` transitions between children interpolating size with origin at the center.
-     * Here we can specify how children are aligned. For instance top-left alignment is used for shrinking
-     * window.
+     * The purpuse is to swap widgets of varying complexity or just diferent variants. Default transition is tailored
+     * towards reducing window contents - origin of the transition is at top left corner.
      */
-    // TODO: rename as Reducer / Condenser / Shrinker / Revealer / ModeSwitch?
-    public class AlignedStack : Gtk.Widget, Gtk.Buildable
+    public class Reducer : Gtk.Widget, Gtk.Buildable
     {
         private class ChildInfo
         {
-            public Gtk.Widget widget;
+            public Gtk.Widget       widget;
             public weak Gtk.Widget? last_focus = null;
-
-            // public GtkATContext *at_context;
-
-            public int last_width = -1;
-            public int last_height = -1;
-            // var minimum_size = Gtk.Requisition ();
-            // var natural_size = Gtk.Requisition ();
-
-            // public bool visible = false;
-            // public uint needs_attention : 1;
-            // public uint use_underline   : 1;
-
-            public ulong notify_visible_id = 0;
+            public int              last_width = -1;
+            public int              last_height = -1;
+            public ulong            notify_visible_id = 0;
+            // public Gtk.ATContext at_context;
 
             public ChildInfo (Gtk.Widget widget)
             {
@@ -150,18 +140,6 @@ namespace Pomodoro
             // Always calculate fresh size for the visible child.
             this._visible_child.last_width = -1;
             this._visible_child.last_height = -1;
-
-            // if (contains_focus)  // TODO: does not seem to work
-            // {
-            //     if (this._visible_child.last_focus != null &&
-            //         this._visible_child.last_focus.visible)
-            //     {
-            //         this._visible_child.last_focus.grab_focus ();  // TODO: iterate parents, grab focus for first visible parent
-            //     }
-            //     else {
-            //         this._visible_child.widget.child_focus (Gtk.DirectionType.TAB_FORWARD);
-            //     }
-            // }
         }
 
         private void start_transition (uint transition_duration)
@@ -181,7 +159,7 @@ namespace Pomodoro
             last_visible_child.last_width = last_visible_child.widget.get_width ();
             last_visible_child.last_height = last_visible_child.widget.get_height ();
 
-            // TODO: restore previous size
+            // TODO: restore previous size?
             // if (visible_child.last_width >= 0 &&
             //     visible_child.last_height >= 0)
             // {
@@ -301,10 +279,6 @@ namespace Pomodoro
         // TODO: call this.animation.skip () if widget gets unmapped
         // if (!gtk_widget_get_mapped (widget))
         //     gtk_progress_tracker_finish (&priv->tracker);
-
-        // TODO: handle child changes
-
-        // TODO: handle child.notify["visibility"]
 
         private void on_notify_visible (GLib.Object object,
                                         GLib.ParamSpec pspec)
@@ -429,7 +403,7 @@ namespace Pomodoro
 
             if (visible_child != null)
             {
-                // Use cached size during animation. Also, dont compute minium size.  # TODO: should we interpolate it too?
+                // Use cached size during animation. Also, dont compute minium size.  # TODO: should we interpolate minimum size too?
                 if (visible_child.last_width != -1 &&
                     visible_child.last_height != -1 &&
                     transition_progress < 1.0)
@@ -463,7 +437,6 @@ namespace Pomodoro
                     ? last_visible_child.last_width
                     : last_visible_child.last_height;
 
-                // minimum = (int) GLib.Math.round (Adw.lerp ((double) last_size, (double) minimum, transition_progress));
                 minimum = natural = (int) GLib.Math.round (Adw.lerp ((double) last_size, (double) natural, transition_progress));
             }
 
@@ -478,10 +451,6 @@ namespace Pomodoro
         {
             var visible_child      = this._visible_child;
             var last_visible_child = this.last_visible_child;
-
-            // TODO: when revealing `visible_child` from collapsed state to full, widget adjust to window size - it should be fixed size
-            // TODO: we should prioritize natural size over minimal
-            // TODO: roles of bigger widget and smaller reverse: once its visible_child, once last_visible_child. Bigger widget should always be beneath
 
             if (last_visible_child != null &&
                 last_visible_child.widget != null &&
@@ -534,7 +503,7 @@ namespace Pomodoro
                         visible_child_allocation.height = int.max (visible_child_allocation.height, min_height);
                     }
 
-                    // TODO: handle other halign / valign types
+                    // TODO: handle other halign / valign values
 
                     // if (child_allocation.width > width)
                     // {
@@ -645,216 +614,5 @@ namespace Pomodoro
 
             base.dispose ();
         }
-
-
-/*
-static void
-gtk_stack_size_allocate (GtkWidget *widget,
-                         int        width,
-                         int        height,
-                         int        baseline)
-{
-  GtkStack *stack = GTK_STACK (widget);
-  GtkStackPrivate *priv = gtk_stack_get_instance_private (stack);
-  GtkAllocation child_allocation;
-
-  if (priv->last_visible_child)
-    {
-      int child_width, child_height;
-      int min, nat;
-
-      gtk_widget_measure (priv->last_visible_child->widget, GTK_ORIENTATION_HORIZONTAL,
-                          -1,
-                          &min, &nat, NULL, NULL);
-      child_width = MAX (min, width);
-      gtk_widget_measure (priv->last_visible_child->widget, GTK_ORIENTATION_VERTICAL,
-                          child_width,
-                          &min, &nat, NULL, NULL);
-      child_height = MAX (min, height);
-
-      gtk_widget_size_allocate (priv->last_visible_child->widget,
-                                &(GtkAllocation) { 0, 0, child_width, child_height }, -1);
     }
-
-  child_allocation.x = get_bin_window_x (stack);
-  child_allocation.y = get_bin_window_y (stack);
-  child_allocation.width = width;
-  child_allocation.height = height;
-
-  if (priv->visible_child)
-    {
-      int min_width;
-      int min_height;
-
-      gtk_widget_measure (priv->visible_child->widget, GTK_ORIENTATION_HORIZONTAL,
-                          height, &min_width, NULL, NULL, NULL);
-      child_allocation.width = MAX (child_allocation.width, min_width);
-
-      gtk_widget_measure (priv->visible_child->widget, GTK_ORIENTATION_VERTICAL,
-                          child_allocation.width, &min_height, NULL, NULL, NULL);
-      child_allocation.height = MAX (child_allocation.height, min_height);
-
-      if (child_allocation.width > width)
-        {
-          GtkAlign halign = gtk_widget_get_halign (priv->visible_child->widget);
-
-          if (halign == GTK_ALIGN_CENTER || halign == GTK_ALIGN_FILL)
-            child_allocation.x = (width - child_allocation.width) / 2;
-          else if (halign == GTK_ALIGN_END)
-            child_allocation.x = (width - child_allocation.width);
-        }
-
-      if (child_allocation.height > height)
-        {
-          GtkAlign valign = gtk_widget_get_valign (priv->visible_child->widget);
-
-          if (valign == GTK_ALIGN_CENTER || valign == GTK_ALIGN_FILL)
-            child_allocation.y = (height - child_allocation.height) / 2;
-          else if (valign == GTK_ALIGN_END)
-            child_allocation.y = (height - child_allocation.height);
-        }
-
-      gtk_widget_size_allocate (priv->visible_child->widget, &child_allocation, -1);
-    }
-}
-
-#define LERP(a, b, t) ((a) + (((b) - (a)) * (1.0 - (t))))
-static void
-gtk_stack_measure (GtkWidget      *widget,
-                   GtkOrientation  orientation,
-                   int             for_size,
-                   int            *minimum,
-                   int            *natural,
-                   int            *minimum_baseline,
-                   int            *natural_baseline)
-{
-  GtkStack *stack = GTK_STACK (widget);
-  GtkStackPrivate *priv = gtk_stack_get_instance_private (stack);
-  GtkStackPage *child_info;
-  GtkWidget *child;
-  int child_min, child_nat;
-  GList *l;
-
-  *minimum = 0;
-  *natural = 0;
-
-  for (l = priv->children; l != NULL; l = l->next)
-    {
-      child_info = l->data;
-      child = child_info->widget;
-
-      if (!priv->homogeneous[orientation] &&
-          priv->visible_child != child_info)
-        continue;
-
-      if (gtk_widget_get_visible (child))
-        {
-          if (!priv->homogeneous[OPPOSITE_ORIENTATION(orientation)] && priv->visible_child != child_info)
-            {
-              int min_for_size;
-
-              gtk_widget_measure (child, OPPOSITE_ORIENTATION (orientation), -1, &min_for_size, NULL, NULL, NULL);
-
-              gtk_widget_measure (child, orientation, MAX (min_for_size, for_size), &child_min, &child_nat, NULL, NULL);
-            }
-          else
-            gtk_widget_measure (child, orientation, for_size, &child_min, &child_nat, NULL, NULL);
-
-          *minimum = MAX (*minimum, child_min);
-          *natural = MAX (*natural, child_nat);
-        }
-    }
-
-  if (priv->last_visible_child != NULL && !priv->homogeneous[orientation])
-    {
-      double t = priv->interpolate_size ? gtk_progress_tracker_get_ease_out_cubic (&priv->tracker, FALSE) : 1.0;
-      int last_size;
-
-      if (orientation == GTK_ORIENTATION_HORIZONTAL)
-        last_size = priv->last_visible_widget_width;
-      else
-        last_size = priv->last_visible_widget_height;
-
-      *minimum = LERP (*minimum, last_size, t);
-      *natural = LERP (*natural, last_size, t);
-    }
-}
-*/
-
-    }
-
-
-/*
-        public void open ()
-        {
-            if (this.state == Pomodoro.RevealerState.OPENING || this.state == Pomodoro.RevealerState.OPENED) {
-                return;
-            }
-
-            var value_from = 0.0;
-            var value_to = 1.0;
-
-            if (this.animation != null) {  // && this.animation.state == Adw.AnimationState.PLAYING) {
-                value_from = this.animation.value;
-
-                this.animation.pause ();
-            }
-
-            var animation_duration = this.transition_duration;
-            var animation_target = new Adw.CallbackAnimationTarget ((value) => {
-                this.queue_resize ();
-            });
-            var animation = new Adw.TimedAnimation (this, value_from, value_to, animation_duration, animation_target);
-            animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
-            animation.done.connect (() => {
-                this.state = Pomodoro.RevealerState.OPENED;
-                this.animation = null;
-
-                // this.notify_property ("child-revealed");
-            });
-
-            this.animation = animation;
-            this.state = Pomodoro.RevealerState.OPENING;
-            this.update_child_visible ();
-
-            animation.play ();
-        }
-
-        public void close ()
-        {
-            if (this.state == Pomodoro.RevealerState.CLOSING || this.state == Pomodoro.RevealerState.CLOSED) {
-                return;
-            }
-
-            var value_from = 1.0;
-            var value_to = 0.0;
-
-            if (this.animation != null) {  // && this.animation.state == Adw.AnimationState.PLAYING) {
-                value_from = this.animation.value;
-
-                this.animation.pause ();
-            }
-
-            var animation_duration = this.transition_duration;
-            var animation_target = new Adw.CallbackAnimationTarget ((value) => {
-                this.queue_resize ();
-            });
-            var animation = new Adw.TimedAnimation (this, value_from, value_to, animation_duration, animation_target);
-            animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
-            animation.done.connect (() => {
-                this.animation = null;
-                this.state = Pomodoro.RevealerState.CLOSED;
-                this.update_child_visible ();
-            });
-
-            this.animation = animation;
-            this.state = Pomodoro.RevealerState.CLOSING;
-
-            animation.play ();
-        }
-*/
-
-
-
-
 }

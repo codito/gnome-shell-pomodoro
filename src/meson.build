@@ -61,12 +61,12 @@ libgnome_pomodoro_dep = declare_dependency(
 gnome_pomodoro_vala_sources = files(
   'about-dialog.vala',
   'accelerator.vala',
-  'aligned-stack.vala',
   'application.vala',
   'log-scale.vala',
   'main.vala',
   'monospace-label.vala',
   'preferences-dialog.vala',
+  'reducer.vala',
   'screen-notification.vala',
   'stats-day-page.vala',
   'stats-month-page.vala',

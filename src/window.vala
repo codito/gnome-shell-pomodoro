@@ -77,11 +77,13 @@ namespace Pomodoro
         private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
 
         [GtkChild]
-        private unowned Pomodoro.AlignedStack mode_stack;  // TODO: ewname to `stack`
+        private unowned Pomodoro.Reducer reducer;
+        // [GtkChild]
+        // private unowned Adw.HeaderBar reduced_header_bar;
+        // [GtkChild]
+        // private unowned Gtk.Box box;
         [GtkChild]
         private unowned Adw.ViewStack stack;  // TODO: rename to `view_stack`
-        // [GtkChild]
-        // private unowned Pomodoro.Revealer revealer;
 
 
         construct
@@ -102,12 +104,6 @@ namespace Pomodoro
 
             this.update_title ();
         }
-
-        // public new void get_preferred_size (out Gtk.Requisition minimum_size,
-        //                                     out Gtk.Requisition natural_size)
-        // {
-        //     this.mode_stack.get_preferred_size (out minimum_size, out natural_size);
-        // }
 
         private void update_title ()
         {
@@ -154,21 +150,19 @@ namespace Pomodoro
         }
         */
 
-        public bool shrinked {
-            get {
-                return this.mode_stack.visible_child_index > 0;
-                // return this.mode_stack.visible_child_name == "compact";
-                // return this.revealer.reveal_child;
-            }
-            set {
-                if (value) {
-                    this.shrink ();
-                }
-                else {
-                    this.unshrink ();
-                }
-            }
-        }
+        // public bool shrinked {
+        //     get {
+        //         return this.reducer.visible_child == this.reduced_header_bar;
+        //     }
+        //     set {
+        //         if (value) {
+        //             this.shrink ();
+        //         }
+        //         else {
+        //             this.unshrink ();
+        //         }
+        //     }
+        // }
 
         public void shrink ()
         {
@@ -180,17 +174,15 @@ namespace Pomodoro
                 this.unmaximize ();
             }
 
-            this.mode_stack.visible_child_index = 1;
-            this.resizable = false;  // TODO: bind this.revealer.reveal_child and resizable
+            this.reducer.visible_child = this.reducer.get_last_child ();
+            this.resizable = false;  // TODO: bind this.reducer.reveal_child and resizable
 
-            // TODO: disable maximization
-            // TODO: disable full screen
             // TODO: set always on top?
         }
 
         public void unshrink ()
         {
-            this.mode_stack.visible_child_index = 0;
+            this.reducer.visible_child = this.reducer.get_first_child ();
             this.resizable = true;
         }
 
@@ -229,10 +221,6 @@ namespace Pomodoro
                 "shrink", null, new GLib.Variant.boolean (false));
             action.change_state.connect (this.change_shrink_state);
             action_map.add_action (action);
-            // TODO: disable action if window is fullscreened or maximized
-            // this.notify["fullscreened"].connect (() => {  // TODO: does not work
-            //     action.set_enabled (!this.fullscreened);
-            // });
 
             var force_dark_theme = style_manager.color_scheme == Adw.ColorScheme.FORCE_DARK;
             action = new GLib.SimpleAction.stateful (
