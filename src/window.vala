@@ -181,29 +181,7 @@ namespace Pomodoro
             }
 
             this.mode_stack.visible_child_index = 1;
-
-            // var surface = this.get_root ().get_surface ();
-            // surface.request_layout ();
-
-            // this.mode_stack.visible_child_name = "compact";
-            // this.revealer.reveal_child = false;
-            // this.resizable = false;  // TODO: bind this.revealer.reveal_child and resizable
-
-            // this.toplevel.compute_size ();
-            // var root = this.get_root ();
-            // if (root != null) {
-            //     root.queue_resize ();
-            // }
-
-
-            // var minimum_size = Gtk.Requisition ();
-            // var natural_size = Gtk.Requisition ();
-
-            // this.get_preferred_size (out minimum_size, out natural_size);
-            // this.default_height = minimum_size.height;
-
-            // this.set_size_request (400, 50);
-
+            this.resizable = false;  // TODO: bind this.revealer.reveal_child and resizable
 
             // TODO: disable maximization
             // TODO: disable full screen
@@ -213,16 +191,7 @@ namespace Pomodoro
         public void unshrink ()
         {
             this.mode_stack.visible_child_index = 0;
-            // this.mode_stack.visible_child_name = "default";
-            // this.revealer.reveal_child = true;
             this.resizable = true;
-
-
-            // var minimum_size = Gtk.Requisition ();
-            // var natural_size = Gtk.Requisition ();
-
-            // this.get_preferred_size (out minimum_size, out natural_size);
-            // this.default_height = natural_size.height;
         }
 
         // TODO: can we bind action and this.revealer property?
@@ -278,82 +247,6 @@ namespace Pomodoro
             this.setup_actions ();
 
             base.parser_finished (builder);
-        }
-
-        // public override Gtk.SizeRequestMode get_request_mode ()
-        // {
-        //     return Gtk.SizeRequestMode.CONSTANT_SIZE;
-        // }
-
-        /**
-         * Simplify measure function to make it more suitable for animating its size
-         */
-        public override void measure (Gtk.Orientation orientation,
-                                      int             for_size,
-                                      out int         minimum,
-                                      out int         natural,
-                                      out int         minimum_baseline,
-                                      out int         natural_baseline)
-        {
-            var child = this.get_first_child ();
-
-            if (child != null) {
-                child.measure (orientation,
-                               for_size,
-                               out minimum,
-                               out natural,
-                               out minimum_baseline,
-                               out natural_baseline);
-
-                // warning ("### measure %s %d: %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), for_size, natural);
-            }
-
-            // var root = this.get_root ();
-
-            // if (root != null)
-            // {
-                // if (orientation == Gtk.Orientation.HORIZONTAL) {
-                //     this.default_width = natural;
-                // }
-                // else {
-                //     this.default_height = natural;
-                // }
-            // }
-
-            // if (this.shrinked) {
-            //     if (orientation == Gtk.Orientation.HORIZONTAL) {
-            //         minimum = 300;
-            //         natural = 300;
-            //     }
-            //     else {
-            //         minimum = 40;
-            //         natural = 40;
-            //     }
-            // }
-
-            // warning ("### measure %s %d: %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), for_size, natural);
-        }
-
-        public override void size_allocate (int width,
-                                            int height,
-                                            int baseline)
-        {
-            // warning ("### size_allocate %dx%d", width, height);
-
-            var child = this.get_first_child ();
-            var child_allocation = Gtk.Allocation () {
-                x = 0,
-                y = 0,
-                width = width,
-                height = height
-            };
-
-            if (child != null)
-            {
-                child.allocate_size (child_allocation, -1);
-            }
-
-            base.size_allocate (width, height, baseline);
         }
     }
 
