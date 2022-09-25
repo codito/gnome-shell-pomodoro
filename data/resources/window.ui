@@ -89,8 +89,8 @@
 
     <child>
       <object class="PomodoroAlignedStack" id="mode_stack">
-<!--        <property name="transition-duration">500</property>-->
-        <property name="transition-duration">3000</property>
+        <property name="transition-duration">500</property>
+<!--        <property name="transition-duration">3000</property>-->
         <property name="interpolate-window-size">True</property>
 <!--        <property name="hhomogeneous">False</property>-->
 <!--        <property name="vhomogeneous">False</property>-->
