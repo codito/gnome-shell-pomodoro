@@ -98,11 +98,14 @@ namespace Pomodoro
             //     this.default_page = "timer";
             // }
 
+            // this.reducer.transition_begin.connect (this.on_reducer_transition_begin);
+            // this.reducer.transition_end.connect (this.on_reducer_transition_end);
             this.stack.notify["visible-child"].connect (() => {
                 this.update_title ();
             });
 
             this.update_title ();
+            this.on_reducer_transition_end ();
         }
 
         private void update_title ()
@@ -112,6 +115,19 @@ namespace Pomodoro
             this.title = page != null ? page.title : _("Pomodoro");
         }
 
+        private void on_reducer_transition_begin ()
+        {
+            this.resizable = true;
+        }
+
+        private void on_reducer_transition_end ()
+        {
+            var reducer = this.reducer;
+
+            if (reducer.visible_child != reducer.get_first_child ()) {
+                this.resizable = false;
+            }
+        }
 
 
         /*
@@ -175,15 +191,11 @@ namespace Pomodoro
             }
 
             this.reducer.visible_child = this.reducer.get_last_child ();
-            this.resizable = false;  // TODO: bind this.reducer.reveal_child and resizable
-
-            // TODO: set always on top?
         }
 
         public void unshrink ()
         {
             this.reducer.visible_child = this.reducer.get_first_child ();
-            this.resizable = true;
         }
 
         // TODO: can we bind action and this.revealer property?
