@@ -21,6 +21,8 @@ namespace Pomodoro
             public weak Gtk.Widget? last_focus = null;
             public int              last_width = -1;
             public int              last_height = -1;
+            // public int              minimum_width = -1;
+            // public int              minimum_height = -1;
             public ulong            notify_visible_id = 0;
             // public Gtk.ATContext at_context;
 
@@ -63,7 +65,10 @@ namespace Pomodoro
         private Adw.Animation?       transition_animation;
         private unowned ChildInfo?   _visible_child;
         private unowned ChildInfo?   last_visible_child;
-
+        // private int                  last_minimum_width = -1;
+        // private int                  last_minimum_height = -1;
+        // private int                  last_width = -1;
+        // private int                  last_height = -1;
 
         private unowned ChildInfo? find_child_info_for_widget (Gtk.Widget child)
         {
@@ -100,25 +105,23 @@ namespace Pomodoro
          */
         private void maybe_clear_window_default_size ()
         {
-            // TODO?
-            // if (this.transition_animation == null) {
-            //     return;
-            // }
+            // var visible_child = this._visible_child;
+            var window = this.get_root () as Gtk.Window;
 
-            // if (this._visible_child == null ||
-            //     this._visible_child.last_width < 0 ||
-            //     this._visible_child.last_height < 0)
+            // if (visible_child != null &&
+            //     visible_child.widget != null &&
+            //     visible_child.widget.visible)
             // {
-            //     return;
+            //     visible_child.last_width = visible_child.widget.get_width ();
+            //     visible_child.last_height = visible_child.widget.get_height ();
             // }
 
-            if (this.interpolate_window_size)
+            if (this.interpolate_window_size &&
+                window != null)
+                // window.default_width >= 0 &&
+                // window.default_height >= 0)
             {
-                var window = this.get_root () as Gtk.Window;
-
-                if (window != null) {
-                    window.set_default_size (-1, -1);
-                }
+                window.set_default_size (-1, -1);
             }
         }
 
@@ -135,27 +138,45 @@ namespace Pomodoro
                 this.last_visible_child = null;
             }
 
-            // Always calculate fresh size for the visible child.
-            // warning ("clear last_size");
+            // Ensure that we don't store last size after the transition.
+            if (this.interpolate_window_size)
+            {
+                GLib.Idle.add (() => {
+                    var window = this.get_root () as Gtk.Window;
 
-            // GLib.Idle.add (() => {
+                    if (window != null &&
+                        window.default_width < 0 &&
+                        window.default_height < 0 &&
+                        window.visible)
+                    {
+                        this.queue_resize ();
 
-                // this._visible_child.last_width = -1;
-                // this._visible_child.last_height = -1;
-                // this.queue_resize ();
+                        return GLib.Source.CONTINUE;
+                    }
+                    else {
+                        // this._visible_child.last_width = -1;
+                        // this._visible_child.last_height = -1;
 
+                        return GLib.Source.REMOVE;
+                    }
+                });
+            }
+            // else {
+            //     this._visible_child.last_width = -1;
+            //     this._visible_child.last_height = -1;
+            // }
 
-            //     this.maybe_clear_window_default_size ();
-                this.transition_end ();
-
-            //     return GLib.Source.REMOVE;
-            // });
+            this.transition_end ();
         }
 
         private void start_transition (uint transition_duration)
         {
+            // TODO: clear last size on style/theme change
+
             var visible_child = this._visible_child;
             var last_visible_child = this.last_visible_child;
+            var minimum_size = Gtk.Requisition ();
+            var natural_size = Gtk.Requisition ();
 
             this.transition_begin ();
 
@@ -174,31 +195,26 @@ namespace Pomodoro
             // }
 
             // Store size of current child and estimate size of next one.
+            // visible_child.widget.get_preferred_size (out minimum_size, out natural_size);
             last_visible_child.last_width = last_visible_child.widget.get_width ();
             last_visible_child.last_height = last_visible_child.widget.get_height ();
 
-
-            // TODO: make distinction between child that has size stored and reduced, which always uses preferred size
-
-
-            // warning ("last preferred size = %dx%d", last_visible_child.last_width, last_visible_child.last_height);
-
-            // TODO: restore previous size?
-            // TODO: clear last size on style/theme change
-            if (visible_child.last_width < 0 ||
-                visible_child.last_height < 0)
-            {
-            //     visible_child.last_width = visible_child.last_width;
-            //     visible_child.last_height = visible_child.last_height;
+            // if (visible_child.last_width < 0 ||
+            //     visible_child.last_height < 0)
+            // {
+            //     visible_child.last_width = natural_size.width;
+            //     visible_child.last_height = natural_size.height;
             // }
-            // else {
-                var natural_size = Gtk.Requisition ();
-                visible_child.widget.get_preferred_size (null, out natural_size);
-                visible_child.last_width = natural_size.width;
-                visible_child.last_height = natural_size.height;
 
-                // warning ("preferred size = %dx%d", visible_child.last_width, visible_child.last_height);
-            }
+            // visible_child.last_width = int.max (visible_child.last_width, minimum_size.width);
+            // visible_child.last_height = int.max (visible_child.last_height, minimum_size.height);
+            // visible_child.minimum_width = minimum_size.width;
+            // visible_child.minimum_height = minimum_size.height;
+
+            // this.last_minimum_width = -1;
+            // this.last_minimum_height = -1;
+            // this.last_width = last_visible_child.widget.get_width ();
+            // this.last_height = last_visible_child.widget.get_height ();
 
             // Setup transition
             if (this.transition_animation != null) {
@@ -435,6 +451,14 @@ namespace Pomodoro
             var minimum_for_size    = 0;
             var last_size           = 0;
 
+            var window = this.get_root () as Gtk.Window;
+            var interpolating_window_size = (
+                this.interpolate_window_size &&
+                window != null &&
+                window.default_width < 0 &&
+                window.default_height < 0
+            );
+
             minimum = 0;
             natural = 0;
             minimum_baseline = -1;
@@ -442,68 +466,31 @@ namespace Pomodoro
 
             if (visible_child != null)
             {
-                // var size = orientation == Gtk.Orientation.HORIZONTAL
-                //     ? visible_child.last_width
-                //     : visible_child.last_height;
+                // TODO: calculate minimum size even during animation?
+                // warning ("measure: C");
+                // FIXME: after an animation it should still suggest last size
+                // warning ("measure: natural %s (B) = %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), natural);
 
-                // Use cached size during animation. Also, dont compute minium size.  # TODO: should we interpolate minimum size too?
-                // if (visible_child.last_width >= 0 &&
-                //     visible_child.last_height >= 0 &&
-                //     transition_progress < 1.0)
+                visible_child.widget.measure (opposite_orientation (orientation),
+                                              -1,
+                                              out minimum_for_size,
+                                              null,
+                                              null,
+                                              null);
+                visible_child.widget.measure (orientation,
+                                              int.max (minimum_for_size, for_size),
+                                              out minimum,
+                                              out natural,
+                                              null,
+                                              null);
 
-                var window = this.get_root () as Gtk.Window;
+                last_size = orientation == Gtk.Orientation.HORIZONTAL
+                    ? visible_child.last_width
+                    : visible_child.last_height;
 
-
-                if (visible_child.last_width >= 0 &&
-                    visible_child.last_height >= 0 &&
-                    this.transition_animation != null)
+                if (last_size >= 0 && (this.transition_animation != null || interpolating_window_size))
                 {
-                    natural = orientation == Gtk.Orientation.HORIZONTAL
-                        ? visible_child.last_width
-                        : visible_child.last_height;
-
-                    minimum = natural;  // FIXME: this prevents window from shrinking the window. Should be interpolated
-
-                    // warning ("measure: A");
-                    // warning ("measure: natural %s (A) = %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), natural);
-                }
-                else if (window != null &&
-                         window.default_width < 0 &&
-                         window.default_height < 0)
-                {
-                    natural = orientation == Gtk.Orientation.HORIZONTAL
-                        ? visible_child.last_width
-                        : visible_child.last_height;
-
-                    minimum = natural;  // FIXME
-
-                    // warning ("measure: B");
-                }
-                else {
-                    // last_size = orientation == Gtk.Orientation.HORIZONTAL
-                    //     ? visible_child.last_width
-                    //     : visible_child.last_height;
-
-                    visible_child.widget.measure (opposite_orientation (orientation),
-                                                  -1,
-                                                  out minimum_for_size,
-                                                  null,
-                                                  null,
-                                                  null);
-                    visible_child.widget.measure (orientation,
-                                                  int.max (minimum_for_size, for_size),
-                                                  out minimum,
-                                                  out natural,
-                                                  null,
-                                                  null);
-
-                    // TODO: calculate minimum size even during animation?
-
-                    // warning ("measure: C");
-
-                    // FIXME: after an animation it should still suggest last size
-
-                    // warning ("measure: natural %s (B) = %d", (orientation == Gtk.Orientation.HORIZONTAL ? "H" : "V"), natural);
+                    natural = last_size;
                 }
             }
 
@@ -518,7 +505,8 @@ namespace Pomodoro
                 natural = (int) GLib.Math.round (
                     Adw.lerp ((double) last_size, (double) natural, transition_progress));
 
-                minimum = natural;  // FIXME: should be interpolated
+                minimum = (int) GLib.Math.round (
+                    Adw.lerp ((double) last_size, (double) minimum, transition_progress));
             }
 
             if (natural < minimum) {
@@ -559,7 +547,8 @@ namespace Pomodoro
                 var min_width = 0;
                 var min_height = 0;
 
-                if (visible_child.last_width >= 0 &&
+                if (this.transition_animation != null &&
+                    visible_child.last_width >= 0 &&
                     visible_child.last_height >= 0)
                 {
                     visible_child_allocation.width = int.max (visible_child.last_width, width);
@@ -591,10 +580,10 @@ namespace Pomodoro
             }
         }
 
-        private void snapshot_crossfade (Gtk.Snapshot snapshot)
+        private void snapshot_with_transition (Gtk.Snapshot snapshot)
         {
-            var visible_child = this._visible_child;
-            var last_visible_child = this.last_visible_child;
+            var visible_child       = this._visible_child;
+            var last_visible_child  = this.last_visible_child;
             var transition_progress = this.get_transition_progress ();
 
             if (last_visible_child != null &&
@@ -620,9 +609,9 @@ namespace Pomodoro
 
         public override void snapshot (Gtk.Snapshot snapshot)
         {
-            var visible_child = this._visible_child;
+            var visible_child      = this._visible_child;
             var last_visible_child = this.last_visible_child;
-            var bounds = Graphene.Rect ();
+            var bounds             = Graphene.Rect ();
             bounds.init (
                 0,
                 0,
@@ -635,19 +624,18 @@ namespace Pomodoro
                 last_visible_child.widget.visible)
             {
                 snapshot.push_clip (bounds);
-                this.snapshot_crossfade (snapshot);
+                this.snapshot_with_transition (snapshot);
                 snapshot.pop ();
                 return;
             }
 
             if (visible_child != null &&
-                visible_child.widget != null &&
-                visible_child.widget.visible)
+                     visible_child.widget != null &&
+                     visible_child.widget.visible)
             {
                 snapshot.push_clip (bounds);
                 this.snapshot_child (visible_child.widget, snapshot);
                 snapshot.pop ();
-                return;
             }
         }
 
