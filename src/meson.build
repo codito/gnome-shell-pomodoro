@@ -59,7 +59,7 @@ libgnome_pomodoro_dep = declare_dependency(
 
 # The gnome-pomodoro binary
 gnome_pomodoro_vala_sources = files(
-  'about-dialog.vala',
+  'about-window.vala',
   'accelerator.vala',
   'application.vala',
   'log-scale.vala',

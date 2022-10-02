@@ -46,7 +46,7 @@ namespace Pomodoro
 
         private unowned Pomodoro.PreferencesDialog preferences_dialog;
         private unowned Pomodoro.Window window;
-        private unowned Gtk.AboutDialog about_dialog;
+        private unowned Adw.AboutWindow about_window;
         private Pomodoro.ApplicationService service;
         private Pomodoro.TimerService timer_service;
         private Pomodoro.DesktopExtension desktop_extension;
@@ -417,22 +417,22 @@ namespace Pomodoro
         private void activate_about (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            if (this.about_dialog == null)
+            if (this.about_window == null)
             {
-                var about_dialog = Pomodoro.create_about_dialog ();
-                ((Gtk.Widget) about_dialog).destroy.connect (() => {
-                    this.about_dialog = null;
+                var about_window = Pomodoro.create_about_window ();
+                ((Gtk.Widget) about_window).destroy.connect (() => {
+                    this.about_window = null;
                 });
 
                 if (this.window != null) {
-                    about_dialog.set_transient_for (this.window);
+                    about_window.set_transient_for (this.window);
                 }
 
-                this.add_window (about_dialog);
-                this.about_dialog = about_dialog;
+                this.add_window (about_window);
+                this.about_window = about_window;
             }
 
-            this.about_dialog.present ();
+            this.about_window.present ();
         }
 
         private void activate_quit (GLib.SimpleAction action,
