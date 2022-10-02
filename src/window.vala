@@ -74,6 +74,20 @@ namespace Pomodoro
             }
         }
 
+        public bool shrinked {
+            get {
+                return this.reducer.visible_child != this.reducer.get_first_child ();
+            }
+            set {
+                if (value) {
+                    this.shrink ();
+                }
+                else {
+                    this.unshrink ();
+                }
+            }
+        }
+
         private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
 
         [GtkChild]
@@ -162,20 +176,6 @@ namespace Pomodoro
         }
         */
 
-        // public bool shrinked {
-        //     get {
-        //         return this.reducer.visible_child == this.reduced_header_bar;
-        //     }
-        //     set {
-        //         if (value) {
-        //             this.shrink ();
-        //         }
-        //         else {
-        //             this.unshrink ();
-        //         }
-        //     }
-        // }
-
         public void shrink ()
         {
             if (this.is_fullscreen ()) {
@@ -194,7 +194,6 @@ namespace Pomodoro
             this.reducer.visible_child = this.reducer.get_first_child ();
         }
 
-        // TODO: can we bind action and this.revealer property?
         private void change_shrink_state (GLib.SimpleAction action,
                                           GLib.Variant?     state)
         {
@@ -208,20 +207,9 @@ namespace Pomodoro
             action.set_state (state);
         }
 
-        private void change_dark_theme_state (GLib.SimpleAction action,
-                                              GLib.Variant?     state)
-        {
-            var style_manager = ((Adw.Application) this.application).style_manager;
-
-            style_manager.color_scheme = state.get_boolean () ? Adw.ColorScheme.FORCE_DARK : Adw.ColorScheme.DEFAULT;
-
-            action.set_state (state);
-        }
-
         private void setup_actions ()
         {
             var action_map = (GLib.ActionMap) this;
-            var style_manager = ((Adw.Application) this.application).style_manager;
 
             GLib.SimpleAction action;
 
@@ -230,12 +218,9 @@ namespace Pomodoro
             action.change_state.connect (this.change_shrink_state);
             action_map.add_action (action);
 
-            var force_dark_theme = style_manager.color_scheme == Adw.ColorScheme.FORCE_DARK;
-            action = new GLib.SimpleAction.stateful (
-                "dark-theme", null, new GLib.Variant.boolean (force_dark_theme));
-            action.change_state.connect (this.change_dark_theme_state);
-            action_map.add_action (action);
-            // TODO: monitor gtk_application_prefer_dark_theme for changes
+            this.notify["shrinked"].connect (() => {
+                action.set_state (new GLib.Variant.boolean (this.shrinked));
+            });
         }
 
         public void parser_finished (Gtk.Builder builder)

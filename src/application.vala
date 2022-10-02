@@ -556,7 +556,7 @@ namespace Pomodoro
             // this.session_manager.restore_async.begin ();
 
             this.setup_resources ();
-            // this.setup_actions ();
+            this.setup_actions ();
             // this.setup_repository ();
             // this.setup_capabilities ();
             // this.setup_desktop_extension ();

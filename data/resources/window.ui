@@ -50,16 +50,11 @@
   </object>
   -->
 
-  <menu id="app_menu">
+  <menu id="primary_menu">
     <section>
-      <attribute name="display-hint">horizontal-buttons</attribute>
       <item>
-        <attribute name="verb-icon">shrink-symbolic</attribute>
+        <attribute name="label" translatable="yes">_Shrink Window</attribute>
         <attribute name="action">win.shrink</attribute>
-      </item>
-      <item>
-        <attribute name="verb-icon">dark-theme-symbolic</attribute>
-        <attribute name="action">win.dark-theme</attribute>
       </item>
     </section>
     <section>
@@ -79,7 +74,6 @@
       </item>
     </section>
   </menu>
-
 
   <template class="PomodoroWindow" parent="AdwApplicationWindow">
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
@@ -112,7 +106,7 @@
                   <object class="GtkMenuButton">
                     <property name="icon-name">open-menu-symbolic</property>
                     <property name="receives_default">False</property>
-                    <property name="menu-model">app_menu</property><!-- TODO: rename to window_menu -->
+                    <property name="menu-model">primary_menu</property>
                     <property name="focus-on-click">False</property>
                     <!-- <property name="use-underline">1</property> TODO: does not work -->
                     <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
@@ -175,7 +169,7 @@
               <object class="GtkMenuButton">
                 <property name="icon-name">open-menu-symbolic</property>
                 <property name="receives_default">False</property>
-                <property name="menu-model">app_menu</property><!-- TODO: rename to window_menu -->
+                <property name="menu-model">primary_menu</property>
                 <property name="focus-on-click">False</property>
                 <!-- <property name="use-underline">1</property> TODO: does not work -->
                 <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
