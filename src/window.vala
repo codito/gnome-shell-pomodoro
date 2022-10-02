@@ -78,10 +78,6 @@ namespace Pomodoro
 
         [GtkChild]
         private unowned Pomodoro.Reducer reducer;
-        // [GtkChild]
-        // private unowned Adw.HeaderBar reduced_header_bar;
-        // [GtkChild]
-        // private unowned Gtk.Box box;
         [GtkChild]
         private unowned Adw.ViewStack stack;  // TODO: rename to `view_stack`
 

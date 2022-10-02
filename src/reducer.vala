@@ -33,7 +33,6 @@ namespace Pomodoro
             }
         }
 
-
         public unowned Gtk.Widget? visible_child {
             get {
                 return this._visible_child != null
@@ -60,7 +59,6 @@ namespace Pomodoro
 
         // Whether to force window to animate its size
         public bool interpolate_window_size { get; set construct; default = false; }
-
 
         private GLib.List<ChildInfo> children;
         private Adw.Animation?       transition_animation;
@@ -240,12 +238,12 @@ namespace Pomodoro
             {
                 child_info.widget.set_child_visible (true);
 
-                if (contains_focus)  // TODO: does not seem to work, perhaps because toggle button is inside popover
+                if (contains_focus)
                 {
-                    if (child_info.last_focus != null &&
-                        child_info.last_focus.visible)
-                    {
-                        child_info.last_focus.grab_focus ();  // TODO: iterate parents, grab focus for first visible parent?
+                    if (child_info.last_focus != null) {
+                        // FIXME? Restoring focus to Gtk.ModelButton doesnt seem to work
+                        // child_info.last_focus.grab_focus ();
+                        child_info.widget.child_focus (Gtk.DirectionType.TAB_FORWARD);
                     }
                     else {
                         child_info.widget.child_focus (Gtk.DirectionType.TAB_FORWARD);
@@ -376,12 +374,10 @@ namespace Pomodoro
             }
         }
 
-        // public override Gtk.SizeRequestMode get_request_mode ()
-        // {
-        //     return this.transition_animation != null
-        //         ? Gtk.SizeRequestMode.CONSTANT_SIZE
-        //         : base.get_request_mode ();
-        // }
+        public override Gtk.SizeRequestMode get_request_mode ()
+        {
+            return Gtk.SizeRequestMode.CONSTANT_SIZE;
+        }
 
         public override void measure (Gtk.Orientation orientation,
                                       int             for_size,
@@ -577,19 +573,6 @@ namespace Pomodoro
                 this.snapshot_child (visible_child.widget, snapshot);
                 snapshot.pop ();
             }
-        }
-
-        // TODO: sometimes window is not reactive to tab navigation,
-        public override bool focus (Gtk.DirectionType direction)
-        {
-            if (this._visible_child != null &&
-                this._visible_child.widget != null &&
-                this._visible_child.widget.visible)
-            {
-                return this._visible_child.widget.focus (direction);
-            }
-
-            return false;
         }
 
         public signal void transition_begin ();
