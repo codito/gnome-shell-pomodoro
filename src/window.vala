@@ -108,14 +108,15 @@ namespace Pomodoro
             //     this.default_page = "timer";
             // }
 
-            // this.reducer.transition_begin.connect (this.on_reducer_transition_begin);
-            // this.reducer.transition_end.connect (this.on_reducer_transition_end);
+            this.reducer.notify["visible-child"].connect (() => {
+                this.update_resizable ();
+            });
             this.stack.notify["visible-child"].connect (() => {
                 this.update_title ();
             });
 
+            this.update_resizable ();
             this.update_title ();
-            this.on_reducer_transition_end ();
         }
 
         private void update_title ()
@@ -125,18 +126,9 @@ namespace Pomodoro
             this.title = page != null ? page.title : _("Pomodoro");
         }
 
-        private void on_reducer_transition_begin ()
+        private void update_resizable ()
         {
-            this.resizable = true;
-        }
-
-        private void on_reducer_transition_end ()
-        {
-            var reducer = this.reducer;
-
-            if (reducer.visible_child != reducer.get_first_child ()) {
-                this.resizable = false;
-            }
+            this.resizable = reducer.visible_child == reducer.get_first_child ();
         }
 
 

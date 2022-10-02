@@ -130,8 +130,6 @@ namespace Pomodoro
                 this.last_visible_child = null;
             }
 
-            this.transition_end ();
-
             this.queue_resize ();
         }
 
@@ -171,7 +169,6 @@ namespace Pomodoro
             animation.play ();
 
             this.transition_animation = animation;
-            this.transition_begin ();
 
             this.maybe_clear_window_default_size ();
             this.queue_resize ();
@@ -574,10 +571,6 @@ namespace Pomodoro
                 snapshot.pop ();
             }
         }
-
-        public signal void transition_begin ();
-
-        public signal void transition_end ();
 
         public override void dispose ()
         {
