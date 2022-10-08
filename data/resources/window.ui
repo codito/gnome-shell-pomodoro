@@ -94,7 +94,7 @@
               <object class="AdwHeaderBar" id="header_bar">
                 <property name="centering-policy">strict</property>
                 <property name="title-widget">
-                  <object class="AdwViewSwitcher" id="switcher">
+                  <object class="AdwViewSwitcher">
                     <property name="stack">stack</property>
                     <property name="policy">wide</property>
                   </object>
@@ -129,7 +129,7 @@
                         <property name="title" translatable="yes">Timer</property>
                         <property name="icon-name">timer-symbolic</property>
                         <property name="child">
-                          <object class="PomodoroTimerView">
+                          <object class="PomodoroTimerView" id="timer_view">
                             <style>
                               <class name="pomodoro-timer-view"/>
                             </style>
@@ -150,6 +150,7 @@
                         </property>
                       </object>
                     </child>
+                    <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
                   </object><!-- stack -->
                 </child>
               </object><!-- clamp -->

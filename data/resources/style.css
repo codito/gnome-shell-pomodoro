@@ -4,13 +4,13 @@
     100% { opacity: 1.0; }
 }
 
-.pomodoro-header-bar viewswitcher.wide indicatorbin {
-   opacity: 0;
+.pomodoro-header-bar viewswitcher.wide image {
+    opacity: 0.001;  /* setting opacity to 0 causes errors */
+    margin-right: -16px;
 }
 
 .pomodoro-header-bar viewswitcher.wide label {
-    margin-left: -12px;
-    margin-right: 12px;
+    margin-right: 2px;
 }
 
 .keybinding {

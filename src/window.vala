@@ -94,6 +94,8 @@ namespace Pomodoro
         private unowned Pomodoro.Reducer reducer;
         [GtkChild]
         private unowned Adw.ViewStack stack;  // TODO: rename to `view_stack`
+        [GtkChild]
+        private unowned Pomodoro.TimerView timer_view;
 
 
         construct
@@ -115,8 +117,14 @@ namespace Pomodoro
                 this.update_title ();
             });
 
+            var timer = Pomodoro.Timer.get_default ();
+            timer.state_changed.connect (() => {
+                this.update_timer_indicator ();
+            });
+
             this.update_resizable ();
             this.update_title ();
+            this.update_timer_indicator ();
         }
 
         private void update_title ()
@@ -131,6 +139,20 @@ namespace Pomodoro
             this.resizable = reducer.visible_child == reducer.get_first_child ();
         }
 
+        private void update_timer_indicator ()
+        {
+            var timer_page = this.stack.get_page (this.timer_view);
+            var timer      = Pomodoro.Timer.get_default ();
+
+            timer_page.needs_attention = this.stack.visible_child_name != "timer" && timer.is_started ();
+        }
+
+        [GtkCallback]
+        private void on_view_stack_visible_child_notify (GLib.Object    object,
+                                                         GLib.ParamSpec pspec)
+        {
+            this.update_timer_indicator ();
+        }
 
         /*
         [GtkCallback]
