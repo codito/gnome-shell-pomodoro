@@ -712,14 +712,14 @@ namespace Pomodoro
                         this.timer.start ();
                     }
                     else {
-                        this.timer.stop ();
+                        this.timer.reset ();
                     }
                 }
                 else if (Options.start) {
                     this.timer.start ();
                 }
                 else if (Options.stop) {
-                    this.timer.stop ();
+                    this.timer.reset ();
                 }
 
                 if (Options.skip) {

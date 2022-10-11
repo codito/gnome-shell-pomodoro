@@ -118,10 +118,11 @@ namespace Pomodoro
             this.timer.start ();
         }
 
+        // TODO: rename to reset
         private void activate_stop (GLib.SimpleAction action,
                                     GLib.Variant?     parameter)
         {
-            this.timer.stop ();
+            this.timer.reset ();
         }
 
         private void activate_pause (GLib.SimpleAction action,

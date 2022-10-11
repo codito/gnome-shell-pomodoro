@@ -3,85 +3,102 @@ namespace Pomodoro
     public class TimerProgressBar : Gtk.Widget
     {
         private const float LINE_WIDTH = 6.0f;
-        private const float OUTLINE_ALPHA = 0.2f;  // TODO: fetch this from CSS
 
-        private Pomodoro.Timer timer;
+        public unowned Pomodoro.Timer timer {
+            get {
+                return this._timer;
+            }
+            set {
+                if (value == this._timer) {
+                    return;
+                }
+
+                this.disconnect_signals ();
+
+                this._timer = value;
+
+                if (this.get_mapped ()) {
+                    this.connect_signals ();
+                }
+            }
+        }
+
+        private Pomodoro.Timer _timer;
+        private ulong          timer_state_changed_id = 0;
         private uint           timeout_id = 0;
-        private double         progress = 0.0;
+        private uint           timeout_interval = 0;
 
         construct
         {
-            var timer = Pomodoro.Timer.get_default ();
-
-            this.timer = timer;
-            // TODO: disconnect signals
-            this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
-        }
-
-        private bool update ()
-        {
-            var timestamp = Pomodoro.to_real_time (this.get_frame_clock ().get_frame_time ());
-            var progress = this.timer.calculate_progress (timestamp);
-
-            if (this.progress != progress)
-            {
-                this.progress = progress;
-
-                this.queue_draw ();
-            }
-
-            return GLib.Source.CONTINUE;
+            this._timer = Pomodoro.Timer.get_default ();
         }
 
         private uint calculate_timeout_interval ()
         {
-            var width  = (double) this.get_width ();
-            var height = (double) this.get_height ();
-            var radius = double.min (0.5 * double.min (width, height), 150.0);
-            var perimeter = 2.0 * Math.PI * radius;
+            var perimeter = (int64) Math.ceil (
+                    2.0 * Math.PI * double.min (this.get_width (), this.get_height ()));
 
-            return (uint) Math.ceil (250.0 * this.timer.duration / perimeter);
+            return Pomodoro.Timestamp.to_milliseconds_uint (this._timer.duration / (2 * perimeter));
         }
 
-        private void start_updating ()
+        private void start_timeout ()
         {
-            if (this.timeout_id == 0) {
-                var interval = uint.max (this.calculate_timeout_interval (), 50);
+            var timeout_interval = uint.max (this.calculate_timeout_interval (), 50);
 
-                // this.update_id = this.add_tick_callback (this.update);
-                this.timeout_id = GLib.Timeout.add (interval, this.update, GLib.Priority.DEFAULT);
-                GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.TimerProgressBar.update");
+            if (this.timeout_interval != timeout_interval) {
+                this.timeout_interval = timeout_interval;
+                this.stop_timeout ();
+            }
+
+            if (this.timeout_id == 0) {
+                this.timeout_id = GLib.Timeout.add (this.timeout_interval, () => {
+                    this.queue_draw ();
+
+                    return GLib.Source.CONTINUE;
+                });
+                GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.TimerProgressBar.on_timeout");
             }
         }
 
-        private void stop_updating ()
+        private void stop_timeout ()
         {
             if (this.timeout_id != 0) {
-                // this.remove_tick_callback (this.timeout_id);
                 GLib.Source.remove (this.timeout_id);
                 this.timeout_id = 0;
             }
         }
 
-        private void on_timer_state_notify ()
+        private void on_timer_state_changed (Pomodoro.TimerState current_state,
+                                             Pomodoro.TimerState previous_state)
         {
-            this.stop_updating ();
-
-            if (this.timer.is_running ()) {
-                this.start_updating ();
-            }
-
-            this.update ();
-        }
-
-        private void on_timer_is_paused_notify ()
-        {
-            if (this.timer.is_running ()) {
-                this.start_updating ();
+            if (this._timer.is_running ()) {
+                this.start_timeout ();
             }
             else {
-                this.stop_updating ();
+                this.stop_timeout ();
+            }
+
+            this.queue_draw ();
+        }
+
+        private void connect_signals ()
+        {
+            if (this.timer_state_changed_id == 0) {
+                this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
+            }
+
+            if (this._timer.is_running ()) {
+                this.start_timeout ();
+            }
+        }
+
+        private void disconnect_signals ()
+        {
+            this.stop_timeout ();
+
+            if (this.timer_state_changed_id != 0) {
+                this._timer.disconnect (this.timer_state_changed_id);
+                this.timer_state_changed_id = 0;
             }
         }
 
@@ -89,59 +106,46 @@ namespace Pomodoro
         {
             base.map ();
 
-            if (this.timer.is_running ()) {
-                this.start_updating ();
-            }
-
-            this.update ();
+            this.connect_signals ();
         }
 
         public override void unmap ()
         {
             base.unmap ();
 
-            this.stop_updating ();
+            this.disconnect_signals ();
         }
 
         public override void snapshot (Gtk.Snapshot snapshot)
         {
+            var timestamp           = this._timer.get_current_time (this.get_frame_clock ().get_frame_time ());
+            var progress            = this._timer.calculate_progress (timestamp);
+            var progress_angle_from = - 0.5 * Math.PI - 2.0 * Math.PI * progress.clamp (0.000001, 1.0);
+            var progress_angle_to   = - 0.5 * Math.PI;
+
             var width         = (float) this.get_width ();
             var height        = (float) this.get_height ();
             var style_context = this.get_style_context ();
             var color         = style_context.get_color ();
+            var radius        = 0.5f * float.min (width, height);
+            var center_x      = 0.5f * width;
+            var center_y      = 0.5f * height;
+            var bounds        = Graphene.Rect ();
+            var through       = Gsk.RoundedRect ();
 
-            var radius   = 0.5f * float.min (width, height);
-            var center_x = 0.5f * width;
-            var center_y = 0.5f * height;
-            var bounds   = Graphene.Rect ();
-
-            var outline = Gsk.RoundedRect ();  // TODO: rename to "through_bounds"
-            var outline_width = LINE_WIDTH;
-            var outline_color = Gdk.RGBA () {
-                red=color.red,
-                green=color.green,
-                blue=color.blue,
-                alpha=OUTLINE_ALPHA
-            };
+            Gdk.RGBA through_color;
+            style_context.lookup_color ("unfocused_borders", out through_color);
 
             bounds.init (center_x - radius, center_y - radius, 2.0f * radius, 2.0f * radius);
-            outline.init_from_rect (bounds, radius);
+            through.init_from_rect (bounds, radius);
 
-            // save/restore() is necessary so we can undo the transforms we start
-            // out with.
-            // snapshot.save ();
+            snapshot.save ();
+            snapshot.append_border (through,
+                                    { LINE_WIDTH, LINE_WIDTH, LINE_WIDTH, LINE_WIDTH },
+                                    { through_color, through_color, through_color, through_color });
 
-            // draw static outline
-            snapshot.append_border (outline,
-                                    { outline_width, outline_width, outline_width, outline_width },
-                                    { outline_color, outline_color, outline_color, outline_color });
-
-            if (this.timer.is_running ())
+            if (this._timer.is_started ())
             {
-                var progress = this.progress;
-                var progress_angle_from = - 0.5 * Math.PI - 2.0 * Math.PI * progress.clamp (0.000001, 1.0);
-                var progress_angle_to = - 0.5 * Math.PI;
-
                 var context = snapshot.append_cairo (bounds);
                 context.set_line_width (LINE_WIDTH);
                 context.set_line_cap (Cairo.LineCap.ROUND);
@@ -153,9 +157,7 @@ namespace Pomodoro
                 context.stroke ();
             }
 
-            // And finally, don't forget to restore the initial save() that
-            // we did for the initial transformations.
-            // snapshot.restore ();
+            snapshot.restore ();
         }
 
         public override Gtk.SizeRequestMode get_request_mode ()
@@ -175,7 +177,7 @@ namespace Pomodoro
 
         public override void dispose ()
         {
-            this.stop_updating ();
+            this.disconnect_signals ();
 
             base.dispose ();
         }

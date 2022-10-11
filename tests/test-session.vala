@@ -152,7 +152,7 @@ namespace Tests
          */
         public void test_new_from_template ()
         {
-            var now = Pomodoro.Timestamp.tick (0);
+            var now = Pomodoro.Timestamp.advance (0);
             var template = this.session_template;
             var session = new Pomodoro.Session.from_template (template);
             // Pomodoro.TimeBlock[] time_blocks = {};
@@ -240,7 +240,7 @@ namespace Tests
                 long_break_duration = 15 * Pomodoro.Interval.MINUTE,
                 cycles = 4
             };
-            var now = Pomodoro.Timestamp.tick (0);
+            var now = Pomodoro.Timestamp.advance (0);
             var session = new Pomodoro.Session ();
 
             session.populate (template, now);

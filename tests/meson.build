@@ -22,6 +22,7 @@ test_names = [
   'time-block',
   'timer',
   # 'timer-view-action-group',
+  'timestamp',
   'session',
   'session-manager',
   # 'session-manager-strategy',

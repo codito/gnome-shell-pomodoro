@@ -895,7 +895,7 @@ namespace Tests
             session_manager.leave_session.connect (() => { signals += "leave-session"; });
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
-            Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
+            Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
             timer.start ();
 
             assert_cmpvariant (
@@ -934,8 +934,8 @@ namespace Tests
             session_manager.leave_session.connect (() => { signals += "leave-session"; });
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
-            // Pomodoro.Timestamp.tick (Pomodoro.Session.EXPIRE_TIMEOUT);
-            Pomodoro.Timestamp.tick (Pomodoro.SessionManager.SESSION_EXPIRY_TIMEOUT);
+            // Pomodoro.Timestamp.advance (Pomodoro.Session.EXPIRE_TIMEOUT);
+            Pomodoro.Timestamp.advance (Pomodoro.SessionManager.SESSION_EXPIRY_TIMEOUT);
             assert_false (timer.is_started ());
             assert_true (session_manager.current_session.is_expired ());
 
@@ -949,7 +949,7 @@ namespace Tests
             assert_nonnull (session_manager.current_time_block);
             assert_true (timer.is_started ());
 
-            Pomodoro.Timestamp.tick (Pomodoro.Interval.SECOND);
+            Pomodoro.Timestamp.advance (Pomodoro.Interval.SECOND);
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.calculate_elapsed ()),
                 new GLib.Variant.int64 (Pomodoro.Interval.SECOND)
@@ -975,7 +975,7 @@ namespace Tests
             session_manager.leave_session.connect (() => { signals += "leave-session"; });
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
-            var now = Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
+            var now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
             timer.reset ();
 
             // As the timer is stopped, expect current time-block to be null.
@@ -1013,7 +1013,7 @@ namespace Tests
             session_manager.leave_session.connect (() => { signals += "leave-session"; });
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
-            Pomodoro.Timestamp.tick (Pomodoro.Interval.MINUTE);
+            Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
             timer.reset ();
 
             assert_null (session_manager.current_session);

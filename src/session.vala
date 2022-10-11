@@ -469,6 +469,8 @@ namespace Pomodoro
             var duration = time_block.duration;
             var is_long_break = false;
 
+            assert (time_block != null);
+
             unowned GLib.List<Child>? link = this.find_link_by_child (child);
             unowned GLib.List<Child>? prev_link = link != null ? link.prev : this.children.last ();
 

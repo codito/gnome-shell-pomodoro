@@ -117,7 +117,7 @@ namespace Pomodoro
 
         public void stop () throws Error
         {
-            this.timer.stop ();
+            this.timer.reset ();
         }
 
         // public void reset () throws Error
@@ -142,7 +142,7 @@ namespace Pomodoro
 
         public void quit () throws Error
         {
-            this.timer.stop ();
+            this.timer.reset ();
 
             var application = Pomodoro.Application.get_default ();
             application.quit ();
@@ -336,7 +336,7 @@ namespace Pomodoro
 
         public void stop () throws GLib.Error
         {
-            this.timer.stop ();
+            this.timer.reset ();
         }
 
         public void pause () throws GLib.Error

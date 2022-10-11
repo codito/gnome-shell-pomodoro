@@ -23,8 +23,8 @@ namespace Pomodoro
 
             this.timer = timer;
             // TODO: disconnect signals
-            this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            // this.timer.notify["state"].connect_after (this.on_timer_state_notify);
+            // this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
         }
 
         /**
@@ -64,14 +64,14 @@ namespace Pomodoro
 
         private void start_updating ()
         {
-            if (this.timeout_id == 0) {
-                var interval = uint.max (this.calculate_timeout_interval (), 50);
+            // if (this.timeout_id == 0) {
+            //     var interval = uint.max (this.calculate_timeout_interval (), 50);
 
-                this.sync_time ();
+            //     this.sync_time ();
 
-                this.timeout_id = GLib.Timeout.add (interval, this.update, GLib.Priority.DEFAULT);
-                GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.SessionProgressBar.update");
-            }
+            //     this.timeout_id = GLib.Timeout.add (interval, this.update, GLib.Priority.DEFAULT);
+            //     GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.SessionProgressBar.update");
+            // }
         }
 
         private void stop_updating ()
@@ -82,26 +82,26 @@ namespace Pomodoro
             }
         }
 
-        private void on_timer_state_notify ()
-        {
-            this.stop_updating ();
+        // private void on_timer_state_notify ()
+        // {
+        //     this.stop_updating ();
 
-            if (this.timer.is_running ()) {
-                this.start_updating ();
-            }
+        //     if (this.timer.is_running ()) {
+        //         this.start_updating ();
+        //     }
 
-            this.update ();
-        }
+        //     this.update ();
+        // }
 
-        private void on_timer_is_paused_notify ()
-        {
-            if (this.timer.is_running ()) {
-                this.start_updating ();
-            }
-            else {
-                this.stop_updating ();
-            }
-        }
+        // private void on_timer_is_paused_notify ()
+        // {
+        //     if (this.timer.is_running ()) {
+        //         this.start_updating ();
+        //     }
+        //     else {
+        //         this.stop_updating ();
+        //     }
+        // }
 
         public override void map ()
         {

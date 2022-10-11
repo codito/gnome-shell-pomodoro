@@ -4,6 +4,42 @@ namespace Pomodoro
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-label.ui")]
     public class TimerLabel : Gtk.Box, Gtk.Buildable
     {
+        public unowned Pomodoro.Timer timer {
+            get {
+                return this._timer;
+            }
+            set {
+                if (value == this._timer) {
+                    return;
+                }
+
+                var is_ticking = this.timer_tick_id != 0;
+
+                this.disconnect_signals ();
+
+                this._timer = value;
+
+                if (this.get_mapped ()) {
+                    this.connect_signals ();
+                }
+            }
+        }
+
+        public unowned Pomodoro.SessionManager session_manager {
+            get {
+                return this._session_manager;
+            }
+            set {
+                if (value == this._session_manager) {
+                    return;
+                }
+
+                this._session_manager = value;
+
+                this.timer = this._session_manager.timer;
+            }
+        }
+
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel minutes_label;
         [GtkChild]
@@ -11,19 +47,15 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel seconds_label;
 
-        private Pomodoro.Timer timer;
-        // private GLib.Settings  settings;
-        // private ulong          settings_changed_id = 0;
-        private ulong          timer_elapsed_id = 0;
-        private ulong          timer_notify_state_id = 0;
-        private ulong          timer_notify_is_paused_id = 0;
+        private Pomodoro.SessionManager _session_manager;
+        private Pomodoro.Timer          _timer;
+        private ulong                   timer_state_changed_id = 0;
+        private ulong                   timer_tick_id = 0;
 
         construct
         {
-            var timer = Pomodoro.Timer.get_default ();
-
-            this.timer = timer;
-            // this.settings = Pomodoro.get_settings ().get_child ("preferences");
+            this._session_manager = Pomodoro.SessionManager.get_default ();
+            this._timer           = _session_manager.timer;
         }
 
         private void set_default_direction_ltr ()
@@ -36,21 +68,21 @@ namespace Pomodoro
 
         private void update_css_classes ()
         {
-            if (this.timer.is_running ()) {
+            if (this._timer.is_running ()) {
                 this.add_css_class ("timer-running");
             }
             else {
                 this.remove_css_class ("timer-running");
             }
 
-            if (this.timer.is_paused ()) {
+            if (this._timer.is_paused ()) {
                 this.add_css_class ("timer-paused");
             }
             else {
                 this.remove_css_class ("timer-paused");
             }
 
-            if (!this.timer.is_started ()) {
+            if (!this._timer.is_started ()) {
                 this.add_css_class ("timer-stopped");
             }
             else {
@@ -58,99 +90,75 @@ namespace Pomodoro
             }
         }
 
-        private void disconnect_signals ()
+        private void connect_signals ()
         {
-            if (this.timer_elapsed_id != 0) {
-                this.timer.disconnect (this.timer_elapsed_id);
-                this.timer_elapsed_id = 0;
+            if (this.timer_tick_id == 0) {
+                this.timer_tick_id = this._timer.tick.connect (this.on_timer_tick);
             }
 
-            if (this.timer_notify_state_id != 0) {
-                this.timer.disconnect (this.timer_notify_state_id);
-                this.timer_notify_state_id = 0;
+            if (this.timer_state_changed_id == 0) {
+                this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
             }
 
-            if (this.timer_notify_is_paused_id != 0) {
-                this.timer.disconnect (this.timer_notify_is_paused_id);
-                this.timer_notify_is_paused_id = 0;
-            }
-
-            // if (this.settings_changed_id != 0) {
-            //     this.settings.disconnect (this.settings_changed_id);
-            //     this.settings_changed_id = 0;
-            // }
+            // TODO: monitor for next time-block duration when the timer is stopped
         }
 
-        private void on_timer_elapsed_notify ()
+        private void disconnect_signals ()
         {
-            var remaining = Pomodoro.Timestamp.to_seconds_uint (
-                this.timer.is_started ()
-                ? this.timer.calculate_remaining ()
-                : Pomodoro.State.POMODORO.get_default_duration ());
+            if (this.timer_tick_id != 0) {
+                this._timer.disconnect (this.timer_tick_id);
+                this.timer_tick_id = 0;
+            }
 
-            var minutes = remaining / 60;
-            var seconds = remaining % 60;
+            if (this.timer_state_changed_id != 0) {
+                this._timer.disconnect (this.timer_state_changed_id);
+                this.timer_state_changed_id = 0;
+            }
+        }
+
+        private void update_remaining_time (int64 timestamp = -1)
+        {
+            var remaining = this._timer.is_started ()
+                ? this._timer.calculate_remaining (timestamp)
+                : Pomodoro.State.POMODORO.get_default_duration ();
+            // TODO: when stopped show duration of next time-block
+            var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (remaining);
+            var minutes = remaining_uint / 60;
+            var seconds = remaining_uint % 60;
 
             this.minutes_label.text = minutes.to_string ();
             this.seconds_label.text = "%02u".printf (seconds);
         }
 
-        private void on_timer_state_notify ()
+        private void on_timer_tick (int64 timestamp)
         {
-            this.update_css_classes ();
+            this.update_remaining_time (timestamp);
         }
 
-        private void on_timer_is_paused_notify ()
+        private void on_timer_state_changed (Pomodoro.TimerState current_state,
+                                             Pomodoro.TimerState previous_state)
         {
+            var timestamp = this._timer.get_last_state_changed_time ();
+
+            this.update_remaining_time (timestamp);
             this.update_css_classes ();
         }
-
-        // private void on_settings_changed (GLib.Settings settings,
-        //                                   string        key)
-        // {
-        //     switch (key)
-        //     {
-        //         case "pomodoro-duration":
-        //             this.on_timer_elapsed_notify ();
-        //             break;
-        //
-        //         default:
-        //             break;
-        //     }
-        // }
 
         public override void map ()
         {
-            this.on_timer_elapsed_notify ();
+            this.update_remaining_time ();
 
             base.map ();
 
-            // TODO
-            // if (this.timer_elapsed_id == 0) {
-            //     this.timer_elapsed_id = this.timer.notify["elapsed"].connect_after (this.on_timer_elapsed_notify);
-            // }
-
-            // TODO
-            // if (this.timer_notify_state_id == 0) {
-            //     this.timer_notify_state_id = this.timer.notify["state"].connect_after (this.on_timer_state_notify);
-            // }
-
-            // TODO
-            // if (this.timer_notify_is_paused_id == 0) {
-            //     this.timer_notify_is_paused_id = this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
-            // }
-
-            // if (this.settings_changed_id == 0) {
-            //     this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
-            // }
+            this.connect_signals ();
         }
 
         public override void unmap ()
         {
-            base.unmap ();
-
             this.disconnect_signals ();
-       }
+
+            base.unmap ();
+        }
 
         public override void realize ()
         {

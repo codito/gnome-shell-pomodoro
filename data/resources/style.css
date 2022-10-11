@@ -86,22 +86,18 @@
     color: white;
 }
 
-/* classes backported from Gtk4 */
-.dialog.message .title {
-    padding-left: 12px;
-    padding-right: 12px;
-    font-size: 15pt;
-    font-weight: bold;
-}
-
 .pomodoro-timer-view .small-button {
     padding: 16px;
-/*    -gtk-icon-size: 16px;*/
     -gtk-icon-size: 24px;
 }
+
 .pomodoro-timer-view .small-button.flat {
-    /* border: 1px solid alpha(@theme_fg_color, 0.2);*/
     border: none;
+}
+
+.pomodoro-timer-view .small-button:backdrop,
+.pomodoro-timer-view .small-button:disabled {
+    color: @insensitive_fg_color;
 }
 
 .pomodoro-timer-view .large-button {
@@ -114,13 +110,14 @@
 .pomodoro-timer-view .suggested-action:hover,
 .pomodoro-timer-view .suggested-action:active {
     border: 0;
-    color: @theme_base_color;
+    color: @theme_bg_color;
     background-color: @theme_fg_color;
     background-image: none;
 }
 
 .pomodoro-timer-view .suggested-action:focus {
-    outline: 2px solid @focus_border_color;
+    outline-width: 3px;
+    outline-offset: 0px;
 }
 
 .pomodoro-timer-view .suggested-action:backdrop,
@@ -172,4 +169,12 @@
 .pomodoro-session-progressbar {
 }
 
-
+/* classes backported from Gtk4 */
+/*
+.dialog.message .title {
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 15pt;
+    font-weight: bold;
+}
+*/

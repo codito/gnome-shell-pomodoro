@@ -2,12 +2,14 @@
 // TODO: move to interval.vala
 namespace Pomodoro.Interval
 {
-    public const int64 SECOND = 1000000;
-    public const int64 MINUTE = 60 * SECOND;
-    public const int64 HOUR   = 60 * MINUTE;
-    public const int64 DAY    = 24 * HOUR;
-    public const int64 MIN    = int64.MIN;
-    public const int64 MAX    = int64.MAX;
+    public const int64 MICROSECOND = 1;
+    public const int64 MILLISECOND = 1000;
+    public const int64 SECOND      = 1000000;
+    public const int64 MINUTE      = 60 * SECOND;
+    public const int64 HOUR        = 60 * MINUTE;
+    public const int64 DAY         = 24 * HOUR;
+    public const int64 MIN         = int64.MIN;
+    public const int64 MAX         = int64.MAX;
 }
 
 
@@ -21,12 +23,20 @@ namespace Pomodoro.Timestamp
     public const int64 MAX       = int64.MAX;
 
     private int64 frozen_time = UNDEFINED;
+    private int64 advance_by = 0;
 
     public int64 from_now ()
     {
-        return frozen_time < 0
-                ? GLib.get_real_time ()
-                : frozen_time;
+        debug ("Timestamp.from_now ()");
+
+        if (frozen_time >= 0) {
+            var tmp = frozen_time;
+            frozen_time += advance_by;
+
+            return tmp;
+        }
+
+        return GLib.get_real_time ();
     }
 
     public int64 from_seconds (double seconds)
@@ -38,11 +48,6 @@ namespace Pomodoro.Timestamp
     {
         return (int64) seconds * Pomodoro.Interval.SECOND;
     }
-
-    // public int64 from_monotonic_timestamp (int64 monotonic_timestamp)
-    // {
-    //     return reference_time + monotonic_timestamp;
-    // }
 
     // TODO
     // public int64 from_iso8601 (string text)
@@ -59,9 +64,14 @@ namespace Pomodoro.Timestamp
         return (uint) (timestamp / Pomodoro.Interval.SECOND).clamp (0, uint.MAX);
     }
 
+    public double to_milliseconds (int64 timestamp)
+    {
+        return ((double) timestamp) / ((double) Pomodoro.Interval.MILLISECOND);
+    }
+
     public uint to_milliseconds_uint (int64 timestamp)
     {
-        return (uint) (timestamp / 1000).clamp (0, uint.MAX);
+        return (uint) (timestamp / Pomodoro.Interval.MILLISECOND).clamp (0, uint.MAX);
     }
 
     // TODO
@@ -133,6 +143,38 @@ namespace Pomodoro.Timestamp
         // TODO
     // }
 
+    // public int64 round_seconds (int64 timestamp)
+    // {
+    //     var remainder = timestamp % Pomodoro.Interval.SECOND;
+
+    //     if (remainder > 500000) {
+    //         return timestamp - remainder + Pomodoro.Interval.SECOND;
+    //     }
+
+    //     if (remainder < -500000) {
+    //         return timestamp - remainder - Pomodoro.Interval.SECOND;
+    //     }
+
+    //     return timestamp - remainder;
+    // }
+
+    public int64 round (int64 timestamp,
+                        int64 unit)
+    {
+        var unit_half = unit / 2;
+        var remainder = timestamp % unit;
+
+        if (remainder > unit_half) {
+            return timestamp - remainder + unit;
+        }
+
+        if (remainder < -unit_half) {
+            return timestamp - remainder - unit;
+        }
+
+        return timestamp - remainder;
+    }
+
     //
     // Functions for unit tests
     //
@@ -140,21 +182,25 @@ namespace Pomodoro.Timestamp
     /**
      * Freeze Pomodoro.Timestamp.from_now () to current time. Added for unittesting.
      */
-    public void freeze (int64 timestamp = -1)  // TODO: remove arg, return frozen time
+    public void freeze (int64 timestamp = -1,
+                        int64 _advance_by = 0)  // TODO: remove arg, return frozen time
     {
         if (timestamp < 0) {
             timestamp = Pomodoro.Timestamp.from_now ();
         }
 
         frozen_time = timestamp;
+        advance_by = _advance_by;
     }
 
     /**
      * Freeze Pomodoro.Timestamp.from_now () to a given value. Added for unittesting.
      */
-    public void freeze_to (int64 timestamp)
+    public void freeze_to (int64 timestamp,
+                           int64 _advance_by = 0)
     {
         frozen_time = timestamp;
+        advance_by = _advance_by;
     }
 
     /**
@@ -173,8 +219,8 @@ namespace Pomodoro.Timestamp
     /**
      * Advance frozen time. Added for unittesting.
      */
-    public int64 tick (int64 interval)  // TODO: rename to "skip" or "advance"
-                       requires (interval >= 0)
+    public int64 advance (int64 interval)
+                          requires (interval >= 0)
     {
         if (!is_frozen ()) {
             freeze ();

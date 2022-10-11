@@ -21,16 +21,17 @@ namespace Pomodoro
 
         private Pomodoro.Timer          timer;
         private Pomodoro.SessionManager session_manager;
-        private ulong                   session_manager_state_changed_id = 0;
-        private ulong                   timer_notify_is_paused_id = 0;
+        private ulong                   timer_state_changed_id = 0;
+        // private ulong                   timer_notify_is_paused_id = 0;
 
         construct
         {
-            this.timer           = Pomodoro.Timer.get_default ();
             this.session_manager = Pomodoro.SessionManager.get_default ();
+            this.timer           = session_manager.timer;
             this.layout_manager  = new Gtk.BinLayout ();
 
-            // this.insert_action_group ("timer", new Pomodoro.TimerViewActionGroup ());
+            this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup (this.session_manager));
+            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
         }
 
         private void update_css_classes ()
