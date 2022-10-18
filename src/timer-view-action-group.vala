@@ -22,10 +22,22 @@ using GLib;
 
 namespace Pomodoro
 {
-    public class TimerViewActionGroup : GLib.SimpleActionGroup
+    public class SessionManagerActionGroup : GLib.SimpleActionGroup
+    {
+        public Pomodoro.SessionManager session_manager { get; construct; }
+
+        public SessionManagerActionGroup (Pomodoro.SessionManager session_manager)
+        {
+            GLib.Object (
+                session_manager: session_manager
+            );
+        }
+    }
+
+
+    public class TimerActionGroup : GLib.SimpleActionGroup
     {
         public Pomodoro.Timer timer { get; construct; }
-        public Pomodoro.SessionManager session_manager { get; construct; }
 
         private GLib.SimpleAction start_action;
         private GLib.SimpleAction stop_action;
@@ -36,17 +48,10 @@ namespace Pomodoro
         private GLib.SimpleAction skip_action;
         private GLib.SimpleAction rewind_action;
 
-        public TimerViewActionGroup (Pomodoro.SessionManager? session_manager = null)
+        public TimerActionGroup (Pomodoro.Timer timer)
         {
-            if (session_manager == null) {
-                session_manager = Pomodoro.SessionManager.get_default ();
-            }
-
-            var timer = session_manager.timer;
-
             GLib.Object (
-                timer: timer,
-                session_manager: session_manager
+                timer: timer
             );
 
             this.start_action = new GLib.SimpleAction ("start", null);
@@ -79,8 +84,8 @@ namespace Pomodoro
             this.rewind_action.activate.connect (this.activate_rewind);
             this.add_action (this.rewind_action);
 
-            this.timer.state_changed.connect (this.on_timer_changed);
-            // this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            timer.state_changed.connect (this.on_timer_changed);
+            // timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
 
             this.update_action_states ();
         }
@@ -88,7 +93,8 @@ namespace Pomodoro
         private void update_action_states ()
         {
             var is_started = this.timer.is_started ();
-            var is_paused = !this.timer.is_paused ();
+            var is_paused = this.timer.is_paused ();
+            // var is_running = !this.timer.is_running ();
 
             this.start_action.set_enabled (!is_started);
             this.stop_action.set_enabled (is_started);

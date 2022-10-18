@@ -22,11 +22,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    public const double USEC_PER_SEC = 1000000.0;  // TODO: remove, use Timestamp.from_seconds() and Timestamp.to_seconds()
-
-    private int64 reference_time = -1;  // TODO: move to timer-progress-bar.vala
-    // private int64 frozen_time = -1;
-
     private inline void ensure_timestamp (ref int64 timestamp)
     {
         if (timestamp < 0) {
@@ -56,6 +51,14 @@ namespace Pomodoro
 
         return str;
     }
+
+
+    // ---------------------------------------------------------------------------
+
+
+    public const double USEC_PER_SEC = 1000000.0;  // TODO: remove, use Timestamp.from_seconds() and Timestamp.to_seconds()
+
+    private int64 reference_time = -1;  // TODO: move to timer-progress-bar.vala
 
     // /**
     //  * Fake Pomodoro.get_current_time (). Added for unittesting.

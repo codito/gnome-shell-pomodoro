@@ -47,16 +47,28 @@ namespace Pomodoro
             }
         }
 
-        private void update_buttons_stack ()
+        private void update_buttons ()
         {
             var is_stopped = !this.timer.is_started ();
             var is_paused = this.timer.is_paused ();
-            var child = this.buttons_grid.get_first_child ();
+            var current_time_block = this.session_manager.current_time_block;
+            var buttons_grid_child = this.buttons_grid.get_first_child ();
 
-            while (child != null) {
-                var stack = child as Gtk.Stack;
+            this.timer_state_menubutton.label = current_time_block.state.get_label ();
 
-                if (stack != null) {
+            if (current_time_block.state.is_break ()) {
+                this.timer_skip_button.tooltip_text = _("Start pomodoro");
+            }
+            else {
+                this.timer_skip_button.tooltip_text = _("Take a break");
+            }
+
+            while (buttons_grid_child != null)
+            {
+                var stack = buttons_grid_child as Gtk.Stack;
+
+                if (stack != null)
+                {
                     if (is_stopped) {
                         stack.visible_child_name = "stopped";
                     }
@@ -68,43 +80,23 @@ namespace Pomodoro
                     }
                 }
 
-                child = stack.get_next_sibling ();
+                buttons_grid_child = stack.get_next_sibling ();
             }
         }
 
         private void disconnect_signals ()
         {
-            if (this.session_manager_state_changed_id != 0) {
-                this.session_manager.disconnect (this.session_manager_state_changed_id);
-                this.session_manager_state_changed_id = 0;
-            }
-
-            if (this.timer_notify_is_paused_id != 0) {
-                this.timer.disconnect (this.timer_notify_is_paused_id);
-                this.timer_notify_is_paused_id = 0;
+            if (this.timer_state_changed_id != 0) {
+                this.timer.disconnect (this.timer_state_changed_id);
+                this.timer_state_changed_id = 0;
             }
         }
 
-        private void on_session_manager_state_changed (Pomodoro.State current_state,
-                                                       Pomodoro.State previous_state)
-        {
-            this.timer_state_menubutton.label = current_state.get_label ();
-
-            if (current_state.is_break ()) {
-                this.timer_skip_button.tooltip_text = _("Start pomodoro");
-            }
-            else {
-                this.timer_skip_button.tooltip_text = _("Take a break");
-            }
-
-            this.update_css_classes ();
-            this.update_buttons_stack ();
-        }
-
-        private void on_timer_is_paused_notify ()
+        private void on_timer_state_changed (Pomodoro.TimerState current_state,
+                                             Pomodoro.TimerState previous_state)
         {
             this.update_css_classes ();
-            this.update_buttons_stack ();
+            this.update_buttons ();
         }
 
         [GtkCallback]
@@ -166,19 +158,14 @@ namespace Pomodoro
 
         public override void map ()
         {
-            var current_time_block = this.session_manager.current_time_block;
-            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+            var timer = this.timer;
 
-            this.on_session_manager_state_changed (current_state, current_state);
+            this.on_timer_state_changed (timer.state, timer.state);
 
             base.map ();
 
-            if (this.session_manager_state_changed_id == 0) {
-                this.session_manager_state_changed_id = this.session_manager.state_changed.connect (this.on_session_manager_state_changed);
-            }
-
-            if (this.timer_notify_is_paused_id == 0) {
-                this.timer_notify_is_paused_id = this.timer.notify["is-paused"].connect_after (this.on_timer_is_paused_notify);
+            if (this.timer_state_changed_id == 0) {
+                this.timer_state_changed_id = timer.state_changed.connect (this.on_timer_state_changed);
             }
         }
 
