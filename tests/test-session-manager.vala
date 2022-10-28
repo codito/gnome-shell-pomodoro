@@ -29,7 +29,7 @@ namespace Tests
         // private const uint LONG_BREAK_DURATION = 900;
         // private const uint POMODOROS_PER_SESSION = 4;
 
-        private Pomodoro.Timer default_timer;
+        private Pomodoro.Timer timer;
 
         private Pomodoro.SessionTemplate session_template = Pomodoro.SessionTemplate () {
             pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
@@ -114,9 +114,7 @@ namespace Tests
         {
             Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
 
-            // Default timer needs to be referenced somewhere
-            this.default_timer = new Pomodoro.Timer ();
-            this.default_timer.set_default ();
+            this.timer = new Pomodoro.Timer ();
 
             var settings = Pomodoro.get_settings ();
             settings.set_uint ("pomodoro-duration", 1500);
@@ -130,6 +128,8 @@ namespace Tests
         {
             var settings = Pomodoro.get_settings ();
             settings.revert ();
+
+            Pomodoro.Timer.set_default (null);
         }
 
 
@@ -141,7 +141,7 @@ namespace Tests
         {
             var session_manager = new Pomodoro.SessionManager ();
 
-            assert_true (session_manager.timer == this.default_timer);
+            assert_true (session_manager.timer == this.timer);
             assert_true (session_manager.timer.is_default ());
             assert_false (session_manager.timer.is_started ());
             assert_false (session_manager.timer.is_running ());
@@ -171,8 +171,8 @@ namespace Tests
 
         public void test_set_current_session ()
         {
-            var timer           = new Pomodoro.Timer ();
-            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+            var timer           = this.timer;
+            var session_manager = new Pomodoro.SessionManager.with_timer (this.timer);
 
             var signals = new string[0];
             var notify_current_time_block_emitted = 0;

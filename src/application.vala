@@ -772,8 +772,7 @@ namespace Pomodoro
             // }
 
             if (this.timer == null) {
-                this.timer = new Pomodoro.Timer ();
-                this.timer.set_default ();
+                this.timer = Pomodoro.Timer.get_default ();
             }
 
             // if (this.session_manager == null) {

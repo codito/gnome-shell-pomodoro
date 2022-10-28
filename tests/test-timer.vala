@@ -186,6 +186,9 @@ namespace Tests
             this.add_test ("new_with__started_state",
                            this.test_new_with__started_state);
 
+            this.add_test ("set_default",
+                           this.test_set_default);
+
             this.add_test ("is_running",
                            this.test_is_running);
             this.add_test ("is_started",
@@ -310,6 +313,8 @@ namespace Tests
         public override void teardown ()
         {
             Pomodoro.Timestamp.unfreeze ();
+
+            Pomodoro.Timer.set_default (null);
         }
 
 
@@ -386,6 +391,36 @@ namespace Tests
             );
             assert_true (timer.is_started ());
             assert_true (timer.is_running ());
+        }
+
+
+        /*
+         * Tests for static methods
+         */
+
+        private void test_set_default ()
+        {
+            // Expect timer to be created on demand
+            var default_timer = Pomodoro.Timer.get_default ();
+            assert_nonnull (default_timer);
+
+            // Check whether default timer holds a reference
+            var destroyed = false;
+            default_timer.weak_ref (() => {
+                destroyed = true;
+            });
+            default_timer = null;
+            assert_false (destroyed);
+
+            Pomodoro.Timer.set_default (null);
+            assert_true (destroyed);
+
+            // Check setting a custom timer
+            var custom_timer = new Pomodoro.Timer ();
+            assert_false (custom_timer.is_default ());
+            Pomodoro.Timer.set_default (custom_timer);
+            assert_true (Pomodoro.Timer.get_default () == custom_timer);
+            assert_true (custom_timer.is_default ());
         }
 
 

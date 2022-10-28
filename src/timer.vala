@@ -216,7 +216,7 @@ namespace Pomodoro
          */
         private const int64 TICKING_TOLERANCE = 20 * Pomodoro.Interval.MILLISECOND;
 
-        private static unowned Pomodoro.Timer? instance = null;
+        private static Pomodoro.Timer? instance = null;
 
         /**
          * Timer internal state.
@@ -450,16 +450,30 @@ namespace Pomodoro
 
 
         /**
-         * Return a default timer or `null` if none is set.
+         * Sets a default `Timer`.
+         *
+         * The old default timer is unreffed and the new timer referenced.
+         *
+         * A value of null for this will cause the current default timer to be released and a new default timer
+         * to be created on demand.
          */
-        public static unowned Pomodoro.Timer? get_default ()
+        public static void set_default (Pomodoro.Timer? timer)
         {
-            return Pomodoro.Timer.instance;
+            Pomodoro.Timer.instance = timer;
         }
 
-        public void set_default ()
+        /**
+         * Return a default timer.
+         *
+         * A new default timer will be created on demand.
+         */
+        public static unowned Pomodoro.Timer get_default ()
         {
-            Pomodoro.Timer.instance = this;
+            if (Pomodoro.Timer.instance == null) {
+                Pomodoro.Timer.set_default (new Pomodoro.Timer ());
+            }
+
+            return Pomodoro.Timer.instance;
         }
 
         public bool is_default ()
