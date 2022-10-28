@@ -1,6 +1,9 @@
 @keyframes blink {
     0% { opacity: 1.0; }
-    50% { opacity: 0.2; }
+    10% { opacity: 1.0; }
+    30% { opacity: 0.2; }
+    65% { opacity: 0.2; }
+    85% { opacity: 1.0; }
     100% { opacity: 1.0; }
 }
 
@@ -147,7 +150,7 @@
 }
 
 .pomodoro-timer-view .pomodoro-timer-label.timer-paused {
-    animation: blink 1500ms steps(2, start) infinite;
+    animation: blink 1500ms infinite;
 }
 
 .pomodoro-timer-view .pomodoro-timer-label.timer-stopped {
