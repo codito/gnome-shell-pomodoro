@@ -73,6 +73,7 @@ gnome_pomodoro_vala_sources = files(
   'stats-page.vala',
   'stats-view.vala',
   'stats-week-page.vala',
+  'timer-control-buttons.vala',
   'timer-label.vala',
   'timer-level-bar.vala',
   'timer-progress-bar.vala',

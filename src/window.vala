@@ -88,8 +88,6 @@ namespace Pomodoro
             }
         }
 
-        private Pomodoro.WindowView _view = Pomodoro.WindowView.DEFAULT;
-
         [GtkChild]
         private unowned Pomodoro.Reducer reducer;
         [GtkChild]
@@ -97,6 +95,9 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.TimerView timer_view;
 
+        private Pomodoro.SessionManager session_manager;
+        private Pomodoro.Timer          timer;
+        private Pomodoro.WindowView     _view = Pomodoro.WindowView.DEFAULT;
 
         construct
         {
@@ -117,10 +118,14 @@ namespace Pomodoro
                 this.update_title ();
             });
 
-            var timer = Pomodoro.Timer.get_default ();
-            timer.state_changed.connect (() => {
+            this.session_manager = Pomodoro.SessionManager.get_default ();
+            this.timer           = session_manager.timer;
+            this.timer.state_changed.connect (() => {
                 this.update_timer_indicator ();
             });
+
+            this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup (this.session_manager));
+            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
 
             this.update_resizable ();
             this.update_title ();

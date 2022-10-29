@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroTimerControlButtons" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="spacing">30</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+
+    <child>
+      <object class="GtkButton" id="left_button">
+        <property name="receives-default">0</property>
+        <property name="tooltip-text" translatable="yes">Rewind one minute</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <property name="action-name">timer.rewind</property>
+        <style>
+          <class name="circular"/>
+          <class name="small-button"/>
+          <class name="flat"/>
+        </style>
+        <child>
+          <object class="GtkImage">
+            <property name="icon-name">timer-rewind-symbolic</property>
+            <style>
+              <class name="symbolic"/>
+            </style>
+          </object>
+        </child>
+      </object><!-- left_button -->
+    </child>
+
+    <child>
+      <object class="GtkButton" id="center_button">
+        <property name="receives-default">True</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <style>
+          <class name="circular"/>
+          <class name="large-button"/>
+          <class name="flat"/>
+          <class name="suggested-action"/>
+        </style>
+        <child>
+          <object class="GtkStack" id="center_image_stack">
+            <property name="transition-type">crossfade</property>
+            <property name="transition-duration">100</property>
+            <property name="interpolate-size">False</property>
+            <property name="hhomogeneous">True</property>
+            <property name="vhomogeneous">True</property>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">start</property>
+                <property name="title" translatable="yes">Start Pomodoro</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-start-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">pause</property>
+                <property name="title" translatable="yes">Pause</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-pause-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">resume</property>
+                <property name="title" translatable="yes">Resume</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-start-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object><!-- center_button -->
+    </child>
+
+    <child>
+      <object class="GtkButton" id="right_button">
+        <property name="receives-default">0</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <style>
+          <class name="circular"/>
+          <class name="small-button"/>
+          <class name="flat"/>
+        </style>
+        <child>
+          <object class="GtkStack" id="right_image_stack">
+            <property name="transition-type">crossfade</property>
+            <property name="transition-duration">100</property>
+            <property name="interpolate-size">False</property>
+            <property name="hhomogeneous">True</property>
+            <property name="vhomogeneous">True</property>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">reset</property>
+                <property name="title" translatable="yes">Stop</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-stop-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">skip</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-skip-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object><!-- right_button -->
+    </child>
+
+  </template>
+</interface>

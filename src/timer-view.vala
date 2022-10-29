@@ -11,27 +11,19 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.TimerLevelBar session_progressbar;
         [GtkChild]
-        private unowned Gtk.Grid buttons_grid;
-        [GtkChild]
-        private unowned Gtk.Button timer_skip_button;
-        [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
         private unowned Gtk.GestureDrag drag_gesture;
 
-        private Pomodoro.Timer          timer;
         private Pomodoro.SessionManager session_manager;
+        private Pomodoro.Timer          timer;
         private ulong                   timer_state_changed_id = 0;
-        // private ulong                   timer_notify_is_paused_id = 0;
 
         construct
         {
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.timer           = session_manager.timer;
             this.layout_manager  = new Gtk.BinLayout ();
-
-            this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup (this.session_manager));
-            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
         }
 
         private void update_css_classes ()
@@ -50,47 +42,11 @@ namespace Pomodoro
 
         private void update_buttons ()
         {
-            var is_stopped = !this.timer.is_started ();
-            var is_paused = this.timer.is_paused ();
             var current_time_block = this.session_manager.current_time_block;
-            var buttons_grid_child = this.buttons_grid.get_first_child ();
 
-            this.timer_state_menubutton.label = current_time_block.state.get_label ();
-
-            if (current_time_block.state.is_break ()) {
-                this.timer_skip_button.tooltip_text = _("Start pomodoro");
-            }
-            else {
-                this.timer_skip_button.tooltip_text = _("Take a break");
-            }
-
-            while (buttons_grid_child != null)
-            {
-                var stack = buttons_grid_child as Gtk.Stack;
-
-                if (stack != null)
-                {
-                    if (is_stopped) {
-                        stack.visible_child_name = "stopped";
-                    }
-                    else if (is_paused && stack.get_child_by_name ("paused") != null) {
-                        stack.visible_child_name = "paused";
-                    }
-                    else {
-                        stack.visible_child_name = "running";
-                    }
-                }
-
-                buttons_grid_child = stack.get_next_sibling ();
-            }
-        }
-
-        private void disconnect_signals ()
-        {
-            if (this.timer_state_changed_id != 0) {
-                this.timer.disconnect (this.timer_state_changed_id);
-                this.timer_state_changed_id = 0;
-            }
+            this.timer_state_menubutton.label = current_time_block != null
+                ? current_time_block.state.get_label ()
+                : _("Stopped");
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
@@ -157,6 +113,21 @@ namespace Pomodoro
             }
         }
 
+        private void connect_signals ()
+        {
+            if (this.timer_state_changed_id == 0) {
+                this.timer_state_changed_id = timer.state_changed.connect (this.on_timer_state_changed);
+            }
+        }
+
+        private void disconnect_signals ()
+        {
+            if (this.timer_state_changed_id != 0) {
+                this.timer.disconnect (this.timer_state_changed_id);
+                this.timer_state_changed_id = 0;
+            }
+        }
+
         public override void map ()
         {
             var timer = this.timer;
@@ -165,9 +136,7 @@ namespace Pomodoro
 
             base.map ();
 
-            if (this.timer_state_changed_id == 0) {
-                this.timer_state_changed_id = timer.state_changed.connect (this.on_timer_state_changed);
-            }
+            this.connect_signals ();
         }
 
         public override void unmap ()
