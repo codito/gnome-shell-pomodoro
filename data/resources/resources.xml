@@ -21,14 +21,20 @@
     <file compressed="true">style-hc.css</file>
     <file compressed="true">style-hc-dark.css</file>
 
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-pause-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-rewind-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-skip-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-start-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-stop-symbolic.svg</file>
+
     <file preprocess="xml-stripblanks">icons/scalable/actions/dark-theme-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/shrink-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/stats-symbolic.svg</file>
-    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-pause-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-rewind-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-skip-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
   </gresource>
 </gresources>
