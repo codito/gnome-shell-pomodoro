@@ -94,7 +94,8 @@ namespace Pomodoro
         {
             var current_time_block = this.session_manager.current_time_block;
 
-            var is_stopped = !this.timer.is_started ();
+            var is_started = this.timer.is_started ();
+            var is_stopped = !is_started;
             var is_paused = this.timer.is_paused ();
             var is_break = current_time_block != null
                 ? current_time_block.state.is_break ()
@@ -139,6 +140,9 @@ namespace Pomodoro
                     ? (is_break ? _("Start pomodoro") : _("Take a break"))
                     : right_page.title;
             }
+
+            this.left_button.can_focus = is_started;
+            this.right_button.can_focus = is_started;
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,

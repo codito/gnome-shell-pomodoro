@@ -22,19 +22,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    public class SessionManagerActionGroup : GLib.SimpleActionGroup
-    {
-        public Pomodoro.SessionManager session_manager { get; construct; }
-
-        public SessionManagerActionGroup (Pomodoro.SessionManager session_manager)
-        {
-            GLib.Object (
-                session_manager: session_manager
-            );
-        }
-    }
-
-
     public class TimerActionGroup : GLib.SimpleActionGroup
     {
         public Pomodoro.Timer timer { get; construct; }
@@ -48,15 +35,11 @@ namespace Pomodoro
         private GLib.SimpleAction skip_action;
         private GLib.SimpleAction rewind_action;
 
-        private ulong timer_state_changed_id = 0;
-
         public TimerActionGroup (Pomodoro.Timer timer)
         {
             GLib.Object (
                 timer: timer
             );
-
-            this.timer_state_changed_id = timer.state_changed.connect (this.on_timer_changed);
         }
 
         construct
@@ -84,27 +67,6 @@ namespace Pomodoro
             this.rewind_action = new GLib.SimpleAction ("rewind", null);
             this.rewind_action.activate.connect (this.activate_rewind);
             this.add_action (this.rewind_action);
-
-            this.update_action_states ();
-        }
-
-        private void update_action_states ()
-        {
-            var is_started = this.timer.is_started ();
-            var is_paused = this.timer.is_paused ();
-
-            this.start_action.set_enabled (!is_started);
-            this.reset_action.set_enabled (is_started);
-            this.pause_action.set_enabled (is_started && !is_paused);
-            this.resume_action.set_enabled (is_started && is_paused);
-            this.skip_action.set_enabled (is_started);
-            this.rewind_action.set_enabled (is_started);
-        }
-
-        private void on_timer_changed (Pomodoro.TimerState current_state,
-                                       Pomodoro.TimerState previous_state)
-        {
-            this.update_action_states ();
         }
 
         private void activate_start (GLib.SimpleAction action,
@@ -143,13 +105,6 @@ namespace Pomodoro
             // TODO: take microseconds from param
 
             this.timer.rewind (Pomodoro.Interval.MINUTE);
-        }
-
-        public override void dispose ()
-        {
-            this.timer.disconnect (timer_state_changed_id);
-
-            base.dispose ();
         }
     }
 }
