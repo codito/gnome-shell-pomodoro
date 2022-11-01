@@ -2,7 +2,62 @@ namespace Pomodoro
 {
     public class TimerProgressBar : Gtk.Widget
     {
+        private const uint  FADE_IN_DURATION = 500;
+        private const uint  FADE_OUT_DURATION = 500;
         private const float LINE_WIDTH = 6.0f;
+
+        private class Through : Gtk.Widget
+        {
+            public override Gtk.SizeRequestMode get_request_mode ()
+            {
+                return Gtk.SizeRequestMode.CONSTANT_SIZE;
+            }
+
+            public override bool focus (Gtk.DirectionType direction)
+            {
+                return false;
+            }
+
+            public override bool grab_focus ()
+            {
+                return false;
+            }
+
+            public override void measure (Gtk.Orientation orientation,
+                                          int for_size,
+                                          out int minimum,
+                                          out int natural,
+                                          out int minimum_baseline,
+                                          out int natural_baseline)
+            {
+                minimum = 0;
+                natural = for_size;
+                minimum_baseline = -1;
+                natural_baseline = -1;
+            }
+
+            public override void snapshot (Gtk.Snapshot snapshot)
+            {
+                var style_context = this.get_style_context ();
+                var width         = (float) this.get_width ();
+                var height        = (float) this.get_height ();
+                var radius        = 0.5f * float.min (width, height);
+                var center_x      = 0.5f * width;
+                var center_y      = 0.5f * height;
+                var bounds        = Graphene.Rect ();
+                var through       = Gsk.RoundedRect ();
+
+                Gdk.RGBA color;
+                style_context.lookup_color ("unfocused_borders", out color);
+
+                bounds.init (center_x - radius, center_y - radius, 2.0f * radius, 2.0f * radius);
+                through.init_from_rect (bounds, radius);
+
+                snapshot.append_border (through,
+                                        { LINE_WIDTH, LINE_WIDTH, LINE_WIDTH, LINE_WIDTH },
+                                        { color, color, color, color });
+            }
+        }
 
         public unowned Pomodoro.Timer timer {
             get {
@@ -23,14 +78,23 @@ namespace Pomodoro
             }
         }
 
-        private Pomodoro.Timer _timer;
-        private ulong          timer_state_changed_id = 0;
-        private uint           timeout_id = 0;
-        private uint           timeout_interval = 0;
+        private Pomodoro.Timer      _timer;
+        private ulong               timer_state_changed_id = 0;
+        private uint                timeout_id = 0;
+        private uint                timeout_interval = 0;
+        private weak Through        through;
+        private Adw.TimedAnimation? fade_animation;
 
         construct
         {
             this._timer = Pomodoro.Timer.get_default ();
+
+            var through = new Through ();
+            through.set_child_visible (true);
+            through.set_parent (this);
+
+            this.through = through;
+            this.layout_manager = new Gtk.BinLayout ();
         }
 
         private uint calculate_timeout_interval ()
@@ -39,6 +103,50 @@ namespace Pomodoro
                     2.0 * Math.PI * double.min (this.get_width (), this.get_height ()));
 
             return Pomodoro.Timestamp.to_milliseconds_uint (this._timer.duration / (2 * perimeter));
+        }
+
+        private void fade_in ()
+        {
+            if (this.fade_animation != null && this.fade_animation.value_to == 1.0) {
+                return;
+            }
+
+            if (this.fade_animation != null) {
+                this.fade_animation.pause ();
+                this.fade_animation = null;
+            }
+
+            var animation_target = new Adw.CallbackAnimationTarget (() => {
+                this.queue_draw ();
+            });
+            this.fade_animation = new Adw.TimedAnimation (this,
+                                                          0.0,
+                                                          1.0,
+                                                          FADE_IN_DURATION,
+                                                          animation_target);
+            this.fade_animation.play ();
+        }
+
+        private void fade_out ()
+        {
+            if (this.fade_animation != null && this.fade_animation.value_to == 0.0) {
+                return;
+            }
+
+            if (this.fade_animation != null) {
+                this.fade_animation.pause ();
+                this.fade_animation = null;
+            }
+
+            var animation_target = new Adw.CallbackAnimationTarget (() => {
+                this.queue_draw ();
+            });
+            this.fade_animation = new Adw.TimedAnimation (this,
+                                                          1.0,
+                                                          0.0,
+                                                          FADE_OUT_DURATION,
+                                                          animation_target);
+            this.fade_animation.play ();
         }
 
         private void start_timeout ()
@@ -76,6 +184,13 @@ namespace Pomodoro
             }
             else {
                 this.stop_timeout ();
+            }
+
+            if (this._timer.is_started ()) {
+                this.fade_in ();
+            }
+            else {
+                this.fade_out ();
             }
 
             this.queue_draw ();
@@ -131,33 +246,27 @@ namespace Pomodoro
             var center_x      = 0.5f * width;
             var center_y      = 0.5f * height;
             var bounds        = Graphene.Rect ();
-            var through       = Gsk.RoundedRect ();
-
-            Gdk.RGBA through_color;
-            style_context.lookup_color ("unfocused_borders", out through_color);
 
             bounds.init (center_x - radius, center_y - radius, 2.0f * radius, 2.0f * radius);
-            through.init_from_rect (bounds, radius);
 
-            snapshot.save ();
-            snapshot.append_border (through,
-                                    { LINE_WIDTH, LINE_WIDTH, LINE_WIDTH, LINE_WIDTH },
-                                    { through_color, through_color, through_color, through_color });
+            this.snapshot_child (this.through, snapshot);
 
             if (this._timer.is_started ())
             {
+                var fade_value = this.fade_animation != null
+                    ? this.fade_animation.value
+                    : 1.0;
+
                 var context = snapshot.append_cairo (bounds);
                 context.set_line_width (LINE_WIDTH);
                 context.set_line_cap (Cairo.LineCap.ROUND);
                 context.set_source_rgba (color.red,
                                          color.green,
                                          color.blue,
-                                         color.alpha);
+                                         color.alpha * fade_value);
                 context.arc_negative (center_x, center_y, radius - LINE_WIDTH / 2.0, progress_angle_from, progress_angle_to);
                 context.stroke ();
             }
-
-            snapshot.restore ();
         }
 
         public override Gtk.SizeRequestMode get_request_mode ()

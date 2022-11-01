@@ -10,8 +10,8 @@ namespace Pomodoro
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-control-buttons.ui")]
     public class TimerControlButtons : Gtk.Box, Gtk.Buildable
     {
-        private const uint FADE_IN_DURATION = 200;
-        private const uint FADE_OUT_DURATION = 300;
+        private const uint FADE_IN_DURATION = 500;
+        private const uint FADE_OUT_DURATION = 500;
 
         [GtkChild]
         private unowned Gtk.Button left_button;
