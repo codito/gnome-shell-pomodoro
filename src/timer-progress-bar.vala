@@ -124,6 +124,7 @@ namespace Pomodoro
                                                           1.0,
                                                           FADE_IN_DURATION,
                                                           animation_target);
+            this.fade_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
             this.fade_animation.play ();
         }
 
@@ -146,6 +147,7 @@ namespace Pomodoro
                                                           0.0,
                                                           FADE_OUT_DURATION,
                                                           animation_target);
+            this.fade_animation.set_easing (Adw.Easing.EASE_IN_OUT_CUBIC);
             this.fade_animation.play ();
         }
 
