@@ -23,36 +23,8 @@ using GLib;
 
 namespace Pomodoro
 {
-    public interface ApplicationExtension : Peas.ExtensionBase
-    {
-    }
-
-
     public class Application : Adw.Application
     {
-        // private const uint SETUP_PLUGINS_TIMEOUT = 3000;
-
-        public Pomodoro.Timer timer;
-        public Pomodoro.SessionManager session_manager;
-        public Pomodoro.CapabilityManager capabilities;  // TODO: rename to capability_manager
-
-        // private Gom.Repository repository;
-        // private Gom.Adapter adapter;
-
-        // public GLib.Object get_repository ()
-        // {
-        //     return (GLib.Object) this.repository;
-        // }
-
-        private unowned Pomodoro.PreferencesDialog preferences_dialog;
-        private unowned Pomodoro.Window window;
-        private unowned Adw.AboutWindow about_window;
-        private Pomodoro.ApplicationService service;
-        private Pomodoro.TimerService timer_service;
-        private Pomodoro.DesktopExtension desktop_extension;
-        private Peas.ExtensionSet extensions;
-        private GLib.Settings settings;
-
         private enum ExitStatus
         {
             UNDEFINED = -1,
@@ -150,8 +122,18 @@ namespace Pomodoro
             }
         }
 
-        public const string[] LEGACY_PLUGINS = { "indicator", "notifications" };
+        public Pomodoro.Timer? timer;
+        public Pomodoro.SessionManager? session_manager;
+        public Pomodoro.CapabilityManager? capabilities;  // TODO: rename to capability_manager
 
+        // private Gom.Repository repository;
+        // private Gom.Adapter adapter;
+        private weak Pomodoro.PreferencesDialog? preferences_dialog;
+        private weak Pomodoro.Window? window;
+        private weak Adw.AboutWindow? about_window;
+        private Pomodoro.ApplicationService? service;
+        private Pomodoro.TimerService? timer_service;
+        private GLib.Settings settings;
 
         public Application ()
         {
@@ -160,25 +142,40 @@ namespace Pomodoro
                 flags: GLib.ApplicationFlags.HANDLES_COMMAND_LINE,
                 resource_base_path: "/org/gnomepomodoro/Pomodoro/"
             );
-
-            this.timer = null;
-            this.service = null;
-            this.timer_service = null;
         }
 
-        public new static unowned Application get_default ()
+        public new static unowned Pomodoro.Application get_default ()
         {
             return GLib.Application.get_default () as Pomodoro.Application;
         }
 
-        public unowned Gtk.Window get_last_focused_window ()
+        public unowned Gtk.Window? get_last_focused_window ()
         {
-            unowned List<Gtk.Window> windows = this.get_windows ();
+            unowned GLib.List<Gtk.Window> link = this.get_windows ();
 
-            return windows != null
-                    ? windows.first ().data
-                    : null;
+            return link != null
+                ? link.first ().data
+                : null;
         }
+
+        public unowned Gtk.Window? get_window_by_type (GLib.Type type)
+        {
+            unowned GLib.List<Gtk.Window> link = this.get_windows ();
+
+            for (; link != null; link = link.next)
+            {
+                if (link.data.get_type () == type) {
+                    return link.data;
+                }
+            }
+
+            return null;
+        }
+
+        // public GLib.Object get_repository ()
+        // {
+        //     return (GLib.Object) this.repository;
+        // }
 
         private void setup_resources ()
         {
@@ -190,79 +187,6 @@ namespace Pomodoro
 
             debug ("setup_resources: end");
         }
-
-        private void setup_desktop_extension ()
-        {
-            try {
-                this.desktop_extension = new Pomodoro.DesktopExtension ();
-
-                this.capabilities.add_group (this.desktop_extension.capabilities, Pomodoro.Priority.HIGH);
-            }
-            catch (GLib.Error error) {
-                GLib.warning ("Error while initializing desktop extension: %s",
-                              error.message);
-            }
-        }
-
-        /*
-        private async void setup_plugins ()
-        {
-            var engine = Peas.Engine.get_default ();
-            engine.add_search_path (Config.PLUGIN_LIB_DIR, Config.PLUGIN_DATA_DIR);
-
-            var timeout_cancellable = new GLib.Cancellable ();
-            var timeout_source = (uint) 0;
-            var wait_count = 0;
-
-            timeout_source = GLib.Timeout.add (SETUP_PLUGINS_TIMEOUT, () => {
-                GLib.debug ("Timeout reached while setting up plugins");
-
-                timeout_source = 0;
-                timeout_cancellable.cancel ();
-
-                return GLib.Source.REMOVE;
-            });
-
-            this.extensions = new Peas.ExtensionSet (engine, typeof (Pomodoro.ApplicationExtension));
-            this.extensions.extension_added.connect ((extension_set,
-                                                      info,
-                                                      extension_object) => {
-                var extension = extension_object as GLib.AsyncInitable;
-
-                if (extension != null)
-                {
-                    extension.init_async.begin (GLib.Priority.DEFAULT, timeout_cancellable, (obj, res) => {
-                        try {
-                            extension.init_async.end (res);
-                        }
-                        catch (GLib.Error error) {
-                            GLib.warning ("Failed to initialize plugin \"%s\": %s",
-                                          info.get_module_name (),
-                                          error.message);
-                        }
-
-                        wait_count--;
-
-                        this.setup_plugins.callback ();
-                    });
-
-                    wait_count++;
-                }
-            });
-
-            this.load_plugins ();
-
-            while (wait_count > 0) {
-                yield;
-            }
-
-            timeout_cancellable = null;
-
-            if (timeout_source != 0) {
-                GLib.Source.remove (timeout_source);
-            }
-        }
-        */
 
         private void setup_capabilities ()
         {
@@ -290,90 +214,100 @@ namespace Pomodoro
             this.release ();
         }
 
-        private void load_plugins ()
-        {
-            // var engine          = Peas.Engine.get_default ();
-            // var enabled_plugins = this.settings.get_strv ("enabled-plugins");
-            // var enabled_hash    = new GLib.HashTable<string, bool> (str_hash, str_equal);
-
-            // foreach (var name in enabled_plugins)
-            // {
-            //     enabled_hash.insert (name, true);
-            // }
-
-
-            // foreach (var plugin_info in engine.get_plugin_list ())
-            // {
-            //     if (plugin_info.is_hidden () || enabled_hash.contains (plugin_info.get_module_name ())) {
-            //         engine.try_load_plugin (plugin_info);
-            //     }
-            //     else {
-            //         engine.try_unload_plugin (plugin_info);
-            //     }
-            // }
-        }
-
         public void show_window (string view_name,
                                  int64  timestamp = -1)
         {
-            if (this.window == null)
-            {
-                var window = new Pomodoro.Window ();
-                ((Gtk.Widget) window).destroy.connect (() => {
-                    this.window = null;
-                });
+            var window = (Pomodoro.Window?) this.get_window_by_type (typeof (Pomodoro.Window));
+
+            if (window == null) {
+                window = new Pomodoro.Window ();
 
                 this.add_window (window);
-                this.window = window;
             }
 
-            this.window.view = Pomodoro.WindowView.from_string (view_name);
+            window.view = Pomodoro.WindowView.from_string (view_name);
 
             if (timestamp >= 0) {
-                this.window.present_with_time ((uint32) (timestamp / 1000000));
+                window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
             }
             else {
-                this.window.present ();
+                window.present ();
             }
         }
 
         public void show_preferences (int64 timestamp = -1)
         {
-            if (this.preferences_dialog == null)
+            var preferences_dialog = (Gtk.Window?) this.get_window_by_type (typeof (Pomodoro.PreferencesDialog));
+
+            if (preferences_dialog == null)
             {
-                var preferences_dialog = new Pomodoro.PreferencesDialog ();
-                ((Gtk.Widget) preferences_dialog).destroy.connect (() => {
-                    this.preferences_dialog = null;
-                });
+                preferences_dialog = new Pomodoro.PreferencesDialog ();
 
                 this.add_window (preferences_dialog);
-                this.preferences_dialog = preferences_dialog;
             }
 
             if (timestamp >= 0) {
-                this.preferences_dialog.present_with_time ((uint32) (timestamp / 1000000));
+                preferences_dialog.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
             }
             else {
-                this.preferences_dialog.present ();
+                preferences_dialog.present ();
+            }
+        }
+
+        public void show_about_window (int64 timestamp = -1)
+        {
+            var window = (Gtk.Window?) this.get_window_by_type (typeof (Pomodoro.Window));
+            var about_window = (Gtk.Window?) this.get_window_by_type (typeof (Adw.AboutWindow));
+
+            if (about_window == null)
+            {
+                about_window = Pomodoro.create_about_window ();
+
+                if (window != null) {
+                    about_window.set_transient_for (window);
+                }
+
+                this.add_window (about_window);
+            }
+
+            if (timestamp >= 0) {
+                about_window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
+            }
+            else {
+                about_window.present ();
             }
         }
 
         private void activate_timer (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            this.show_window ("timer");
+            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
+
+            this.show_window ("timer", timestamp);
         }
 
         private void activate_stats (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            this.show_window ("stats");
+            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
+
+            this.show_window ("stats", timestamp);
         }
 
         private void activate_preferences (GLib.SimpleAction action,
                                            GLib.Variant?     parameter)
         {
-            this.show_preferences ();
+            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
+
+            this.show_preferences (timestamp);
+        }
+
+        private void activate_about (GLib.SimpleAction action,
+                                     GLib.Variant?     parameter)
+        {
+            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
+
+            this.show_about_window (timestamp);
         }
 
         private void activate_visit_website (GLib.SimpleAction action,
@@ -412,27 +346,6 @@ namespace Pomodoro
             catch (GLib.SpawnError error) {
                 GLib.warning ("Failed to spawn process: %s", error.message);
             }
-        }
-
-        private void activate_about (GLib.SimpleAction action,
-                                     GLib.Variant?     parameter)
-        {
-            if (this.about_window == null)
-            {
-                var about_window = Pomodoro.create_about_window ();
-                ((Gtk.Widget) about_window).destroy.connect (() => {
-                    this.about_window = null;
-                });
-
-                if (this.window != null) {
-                    about_window.set_transient_for (this.window);
-                }
-
-                this.add_window (about_window);
-                this.about_window = about_window;
-            }
-
-            this.about_window.present ();
         }
 
         private void activate_quit (GLib.SimpleAction action,
@@ -479,15 +392,15 @@ namespace Pomodoro
         {
             GLib.SimpleAction action;
 
-            action = new GLib.SimpleAction ("timer", null);
+            action = new GLib.SimpleAction ("timer", GLib.VariantType.INT64);
             action.activate.connect (this.activate_timer);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("stats", null);
+            action = new GLib.SimpleAction ("stats", GLib.VariantType.INT64);
             action.activate.connect (this.activate_stats);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("preferences", null);
+            action = new GLib.SimpleAction ("preferences", GLib.VariantType.INT64);
             action.activate.connect (this.activate_preferences);
             this.add_action (action);
 
@@ -499,7 +412,7 @@ namespace Pomodoro
             action.activate.connect (this.activate_report_issue);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("about", null);
+            action = new GLib.SimpleAction ("about", GLib.VariantType.INT64);
             action.activate.connect (this.activate_about);
             this.add_action (action);
 
@@ -529,6 +442,19 @@ namespace Pomodoro
             this.set_accels_for_action ("win.shrink", {"<Primary>space"});
         }
 
+        /**
+         * This is just for local things, like showing help
+         */
+        private void parse_command_line (ref unowned string[] arguments) throws GLib.OptionError
+        {
+            var option_context = new GLib.OptionContext ();
+            option_context.add_main_entries (Options.ENTRIES, Config.GETTEXT_PACKAGE);
+
+            // TODO: add options from plugins
+
+            option_context.parse (ref arguments);
+        }
+
         private static bool command_line_version_callback ()
         {
             stdout.printf ("%s %s\n",
@@ -550,6 +476,12 @@ namespace Pomodoro
             this.hold ();
 
             base.startup ();
+
+            this.session_manager = Pomodoro.SessionManager.get_default ();
+            this.session_manager.enter_time_block.connect (this.on_enter_time_block);
+
+            this.timer = this.session_manager.timer;
+            // this.timer.changed.connect (this.on_timer_changed);
 
             // TODO: Handle async
 
@@ -580,19 +512,6 @@ namespace Pomodoro
             this.release ();
 
             debug ("startup: end");
-        }
-
-        /**
-         * This is just for local things, like showing help
-         */
-        private void parse_command_line (ref unowned string[] arguments) throws GLib.OptionError
-        {
-            var option_context = new GLib.OptionContext ();
-            option_context.add_main_entries (Options.ENTRIES, Config.GETTEXT_PACKAGE);
-
-            // TODO: add options from plugins
-
-            option_context.parse (ref arguments);
         }
 
         protected override bool local_command_line ([CCode (array_length = false, array_null_terminated = true)]
@@ -667,9 +586,7 @@ namespace Pomodoro
         {
             this.hold ();
 
-            foreach (var window in this.get_windows ()) {
-                this.remove_window (window);
-            }
+            base.shutdown ();
 
             // TODO: handle async
 
@@ -684,8 +601,11 @@ namespace Pomodoro
             // }
 
             Pomodoro.close_repository ();
+            Pomodoro.SessionManager.set_default (null);
+            Pomodoro.Timer.set_default (null);
 
-            base.shutdown ();
+            this.session_manager = null;
+            this.timer = null;
 
             this.release ();
         }
@@ -726,7 +646,7 @@ namespace Pomodoro
                     this.timer.skip ();
                 }
                 else if (Options.extend && this.timer.duration > 0) {
-                    this.timer.duration += 60 * 1000000;
+                    this.timer.duration += Pomodoro.Interval.MINUTE;
                 }
 
                 if (Options.pause_resume) {
@@ -766,20 +686,6 @@ namespace Pomodoro
                 return false;
             }
 
-            // if (this.timer == null) {
-            //     this.timer = Pomodoro.Timer.get_default ();
-            //     // this.timer.changed.connect (this.on_timer_changed);
-            // }
-
-            if (this.timer == null) {
-                this.timer = Pomodoro.Timer.get_default ();
-            }
-
-            // if (this.session_manager == null) {
-            //     this.session_manager = Pomodoro.SessionManager.get_default ();
-            //     this.session_manager.enter_time_block.connect (this.on_enter_time_block);
-            // }
-
             /*
             if (this.settings == null) {
                 this.settings = Pomodoro.get_settings ();
@@ -813,10 +719,6 @@ namespace Pomodoro
             debug ("dbus_unregister: begin");
 
             base.dbus_unregister (connection, object_path);
-
-            if (this.timer != null) {
-                this.timer = null;
-            }
 
             if (this.service != null) {
                 this.service = null;
@@ -873,7 +775,7 @@ namespace Pomodoro
 
         private void on_enter_time_block (Pomodoro.TimeBlock time_block)
         {
-            this.hold ();
+            // this.hold ();
 
             // TODO: deduplicate calls
             // TODO: only save if time blocks have changed
@@ -921,5 +823,104 @@ namespace Pomodoro
         //         });
         //     }
         // }
+
+        // -----------------------------------------------------------------------------------------------------
+
+
+        /*
+        private void load_plugins ()
+        {
+            // var engine          = Peas.Engine.get_default ();
+            // var enabled_plugins = this.settings.get_strv ("enabled-plugins");
+            // var enabled_hash    = new GLib.HashTable<string, bool> (str_hash, str_equal);
+
+            // foreach (var name in enabled_plugins)
+            // {
+            //     enabled_hash.insert (name, true);
+            // }
+
+            // foreach (var plugin_info in engine.get_plugin_list ())
+            // {
+            //     if (plugin_info.is_hidden () || enabled_hash.contains (plugin_info.get_module_name ())) {
+            //         engine.try_load_plugin (plugin_info);
+            //     }
+            //     else {
+            //         engine.try_unload_plugin (plugin_info);
+            //     }
+            // }
+        }
+
+        private void setup_desktop_extension ()
+        {
+            try {
+                this.desktop_extension = new Pomodoro.DesktopExtension ();
+
+                this.capabilities.add_group (this.desktop_extension.capabilities, Pomodoro.Priority.HIGH);
+            }
+            catch (GLib.Error error) {
+                GLib.warning ("Error while initializing desktop extension: %s",
+                              error.message);
+            }
+        }
+
+        private async void setup_plugins ()
+        {
+            var engine = Peas.Engine.get_default ();
+            engine.add_search_path (Config.PLUGIN_LIB_DIR, Config.PLUGIN_DATA_DIR);
+
+            var timeout_cancellable = new GLib.Cancellable ();
+            var timeout_source = (uint) 0;
+            var wait_count = 0;
+
+            timeout_source = GLib.Timeout.add (SETUP_PLUGINS_TIMEOUT, () => {
+                GLib.debug ("Timeout reached while setting up plugins");
+
+                timeout_source = 0;
+                timeout_cancellable.cancel ();
+
+                return GLib.Source.REMOVE;
+            });
+
+            this.extensions = new Peas.ExtensionSet (engine, typeof (Pomodoro.ApplicationExtension));
+            this.extensions.extension_added.connect ((extension_set,
+                                                      info,
+                                                      extension_object) => {
+                var extension = extension_object as GLib.AsyncInitable;
+
+                if (extension != null)
+                {
+                    extension.init_async.begin (GLib.Priority.DEFAULT, timeout_cancellable, (obj, res) => {
+                        try {
+                            extension.init_async.end (res);
+                        }
+                        catch (GLib.Error error) {
+                            GLib.warning ("Failed to initialize plugin \"%s\": %s",
+                                          info.get_module_name (),
+                                          error.message);
+                        }
+
+                        wait_count--;
+
+                        this.setup_plugins.callback ();
+                    });
+
+                    wait_count++;
+                }
+            });
+
+            this.load_plugins ();
+
+            while (wait_count > 0) {
+                yield;
+            }
+
+            timeout_cancellable = null;
+
+            if (timeout_source != 0) {
+                GLib.Source.remove (timeout_source);
+            }
+        }
+        */
+
     }
 }

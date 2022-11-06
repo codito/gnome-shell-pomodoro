@@ -64,6 +64,11 @@ namespace Pomodoro.Timestamp
         return (uint) (timestamp / Pomodoro.Interval.SECOND).clamp (0, uint.MAX);
     }
 
+    public uint to_seconds_uint32 (int64 timestamp)
+    {
+        return (uint32) (timestamp / Pomodoro.Interval.SECOND).clamp (0, uint32.MAX);
+    }
+
     public double to_milliseconds (int64 timestamp)
     {
         return ((double) timestamp) / ((double) Pomodoro.Interval.MILLISECOND);

@@ -83,7 +83,6 @@ namespace Pomodoro
             double window_x, window_y;
             double native_x, native_y;
 
-            // TODO: use drag_check_threshold_double once available in Vala API
             if (Gtk.drag_check_threshold (this, 0, 0, (int) offset_x, (int) offset_y))
             {
                 gesture.set_state (Gtk.EventSequenceState.CLAIMED);
