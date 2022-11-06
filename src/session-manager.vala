@@ -162,12 +162,8 @@ namespace Pomodoro
 
         public SessionManager ()
         {
-            var timer = Pomodoro.Timer.get_default ();
-
-            assert (timer != null);  // TODO remove, Timer.get_default () should always return instance
-
             GLib.Object (
-                timer: timer
+                timer: Pomodoro.Timer.get_default ()
             );
         }
 
@@ -321,27 +317,31 @@ namespace Pomodoro
             return this._current_session.get_next_time_block (this._current_time_block);
         }
 
-        public static unowned Pomodoro.SessionManager? get_default ()
+        /**
+         * Sets a default `SessionManager`.
+         *
+         * The old default manager is unreffed and the new manager referenced.
+         *
+         * A value of null for this will cause the current default manager to be released and a new default manager
+         * to be created on demand.
+         */
+        public static void set_default (Pomodoro.SessionManager? session_manager)
+        {
+            Pomodoro.SessionManager.instance = session_manager;
+        }
+
+        /**
+         * Return a default manager.
+         *
+         * A new default manager will be created on demand.
+         */
+        public static unowned Pomodoro.SessionManager get_default ()
         {
             if (Pomodoro.SessionManager.instance == null) {
-                var session_manager = new Pomodoro.SessionManager ();
-                session_manager.set_default ();
+                Pomodoro.SessionManager.set_default (new Pomodoro.SessionManager ());
             }
 
             return Pomodoro.SessionManager.instance;
-        }
-
-        public void set_default ()
-        {
-            Pomodoro.SessionManager.instance = this;
-
-            // TODO: connect to Application to cleanup at exit
-
-            // this.watch_closure (() => {
-            //     if (Pomodoro.SessionManager.instance == session_manager) {
-            //         Pomodoro.SessionManager.instance = null;
-            //     }
-            // });
         }
 
         public unowned Pomodoro.TimeBlock? get_current_or_previous_time_block ()
