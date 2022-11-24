@@ -73,8 +73,8 @@
     opacity: 0.0;
 }
 
-.pomodoro-screen-notification .pomodoro-timer-label,
-.pomodoro-screen-notification .pomodoro-timer-label:backdrop {
+.pomodoro-screen-notification timerlabel,
+.pomodoro-screen-notification timerlabel:backdrop {
     font-size: 55pt;
     font-weight: normal;
     text-shadow: 0px 5px 8px rgba(0, 0, 0, 0.10);
@@ -88,87 +88,156 @@
     color: white;
 }
 
-.pomodoro-timer-view .small-button {
+.blinking {
+    animation: blink 1500ms infinite;
+}
+
+
+
+/**
+ * PomodoroTimerControlButtons widget
+ */
+timercontrolbuttons.circular button {
+    border-radius: 50%;
+}
+
+
+/**
+ * PomodoroTimerProgressBar widget
+ */
+timerprogressbar {
+    min-width: 300px;
+    min-height: 300px;
+}
+
+
+/**
+ * PomodoroSessionProgressBar widget
+ */
+sessionprogressbar {
+}
+
+
+/**
+ * PomodoroTimerLabel widget
+ */
+timerlabel.timer-stopped {
+    opacity: 0.2;  /* same as blink */
+}
+
+
+/**
+ * PomodoroTimerView widget
+ */
+timerview > box {
+    margin: 20px 20px 50px 20px;
+}
+
+timerview button:backdrop,
+timerview button:disabled {
+    color: @insensitive_fg_color;
+}
+
+timerview sessionprogressbar {
+    margin: 10px 0;
+}
+
+timerview timercontrolbuttons button {
     padding: 16px;
     -gtk-icon-size: 24px;
 }
 
-.pomodoro-timer-view .small-button.flat {
-    border: none;
-}
-
-.pomodoro-timer-view .small-button:backdrop,
-.pomodoro-timer-view .small-button:disabled {
-    color: @insensitive_fg_color;
-}
-
-.pomodoro-timer-view .large-button {
+timerview timercontrolbuttons button.suggested-action {
     padding: 20px;
-    -gtk-icon-size: 24px;
 }
 
-.pomodoro-timer-view .suggested-action,
-.pomodoro-timer-view .suggested-action:focus,
-.pomodoro-timer-view .suggested-action:hover,
-.pomodoro-timer-view .suggested-action:active {
+timerview timercontrolbuttons .suggested-action,
+timerview timercontrolbuttons .suggested-action:focus,
+timerview timercontrolbuttons .suggested-action:hover,
+timerview timercontrolbuttons .suggested-action:active {
     border: 0;
     color: @theme_bg_color;
     background-color: @theme_fg_color;
     background-image: none;
 }
 
-.pomodoro-timer-view .suggested-action:focus {
+timerview .suggested-action:focus {
     outline-width: 3px;
     outline-offset: 0px;
 }
 
-.pomodoro-timer-view .suggested-action:backdrop,
-.pomodoro-timer-view .suggested-action:disabled {
+timerview .suggested-action:backdrop,
+timerview .suggested-action:backdrop:hover,
+timerview .suggested-action:disabled {
     color: @theme_bg_color;
     background-color: @insensitive_fg_color;
 }
 
-.pomodoro-timer-view .pomodoro-timer-state {
+timerview .pomodoro-timer-state {
     font-weight: 700;
 }
 
-.pomodoro-timer-view .pomodoro-timer-state arrow {
+timerview .pomodoro-timer-state arrow {
     opacity: 0;
     margin-left: -16px;
 }
 
-.pomodoro-timer-view .pomodoro-timer-label {
+timerview timerlabel {
     font-size: 55pt;
     font-weight: 400;
     opacity: 1.0;
 }
 
-.pomodoro-timer-view .pomodoro-timer-label > .separator-label {
+timerview timerlabel > .separator-label {
     margin-left: -10px;
     margin-right: -10px;
 }
 
-.pomodoro-timer-view .pomodoro-timer-label.timer-paused {
-    animation: blink 1500ms infinite;
-}
-
-.pomodoro-timer-view .pomodoro-timer-label.timer-stopped {
-    opacity: 0.2;  /* same as blink */
-}
-
-.pomodoro-timer-label:backdrop,
-.pomodoro-timer-state label:backdrop,
-.pomodoro-timer-progressbar:backdrop,
-.pomodoro-session-progressbar:backdrop {
+timerview timerlabel:backdrop,
+timerview .pomodoro-timer-state label:backdrop,
+timerview timerprogressbar:backdrop,
+timerview sessionprogressbar:backdrop {
     color: @insensitive_fg_color;
 }
 
-.pomodoro-timer-progressbar {
-    min-width: 300px;
-    min-height: 300px;
+
+/**
+ * PomodoroTinyTimerView widget
+ */
+tinytimerview {
+    min-width: 400px;
+    padding: 5px;
 }
 
-.pomodoro-session-progressbar {
+tinytimerview timerlabel {
+    margin-left: 10px;
+}
+
+
+/**
+ * PomodoroCompactTimerView widget
+ */
+compacttimerview {
+    min-width: 300px;
+    padding: 5px;
+    padding-left: 10px;
+}
+
+compacttimerview > grid > separator {
+    margin-left: 5px;
+}
+
+compacttimerview timerlabel {
+    font-size: 16pt;
+}
+
+compacttimerview timerlabel > .separator-label {
+    margin-left: -3px;
+    margin-right: -3px;
+}
+
+compacttimerview timercontrolbuttons button {
+    padding: 3px;
 }
 
 /* classes backported from Gtk4 */

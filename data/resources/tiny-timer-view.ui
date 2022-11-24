@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroTinyTimerView" parent="GtkWidget">
+<!--    <property name="width-request">300</property>-->
+<!--    <property name="height-request">50</property>-->
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="halign">fill</property>
+        <property name="valign">fill</property>
+        <property name="spacing">5</property>
+        <child>
+          <object class="PomodoroTimerLabel">
+            <property name="halign">start</property>
+            <property name="valign">fill</property>
+            <style>
+              <class name="title-3"/>
+            </style>
+          </object>
+        </child>
+
+        <child>
+          <!-- Task name / State -->
+          <object class="GtkLabel">
+          </object>
+
+          <!-- SessionProgress -->
+        </child>
+
+        <child>
+          <object class="PomodoroTimerControlButtons">
+            <property name="spacing">0</property>
+            <property name="has-rewind">False</property>
+            <property name="has-suggested-action">False</property>
+            <property name="valign">fill</property>
+            <!--
+            <style>
+              <class name="linked"/>
+            </style>
+            -->
+          </object>
+          <!--
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="halign">fill</property>
+            <property name="valign">fill</property>
+            <style>
+              <class name="linked"/>
+            </style>
+            <child>
+              <object class="GtkButton" id="left_button">
+                <property name="receives-default">True</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <child>
+                  <object class="GtkStack" id="left_image_stack">
+                    <property name="transition-type">crossfade</property>
+                    <property name="transition-duration">100</property>
+                    <property name="interpolate-size">False</property>
+                    <property name="hhomogeneous">True</property>
+                    <property name="vhomogeneous">True</property>
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">start</property>
+                        <property name="title" translatable="yes">Start Pomodoro</property>
+                        <property name="child">
+                          <object class="GtkImage">
+                            <property name="icon-name">timer-start-symbolic</property>
+                            <style>
+                              <class name="symbolic"/>
+                            </style>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">pause</property>
+                        <property name="title" translatable="yes">Pause</property>
+                        <property name="child">
+                          <object class="GtkImage">
+                            <property name="icon-name">timer-pause-symbolic</property>
+                            <style>
+                              <class name="symbolic"/>
+                            </style>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">resume</property>
+                        <property name="title" translatable="yes">Resume</property>
+                        <property name="child">
+                          <object class="GtkImage">
+                            <property name="icon-name">timer-start-symbolic</property>
+                            <style>
+                              <class name="symbolic"/>
+                            </style>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="right_button">
+                <property name="receives-default">0</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <style>
+                  <class name="circular"/>
+                  <class name="small-button"/>
+                  <class name="flat"/>
+                </style>
+                <child>
+                  <object class="GtkStack" id="right_image_stack">
+                    <property name="transition-type">crossfade</property>
+                    <property name="transition-duration">100</property>
+                    <property name="interpolate-size">False</property>
+                    <property name="hhomogeneous">True</property>
+                    <property name="vhomogeneous">True</property>
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">reset</property>
+                        <property name="title" translatable="yes">Stop</property>
+                        <property name="child">
+                          <object class="GtkImage">
+                            <property name="icon-name">timer-stop-symbolic</property>
+                            <style>
+                              <class name="symbolic"/>
+                            </style>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">skip</property>
+                        <property name="child">
+                          <object class="GtkImage">
+                            <property name="icon-name">timer-skip-symbolic</property>
+                            <style>
+                              <class name="symbolic"/>
+                            </style>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          -->
+        </child>
+
+        <child type="end">
+          <object class="GtkButton">
+            <property name="receives-default">False</property>
+            <property name="halign">fill</property>
+            <property name="valign">fill</property>
+            <property name="action-name">win.expand</property>
+            <style>
+              <class name="flat"/>
+            </style>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">window-expand-symbolic</property>
+                <style>
+                  <class name="symbolic"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+
+      <!--
+      <object class="AdwHeaderBar">
+        <property name="halign">fill</property>
+        <property name="valign">start</property>
+        <property name="vexpand">False</property>
+        <property name="vexpand-set">False</property>
+        <property name="centering-policy">loose</property>
+        <child type="end">
+          <object class="GtkMenuButton">
+            <property name="icon-name">open-menu-symbolic</property>
+            <property name="receives_default">False</property>
+            <property name="menu-model">primary_menu</property>
+            <property name="focus-on-click">False</property>
+            <property name="use-underline">True</property>
+            <property name="autohide">True</property>
+          </object>
+        </child>
+      </object>
+      -->
+
+    </child>
+  </template>
+</interface>

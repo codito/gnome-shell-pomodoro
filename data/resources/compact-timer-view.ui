@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroCompactTimerView" parent="GtkWidget">
+<!--    <property name="width-request">300</property>-->
+    <child>
+      <object class="GtkGrid">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="row-spacing">5</property>
+        <property name="column-spacing">5</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="can-focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="spacing">20</property>
+            <property name="height-request">50</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="can-focus">False</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <property name="label" translatable="yes">Task</property>
+                <style>
+                  <class name="title-3"/>
+                </style>
+                <!--
+                <layout>
+                  <property name="expand">True</property>
+                  <property name="fill">True</property>
+                  <property name="position">0</property>
+                </layout>
+                -->
+              </object>
+            </child>
+            <child>
+              <object class="PomodoroTimerLabel">
+                <property name="can-focus">False</property>
+                <property name="halign">end</property>
+                <property name="valign">center</property>
+                <style>
+                  <class name="pomodoro-timer-label"/>
+                  <class name="title-3"/>
+                </style>
+                <!--
+                <layout>
+                  <property name="expand">False</property>
+                  <property name="fill">True</property>
+                  <property name="pack-type">end</property>
+                  <property name="position">1</property>
+                </layout>
+                -->
+              </object>
+            </child>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroSessionProgressBar">
+            <property name="line-width">4</property>
+            <property name="can-focus">False</property>
+            <property name="hexpand">True</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="hexpand">True</property>
+            <child type="center">
+              <object class="PomodoroTimerControlButtons">
+                <property name="halign">center</property>
+                <property name="hexpand">True</property>
+                <property name="spacing">5</property>
+                <property name="circular">True</property>
+              </object>
+            </child>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator" id="separator">
+            <layout>
+              <property name="column">1</property>
+              <property name="row">0</property>
+              <property name="row-span">3</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="receives-default">False</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <property name="action-name">win.expand</property>
+            <style>
+              <class name="circular"/>
+              <class name="flat"/>
+            </style>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">window-expand-symbolic</property>
+                <style>
+                  <class name="symbolic"/>
+                </style>
+              </object>
+            </child>
+            <layout>
+              <property name="column">2</property>
+              <property name="row">0</property>
+              <property name="row-span">3</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

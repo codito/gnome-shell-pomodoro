@@ -27,11 +27,6 @@
         <property name="spacing">50</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
-        <property name="margin-top">20</property>
-        <property name="margin-bottom">50</property>
-        <property name="margin-start">20</property>
-        <property name="margin-end">20</property>
-
         <child>
           <object class="GtkMenuButton" id="timer_state_menubutton">
             <property name="receives-default">0</property>
@@ -47,7 +42,6 @@
             </style>
           </object>
         </child>
-
         <child>
           <object class="GtkOverlay">
             <child type="overlay">
@@ -59,43 +53,30 @@
                 <child>
                   <object class="PomodoroTimerLabel" id="timer_label">
                     <property name="halign">center</property>
-                    <style>
-                      <class name="pomodoro-timer-label"/>
-                    </style>
                   </object>
                 </child>
                 <child>
-                  <object class="PomodoroTimerLevelBar" id="session_progressbar">
+                  <object class="PomodoroSessionProgressBar" id="session_progressbar">
                     <property name="halign">center</property>
-                    <property name="margin-top">10</property>
-                    <property name="margin-bottom">10</property>
-                    <property name="margin-start">20</property>
-                    <property name="margin-end">20</property>
-                    <style>
-                      <class name="pomodoro-session-progressbar"/>
-                    </style>
                   </object>
                 </child>
               </object>
             </child>
             <child>
               <object class="PomodoroTimerProgressBar" id="timer_progressbar">
-                <style>
-                  <class name="pomodoro-timer-progressbar"/>
-                </style>
               </object>
             </child>
+          </object><!-- overlay -->
+        </child>
+        <child>
+          <object class="PomodoroTimerControlButtons">
+            <property name="has-suggested-action">True</property>
+            <property name="circular">True</property>
+            <property name="spacing">30</property>
           </object>
         </child>
-
-        <child>
-          <object class="PomodoroTimerControlButtons"/>
-        </child>
-
       </object><!-- box -->
     </child>
-
-    <!-- TODO: place GtkWindowHandle as background? -->
     <child>
       <object class="GtkGestureClick" id="click_gesture">
         <signal name="pressed" handler="on_pressed" swapped="no"/>

@@ -3,18 +3,20 @@
   <gresource prefix="/org/gnomepomodoro/Pomodoro">
     <file compressed="true">database/version-1.sql</file>
 
+    <file compressed="true" preprocess="xml-stripblanks">compact-timer-view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">install-extension-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">menus.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">preferences.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences-keyboard-shortcut-page.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences-main-page.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences-plugins-page.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">preferences.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">screen-notification.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">stats-page.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">stats-view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">timer-control-buttons.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">timer-label.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">timer-view.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">tiny-timer-view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
     <file compressed="true">style.css</file>
     <file compressed="true">style-dark.css</file>
@@ -36,5 +38,9 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-compact-size-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-expand-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-normal-size-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-tiny-size-symbolic.svg</file>
   </gresource>
 </gresources>

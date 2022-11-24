@@ -297,17 +297,13 @@ namespace Pomodoro
         private void activate_preferences (GLib.SimpleAction action,
                                            GLib.Variant?     parameter)
         {
-            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
-
-            this.show_preferences (timestamp);
+            this.show_preferences ();
         }
 
         private void activate_about (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
-
-            this.show_about_window (timestamp);
+            this.show_about_window ();
         }
 
         private void activate_visit_website (GLib.SimpleAction action,
@@ -400,7 +396,7 @@ namespace Pomodoro
             action.activate.connect (this.activate_stats);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("preferences", GLib.VariantType.INT64);
+            action = new GLib.SimpleAction ("preferences", null);
             action.activate.connect (this.activate_preferences);
             this.add_action (action);
 
@@ -412,7 +408,7 @@ namespace Pomodoro
             action.activate.connect (this.activate_report_issue);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("about", GLib.VariantType.INT64);
+            action = new GLib.SimpleAction ("about", null);
             action.activate.connect (this.activate_about);
             this.add_action (action);
 

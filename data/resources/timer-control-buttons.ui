@@ -2,10 +2,12 @@
 <interface>
   <template class="PomodoroTimerControlButtons" parent="GtkBox">
     <property name="orientation">horizontal</property>
-    <property name="spacing">30</property>
+    <property name="spacing">10</property>
     <property name="halign">center</property>
     <property name="valign">center</property>
-
+    <style>
+      <class name="pomodoro-timer-control-buttons"/>
+    </style>
     <child>
       <object class="GtkButton" id="left_button">
         <property name="receives-default">0</property>
@@ -14,8 +16,7 @@
         <property name="valign">center</property>
         <property name="action-name">timer.rewind</property>
         <style>
-          <class name="circular"/>
-          <class name="small-button"/>
+<!--          <class name="circular"/>-->
           <class name="flat"/>
         </style>
         <child>
@@ -35,10 +36,8 @@
         <property name="halign">center</property>
         <property name="valign">center</property>
         <style>
-          <class name="circular"/>
-          <class name="large-button"/>
+<!--          <class name="circular"/>-->
           <class name="flat"/>
-          <class name="suggested-action"/>
         </style>
         <child>
           <object class="GtkStack" id="center_image_stack">
@@ -100,8 +99,7 @@
         <property name="halign">center</property>
         <property name="valign">center</property>
         <style>
-          <class name="circular"/>
-          <class name="small-button"/>
+<!--          <class name="circular"/>-->
           <class name="flat"/>
         </style>
         <child>

@@ -13,6 +13,47 @@ namespace Pomodoro
         private const uint FADE_IN_DURATION = 500;
         private const uint FADE_OUT_DURATION = 500;
 
+        public bool has_rewind {
+            get {
+                return this.left_button.visible;
+            }
+            set {
+                this.left_button.visible = value;
+            }
+        }
+
+        public bool has_suggested_action {
+            get {
+                return this.center_button.has_css_class ("suggested-action");
+            }
+            set {
+                if (value) {
+                    this.center_button.add_css_class ("suggested-action");
+                }
+                else {
+                    this.center_button.remove_css_class ("suggested-action");
+                }
+            }
+        }
+
+        public bool circular {
+            get {
+                return this.center_button.has_css_class ("circular");
+            }
+            set {
+                if (value) {
+                    this.left_button.add_css_class ("circular");
+                    this.center_button.add_css_class ("circular");
+                    this.right_button.add_css_class ("circular");
+                }
+                else {
+                    this.left_button.remove_css_class ("circular");
+                    this.center_button.remove_css_class ("circular");
+                    this.right_button.remove_css_class ("circular");
+                }
+            }
+        }
+
         [GtkChild]
         private unowned Gtk.Button left_button;
         [GtkChild]
@@ -28,6 +69,12 @@ namespace Pomodoro
         private Pomodoro.Timer          timer;
         private ulong                   timer_state_changed_id = 0;
         private Adw.TimedAnimation?     fade_animation;
+
+
+        static construct
+        {
+            set_css_name ("timercontrolbuttons");
+        }
 
         construct
         {
@@ -136,7 +183,13 @@ namespace Pomodoro
             }
 
             if (right_page != null) {
-                this.right_image_stack.visible_child = right_page.child;
+                if (this.right_button.opacity > 0.0) {
+                    this.right_image_stack.visible_child = right_page.child;
+                }
+                else {
+                    this.right_image_stack.set_visible_child_full (right_page.name, Gtk.StackTransitionType.NONE);
+                }
+
                 this.right_button.action_name = "timer.%s".printf (right_page.name);
                 this.right_button.tooltip_text = right_page.name == "skip"
                     ? (is_break ? _("Start pomodoro") : _("Take a break"))
@@ -172,9 +225,9 @@ namespace Pomodoro
         {
             this.update_buttons ();
 
-            base.map ();
-
             this.connect_signals ();
+
+            base.map ();
         }
 
         public override void unmap ()

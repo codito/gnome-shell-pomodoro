@@ -9,7 +9,7 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.TimerProgressBar timer_progressbar;
         [GtkChild]
-        private unowned Pomodoro.TimerLevelBar session_progressbar;
+        private unowned Pomodoro.SessionProgressBar session_progressbar;
         [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
@@ -18,6 +18,12 @@ namespace Pomodoro
         private Pomodoro.SessionManager session_manager;
         private Pomodoro.Timer          timer;
         private ulong                   timer_state_changed_id = 0;
+
+
+        static construct
+        {
+            set_css_name ("timerview");
+        }
 
         construct
         {
@@ -129,9 +135,7 @@ namespace Pomodoro
 
         public override void map ()
         {
-            var timer = this.timer;
-
-            this.on_timer_state_changed (timer.state, timer.state);
+            this.on_timer_state_changed (this.timer.state, this.timer.state);
 
             base.map ();
 

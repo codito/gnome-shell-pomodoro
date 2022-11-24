@@ -1,10 +1,27 @@
 namespace Pomodoro
 {
-    // TODO: rename to SessionProgressBar
-    public class TimerLevelBar : Gtk.Widget
+    public class SessionProgressBar : Gtk.Widget
     {
-        private const float LINE_WIDTH = 6.0f;
+        private const float DEFAULT_LINE_WIDTH = 6.0f;
         private const float OUTLINE_ALPHA = 0.2f;  // TODO: fetch this from CSS
+
+        public float line_width {
+            get {
+                return this._line_width;
+            }
+            set {
+                if (this._line_width == value) {
+                    return;
+                }
+
+                this._line_width = value;
+
+                this.notify_property ("line-width");
+                this.queue_draw ();
+            }
+        }
+
+        private float _line_width = DEFAULT_LINE_WIDTH;
 
         private Pomodoro.Timer timer;
         private uint           timeout_id = 0;
@@ -12,6 +29,12 @@ namespace Pomodoro
         private double         progress = 0.0;
         // private double         max_value = 0.0;
         // private double         pomodoro_count_limit = 0.0;
+
+
+        static construct
+        {
+            set_css_name ("sessionprogressbar");
+        }
 
         construct
         {
@@ -136,29 +159,30 @@ namespace Pomodoro
                 natural_baseline = -1;
             }
             else {
-                minimum = (int) LINE_WIDTH;
+                minimum = (int) this._line_width;
                 natural = minimum;
                 minimum_baseline = natural / 2;
                 natural_baseline = minimum_baseline;
             }
         }
 
-        public override void snapshot (Gtk.Snapshot snapshot)
+        public override void snapshot (Gtk.Snapshot snapshot)  /* TODO: instead of snapshot, use use gizmo widgets, so that only one gizmo needs to be updated */
         {
             var width         = (float) this.get_width ();
             var height        = (float) this.get_height ();
             var style_context = this.get_style_context ();
             var color         = style_context.get_color ();
+            var line_width    = this._line_width;
             var bounds        = Graphene.Rect ();
             bounds.init (0, 0, width, height);
 
             var baseline = height / 2.0f;
-            var padding = LINE_WIDTH / 2.0f;
-            var spacing = 8.0f + 2.0f * padding;
-            var block_width = (width - 2.0f * padding - 3.0 * spacing) / 4.0f;
+            var padding = line_width / 2.0f;
+            var spacing = 1.0f + 2.0f * line_width;
+            var block_width = (width - 2.0f * padding - 3.0f * spacing) / 4.0f;  /* TODO: variable num of blocks */
 
             var context = snapshot.append_cairo (bounds);
-            context.set_line_width (LINE_WIDTH);
+            context.set_line_width (line_width);
             context.set_line_cap (Cairo.LineCap.ROUND);
             context.set_source_rgba (color.red,
                                      color.green,
@@ -168,7 +192,7 @@ namespace Pomodoro
             context.save ();
             context.translate (padding, baseline);
 
-            for (var index = 0; index < 4; index++) {
+            for (var index = 0; index < 4; index++) {  /* TODO: variable num of blocks */
                 context.move_to (0.0, 0.0);
                 context.line_to (block_width, 0.0);
                 context.translate (block_width + spacing, 0.0);

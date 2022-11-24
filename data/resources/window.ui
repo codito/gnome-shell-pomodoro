@@ -3,6 +3,42 @@
   <requires lib="gtk" version="4.0"/>
   <requires lib="libadwaita" version="1.0"/>
 
+  <menu id="primary_menu">
+    <section>
+      <attribute name="display-hint">horizontal-buttons</attribute>
+      <item>
+        <attribute name="verb-icon">window-tiny-size-symbolic</attribute>
+        <attribute name="action">win.set-size</attribute>
+        <attribute name="target">tiny</attribute>
+      </item>
+      <item>
+        <attribute name="verb-icon">window-compact-size-symbolic</attribute>
+        <attribute name="action">win.set-size</attribute>
+        <attribute name="target">compact</attribute>
+      </item>
+      <item>
+        <attribute name="verb-icon">window-normal-size-symbolic</attribute>
+        <attribute name="action">win.set-size</attribute>
+        <attribute name="target">normal</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Preferences</attribute>
+        <attribute name="action">app.preferences</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_About</attribute>
+        <attribute name="action">app.about</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Quit</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+    </section>
+  </menu>
   <!--
   <object class="GtkPopoverMenu" id="state_popover">
     <property name="can-focus">False</property>
@@ -50,376 +86,210 @@
   </object>
   -->
 
-  <menu id="primary_menu">
-    <section>
-      <item>
-        <attribute name="label" translatable="yes">_Shrink Window</attribute>
-        <attribute name="action">win.shrink</attribute>
-      </item>
-    </section>
-    <section>
-      <item>
-        <attribute name="label" translatable="yes">_Preferences</attribute>
-        <attribute name="action">app.preferences</attribute>
-      </item>
-      <item>
-        <attribute name="label" translatable="yes">_About</attribute>
-        <attribute name="action">app.about</attribute>
-      </item>
-    </section>
-    <section>
-      <item>
-        <attribute name="label" translatable="yes">_Quit</attribute>
-        <attribute name="action">app.quit</attribute>
-      </item>
-    </section>
-  </menu>
-
   <template class="PomodoroWindow" parent="AdwApplicationWindow">
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
     <property name="default-width">400</property>
     <property name="default-height">600</property>
     <property name="valign">fill</property>
-
     <child>
-      <object class="PomodoroReducer" id="reducer">
+      <object class="PomodoroSizeStack" id="size_stack">
         <property name="transition-duration">500</property>
         <property name="interpolate-window-size">True</property>
         <child>
-          <object class="GtkBox" id="box">
-            <property name="orientation">vertical</property>
-            <property name="halign">fill</property>
-            <property name="valign">fill</property>
-            <child>
-              <object class="AdwHeaderBar" id="header_bar">
-                <property name="centering-policy">strict</property>
-                <property name="title-widget">
-                  <object class="AdwViewSwitcher">
-                    <property name="stack">stack</property>
-                    <property name="policy">wide</property>
-                  </object>
-                </property>
-                <style>
-                  <class name="pomodoro-header-bar"/>
-                </style>
-                <child type="end">
-                  <object class="GtkMenuButton">
-                    <property name="icon-name">open-menu-symbolic</property>
-                    <property name="receives_default">False</property>
-                    <property name="menu-model">primary_menu</property>
-                    <property name="focus-on-click">False</property>
-                    <!-- <property name="use-underline">1</property> TODO: does not work -->
-                    <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
-                  </object>
-                </child>
-              </object><!-- header_bar -->
-            </child>
-            <child>
-              <object class="AdwClamp">
-                <!-- Update the panel size in CSS accordingly. -->
-                <property name="maximum-size">668</property>
-                <property name="tightening-threshold">550</property>
+          <object class="PomodoroSizeStackPage">
+            <property name="name">normal</property>
+            <property name="resizable">True</property>
+            <property name="child">
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="halign">fill</property>
+                <property name="valign">fill</property>
                 <child>
-                  <object class="AdwViewStack" id="stack">
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
-                    <child>
-                      <object class="AdwViewStackPage">
-                        <property name="name">timer</property>
-                        <property name="title" translatable="yes">Timer</property>
-                        <property name="icon-name">timer-symbolic</property>
-                        <property name="child">
-                          <object class="PomodoroTimerView" id="timer_view">
-                            <style>
-                              <class name="pomodoro-timer-view"/>
-                            </style>
-                          </object>
-                        </property>
+                  <object class="AdwHeaderBar" id="header_bar">
+                    <property name="centering-policy">strict</property>
+                    <property name="title-widget">
+                      <object class="AdwViewSwitcher">
+                        <property name="stack">view_stack</property>
+                        <property name="policy">wide</property>
+                      </object>
+                    </property>
+                    <style>
+                      <class name="pomodoro-header-bar"/>
+                    </style>
+                    <child type="end">
+                      <object class="GtkMenuButton">
+                        <property name="icon-name">open-menu-symbolic</property>
+                        <property name="receives_default">False</property>
+                        <property name="menu-model">primary_menu</property>
+                        <property name="focus-on-click">False</property>
                       </object>
                     </child>
-                    <child>
-                      <object class="AdwViewStackPage">
-                        <property name="name">stats</property>
-                        <property name="title" translatable="yes">Stats</property>
-                        <property name="icon-name">stats-symbolic</property>
-                        <property name="child">
-                          <!-- TODO -->
-                          <object class="GtkLabel">
-                            <property name="label">Stats</property>
-                          </object>
-                        </property>
-                      </object>
-                    </child>
-                    <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
-                  </object><!-- stack -->
+                  </object><!-- header_bar -->
                 </child>
-              </object><!-- clamp -->
-            </child>
-          </object><!-- box -->
-        </child>
-        <child>
-          <object class="AdwHeaderBar">
-            <property name="halign">fill</property>
-            <property name="valign">start</property>
-            <property name="vexpand">False</property>
-            <property name="vexpand-set">False</property>
-<!--            <property name="width-request">400</property>-->
-<!--            <property name="valign">start</property>-->
-            <property name="centering-policy">loose</property>
-            <child type="end">
-              <object class="GtkMenuButton">
-                <property name="icon-name">open-menu-symbolic</property>
-                <property name="receives_default">False</property>
-                <property name="menu-model">primary_menu</property>
-                <property name="focus-on-click">False</property>
-                <!-- <property name="use-underline">1</property> TODO: does not work -->
-                <!-- <property name="autohide">1</property> TODO? its harder to dismiss the popover -->
-              </object>
-
-<!--                  <object class="GtkButton">-->
-<!--                    <attribute name="verb-icon">shrink-symbolic</attribute>-->
-<!--                    <attribute name="action">win.shrink</attribute>-->
-<!--                  </object>-->
-            </child>
+                <child>
+                  <object class="AdwClamp"><!-- TODO: views should define clamp themselves -->
+                    <!-- TODO: Update the panel size in CSS accordingly. -->
+                    <property name="maximum-size">668</property>
+                    <property name="tightening-threshold">550</property>
+                    <child>
+                      <object class="AdwViewStack" id="view_stack">
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <child>
+                          <object class="AdwViewStackPage">
+                            <property name="name">timer</property>
+                            <property name="title" translatable="yes">Timer</property>
+                            <property name="icon-name">timer-symbolic</property>
+                            <property name="child">
+                              <object class="PomodoroTimerView" id="timer_view"/>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwViewStackPage">
+                            <property name="name">stats</property>
+                            <property name="title" translatable="yes">Stats</property>
+                            <property name="icon-name">stats-symbolic</property>
+                            <property name="child">
+                              <!-- TODO: change to History -->
+                              <object class="GtkLabel">
+                                <property name="label">Stats</property>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
+                      </object><!-- stack -->
+                    </child>
+                  </object><!-- clamp -->
+                </child>
+              </object><!-- box -->
+            </property>
           </object>
         </child>
-      </object><!-- mode_stack -->
+        <child>
+          <object class="PomodoroSizeStackPage">
+            <property name="name">compact</property>
+            <property name="resizable">False</property>
+            <property name="child">
+              <object class="GtkWindowHandle">
+                <property name="halign">fill</property>
+                <property name="valign">start</property>
+                <property name="child">
+                  <object class="PomodoroCompactTimerView"/>
+                </property>
+                <!-- TODO: handle double-click -->
+                <!--
+                <child>
+                  <object class="GtkGestureClick">
+                    <signal name="pressed" handler="on_click_gesture_pressed_cb" swapped="no"/>
+                  </object>
+                </child>
+                -->
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroSizeStackPage">
+            <property name="name">tiny</property>
+            <property name="resizable">False</property>
+            <property name="child">
+              <object class="GtkWindowHandle">
+                <property name="halign">fill</property>
+                <property name="valign">start</property>
+                <property name="child">
+                  <object class="PomodoroTinyTimerView"/>
+                </property>
+                <!-- TODO: handle double-click -->
+                <!--
+                <child>
+                  <object class="GtkGestureClick">
+                    <signal name="pressed" handler="on_click_gesture_pressed_cb" swapped="no"/>
+                  </object>
+                </child>
+                -->
+              </object>
+            </property>
+          </object>
+        </child>
+        <signal name="notify::visible-child" handler="on_size_stack_visible_child_notify" swapped="false" />
+      </object><!-- size_stack -->
     </child>
 
-<!--        <property name="can-focus">False</property>-->
-        <!--
-        <child>
-          <object class="GtkOverlay">
-            <property name="can-focus">False</property>
-            <child>
-              <object class="GtkStack" id="timer_stack">
-                <property name="can-focus">False</property>
-                <property name="margin-start">20</property>
-                <property name="margin-end">20</property>
-                <property name="margin-top">50</property>
-                <property name="margin-bottom">50</property>
-                <property name="transition-type">crossfade</property>
-                <child>
-                  <object class="GtkButton" id="start_button">
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="tooltip-text" translatable="yes">Start Pomodoro</property>
-                    <property name="halign">center</property>
-                    <property name="valign">center</property>
-                    <property name="action-name">timer.start</property>
-                    <property name="use-underline">True</property>
-                    <child>
-                      <object class="GtkImage">
-                        <property name="can-focus">False</property>
-                        <property name="margin-start">50</property>
-                        <property name="margin-end">50</property>
-                        <property name="margin-top">50</property>
-                        <property name="margin-bottom">50</property>
-                        <property name="pixel-size">64</property>
-                        <property name="icon-name">media-playback-start-symbolic</property>
-                      </object>
-                    </child>
-                    <style>
-                      <class name="suggested-action"/>
-                      <class name="pomodoro-symbolic-button"/>
-                    </style>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkBox" id="box4">
-                    <property name="can-focus">False</property>
-                    <property name="valign">center</property>
-                    <property name="orientation">vertical</property>
-                    <child>
-                      <object class="GtkBox" id="timer_box">
-                        <property name="height-request">400</property>
-                        <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <signal name="draw" handler="on_timer_box_draw" swapped="no"/>
-                        <child type="center">
-                          <object class="GtkBox">
-                            <property name="can-focus">False</property>
-                            <property name="halign">center</property>
-                            <property name="valign">center</property>
-                            <child>
-                              <object class="GtkLabel" id="minutes_label">
-                                <property name="can-focus">False</property>
-                                <property name="label">00</property>
-                                <property name="justify">center</property>
-                                <property name="width-chars">2</property>
-                                <style>
-                                  <class name="pomodoro-timer-label"/>
-                                </style>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="separator_label">
-                                <property name="can-focus">False</property>
-                                <property name="margin-bottom">12</property>
-                                <property name="label">:</property>
-                                <style>
-                                  <class name="pomodoro-timer-label"/>
-                                  <class name="pomodoro-separator-label"/>
-                                </style>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="seconds_label">
-                                <property name="can-focus">False</property>
-                                <property name="label">00</property>
-                                <property name="justify">center</property>
-                                <property name="width-chars">2</property>
-                                <style>
-                                  <class name="pomodoro-timer-label"/>
-                                </style>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkToggleButton" id="state_togglebutton">
-                            <property name="can-focus">True</property>
-                            <property name="receives-default">False</property>
-                            <property name="halign">center</property>
-                            <property name="margin-top">90</property>
-                            <property name="relief">none</property>
-                            <style>
-                              <class name="pomodoro-button"/>
-                            </style>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkBox" id="box6">
-                        <property name="can-focus">False</property>
-                        <property name="halign">center</property>
-                        <property name="margin-bottom">24</property>
-                        <property name="spacing">24</property>
-                        <child>
-                          <object class="GtkButton" id="pause_button">
-                            <property name="can-focus">True</property>
-                            <property name="receives-default">True</property>
-                            <property name="tooltip-text" translatable="yes">Pause</property>
-                            <property name="action-name">timer.pause</property>
-                            <property name="relief">none</property>
-                            <property name="use-underline">True</property>
-                            <child>
-                              <object class="GtkImage" id="pause_button_image">
-                                <property name="can-focus">False</property>
-                                <property name="pixel-size">32</property>
-                                <property name="icon-name">media-playback-pause-symbolic</property>
-                              </object>
-                            </child>
-                            <style>
-                              <class name="flat"/>
-                              <class name="pomodoro-symbolic-button"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="stop_button">
-                            <property name="can-focus">True</property>
-                            <property name="receives-default">True</property>
-                            <property name="tooltip-text" translatable="yes">Stop</property>
-                            <property name="action-name">timer.stop</property>
-                            <property name="relief">none</property>
-                            <property name="use-underline">True</property>
-                            <child>
-                              <object class="GtkImage">
-                                <property name="can-focus">False</property>
-                                <property name="pixel-size">32</property>
-                                <property name="icon-name">media-playback-stop-symbolic</property>
-                              </object>
-                            </child>
-                            <style>
-                              <class name="flat"/>
-                              <class name="pomodoro-symbolic-button"/>
-                            </style>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child type="overlay">
-              <object class="GtkRevealer" id="in_app_notification_install_extension">
-                <property name="can-focus">False</property>
-                <property name="halign">center</property>
-                <property name="valign">start</property>
-                <property name="transition-duration">100</property>
-                <child>
-                  <object class="GtkFrame">
-                    <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="can-focus">False</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="can-focus">False</property>
-                            <property name="margin-end">30</property>
-                            <property name="label" translatable="yes">Extension for GNOME Shell is available</property>
-                            <property name="wrap">True</property>
-                            <property name="xalign">0</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="in_app_notification_install_extension_install_button">
-                            <property name="label" translatable="yes">_Install</property>
-                            <property name="can-focus">True</property>
-                            <property name="focus-on-click">False</property>
-                            <property name="receives-default">False</property>
-                            <property name="valign">center</property>
-                            <property name="margin-end">6</property>
-                            <property name="use-underline">True</property>
-                            <signal name="clicked" handler="on_in_app_notification_install_extension_install_button_clicked" swapped="no"/>
-                            <style>
-                              <class name="text-button"/>
-                            </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="in_app_notification_install_extension_close_button">
-                            <property name="can-focus">True</property>
-                            <property name="focus-on-click">False</property>
-                            <property name="receives-default">False</property>
-                            <property name="valign">center</property>
-                            <property name="relief">none</property>
-                            <signal name="clicked" handler="on_in_app_notification_install_extension_close_button_clicked" swapped="no"/>
-                            <child>
-                              <object class="GtkImage">
-                                <property name="can-focus">False</property>
-                                <property name="icon-name">window-close-symbolic</property>
-                              </object>
-                            </child>
-                            <style>
-                              <class name="image-button"/>
-                              <class name="flat"/>
-                            </style>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="label_item">
-                      <placeholder/>
-                    </child>
-                    <style>
-                      <class name="app-notification"/>
-                    </style>
-                  </object>
-                </child>
-                <style>
-                  <class name="top"/>
-                </style>
-              </object>
-            </child>
-          </object>
-        </child>
-        -->
+    <!--
+    <object class="GtkRevealer" id="in_app_notification_install_extension">
+      <property name="can-focus">False</property>
+      <property name="halign">center</property>
+      <property name="valign">start</property>
+      <property name="transition-duration">100</property>
+      <child>
+        <object class="GtkFrame">
+          <property name="can-focus">False</property>
+          <property name="label-xalign">0</property>
+          <property name="shadow-type">none</property>
+          <child>
+            <object class="GtkBox">
+              <property name="can-focus">False</property>
+              <child>
+                <object class="GtkLabel">
+                  <property name="can-focus">False</property>
+                  <property name="margin-end">30</property>
+                  <property name="label" translatable="yes">Extension for GNOME Shell is available</property>
+                  <property name="wrap">True</property>
+                  <property name="xalign">0</property>
+                </object>
+              </child>
+              <child>
+                <object class="GtkButton" id="in_app_notification_install_extension_install_button">
+                  <property name="label" translatable="yes">_Install</property>
+                  <property name="can-focus">True</property>
+                  <property name="focus-on-click">False</property>
+                  <property name="receives-default">False</property>
+                  <property name="valign">center</property>
+                  <property name="margin-end">6</property>
+                  <property name="use-underline">True</property>
+                  <signal name="clicked" handler="on_in_app_notification_install_extension_install_button_clicked" swapped="no"/>
+                  <style>
+                    <class name="text-button"/>
+                  </style>
+                </object>
+              </child>
+              <child>
+                <object class="GtkButton" id="in_app_notification_install_extension_close_button">
+                  <property name="can-focus">True</property>
+                  <property name="focus-on-click">False</property>
+                  <property name="receives-default">False</property>
+                  <property name="valign">center</property>
+                  <property name="relief">none</property>
+                  <signal name="clicked" handler="on_in_app_notification_install_extension_close_button_clicked" swapped="no"/>
+                  <child>
+                    <object class="GtkImage">
+                      <property name="can-focus">False</property>
+                      <property name="icon-name">window-close-symbolic</property>
+                    </object>
+                  </child>
+                  <style>
+                    <class name="image-button"/>
+                    <class name="flat"/>
+                  </style>
+                </object>
+              </child>
+            </object>
+          </child>
+          <child type="label_item">
+            <placeholder/>
+          </child>
+          <style>
+            <class name="app-notification"/>
+          </style>
+        </object>
+      </child>
+      <style>
+        <class name="top"/>
+      </style>
+    </object>
+    -->
 
   </template>
 </interface>

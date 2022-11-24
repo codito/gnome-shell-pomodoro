@@ -4,10 +4,28 @@ namespace Pomodoro
     {
         private const uint  FADE_IN_DURATION = 500;
         private const uint  FADE_OUT_DURATION = 500;
-        private const float LINE_WIDTH = 6.0f;
+        private const float DEFAULT_LINE_WIDTH = 6.0f;
 
         private class Through : Gtk.Widget
         {
+            public float line_width {
+                get {
+                    return this._line_width;
+                }
+                set {
+                    if (this._line_width == value) {
+                        return;
+                    }
+
+                    this._line_width = value;
+
+                    this.notify_property ("line-width");
+                    this.queue_draw ();
+                }
+            }
+
+            private float _line_width = DEFAULT_LINE_WIDTH;
+
             public override Gtk.SizeRequestMode get_request_mode ()
             {
                 return Gtk.SizeRequestMode.CONSTANT_SIZE;
@@ -46,6 +64,7 @@ namespace Pomodoro
                 var center_y      = 0.5f * height;
                 var bounds        = Graphene.Rect ();
                 var through       = Gsk.RoundedRect ();
+                var line_width    = this._line_width;
 
                 Gdk.RGBA color;
                 style_context.lookup_color ("unfocused_borders", out color);
@@ -54,7 +73,7 @@ namespace Pomodoro
                 through.init_from_rect (bounds, radius);
 
                 snapshot.append_border (through,
-                                        { LINE_WIDTH, LINE_WIDTH, LINE_WIDTH, LINE_WIDTH },
+                                        { line_width, line_width, line_width, line_width },
                                         { color, color, color, color });
             }
         }
@@ -78,12 +97,34 @@ namespace Pomodoro
             }
         }
 
+        public float line_width {
+            get {
+                return this._line_width;
+            }
+            set {
+                if (this._line_width == value) {
+                    return;
+                }
+
+                this._line_width = value;
+
+                this.notify_property ("line-width");
+                this.queue_draw ();
+            }
+        }
+
         private Pomodoro.Timer      _timer;
+        private float               _line_width = DEFAULT_LINE_WIDTH;
         private ulong               timer_state_changed_id = 0;
         private uint                timeout_id = 0;
         private uint                timeout_interval = 0;
         private weak Through        through;
         private Adw.TimedAnimation? fade_animation;
+
+        static construct
+        {
+            set_css_name ("timerprogressbar");
+        }
 
         construct
         {
@@ -92,6 +133,7 @@ namespace Pomodoro
             var through = new Through ();
             through.set_child_visible (true);
             through.set_parent (this);
+            through.bind_property ("line-width", this, "line-width", GLib.BindingFlags.SYNC_CREATE);
 
             this.through = through;
             this.layout_manager = new Gtk.BinLayout ();
@@ -248,6 +290,7 @@ namespace Pomodoro
             var center_x      = 0.5f * width;
             var center_y      = 0.5f * height;
             var bounds        = Graphene.Rect ();
+            var line_width    = this._line_width;
 
             bounds.init (center_x - radius, center_y - radius, 2.0f * radius, 2.0f * radius);
 
@@ -260,13 +303,17 @@ namespace Pomodoro
                     : 1.0;
 
                 var context = snapshot.append_cairo (bounds);
-                context.set_line_width (LINE_WIDTH);
+                context.set_line_width (line_width);
                 context.set_line_cap (Cairo.LineCap.ROUND);
                 context.set_source_rgba (color.red,
                                          color.green,
                                          color.blue,
                                          color.alpha * fade_value);
-                context.arc_negative (center_x, center_y, radius - LINE_WIDTH / 2.0, progress_angle_from, progress_angle_to);
+                context.arc_negative (center_x,
+                                      center_y,
+                                      radius - line_width / 2.0,
+                                      progress_angle_from,
+                                      progress_angle_to);
                 context.stroke ();
             }
         }

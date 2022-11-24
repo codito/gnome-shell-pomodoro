@@ -52,6 +52,12 @@ namespace Pomodoro
         private ulong                   timer_state_changed_id = 0;
         private ulong                   timer_tick_id = 0;
 
+
+        static construct
+        {
+            set_css_name ("timerlabel");
+        }
+
         construct
         {
             this._session_manager = Pomodoro.SessionManager.get_default ();
@@ -68,18 +74,11 @@ namespace Pomodoro
 
         private void update_css_classes ()
         {
-            if (this._timer.is_running ()) {
-                this.add_css_class ("timer-running");
-            }
-            else {
-                this.remove_css_class ("timer-running");
-            }
-
             if (this._timer.is_paused ()) {
-                this.add_css_class ("timer-paused");
+                this.add_css_class ("blinking");
             }
             else {
-                this.remove_css_class ("timer-paused");
+                this.remove_css_class ("blinking");
             }
 
             if (!this._timer.is_started ()) {
@@ -147,10 +146,11 @@ namespace Pomodoro
         public override void map ()
         {
             this.update_remaining_time ();
-
-            base.map ();
+            this.update_css_classes ();
 
             this.connect_signals ();
+
+            base.map ();
         }
 
         public override void unmap ()

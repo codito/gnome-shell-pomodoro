@@ -21,6 +21,46 @@
 
 namespace Pomodoro
 {
+    public enum WindowSize
+    {
+        NORMAL = 0,
+        COMPACT = 1,
+        TINY = 2;
+
+        public static WindowSize from_string (string? name)
+        {
+            switch (name)
+            {
+                case "tiny":
+                    return WindowSize.TINY;
+
+                case "compact":
+                    return WindowSize.COMPACT;
+
+                default:
+                    return WindowSize.NORMAL;
+            }
+        }
+
+        public string to_string ()
+        {
+            switch (this)
+            {
+                case NORMAL:
+                    return "normal";
+
+                case COMPACT:
+                    return "compact";
+
+                case TINY:
+                    return "tiny";
+
+                default:
+                    assert_not_reached ();
+            }
+        }
+    }
+
     public enum WindowView
     {
         DEFAULT = 0,
@@ -41,82 +81,85 @@ namespace Pomodoro
                     return WindowView.DEFAULT;
             }
         }
+
+        public string to_string ()
+        {
+            switch (this)
+            {
+                case TIMER:
+                    return "timer";
+
+                case STATS:
+                    return "stats";
+
+                case DEFAULT:
+                    return "";
+
+                default:
+                    assert_not_reached ();
+            }
+        }
     }
 
 
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
     public class Window : Adw.ApplicationWindow, Gtk.Buildable
     {
-        // private const int MIN_WIDTH = 500;
-        // private const int MIN_HEIGHT = 650;
+        [CCode (notify = false)]
+        public Pomodoro.WindowSize size {
+            get {
+                return this._size;
+            }
+            set {
+                if (this._size == value) {
+                    return;
+                }
 
+                this._size = value;
+
+                this.size_stack.visible_child_name = value.to_string ();
+                this.notify_property ("size");
+            }
+        }
+
+        [CCode (notify = false)]
         public Pomodoro.WindowView view {
             get {
                 return this._view;
             }
             set {
+                if (this._view == value) {
+                    return;
+                }
+
                 this._view = value;
 
-                switch (value)
-                {
-                    case Pomodoro.WindowView.TIMER:
-                        this.stack.visible_child_name = "timer";
-                        break;
-
-                    case Pomodoro.WindowView.STATS:
-                        this.stack.visible_child_name = "stats";
-                        break;
-
-                    default:
-                        this.stack.visible_child_name = "timer";
-                        break;
+                var resolved_view = value;
+                if (resolved_view == Pomodoro.WindowView.DEFAULT) {
+                    resolved_view = this.get_default_view ();
                 }
-            }
-        }
 
-        public bool shrinked {
-            get {
-                return this.reducer.visible_child != this.reducer.get_first_child ();
-            }
-            set {
-                if (value) {
-                    this.shrink ();
-                }
-                else {
-                    this.unshrink ();
-                }
+                this.view_stack.visible_child_name = resolved_view.to_string ();
+                this.notify_property ("view");
             }
         }
 
         [GtkChild]
-        private unowned Pomodoro.Reducer reducer;
+        private unowned Pomodoro.SizeStack size_stack;
         [GtkChild]
-        private unowned Adw.ViewStack stack;  // TODO: rename to `view_stack`
+        private unowned Adw.ViewStack view_stack;
         [GtkChild]
         private unowned Pomodoro.TimerView timer_view;
 
         private Pomodoro.SessionManager session_manager;
         private Pomodoro.Timer          timer;
+        private Pomodoro.WindowSize     _size = Pomodoro.WindowSize.NORMAL;
         private Pomodoro.WindowView     _view = Pomodoro.WindowView.DEFAULT;
 
         construct
         {
             // TODO: this.default_page should be set from application.vala
             // var application = Pomodoro.Application.get_default ();
-
-            // if (application.capabilities.has_capability ("indicator")) {
-            //     this.default_page = "stats";
-            // }
-            // else {
-            //     this.default_page = "timer";
-            // }
-
-            this.reducer.notify["visible-child"].connect (() => {
-                this.update_resizable ();
-            });
-            this.stack.notify["visible-child"].connect (() => {
-                this.update_title ();
-            });
 
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.timer           = session_manager.timer;
@@ -127,35 +170,52 @@ namespace Pomodoro
             this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup (this.session_manager));
             this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
 
-            this.update_resizable ();
             this.update_title ();
             this.update_timer_indicator ();
         }
 
         private void update_title ()
         {
-            var page = this.stack.get_page (this.stack.visible_child);
+            var page = this._size == Pomodoro.WindowSize.NORMAL
+                ? this.view_stack.get_page (this.view_stack.visible_child)
+                : null;
 
             this.title = page != null ? page.title : _("Pomodoro");
         }
 
-        private void update_resizable ()
-        {
-            this.resizable = reducer.visible_child == reducer.get_first_child ();
-        }
-
         private void update_timer_indicator ()
         {
-            var timer_page = this.stack.get_page (this.timer_view);
+            var timer_page = this.view_stack.get_page (this.timer_view);
             var timer      = Pomodoro.Timer.get_default ();
 
-            timer_page.needs_attention = this.stack.visible_child_name != "timer" && timer.is_started ();
+            timer_page.needs_attention = this.view_stack.visible_child != timer_page.child &&
+                                         timer.is_started ();
+        }
+
+        public Pomodoro.WindowView get_default_view ()
+                                                     ensures (result != Pomodoro.WindowView.DEFAULT)
+        {
+            return Pomodoro.WindowView.TIMER;
+        }
+
+        [GtkCallback]
+        private void on_size_stack_visible_child_notify (GLib.Object    object,
+                                                         GLib.ParamSpec pspec)
+        {
+            this.size = Pomodoro.WindowSize.from_string (this.size_stack.visible_child_name);
         }
 
         [GtkCallback]
         private void on_view_stack_visible_child_notify (GLib.Object    object,
                                                          GLib.ParamSpec pspec)
         {
+            var view = Pomodoro.WindowView.from_string (this.view_stack.visible_child_name);
+
+            this._view = this._view == Pomodoro.WindowView.DEFAULT && this.get_default_view () == view
+                ? Pomodoro.WindowView.DEFAULT
+                : view;
+
+            this.update_title ();
             this.update_timer_indicator ();
         }
 
@@ -195,35 +255,17 @@ namespace Pomodoro
         }
         */
 
-        public void shrink ()
+        private void on_set_size_change_state (GLib.SimpleAction action,
+                                               GLib.Variant?     state)
         {
-            if (this.is_fullscreen ()) {
-                this.unfullscreen ();
-            }
-
-            if (this.is_maximized ()) {
-                this.unmaximize ();
-            }
-
-            this.reducer.visible_child = this.reducer.get_last_child ();
+            this.size = Pomodoro.WindowSize.from_string (state.get_string ());
         }
 
-        public void unshrink ()
+        private void on_expand_activate (GLib.SimpleAction action,
+                                         GLib.Variant?     parameter)
         {
-            this.reducer.visible_child = this.reducer.get_first_child ();
-        }
-
-        private void change_shrink_state (GLib.SimpleAction action,
-                                          GLib.Variant?     state)
-        {
-            if (state.get_boolean ()) {
-                this.shrink ();
-            }
-            else {
-                this.unshrink ();
-            }
-
-            action.set_state (state);
+            this.size = Pomodoro.WindowSize.NORMAL;
+            this.view = Pomodoro.WindowView.TIMER;
         }
 
         private void setup_actions ()
@@ -232,13 +274,19 @@ namespace Pomodoro
 
             GLib.SimpleAction action;
 
-            action = new GLib.SimpleAction.stateful (
-                "shrink", null, new GLib.Variant.boolean (false));
-            action.change_state.connect (this.change_shrink_state);
+            action = new GLib.SimpleAction.stateful ("set-size",
+                                                     GLib.VariantType.STRING,
+                                                     new GLib.Variant.string (this.size.to_string ()));
+            action.change_state.connect (this.on_set_size_change_state);
             action_map.add_action (action);
 
-            this.notify["shrinked"].connect (() => {
-                action.set_state (new GLib.Variant.boolean (this.shrinked));
+            action = new GLib.SimpleAction ("expand", null);
+            action.activate.connect (this.on_expand_activate);
+            action_map.add_action (action);
+
+            this.notify["size"].connect (() => {
+                var set_size_action = this.lookup_action ("set-size");
+                set_size_action.change_state (new GLib.Variant.string (this.size.to_string ()));
             });
         }
 
