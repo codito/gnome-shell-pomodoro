@@ -209,19 +209,6 @@ timerview sessionprogressbar:backdrop {
 
 
 /**
- * PomodoroTinyTimerView widget
- */
-tinytimerview {
-    min-width: 400px;
-    padding: 5px;
-}
-
-tinytimerview timerlabel {
-    margin-left: 10px;
-}
-
-
-/**
  * PomodoroCompactTimerView widget
  */
 compacttimerview {

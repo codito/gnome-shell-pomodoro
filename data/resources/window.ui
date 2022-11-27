@@ -5,7 +5,6 @@
 
   <menu id="primary_menu">
     <section>
-      <!-- <attribute name="display-hint">horizontal-buttons</attribute> -->
       <item>
         <attribute name="label" translatable="yes">_Shrink Window</attribute>
         <attribute name="verb-icon">window-shrink-symbolic</attribute>
@@ -169,29 +168,6 @@
                 <property name="valign">start</property>
                 <property name="child">
                   <object class="PomodoroCompactTimerView"/>
-                </property>
-                <!-- TODO: handle double-click -->
-                <!--
-                <child>
-                  <object class="GtkGestureClick">
-                    <signal name="pressed" handler="on_click_gesture_pressed_cb" swapped="no"/>
-                  </object>
-                </child>
-                -->
-              </object>
-            </property>
-          </object>
-        </child>
-        <child>
-          <object class="PomodoroSizeStackPage">
-            <property name="name">tiny</property>
-            <property name="resizable">False</property>
-            <property name="child">
-              <object class="GtkWindowHandle">
-                <property name="halign">fill</property>
-                <property name="valign">start</property>
-                <property name="child">
-                  <object class="PomodoroTinyTimerView"/>
                 </property>
                 <!-- TODO: handle double-click -->
                 <!--
