@@ -1,6 +1,6 @@
 namespace Pomodoro
 {
-    public class TimerProgressBar : Pomodoro.ProgressBar
+    public class TimerProgressRing : Pomodoro.ProgressRing
     {
         public unowned Pomodoro.Timer timer {
             get {
@@ -29,32 +29,14 @@ namespace Pomodoro
         construct
         {
             this._timer = Pomodoro.Timer.get_default ();
-
-            // this.fade_out ();
         }
 
         private uint calculate_timeout_interval ()
-                                                 requires (this._timer != null)
         {
-            int64 length;
+            var perimeter = (int64) Math.ceil (
+                    2.0 * Math.PI * double.min (this.get_width (), this.get_height ()));
 
-            switch (this.shape)
-            {
-                case Pomodoro.ProgressBarShape.BAR:
-                    length = (int64) this.get_width ();
-                    break;
-
-                case Pomodoro.ProgressBarShape.RING:
-                    length = (int64) Math.ceil (2.0 * Math.PI * double.min (this.get_width (), this.get_height ()));
-                    break;
-
-                default:
-                    assert_not_reached ();
-            }
-
-            return length > 0
-                ? Pomodoro.Timestamp.to_milliseconds_uint (this._timer.duration / (2 * length))
-                : 0;
+            return Pomodoro.Timestamp.to_milliseconds_uint (this._timer.duration / (2 * perimeter));
         }
 
         private void start_timeout ()
@@ -66,13 +48,13 @@ namespace Pomodoro
                 this.stop_timeout ();
             }
 
-            if (this.timeout_id == 0 && this.timeout_interval > 0) {
+            if (this.timeout_id == 0) {
                 this.timeout_id = GLib.Timeout.add (this.timeout_interval, () => {
-                    this.invalidate_value ();
+                    this.queue_draw_highlight ();
 
                     return GLib.Source.CONTINUE;
                 });
-                GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.TimerProgressBar.on_timeout");
+                GLib.Source.set_name_by_id (this.timeout_id, "Pomodoro.TimerProgressRing.on_timeout");
             }
         }
 
@@ -94,18 +76,14 @@ namespace Pomodoro
                 this.stop_timeout ();
             }
 
-            // if (this._timer.is_started ())
-            // {
-            //     if (previous_state.started_time < 0) {
-            //         this.fade_in ();
-            //     }
-            // }
-            // else {
-            //     this.fade_out ();
-            // }
+            if (this._timer.is_started ()) {
+                this.fade_in ();
+            }
+            else {
+                this.fade_out ();
+            }
 
-            this.invalidate_value ();
-            // this.queue_draw ();
+            this.queue_draw ();
         }
 
         private void connect_signals ()
@@ -129,9 +107,9 @@ namespace Pomodoro
             }
         }
 
-        public override double resolve_value ()
+        public override double resolve_value (int64 monotonic_time)
         {
-            var timestamp = this._timer.get_current_time (this.get_frame_clock ().get_frame_time ());
+            var timestamp = this._timer.get_current_time (monotonic_time);
 
             return this._timer.is_started ()
                 ? this._timer.calculate_progress (timestamp)

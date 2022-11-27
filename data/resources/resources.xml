@@ -41,6 +41,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-compact-size-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-expand-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-normal-size-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-shrink-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-tiny-size-symbolic.svg</file>
   </gresource>
 </gresources>

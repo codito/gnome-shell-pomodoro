@@ -7,8 +7,6 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.MenuButton timer_state_menubutton;
         [GtkChild]
-        private unowned Pomodoro.TimerProgressBar timer_progressbar;
-        [GtkChild]
         private unowned Pomodoro.SessionProgressBar session_progressbar;
         [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
@@ -36,12 +34,10 @@ namespace Pomodoro
         {
             if (this.timer.is_running ()) {
                 this.timer_state_menubutton.add_css_class ("timer-running");
-                this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
             }
             else {
                 this.timer_state_menubutton.remove_css_class ("timer-running");
-                this.timer_progressbar.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
             }
         }

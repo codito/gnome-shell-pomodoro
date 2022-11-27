@@ -428,14 +428,10 @@ namespace Pomodoro
             // - take-short-break
             // - take-long-break
 
-            // action = new GLib.SimpleAction ("timer-set-state", GLib.VariantType.STRING);
-            // action.activate.connect (this.activate_timer_set_state);
-            // this.add_action (action);
-
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
             this.set_accels_for_action ("app.quit", {"<Primary>q"});
-            this.set_accels_for_action ("win.shrink", {"<Primary>space"});
+            this.set_accels_for_action ("win.toggle-shrinked", {"F9"});
         }
 
         /**

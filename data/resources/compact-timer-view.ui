@@ -60,9 +60,9 @@
           </object>
         </child>
         <child>
-          <object class="PomodoroSessionProgressBar">
-            <property name="line-width">4</property>
-            <property name="can-focus">False</property>
+          <object class="PomodoroTimerProgressBar">
+            <property name="line-width">5</property>
+            <property name="halign">fill</property>
             <property name="hexpand">True</property>
             <layout>
               <property name="column">0</property>

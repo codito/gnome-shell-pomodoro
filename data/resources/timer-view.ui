@@ -64,6 +64,9 @@
             </child>
             <child>
               <object class="PomodoroTimerProgressBar" id="timer_progressbar">
+                <property name="shape">ring</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
               </object>
             </child>
           </object><!-- overlay -->

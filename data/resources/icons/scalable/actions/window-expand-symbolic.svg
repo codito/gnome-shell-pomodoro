@@ -23,8 +23,8 @@
      inkscape:pagecheckerboard="0"
      showgrid="true"
      inkscape:zoom="16"
-     inkscape:cx="-14.21875"
-     inkscape:cy="4.46875"
+     inkscape:cx="18.59375"
+     inkscape:cy="12.84375"
      inkscape:window-width="2560"
      inkscape:window-height="1371"
      inkscape:window-x="0"
@@ -67,13 +67,8 @@
        id="path1146"
        style="fill:#2e3436" />
   </g>
-  <rect
-     style="fill:#2e3436;stroke:none;stroke-width:0.999999;-inkscape-stroke:none;stop-color:#000000"
-     id="rect361"
-     height="5"
-     x="-90.979996"
-     y="0.077757448"
-     rx="1.25"
-     ry="1.25"
-     width="12" />
+  <path
+     d="M 14,4 V 6 H 2 V 4 Z m 0,0"
+     id="path6"
+     style="fill:#2e3436;stroke-width:1" />
 </svg>

@@ -103,11 +103,13 @@ timercontrolbuttons.circular button {
 
 
 /**
- * PomodoroTimerProgressBar widget
+ * PomodoroProgressBar widget
  */
-timerprogressbar {
+progressbar {
+    /*
     min-width: 300px;
     min-height: 300px;
+    */
 }
 
 
@@ -193,9 +195,14 @@ timerview timerlabel > .separator-label {
     margin-right: -10px;
 }
 
+timerview progressbar {
+    min-width: 300px;
+    min-height: 300px;
+}
+
 timerview timerlabel:backdrop,
 timerview .pomodoro-timer-state label:backdrop,
-timerview timerprogressbar:backdrop,
+timerview progressbar:backdrop,
 timerview sessionprogressbar:backdrop {
     color: @insensitive_fg_color;
 }
@@ -220,11 +227,11 @@ tinytimerview timerlabel {
 compacttimerview {
     min-width: 300px;
     padding: 5px;
-    padding-left: 10px;
+    padding-left: 12px;
 }
 
 compacttimerview > grid > separator {
-    margin-left: 5px;
+    margin-left: 7px;
 }
 
 compacttimerview timerlabel {

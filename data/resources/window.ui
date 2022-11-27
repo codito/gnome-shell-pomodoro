@@ -5,21 +5,11 @@
 
   <menu id="primary_menu">
     <section>
-      <attribute name="display-hint">horizontal-buttons</attribute>
+      <!-- <attribute name="display-hint">horizontal-buttons</attribute> -->
       <item>
-        <attribute name="verb-icon">window-tiny-size-symbolic</attribute>
-        <attribute name="action">win.set-size</attribute>
-        <attribute name="target">tiny</attribute>
-      </item>
-      <item>
-        <attribute name="verb-icon">window-compact-size-symbolic</attribute>
-        <attribute name="action">win.set-size</attribute>
-        <attribute name="target">compact</attribute>
-      </item>
-      <item>
-        <attribute name="verb-icon">window-normal-size-symbolic</attribute>
-        <attribute name="action">win.set-size</attribute>
-        <attribute name="target">normal</attribute>
+        <attribute name="label" translatable="yes">_Shrink Window</attribute>
+        <attribute name="verb-icon">window-shrink-symbolic</attribute>
+        <attribute name="action">win.toggle-shrinked</attribute>
       </item>
     </section>
     <section>
@@ -119,9 +109,11 @@
                     <child type="end">
                       <object class="GtkMenuButton">
                         <property name="icon-name">open-menu-symbolic</property>
-                        <property name="receives_default">False</property>
                         <property name="menu-model">primary_menu</property>
-                        <property name="focus-on-click">False</property>
+                        <property name="primary">True</property>
+                        <accessibility>
+                          <property name="label" translatable="yes">Primary Menu</property>
+                        </accessibility>
                       </object>
                     </child>
                   </object><!-- header_bar -->

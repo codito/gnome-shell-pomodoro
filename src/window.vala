@@ -255,10 +255,10 @@ namespace Pomodoro
         }
         */
 
-        private void on_set_size_change_state (GLib.SimpleAction action,
-                                               GLib.Variant?     state)
+        private void on_shrink_activate (GLib.SimpleAction action,
+                                         GLib.Variant?     parameter)
         {
-            this.size = Pomodoro.WindowSize.from_string (state.get_string ());
+            this.size = Pomodoro.WindowSize.COMPACT;
         }
 
         private void on_expand_activate (GLib.SimpleAction action,
@@ -268,26 +268,34 @@ namespace Pomodoro
             this.view = Pomodoro.WindowView.TIMER;
         }
 
+        private void on_toggle_shrinked_activate (GLib.SimpleAction action,
+                                                  GLib.Variant?     parameter)
+        {
+            if (this.size == Pomodoro.WindowSize.NORMAL) {
+                this.lookup_action ("shrink").activate (null);
+            }
+            else {
+                this.lookup_action ("expand").activate (null);
+            }
+        }
+
         private void setup_actions ()
         {
             var action_map = (GLib.ActionMap) this;
 
             GLib.SimpleAction action;
 
-            action = new GLib.SimpleAction.stateful ("set-size",
-                                                     GLib.VariantType.STRING,
-                                                     new GLib.Variant.string (this.size.to_string ()));
-            action.change_state.connect (this.on_set_size_change_state);
+            action = new GLib.SimpleAction ("shrink", null);
+            action.activate.connect (this.on_shrink_activate);
             action_map.add_action (action);
 
             action = new GLib.SimpleAction ("expand", null);
             action.activate.connect (this.on_expand_activate);
             action_map.add_action (action);
 
-            this.notify["size"].connect (() => {
-                var set_size_action = this.lookup_action ("set-size");
-                set_size_action.change_state (new GLib.Variant.string (this.size.to_string ()));
-            });
+            action = new GLib.SimpleAction ("toggle-shrinked", null);
+            action.activate.connect (this.on_toggle_shrinked_activate);
+            action_map.add_action (action);
         }
 
         public void parser_finished (Gtk.Builder builder)
