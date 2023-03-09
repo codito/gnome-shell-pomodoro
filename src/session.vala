@@ -168,6 +168,91 @@ namespace Pomodoro
         }
 
 
+        private void update_time_range ()
+        {
+            unowned Pomodoro.TimeBlock first_time_block = this.get_first_time_block ();
+            unowned Pomodoro.TimeBlock last_time_block = this.get_last_time_block ();
+
+            var old_duration = this._end_time - this._start_time;
+
+            var start_time = first_time_block != null
+                ? first_time_block.start_time
+                : Pomodoro.Timestamp.MIN;
+
+            var end_time = last_time_block != null
+                ? last_time_block.end_time
+                : Pomodoro.Timestamp.MAX;
+
+            if (this._start_time != start_time) {
+                this._start_time = start_time;
+                this.notify_property ("start-time");
+            }
+
+            if (this._end_time != end_time) {
+                this._end_time = end_time;
+                this.notify_property ("end-time");
+            }
+
+            if (this._end_time - this._start_time != old_duration) {
+                this.notify_property ("duration");
+            }
+        }
+
+        private void handle_child_added (Child child)
+        {
+            unowned Pomodoro.TimeBlock time_block = child.time_block;
+
+            time_block.session = this;
+
+            child.status = Pomodoro.TimeBlockStatus.SCHEDULED;
+
+            if (child.changed_id == 0) {
+                child.changed_id = time_block.changed.connect (() => {
+                    this.emit_changed ();
+                });
+            }
+
+            this.emit_changed ();
+        }
+
+        private void handle_child_removed (Child child)
+        {
+            unowned Pomodoro.TimeBlock time_block = child.time_block;
+
+            GLib.SignalHandler.disconnect (time_block, child.changed_id);
+
+            child.changed_id = 0;
+            time_block.session = null;
+
+            this.emit_changed ();
+        }
+
+        private void emit_changed ()
+        {
+            if (this.changed_freeze_count > 0) {
+                this.changed_is_pending = true;
+            }
+            else {
+                this.changed_is_pending = false;
+                this.changed ();
+            }
+        }
+
+        public void freeze_changed ()
+        {
+            this.changed_freeze_count++;
+        }
+
+        public void thaw_changed ()
+        {
+            this.changed_freeze_count--;
+
+            if (this.changed_freeze_count == 0 && this.changed_is_pending) {
+                this.emit_changed ();
+            }
+        }
+
+
         /*
          * Methods for managing session as a whole
          */
@@ -321,8 +406,396 @@ namespace Pomodoro
 
 
         /*
+         * Methods for container operations
+         */
+
+
+        private unowned GLib.List<Child>? find_link_by_time_block (Pomodoro.TimeBlock? time_block)
+        {
+            unowned GLib.List<Child> link = this.children.first ();
+
+            while (link != null)
+            {
+                if (link.data.time_block == time_block) {
+                    return link;
+                }
+
+                link = link.next;
+            }
+
+            return null;
+        }
+
+        private void append_child (Child child)
+        {
+            var is_first = this.children.is_empty ();
+
+            this.children.append (child);
+            this._end_time = child.time_block.end_time;
+
+            if (is_first) {
+                this._start_time = child.time_block.start_time;
+            }
+
+            this.handle_child_added (child);
+        }
+
+        /**
+         * Add the time-block and align it with the last block.
+         */
+        public void append (Pomodoro.TimeBlock time_block)
+        {
+            // TODO: convert current last long-break into a short one if needed
+
+            if (this.contains (time_block)) {
+                // TODO: warn block already belong to session
+                return;
+            }
+
+            var old_start_time = this._start_time;
+            var old_end_time = this._end_time;
+            var old_duration = this._end_time - this._start_time;
+
+            var last_time_block = this.get_last_time_block ();
+            if (last_time_block != null) {
+                time_block.set_time_range (
+                    last_time_block.end_time,
+                    Pomodoro.Timestamp.add (last_time_block.end_time, time_block.duration)
+                );
+
+                // time_block.move_to (this._end_time);
+            }
+
+            // TODO: mark time-block as added manually? so that it doesn't conform to template?
+            this.append_child (new Child (time_block));
+
+            if (this._start_time != old_start_time) {
+                this.notify_property ("start-time");
+            }
+
+            if (this._end_time != old_end_time) {
+                this.notify_property ("end-time");
+            }
+
+            if (this._end_time - this._start_time != old_duration) {
+                this.notify_property ("duration");
+            }
+        }
+
+
+        public void insert_sorted (Pomodoro.TimeBlock time_block)
+        {
+            // TODO
+            assert_not_reached ();
+        }
+
+        public void insert_before (Pomodoro.TimeBlock time_block,
+                                   Pomodoro.TimeBlock sibling)
+        {
+            // TODO
+            assert_not_reached ();
+        }
+
+        public void insert_after (Pomodoro.TimeBlock time_block,
+                                  Pomodoro.TimeBlock sibling)
+        {
+            // TODO
+            assert_not_reached ();
+        }
+
+        public void remove (Pomodoro.TimeBlock time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+            if (link == null) {
+                // TODO: warn that block does not belong to session
+                return;
+            }
+
+            var child = link.data;
+
+            this.children.remove_link (link);
+            this.handle_child_removed (child);
+        }
+
+        public void remove_before (Pomodoro.TimeBlock time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+
+            if (link == null) {
+                // TODO: warn that block does not belong to session
+                return;
+            }
+
+            if (link.prev == null) {
+                return;
+            }
+
+            this.freeze_changed ();
+
+            while (link.prev != null)
+            {
+                var prev_child = link.prev.data;
+
+                this.children.remove_link (link.prev);
+                this.handle_child_removed (prev_child);
+            }
+
+            this.thaw_changed ();
+        }
+
+        public void remove_after (Pomodoro.TimeBlock time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+
+            if (link == null) {
+                // TODO: warn that block does not belong to session
+                return;
+            }
+
+            if (link.next == null) {
+                return;
+            }
+
+            this.freeze_changed ();
+
+            while (link.next != null)
+            {
+                var next_child = link.next.data;
+
+                this.children.remove_link (link.next);
+                this.handle_child_removed (next_child);
+            }
+
+            this.thaw_changed ();
+        }
+
+        public unowned Pomodoro.TimeBlock? get_first_time_block ()
+        {
+            unowned GLib.List<Child> first_link = this.children.first ();
+
+            return first_link != null ? first_link.data.time_block : null;
+        }
+
+        public unowned Pomodoro.TimeBlock? get_last_time_block ()
+        {
+            unowned GLib.List<Child> last_link = this.children.last ();
+
+            return last_link != null ? last_link.data.time_block : null;
+        }
+
+        public unowned Pomodoro.TimeBlock? get_nth_time_block (uint index)
+        {
+            unowned Child child = this.children.nth_data (index);
+
+            return child != null ? child.time_block : null;
+        }
+
+        public unowned Pomodoro.TimeBlock? get_previous_time_block (Pomodoro.TimeBlock? time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+
+            if (link == null || link.prev == null) {
+                return null;
+            }
+
+            return link.prev.data.time_block;
+        }
+
+        public unowned Pomodoro.TimeBlock? get_next_time_block (Pomodoro.TimeBlock? time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+
+            if (link == null || link.next == null) {
+                return null;
+            }
+
+            return link.next.data.time_block;
+        }
+
+        public int index (Pomodoro.TimeBlock time_block)
+        {
+            var index = -1;
+
+            unowned GLib.List<Child> link = this.children.first ();
+
+            while (link != null)
+            {
+                index++;
+
+                if (link.data.time_block == time_block) {
+                    return index;
+                }
+
+                link = link.next;
+            }
+
+            return index;
+        }
+
+        public bool contains (Pomodoro.TimeBlock time_block)
+        {
+            if (time_block.session != this) {
+                return false;
+            }
+
+            unowned List<Child> link = this.find_link_by_time_block (time_block);
+
+            return link != null;
+        }
+
+        public void @foreach (GLib.Func<unowned Pomodoro.TimeBlock> func)
+        {
+            unowned GLib.List<Child> link = this.children.first ();
+
+            while (link != null)
+            {
+                func (link.data.time_block);
+
+                link = link.next;
+            }
+        }
+
+
+        /*
+         * Methods for managing time-blocks status
+         */
+
+
+        /**
+         * Set status for the time block and ensure previous time blocks are marked as completed/uncompleted.
+         *
+         * It's unlikely that we will need to change statuses of previous blocks.
+         */
+        private void set_time_block_status (Pomodoro.TimeBlock       time_block,
+                                            Pomodoro.TimeBlockStatus status)
+        {
+            unowned GLib.List<Child> link = this.children.first ();
+
+            if (!this.contains (time_block)) {
+                return;
+            }
+
+            while (link != null)
+            {
+                if (link.data.time_block == time_block)
+                {
+                    link.data.status = status;
+                    break;
+                }
+                else {
+                    switch (link.data.status)
+                    {
+                        case Pomodoro.TimeBlockStatus.COMPLETED:
+                        case Pomodoro.TimeBlockStatus.UNCOMPLETED:
+                            break;
+
+                        default:
+                            GLib.warning ("Changing previous time-block status to UNCOMPLETED.");
+                            link.data.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
+                            break;
+                    }
+                }
+
+                link = link.next;
+            }
+        }
+
+        /**
+         * Convenience method to get status, without getting meta.
+         */
+        public Pomodoro.TimeBlockStatus get_time_block_status (Pomodoro.TimeBlock time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+
+            return link != null
+                ? link.data.status
+                : Pomodoro.TimeBlockStatus.UNSCHEDULED;
+        }
+
+        /**
+         * Expose internal data via read-only `TimeBlockMeta` struct.
+         */
+        public Pomodoro.TimeBlockMeta get_time_block_meta (Pomodoro.TimeBlock time_block)
+        {
+            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
+
+            if (link == null) {
+                return Pomodoro.TimeBlockMeta ();
+            }
+
+            return TimeBlockMeta () {
+                status = link.data.status,
+                cycle = link.data.cycle,
+                intended_duration = link.data.intended_duration,
+                is_long_break = link.data.is_long_break,
+            };
+        }
+
+        public void mark_time_block_started (Pomodoro.TimeBlock time_block,
+                                             int64              timestamp)
+        {
+            assert (timestamp > 0);
+
+            unowned GLib.List<Child>? link = this.find_link_by_time_block (time_block);
+            assert (link != null);
+
+            switch (link.data.status)
+            {
+                case Pomodoro.TimeBlockStatus.SCHEDULED:
+                    break;
+
+                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
+                    GLib.warning ("Time block is already marked as started");
+                    break;
+
+                default:
+                    GLib.error ("Unable to mark time block with status \"%s\" as started",
+                                link.data.status.to_string ());
+                    break;
+            }
+
+            this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            time_block.move_to (timestamp);
+        }
+
+        public void mark_time_block_ended (Pomodoro.TimeBlock time_block,
+                                           bool               completed,
+                                           int64              timestamp)
+        {
+            assert (timestamp > 0);
+            assert (timestamp >= time_block.start_time);
+
+            var status = completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED;
+
+            unowned GLib.List<Child>? link = this.find_link_by_time_block (time_block);
+            assert (link != null);
+
+            switch (link.data.status)
+            {
+                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
+                    break;
+
+                case Pomodoro.TimeBlockStatus.COMPLETED:
+                case Pomodoro.TimeBlockStatus.UNCOMPLETED:
+                    GLib.warning ("Time block is already marked as ended");
+                    break;
+
+                default:
+                    GLib.error ("Unable to mark time block with status \"%s\" as ended", link.data.status.to_string ());
+                    break;
+            }
+
+            this.set_time_block_status (time_block, status);
+
+            link.data.time_block.end_time = timestamp;
+        }
+
+
+        /*
          * Methods for scheduling
          */
+
 
         /**
          * Remove links following
@@ -677,480 +1150,9 @@ namespace Pomodoro
 
 
         /*
-         * Methods for container operations
+         * Signals
          */
 
-        private unowned GLib.List<Child>? find_link_by_time_block (Pomodoro.TimeBlock? time_block)
-        {
-            unowned GLib.List<Child> link = this.children.first ();
-
-            while (link != null)
-            {
-                if (link.data.time_block == time_block) {
-                    return link;
-                }
-
-                link = link.next;
-            }
-
-            return null;
-        }
-
-        private void append_child (Child child)
-        {
-            var is_first = this.children.is_empty ();
-
-            this.children.append (child);
-            this._end_time = child.time_block.end_time;
-
-            if (is_first) {
-                this._start_time = child.time_block.start_time;
-            }
-
-            this.handle_child_added (child);
-        }
-
-        /**
-         * Add the time-block and align it with the last block.
-         */
-        public void append (Pomodoro.TimeBlock time_block)
-        {
-            // TODO: convert current last long-break into a short one if needed
-
-            if (this.contains (time_block)) {
-                // TODO: warn block already belong to session
-                return;
-            }
-
-            var old_start_time = this._start_time;
-            var old_end_time = this._end_time;
-            var old_duration = this._end_time - this._start_time;
-
-            var last_time_block = this.get_last_time_block ();
-            if (last_time_block != null) {
-                time_block.set_time_range (
-                    last_time_block.end_time,
-                    Pomodoro.Timestamp.add (last_time_block.end_time, time_block.duration)
-                );
-
-                // time_block.move_to (this._end_time);
-            }
-
-            // TODO: mark time-block as added manually? so that it doesn't conform to template?
-            this.append_child (new Child (time_block));
-
-            if (this._start_time != old_start_time) {
-                this.notify_property ("start-time");
-            }
-
-            if (this._end_time != old_end_time) {
-                this.notify_property ("end-time");
-            }
-
-            if (this._end_time - this._start_time != old_duration) {
-                this.notify_property ("duration");
-            }
-        }
-
-
-        public void insert_sorted (Pomodoro.TimeBlock time_block)
-        {
-            // TODO
-            assert_not_reached ();
-        }
-
-        public void insert_before (Pomodoro.TimeBlock time_block,
-                                   Pomodoro.TimeBlock sibling)
-        {
-            // TODO
-            assert_not_reached ();
-        }
-
-        public void insert_after (Pomodoro.TimeBlock time_block,
-                                  Pomodoro.TimeBlock sibling)
-        {
-            // TODO
-            assert_not_reached ();
-        }
-
-        public void remove (Pomodoro.TimeBlock time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-            if (link == null) {
-                // TODO: warn that block does not belong to session
-                return;
-            }
-
-            var child = link.data;
-
-            this.children.remove_link (link);
-            this.handle_child_removed (child);
-        }
-
-        public void remove_before (Pomodoro.TimeBlock time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-
-            if (link == null) {
-                // TODO: warn that block does not belong to session
-                return;
-            }
-
-            if (link.prev == null) {
-                return;
-            }
-
-            this.freeze_changed ();
-
-            while (link.prev != null)
-            {
-                var prev_child = link.prev.data;
-
-                this.children.remove_link (link.prev);
-                this.handle_child_removed (prev_child);
-            }
-
-            this.thaw_changed ();
-        }
-
-        public void remove_after (Pomodoro.TimeBlock time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-
-            if (link == null) {
-                // TODO: warn that block does not belong to session
-                return;
-            }
-
-            if (link.next == null) {
-                return;
-            }
-
-            this.freeze_changed ();
-
-            while (link.next != null)
-            {
-                var next_child = link.next.data;
-
-                this.children.remove_link (link.next);
-                this.handle_child_removed (next_child);
-            }
-
-            this.thaw_changed ();
-        }
-
-
-        public unowned Pomodoro.TimeBlock? get_first_time_block ()
-        {
-            unowned GLib.List<Child> first_link = this.children.first ();
-
-            return first_link != null ? first_link.data.time_block : null;
-        }
-
-        public unowned Pomodoro.TimeBlock? get_last_time_block ()
-        {
-            unowned GLib.List<Child> last_link = this.children.last ();
-
-            return last_link != null ? last_link.data.time_block : null;
-        }
-
-        public unowned Pomodoro.TimeBlock? get_nth_time_block (uint index)
-        {
-            unowned Child child = this.children.nth_data (index);
-
-            return child != null ? child.time_block : null;
-        }
-
-        public unowned Pomodoro.TimeBlock? get_previous_time_block (Pomodoro.TimeBlock? time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-
-            if (link == null || link.prev == null) {
-                return null;
-            }
-
-            return link.prev.data.time_block;
-        }
-
-        public unowned Pomodoro.TimeBlock? get_next_time_block (Pomodoro.TimeBlock? time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-
-            if (link == null || link.next == null) {
-                return null;
-            }
-
-            return link.next.data.time_block;
-        }
-
-        public int index (Pomodoro.TimeBlock time_block)
-        {
-            var index = -1;
-
-            unowned GLib.List<Child> link = this.children.first ();
-
-            while (link != null)
-            {
-                index++;
-
-                if (link.data.time_block == time_block) {
-                    return index;
-                }
-
-                link = link.next;
-            }
-
-            return index;
-        }
-
-        public bool contains (Pomodoro.TimeBlock time_block)
-        {
-            if (time_block.session != this) {
-                return false;
-            }
-
-            unowned List<Child> link = this.find_link_by_time_block (time_block);
-
-            return link != null;
-        }
-
-        public void @foreach (GLib.Func<unowned Pomodoro.TimeBlock> func)
-        {
-            unowned GLib.List<Child> link = this.children.first ();
-
-            while (link != null)
-            {
-                func (link.data.time_block);
-
-                link = link.next;
-            }
-        }
-
-
-        /*
-         * Methods for managing time-blocks status
-         */
-
-
-        /**
-         * Set status for the time block and ensure previous time blocks are marked as completed/uncompleted.
-         *
-         * It's unlikely that we will need to change statuses of previous blocks.
-         */
-        private void set_time_block_status (Pomodoro.TimeBlock       time_block,
-                                            Pomodoro.TimeBlockStatus status)
-        {
-            unowned GLib.List<Child> link = this.children.first ();
-
-            if (!this.contains (time_block)) {
-                return;
-            }
-
-            while (link != null)
-            {
-                if (link.data.time_block == time_block)
-                {
-                    link.data.status = status;
-                    break;
-                }
-                else {
-                    switch (link.data.status)
-                    {
-                        case Pomodoro.TimeBlockStatus.COMPLETED:
-                        case Pomodoro.TimeBlockStatus.UNCOMPLETED:
-                            break;
-
-                        default:
-                            GLib.warning ("Changing previous time-block status to UNCOMPLETED.");
-                            link.data.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
-                            break;
-                    }
-                }
-
-                link = link.next;
-            }
-        }
-
-        /**
-         * Convenience method to get status, without getting meta.
-         */
-        public Pomodoro.TimeBlockStatus get_time_block_status (Pomodoro.TimeBlock time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-
-            return link != null
-                ? link.data.status
-                : Pomodoro.TimeBlockStatus.UNSCHEDULED;
-        }
-
-        /**
-         * Expose internal data via read-only `TimeBlockMeta` struct.
-         */
-        public Pomodoro.TimeBlockMeta get_time_block_meta (Pomodoro.TimeBlock time_block)
-        {
-            unowned GLib.List<Child> link = this.find_link_by_time_block (time_block);
-
-            if (link == null) {
-                return Pomodoro.TimeBlockMeta ();
-            }
-
-            return TimeBlockMeta () {
-                status = link.data.status,
-                cycle = link.data.cycle,
-                intended_duration = link.data.intended_duration,
-                is_long_break = link.data.is_long_break,
-            };
-        }
-
-        public void mark_time_block_started (Pomodoro.TimeBlock time_block,
-                                             int64              timestamp)
-        {
-            assert (timestamp > 0);
-
-            unowned GLib.List<Child>? link = this.find_link_by_time_block (time_block);
-            assert (link != null);
-
-            switch (link.data.status)
-            {
-                case Pomodoro.TimeBlockStatus.SCHEDULED:
-                    break;
-
-                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
-                    GLib.warning ("Time block is already marked as started");
-                    break;
-
-                default:
-                    GLib.error ("Unable to mark time block with status \"%s\" as started",
-                                link.data.status.to_string ());
-                    break;
-            }
-
-            this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
-
-            time_block.move_to (timestamp);
-        }
-
-        public void mark_time_block_ended (Pomodoro.TimeBlock time_block,
-                                           bool               completed,
-                                           int64              timestamp)
-        {
-            assert (timestamp > 0);
-            assert (timestamp >= time_block.start_time);
-
-            var status = completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED;
-
-            unowned GLib.List<Child>? link = this.find_link_by_time_block (time_block);
-            assert (link != null);
-
-            switch (link.data.status)
-            {
-                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
-                    break;
-
-                case Pomodoro.TimeBlockStatus.COMPLETED:
-                case Pomodoro.TimeBlockStatus.UNCOMPLETED:
-                    GLib.warning ("Time block is already marked as ended");
-                    break;
-
-                default:
-                    GLib.error ("Unable to mark time block with status \"%s\" as ended", link.data.status.to_string ());
-                    break;
-            }
-
-            this.set_time_block_status (time_block, status);
-
-            link.data.time_block.end_time = timestamp;
-        }
-
-
-        /*
-         * Signals & related methods
-         */
-
-
-        private void update_time_range ()
-        {
-            unowned Pomodoro.TimeBlock first_time_block = this.get_first_time_block ();
-            unowned Pomodoro.TimeBlock last_time_block = this.get_last_time_block ();
-
-            var old_duration = this._end_time - this._start_time;
-
-            var start_time = first_time_block != null
-                ? first_time_block.start_time
-                : Pomodoro.Timestamp.MIN;
-
-            var end_time = last_time_block != null
-                ? last_time_block.end_time
-                : Pomodoro.Timestamp.MAX;
-
-            if (this._start_time != start_time) {
-                this._start_time = start_time;
-                this.notify_property ("start-time");
-            }
-
-            if (this._end_time != end_time) {
-                this._end_time = end_time;
-                this.notify_property ("end-time");
-            }
-
-            if (this._end_time - this._start_time != old_duration) {
-                this.notify_property ("duration");
-            }
-        }
-
-        private void handle_child_added (Child child)
-        {
-            unowned Pomodoro.TimeBlock time_block = child.time_block;
-
-            time_block.session = this;
-
-            child.status = Pomodoro.TimeBlockStatus.SCHEDULED;
-
-            if (child.changed_id == 0) {
-                child.changed_id = time_block.changed.connect (() => {
-                    this.emit_changed ();
-                });
-            }
-
-            this.emit_changed ();
-        }
-
-        private void handle_child_removed (Child child)
-        {
-            unowned Pomodoro.TimeBlock time_block = child.time_block;
-
-            GLib.SignalHandler.disconnect (time_block, child.changed_id);
-
-            child.changed_id = 0;
-            time_block.session = null;
-
-            this.emit_changed ();
-        }
-
-        private void emit_changed ()
-        {
-            if (this.changed_freeze_count > 0) {
-                this.changed_is_pending = true;
-            }
-            else {
-                this.changed_is_pending = false;
-                this.changed ();
-            }
-        }
-
-        public void freeze_changed ()
-        {
-            this.changed_freeze_count++;
-        }
-
-        public void thaw_changed ()
-        {
-            this.changed_freeze_count--;
-
-            if (this.changed_freeze_count == 0 && this.changed_is_pending) {
-                this.emit_changed ();
-            }
-        }
 
         [Signal (run = "first")]
         public signal void changed ()
