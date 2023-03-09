@@ -72,7 +72,7 @@ namespace Tests
             this.add_test ("get_next_time_block", this.test_get_next_time_block);
             this.add_test ("get_previous_time_block", this.test_get_previous_time_block);
 
-            this.add_test ("get_cycles_count", this.test_get_cycles_count);
+            this.add_test ("cycles", this.test_cycles);
 
             // TODO: Tests methods for modifying ongoing session
             // this.add_test ("extend", this.test_extend);
@@ -180,7 +180,7 @@ namespace Tests
             //     assert_true (break_.state == Pomodoro.State.BREAK);
             // }
 
-            assert_cmpuint (session.get_cycles_count (), GLib.CompareOperator.EQ, template.cycles);
+            assert_cmpuint (session.cycles, GLib.CompareOperator.EQ, template.cycles);
 
             // assert_cmpmem (
             //     list_session_states (session),
@@ -211,24 +211,24 @@ namespace Tests
             );
         }
 
-        public void test_get_cycles_count ()
+        public void test_cycles ()
         {
             var session_0 = new Pomodoro.Session ();
-            assert_cmpuint (session_0.get_cycles_count (), GLib.CompareOperator.EQ, 0);
+            assert_cmpuint (session_0.cycles, GLib.CompareOperator.EQ, 0);
 
             var session_1 = new Pomodoro.Session.from_template (
                 Pomodoro.SessionTemplate () {
                     cycles = 1
                 }
             );
-            assert_cmpuint (session_1.get_cycles_count (), GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (session_1.cycles, GLib.CompareOperator.EQ, 1);
 
             var session_2 = new Pomodoro.Session.from_template (
                 Pomodoro.SessionTemplate () {
                     cycles = 2
                 }
             );
-            assert_cmpuint (session_2.get_cycles_count (), GLib.CompareOperator.EQ, 2);
+            assert_cmpuint (session_2.cycles, GLib.CompareOperator.EQ, 2);
 
             // TODO Test with session starting with a break
 
@@ -252,7 +252,7 @@ namespace Tests
             var session = new Pomodoro.Session ();
 
             session.populate (template, now);
-            assert_cmpuint (session.get_cycles_count (), GLib.CompareOperator.EQ, template.cycles);
+            assert_cmpuint (session.cycles, GLib.CompareOperator.EQ, template.cycles);
 
             time_block = session.get_nth_time_block (0);
             assert_true (time_block.duration == template.pomodoro_duration);

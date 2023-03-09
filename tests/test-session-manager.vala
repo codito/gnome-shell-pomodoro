@@ -847,7 +847,7 @@ namespace Tests
             debug ("### B");
 
             assert_nonnull (session_manager.current_session);
-            assert_cmpuint (session_manager.current_session.get_cycles_count (), GLib.CompareOperator.EQ, 4);
+            assert_cmpuint (session_manager.current_session.cycles, GLib.CompareOperator.EQ, 4);
             // assert_cmpmem (
             //     list_session_states (session_manager.current_session),
             //     {
