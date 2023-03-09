@@ -1,26 +1,8 @@
+using GLib;
+
+
 namespace Pomodoro
 {
-    public enum Strictness
-    {
-        STRICT,
-        LENIENT;
-
-        /**
-         * Return a fallback stricness if none is specified.
-         */
-        public static Pomodoro.Strictness get_default ()
-        {
-            // TODO: return from settings, not the SessionManager
-
-            var session_manager = Pomodoro.SessionManager.get_default ();
-            if (session_manager != null) {
-                return session_manager.strictness;
-            }
-
-            return Pomodoro.Strictness.STRICT;
-        }
-    }
-
     /**
      * SessionManager manages and advances time-blocks and sessions.
      */

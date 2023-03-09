@@ -31,7 +31,7 @@ test_names = [
 
 # Compile schemas for unit tests
 #compiled_schemas = gnome.compile_schemas(
-#  depend_files: meson.current_source_dir() / 'data' 'org.gnomepomodoro.Pomodoro.gschema.xml'
+#  depend_files: meson.current_source_dir() / 'data' / 'org.gnomepomodoro.Pomodoro.gschema.xml'
 #)
 
 test_env = environment()

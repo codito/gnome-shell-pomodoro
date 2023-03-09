@@ -847,7 +847,7 @@ namespace Tests
             debug ("### B");
 
             assert_nonnull (session_manager.current_session);
-            assert_cmpuint (session_manager.current_session.get_cycles ().length (), GLib.CompareOperator.EQ, 4);
+            assert_cmpuint (session_manager.current_session.get_cycles_count (), GLib.CompareOperator.EQ, 4);
             // assert_cmpmem (
             //     list_session_states (session_manager.current_session),
             //     {
@@ -1067,7 +1067,7 @@ namespace Tests
             var timer               = new Pomodoro.Timer ();
             var session_manager     = new Pomodoro.SessionManager.with_timer (timer);
             var now                 = Pomodoro.Timestamp.from_now ();
-            var rescheduled_emitted = 0;
+            var changed_emitted = 0;
 
             var session      = new Pomodoro.Session.from_template (this.session_template);
             var time_block_1 = session.get_nth_time_block (0);
@@ -1081,7 +1081,7 @@ namespace Tests
             assert_null (session_manager.current_time_block);
             assert_false (session_manager.current_session.is_expired ());
 
-            session.rescheduled.connect (() => { rescheduled_emitted++; });
+            session.changed.connect (() => { changed_emitted++; });
 
             // Skip within session
             // debug ("Timer.start()");
@@ -1089,12 +1089,12 @@ namespace Tests
             assert_true (session_manager.current_session == session);
             // assert_cmpint (session.index (session_manager.current_time_block), GLib.CompareOperator.EQ, 0);
             assert_true (session_manager.current_time_block == time_block_1);
-            assert_cmpint (rescheduled_emitted, GLib.CompareOperator.EQ, 1);
+            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
             assert_cmpvariant (
                 new GLib.Variant.int64 (time_block_1.start_time),
                 new GLib.Variant.int64 (now)
             );
-            assert_true (time_block_1.status == Pomodoro.TimeBlockStatus.IN_PROGRESS);
+            assert_true (session.get_time_block_status (time_block_1) == Pomodoro.TimeBlockStatus.IN_PROGRESS);
 
             // debug ("Timer.skip()");
             timer.skip ();
@@ -1108,8 +1108,8 @@ namespace Tests
                 new GLib.Variant.int64 (time_block_2.start_time),
                 new GLib.Variant.int64 (now)
             );
-            assert_true (time_block_1.status == Pomodoro.TimeBlockStatus.UNCOMPLETED);
-            assert_true (time_block_2.status == Pomodoro.TimeBlockStatus.IN_PROGRESS);
+            assert_true (session.get_time_block_status (time_block_1) == Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_true (session.get_time_block_status (time_block_2) == Pomodoro.TimeBlockStatus.IN_PROGRESS);
 
             // debug ("Timer.skip()");
             timer.skip ();

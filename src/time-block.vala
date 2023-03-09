@@ -3,13 +3,13 @@ using GLib;
 
 namespace Pomodoro
 {
-    public enum TimeBlockStatus
-    {
-        UNSCHEDULED,
-        SCHEDULED,
-        IN_PROGRESS,
-        COMPLETED,
-        UNCOMPLETED;
+    // public enum TimeBlockStatus
+    // {
+    //     UNSCHEDULED,
+    //     SCHEDULED,
+    //     IN_PROGRESS,
+    //     COMPLETED,
+    //     UNCOMPLETED;
 
         // public bool has_started ()
         // {
@@ -25,30 +25,30 @@ namespace Pomodoro
         //     }
         // }
 
-        public string to_string ()
-        {
-            switch (this)
-            {
-                case UNSCHEDULED:
-                    return "unscheduled";
+    //     public string to_string ()
+    //     {
+    //         switch (this)
+    //         {
+    //             case UNSCHEDULED:
+    //                 return "unscheduled";
 
-                case SCHEDULED:
-                    return "scheduled";
+    //             case SCHEDULED:
+    //                 return "scheduled";
 
-                case IN_PROGRESS:
-                    return "in-progress";
+    //             case IN_PROGRESS:
+    //                 return "in-progress";
 
-                case COMPLETED:
-                    return "completed";
+    //             case COMPLETED:
+    //                 return "completed";
 
-                case UNCOMPLETED:
-                    return "uncompleted";
+    //             case UNCOMPLETED:
+    //                 return "uncompleted";
 
-                default:
-                    return "";
-            }
-        }
-    }
+    //             default:
+    //                 return "";
+    //         }
+    //     }
+    // }
 
 
     public class TimeBlock : GLib.InitiallyUnowned
@@ -105,14 +105,14 @@ namespace Pomodoro
             }
         }
 
-        /**
-         * `status` is used externally by a session manager
-         *
-         * It indicates whether time block really has started and whether it has been completed or skipped.
-         */
-        public Pomodoro.TimeBlockStatus status {
-            get; set; default = TimeBlockStatus.UNSCHEDULED;
-        }
+        // /**
+        //  * `status` is used externally by a session manager
+        //  *
+        //  * It indicates whether time block really has started and whether it has been completed or skipped.
+        //  */
+        // public Pomodoro.TimeBlockStatus status {
+        //     get; set; default = TimeBlockStatus.UNSCHEDULED;
+        // }
 
         public TimeBlock (Pomodoro.State  state = Pomodoro.State.UNDEFINED,
                           Pomodoro.Source source = Pomodoro.Source.UNDEFINED)

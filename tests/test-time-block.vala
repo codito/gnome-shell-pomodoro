@@ -425,6 +425,8 @@ namespace Tests
 
 public static int main (string[] args)
 {
+    print("# main");
+
     Tests.init (args);
 
     return Tests.run (
