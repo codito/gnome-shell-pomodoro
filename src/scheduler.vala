@@ -1,7 +1,7 @@
 namespace Pomodoro
 {
     /**
-     * Scheduler lets find empty blocks of time.
+     * Scheduler helps finding empty blocks of time.
      *
      * In future we would like to align time-blocks to calendar events and working time,
      * hence it's separated to a helper class.
@@ -11,6 +11,10 @@ namespace Pomodoro
      */
     public class Scheduler : GLib.Object
     {
+        // public Pomodoro.Strictness      strictness { get; set; }
+
+        // public Pomodoro.SessionTemplate session_template { get; set; }
+
         /**
          * Fit time-block to first available slot.
          *

@@ -74,11 +74,11 @@ namespace Pomodoro
     /**
      * Pomodoro.Session class.
      *
-     * By "session" in this project we mean mostly a streak of pomodoros. Sessions are separated
-     * either by a long break or inactivity.
+     * By "session" in this project we mean mostly a streak of pomodoros interleaved with breaks.
+     * Session ends with either by a long break or inactivity.
      *
-     * Class serves as a container. It merely defines the session and helps in modifying it.
-     * See `SessionManager` for more high-level logic.
+     * Class acts as a container. It merely defines the session and helps in modifying it. It can be used to represent
+     * historic sessions. `SessionManager` is responsible for scheduling.
      */
     public class Session : GLib.Object
     {
@@ -426,16 +426,36 @@ namespace Pomodoro
             return null;
         }
 
+        /**
+         * Remove links following
+         */
+        private void remove_link (GLib.List<Child>? link)
+        {
+            if (link == null) {
+                return;
+            }
+
+            var child = link.data;
+
+            this.children.delete_link (link);
+            this.handle_child_removed (child);
+        }
+
+        private void remove_links_after (GLib.List<Child>? link)
+        {
+            if (link == null) {
+                return;
+            }
+
+            if (link.next != null) {
+                this.remove_links_after (link.next);
+                this.remove_link (link.next);
+            }
+        }
+
         private void append_child (Child child)
         {
-            var is_first = this.children.is_empty ();
-
             this.children.append (child);
-            this._end_time = child.time_block.end_time;
-
-            if (is_first) {
-                this._start_time = child.time_block.start_time;
-            }
 
             this.handle_child_added (child);
         }
@@ -452,11 +472,8 @@ namespace Pomodoro
                 return;
             }
 
-            var old_start_time = this._start_time;
-            var old_end_time = this._end_time;
-            var old_duration = this._end_time - this._start_time;
-
             var last_time_block = this.get_last_time_block ();
+
             if (last_time_block != null) {
                 time_block.set_time_range (
                     last_time_block.end_time,
@@ -468,18 +485,6 @@ namespace Pomodoro
 
             // TODO: mark time-block as added manually? so that it doesn't conform to template?
             this.append_child (new Child (time_block));
-
-            if (this._start_time != old_start_time) {
-                this.notify_property ("start-time");
-            }
-
-            if (this._end_time != old_end_time) {
-                this.notify_property ("end-time");
-            }
-
-            if (this._end_time - this._start_time != old_duration) {
-                this.notify_property ("duration");
-            }
         }
 
 
@@ -756,7 +761,7 @@ namespace Pomodoro
 
             this.set_time_block_status (time_block, Pomodoro.TimeBlockStatus.IN_PROGRESS);
 
-            time_block.move_to (timestamp);
+            time_block.move_to (timestamp);  // TODO: this should trigger reschedule
         }
 
         public void mark_time_block_ended (Pomodoro.TimeBlock time_block,
@@ -766,7 +771,9 @@ namespace Pomodoro
             assert (timestamp > 0);
             assert (timestamp >= time_block.start_time);
 
-            var status = completed ? Pomodoro.TimeBlockStatus.COMPLETED : Pomodoro.TimeBlockStatus.UNCOMPLETED;
+            var time_block_status = completed
+                ? Pomodoro.TimeBlockStatus.COMPLETED
+                : Pomodoro.TimeBlockStatus.UNCOMPLETED;
 
             unowned GLib.List<Child>? link = this.find_link_by_time_block (time_block);
             assert (link != null);
@@ -786,7 +793,7 @@ namespace Pomodoro
                     break;
             }
 
-            this.set_time_block_status (time_block, status);
+            this.set_time_block_status (time_block, time_block_status);
 
             link.data.time_block.end_time = timestamp;
         }
@@ -796,33 +803,6 @@ namespace Pomodoro
          * Methods for scheduling
          */
 
-
-        /**
-         * Remove links following
-         */
-        private void remove_link (GLib.List<Child>? link)
-        {
-            if (link == null) {
-                return;
-            }
-
-            var child = link.data;
-
-            this.children.delete_link (link);
-            this.handle_child_removed (child);
-        }
-
-        private void remove_links_after (GLib.List<Child>? link)
-        {
-            if (link == null) {
-                return;
-            }
-
-            if (link.next != null) {
-                this.remove_links_after (link.next);
-                this.remove_link (link.next);
-            }
-        }
 
         /**
          * Schedule given child
@@ -892,7 +872,7 @@ namespace Pomodoro
          *
          * Only works if session is empty. Use `.reschedule()` if session is already populated.
          */
-        public void populate (Pomodoro.SessionTemplate template,  // TODO: don't pass template through params
+        public void populate (Pomodoro.SessionTemplate template,
                               int64                    timestamp = -1)
         {
             if (!this.children.is_empty ())
@@ -1042,8 +1022,8 @@ namespace Pomodoro
          * given template and time-blocks statuses.
          */
         public void schedule (Pomodoro.SessionTemplate template,
-                                Pomodoro.Strictness      strictness = Pomodoro.Strictness.STRICT,
-                                int64                    timestamp = -1)
+                              Pomodoro.Strictness      strictness = Pomodoro.Strictness.STRICT,
+                              int64                    timestamp = -1)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -1069,7 +1049,13 @@ namespace Pomodoro
 
             debug ("-------------------- reschedule end --------------------");
 
+            var changed = this.changed_is_pending;
+
             this.thaw_changed ();
+
+            if (changed) {
+                this.scheduled ();
+            }
         }
 
         // TODO: deprecated
@@ -1152,7 +1138,7 @@ namespace Pomodoro
         /*
          * Signals
          */
-
+        public signal void scheduled ();
 
         [Signal (run = "first")]
         public signal void changed ()

@@ -271,6 +271,10 @@ namespace Pomodoro
                 this.previous_time_block = previous_time_block;
                 this._current_time_block = time_block;
 
+                if (time_block != null) {
+                    session.mark_time_block_started (time_block, time_block.start_time);  // FIXME: should use timestamp
+                }
+
                 this.notify_property ("current-time-block");
 
                 this.update_timer_state ();
@@ -523,8 +527,8 @@ namespace Pomodoro
         /**
          * Start given time-block
          *
-         * While `set_current_time_block_internal` only marks which timeblock and session is current,
-         * advance* methods modify session and time-blocks:
+         * While `set_current_time_block_internal` only marks which time-block and session is current,
+         * advance_* methods modify session and time-blocks:
          *   - time-block is shifted to `timestamp`
          *   - session is adjusted accordingly
          */
@@ -572,6 +576,7 @@ namespace Pomodoro
             }
 
             this.set_current_time_block_internal (session, time_block);
+
             // this.bump_expiry_time (SESSION_EXPIRY_TIMEOUT);  // TODO: is it the best place to do bump expiry-time?
         }
 
