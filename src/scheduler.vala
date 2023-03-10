@@ -1,7 +1,7 @@
 namespace Pomodoro
 {
     /**
-     * Scheduler helps finding empty blocks of time.
+     * Scheduler helps arranging time-blocks within a session.
      *
      * In future we would like to align time-blocks to calendar events and working time,
      * hence it's separated to a helper class.

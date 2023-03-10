@@ -30,30 +30,48 @@ namespace Pomodoro
         }
 
         [CCode(notify = false)]
-        public Pomodoro.Strictness strictness {
+        public Pomodoro.Scheduler scheduler {
             get {
-                return this._strictness;
+                return this._scheduler;
             }
             set {
-                if (this._strictness == value) {
+                if (this._scheduler == value) {
                     return;
                 }
 
-                this._strictness = value;
+                this._scheduler = value;
 
-                this.notify_property ("strictness");
+                // TODO: reschedule current session
+
+                this.notify_property ("scheduler");
             }
         }
 
-        /**
-         * Session template
-         */
-        [CCode(notify = false)]
-        public Pomodoro.SessionTemplate session_template {
-            get {
-                return this._session_template;
-            }
-        }
+        // [CCode(notify = false)]
+        // public Pomodoro.Strictness strictness {
+        //     get {
+        //         return this._strictness;
+        //     }
+        //     set {
+        //         if (this._strictness == value) {
+        //             return;
+        //         }
+
+        //         this._strictness = value;
+
+        //         this.notify_property ("strictness");
+        //     }
+        // }
+
+        // /**
+        //  * Session template
+        //  */
+        // [CCode(notify = false)]
+        // public Pomodoro.SessionTemplate session_template {
+        //     get {
+        //         return this._session_template;
+        //     }
+        // }
 
         /**
          * A current session.
@@ -127,7 +145,8 @@ namespace Pomodoro
         }
 
         private Pomodoro.Timer                   _timer;
-        private Pomodoro.SessionTemplate         _session_template;
+        private Pomodoro.Scheduler               _scheduler;
+        // private Pomodoro.SessionTemplate         _session_template;
         private Pomodoro.Session?                _current_session = null;
         private Pomodoro.TimeBlock?              _current_time_block = null;
         private bool                             current_time_block_entered = false;
@@ -135,7 +154,7 @@ namespace Pomodoro
         private bool                             current_session_entered = false;
         private Pomodoro.Session?                previous_session = null;
         private Pomodoro.TimeBlock?              previous_time_block = null;
-        private Pomodoro.Strictness              _strictness = Pomodoro.Strictness.STRICT;
+        // private Pomodoro.Strictness              _strictness = Pomodoro.Strictness.STRICT;
         private int                              timer_freeze_count = 0;
         private ulong                            timer_resolve_state_id = 0;
         private ulong                            timer_state_changed_id = 0;
@@ -159,7 +178,7 @@ namespace Pomodoro
         construct
         {
             // TODO: monitor settings and update it
-            this._session_template = Pomodoro.SessionTemplate ();
+            // this._session_template = Pomodoro.SessionTemplate ();
         }
 
         private void update_timer_state (int64 timestamp = -1)
@@ -218,10 +237,13 @@ namespace Pomodoro
                     // var session      = time_block.session;
                     // var timestamp    = this.timer.state.finished_time > 0 ? this.timer.state.finished_time : time_block.end_time; // TODO: is it correct?
                     var has_finished = (this.timer.user_data == time_block) && this.timer.is_finished ();  // TODO: to test
-                    var completed    = time_block.is_completed (has_finished, this.strictness, timestamp);
+                    // TODO ask scheduler
+                    var completed = true;
+                    // var completed    = time_block.is_completed (has_finished, this.strictness, timestamp);
 
-                    session.mark_time_block_ended (time_block, completed, timestamp);  // TODO: should be in resolve state
-                    session.reschedule (this._session_template, this.strictness, timestamp);
+                    // TODO
+                    // session.mark_time_block_ended (time_block, completed, timestamp);  // TODO: should be in resolve state
+                    // session.reschedule (this._session_template, this.strictness, timestamp);
 
                     this.leave_time_block (previous_time_block);
                 }
@@ -272,7 +294,8 @@ namespace Pomodoro
                 this._current_time_block = time_block;
 
                 if (time_block != null) {
-                    session.mark_time_block_started (time_block, time_block.start_time);  // FIXME: should use timestamp
+                    // TODO
+                    // session.mark_time_block_started (time_block, time_block.start_time);  // FIXME: should use timestamp
                 }
 
                 this.notify_property ("current-time-block");
@@ -558,21 +581,25 @@ namespace Pomodoro
                     this.timer.state.user_data == this._current_time_block &&
                     this.timer.state.finished_time > 0
                 );
-                var has_completed = this._current_time_block.is_completed (
-                    has_finished,
-                    this.strictness,
-                    has_finished ? this.timer.state.finished_time : timestamp
-                );
+                var has_completed = false;  // TODO ask scheduler
+                // var has_completed = this._current_time_block.is_completed (
+                //     has_finished,
+                //     this.strictness,
+                //     has_finished ? this.timer.state.finished_time : timestamp
+                // );
 
-                this._current_session.mark_time_block_ended (this._current_time_block, has_completed, timestamp);
+                // TODO
+                // this._current_session.mark_time_block_ended (this._current_time_block, has_completed, timestamp);
             }
 
             if (this._current_session != null && this._current_session != session) {
-                this._current_session.finish (timestamp);  // TODO: pass strictness?
+                // TODO
+                // this._current_session.finish (timestamp);  // TODO: pass strictness?
             }
 
             if (time_block != null) {
-                time_block.session.reschedule (this._session_template, this.strictness);
+                // TODO call scheduler
+                // time_block.session.reschedule (this._session_template, this.strictness);
             }
 
             this.set_current_time_block_internal (session, time_block);
@@ -884,7 +911,8 @@ namespace Pomodoro
 
             this.current_time_block_changed_id = time_block.changed.connect (this.on_current_time_block_changed);
 
-            session.mark_time_block_started (time_block, timestamp);
+            // TODO
+            // session.mark_time_block_started (time_block, timestamp);
         }
 
         public signal void leave_time_block (Pomodoro.TimeBlock time_block)

@@ -14,19 +14,19 @@ namespace Tests
     // delegate bool FilterFunc (Pomodoro.TimeBlock time_block);
 
 
-    private void mark_time_blocks_completed (Pomodoro.Session session,
-                                             uint             n)
-    {
-        unowned Pomodoro.TimeBlock time_block;
+    // private void mark_time_blocks_completed (Pomodoro.Session session,
+    //                                          uint             n)
+    // {
+    //     unowned Pomodoro.TimeBlock time_block;
 
-        for (var index = 0; index < n; index++)
-        {
-            time_block = session.get_nth_time_block (index);
+    //     for (var index = 0; index < n; index++)
+    //     {
+    //         time_block = session.get_nth_time_block (index);
             // time_block.status = Pomodoro.TimeBlockStatus.COMPLETED;
 
-            session.mark_time_block_ended (time_block, true, time_block.end_time);
-        }
-    }
+    //         session.mark_time_block_ended (time_block, true, time_block.end_time);
+    //     }
+    // }
 
 
     private uint count_pomodoros (Pomodoro.Session session)
@@ -57,7 +57,7 @@ namespace Tests
             this.add_test ("new", this.test_new);
             this.add_test ("new_from_template", this.test_new_from_template);
 
-            this.add_test ("populate", this.test_populate);
+            // this.add_test ("populate", this.test_populate);
 
             // TODO: Tests methods for modifying history
             // this.add_test ("prepend", this.test_prepend);
@@ -104,7 +104,7 @@ namespace Tests
             // this.add_test ("reschedule__strict__after_uncompleted_long_break", this.test_reschedule__strict__after_uncompleted_long_break);
             // this.add_test ("reschedule__strict__template_change", this.test_reschedule__strict__template_change);
 
-            this.add_test ("reschedule__lenient", this.test_reschedule__lenient);
+            // this.add_test ("reschedule__lenient", this.test_reschedule__lenient);
 
             // TODO: methods for saving / restoring in db
         }
@@ -235,34 +235,34 @@ namespace Tests
             // TODO Test with session starting with undefined block
         }
 
-        /**
-         * Check `Session.populate()`.
-         */
-        public void test_populate ()
-        {
-            unowned Pomodoro.TimeBlock time_block;
+        // /**
+        //  * Check `Session.populate()`.
+        //  */
+        // public void test_populate ()
+        // {
+        //     unowned Pomodoro.TimeBlock time_block;
 
-            var template = Pomodoro.SessionTemplate () {
-                pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
-                short_break_duration = 5 * Pomodoro.Interval.MINUTE,
-                long_break_duration = 15 * Pomodoro.Interval.MINUTE,
-                cycles = 4
-            };
-            var now = Pomodoro.Timestamp.advance (0);
-            var session = new Pomodoro.Session ();
+        //     var template = Pomodoro.SessionTemplate () {
+        //         pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
+        //         short_break_duration = 5 * Pomodoro.Interval.MINUTE,
+        //         long_break_duration = 15 * Pomodoro.Interval.MINUTE,
+        //         cycles = 4
+        //     };
+        //     var now = Pomodoro.Timestamp.advance (0);
+        //     var session = new Pomodoro.Session ();
 
-            session.populate (template, now);
-            assert_cmpuint (session.cycles, GLib.CompareOperator.EQ, template.cycles);
+        //     session.populate (template, now);
+        //     assert_cmpuint (session.cycles, GLib.CompareOperator.EQ, template.cycles);
 
-            time_block = session.get_nth_time_block (0);
-            assert_true (time_block.duration == template.pomodoro_duration);
+        //     time_block = session.get_nth_time_block (0);
+        //     assert_true (time_block.duration == template.pomodoro_duration);
 
-            time_block = session.get_nth_time_block (1);
-            assert_true (time_block.duration == template.short_break_duration);
+        //     time_block = session.get_nth_time_block (1);
+        //     assert_true (time_block.duration == template.short_break_duration);
 
-            time_block = session.get_last_time_block ();
-            assert_true (time_block.duration == template.long_break_duration);
-        }
+        //     time_block = session.get_last_time_block ();
+        //     assert_true (time_block.duration == template.long_break_duration);
+        // }
 
         public void test_get_first_time_block ()
         {
@@ -347,39 +347,39 @@ namespace Tests
         //     );
         // }
 
-        /**
-         * Check moving all time blocks to a given timestamp when none of the blocks have started.
-         */
-        public void test_reschedule__strict ()
-        {
-            var session = new Pomodoro.Session.from_template (this.session_template);
+        // /**
+        //  * Check moving all time blocks to a given timestamp when none of the blocks have started.
+        //  */
+        // public void test_reschedule__strict ()
+        // {
+        //     var session = new Pomodoro.Session.from_template (this.session_template);
 
-            var changed_emitted = 0;
-            session.changed.connect (() => {
-                changed_emitted++;
-            });
-            var expected_session_start_time = Pomodoro.Timestamp.from_now () + Pomodoro.Interval.MINUTE;
-            var expected_session_duration = session.duration;
+        //     var changed_emitted = 0;
+        //     session.changed.connect (() => {
+        //         changed_emitted++;
+        //     });
+        //     var expected_session_start_time = Pomodoro.Timestamp.from_now () + Pomodoro.Interval.MINUTE;
+        //     var expected_session_duration = session.duration;
 
-            session.reschedule (this.session_template,
-                                Pomodoro.Strictness.STRICT,
-                                expected_session_start_time);
+        //     session.reschedule (this.session_template,
+        //                         Pomodoro.Strictness.STRICT,
+        //                         expected_session_start_time);
 
-            assert_cmpuint (
-                count_pomodoros (session),
-                GLib.CompareOperator.EQ,
-                this.session_template.cycles
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session.start_time),
-                new GLib.Variant.int64 (expected_session_start_time)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (session.duration),
-                new GLib.Variant.int64 (expected_session_duration)
-            );
-            assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
-        }
+        //     assert_cmpuint (
+        //         count_pomodoros (session),
+        //         GLib.CompareOperator.EQ,
+        //         this.session_template.cycles
+        //     );
+        //     assert_cmpvariant (
+        //         new GLib.Variant.int64 (session.start_time),
+        //         new GLib.Variant.int64 (expected_session_start_time)
+        //     );
+        //     assert_cmpvariant (
+        //         new GLib.Variant.int64 (session.duration),
+        //         new GLib.Variant.int64 (expected_session_duration)
+        //     );
+        //     assert_cmpint (changed_emitted, GLib.CompareOperator.EQ, 1);
+        // }
 
 
         /*
@@ -851,10 +851,10 @@ namespace Tests
 
 
 
-        public void test_reschedule__lenient ()
-        {
+        // public void test_reschedule__lenient ()
+        // {
             // TODO
-        }
+        // }
     }
 }
 
