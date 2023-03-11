@@ -204,6 +204,7 @@ namespace Pomodoro
                 });
             }
 
+            this.added (time_block);
             this.emit_changed ();
         }
 
@@ -216,6 +217,7 @@ namespace Pomodoro
             child.changed_id = 0;
             time_block.session = null;
 
+            this.removed (time_block);
             this.emit_changed ();
         }
 
@@ -639,7 +641,10 @@ namespace Pomodoro
          * Signals
          */
 
+        public signal void added (Pomodoro.TimeBlock time_block);
 
+        public signal void removed (Pomodoro.TimeBlock time_block);
+]
         [Signal (run = "first")]
         public signal void changed ()
         {
