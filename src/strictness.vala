@@ -10,9 +10,9 @@ namespace Pomodoro
          */
         public static Pomodoro.Strictness get_default ()
         {
-            // TODO: return from settings
+            var settings = Pomodoro.get_settings ();
 
-            return Pomodoro.Strictness.STRICT;
+            return settings.get_enum ("strictness");
         }
     }
 }

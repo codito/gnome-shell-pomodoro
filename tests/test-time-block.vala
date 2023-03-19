@@ -28,14 +28,14 @@ namespace Tests
             this.add_test ("calculate_remaining__with_gaps_overlapping",
                            this.test_calculate_remaining__with_gaps_overlapping);
 
-
+            this.add_test ("move_by", this.test_move_by);
+            this.add_test ("move_to", this.test_move_to);
 
             // this.add_test ("state", this.test_state);
             // this.add_test ("start_time", this.test_start_time);
             // this.add_test ("end_time", this.test_end_time);
             // this.add_test ("duration", this.test_duration);
             // this.add_test ("parent", this.test_parent);
-            // this.add_test ("schedule", this.test_schedule);
             // this.add_test ("has_bounds", this.test_has_bounds);
             // this.add_test ("add_child", this.test_add_child);
             // this.add_test ("remove_child", this.test_remove_child);
@@ -71,8 +71,8 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.start_time));
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.end_time));
         }
 
         public void test_new__pomodoro ()
@@ -81,8 +81,8 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.start_time));
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.end_time));
         }
 
         public void test_new__break ()
@@ -91,8 +91,8 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
-            assert_true (time_block.start_time == Pomodoro.Timestamp.MIN);
-            assert_true (time_block.end_time == Pomodoro.Timestamp.MAX);
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.start_time));
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.end_time));
         }
 
 
@@ -100,7 +100,6 @@ namespace Tests
          * Tests for properties
          */
 
-        // TODO: remove, should be set at construct level
         public void test_set_session ()
         {
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
@@ -158,22 +157,105 @@ namespace Tests
          * Tests for methods
          */
 
-        // public void to_timer_state ()
-        // {
-        //     var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
-        //     var expected_timer_state = Pomodoro.TimerState () {
+        public void test_move_by ()
+        {
+            var now = Pomodoro.Timestamp.advance (0);
+            var time_block = new Pomodoro.TimeBlock ();
 
-        //     };
+            var changed_emitted = 0;
+            time_block.changed.connect (() => {
+                changed_emitted++;
+            });
 
-        //     assert_cmpvariant (
-        //         time_block.to_timer_state ().to_variant (),
-        //         expected_timer_state.to_variant ()
-        //     );
-        // }
+            time_block.set_time_range (Pomodoro.Timestamp.UNDEFINED, now);
+            time_block.move_by (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 2);
 
-        // public void test_schedule ()
-        // {
-        // }
+            time_block.set_time_range (now, Pomodoro.Timestamp.UNDEFINED);
+            time_block.move_by (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 4);
+
+            time_block.set_time_range (now, now + Pomodoro.Interval.MINUTE);
+            time_block.move_by (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (now + 2 * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 6);
+
+            time_block.move_by (0);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 6);
+        }
+
+        public void test_move_to ()
+        {
+            var now = Pomodoro.Timestamp.advance (0);
+            var time_block = new Pomodoro.TimeBlock ();
+
+            var changed_emitted = 0;
+            time_block.changed.connect (() => {
+                changed_emitted++;
+            });
+
+            time_block.set_time_range (Pomodoro.Timestamp.UNDEFINED, now);
+            time_block.move_to (now + Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 1);
+
+            time_block.set_time_range (now, Pomodoro.Timestamp.UNDEFINED);
+            time_block.move_to (now + Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 3);
+
+            time_block.set_time_range (now, now + Pomodoro.Interval.MINUTE);
+            time_block.move_to (now + Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (now + 2 * Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 5);
+
+            time_block.move_to (time_block.start_time);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 5);
+        }
 
         // public void test_has_bounds ()
         // {
@@ -404,7 +486,7 @@ namespace Tests
             );
         }
 
-        // public void test_get_progress ()
+        // public void test_calculate_progress ()
         // {
         // }
 

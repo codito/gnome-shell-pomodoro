@@ -10,6 +10,30 @@ namespace Pomodoro.Interval
     public const int64 DAY         = 24 * HOUR;
     public const int64 MIN         = int64.MIN;
     public const int64 MAX         = int64.MAX;
+
+
+    public int64 add (int64 interval,
+                      int64 other)
+    {
+        // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+
+        if (other > 0) {
+            return interval < MAX - other
+                ? interval + other
+                : MAX;
+        }
+        else {
+            return interval > MIN - other
+                ? interval + other
+                : MIN;
+        }
+    }
+
+    public int64 subtract (int64 interval,
+                           int64 other)
+    {
+        return add (interval, -other);
+    }
 }
 
 
@@ -18,16 +42,19 @@ namespace Pomodoro.Interval
  */
 namespace Pomodoro.Timestamp
 {
+    // Special value. Assume that timestamps do not go below 0.
     public const int64 UNDEFINED = -1;
-    public const int64 MIN       = 0;
-    public const int64 MAX       = int64.MAX;
+
+    // Constants for infinite values.
+    public const int64 MIN = 0;
+    public const int64 MAX = int64.MAX;
 
     private int64 frozen_time = UNDEFINED;
     private int64 advance_by = 0;
 
     public int64 from_now ()
     {
-        debug ("Timestamp.from_now ()");
+        GLib.debug ("Timestamp.from_now ()");
 
         if (frozen_time >= 0) {
             var tmp = frozen_time;
@@ -89,26 +116,56 @@ namespace Pomodoro.Timestamp
     // {
     // }
 
-    public bool is_finite (int64 timestamp)
+    // TODO: remove
+    // public bool is_finite (int64 timestamp)
+    // {
+    //     return timestamp >= MIN;
+    // }
+
+    // TODO: remove
+    // public bool is_infinite (int64 timestamp)
+    // {
+    //     return timestamp < MIN;
+    // }
+
+    public inline bool is_defined (int64 timestamp)
     {
-        return timestamp > MIN && timestamp < MAX;
+        return timestamp >= MIN;
     }
 
-    public bool is_infinite (int64 timestamp)
+    public inline bool is_undefined (int64 timestamp)
     {
-        return timestamp == MIN || timestamp == MAX;
+        return timestamp < MIN;
     }
 
     public int64 add (int64 timestamp,
-                      int64 interval)
+                      int64 other)
     {
+        // assert_not_reached ();  // TODO: remove
+
         // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
 
-        if (is_infinite (timestamp)) {
+        if (is_undefined (timestamp)) {
             return timestamp;
         }
 
-        // FIXME: we assume here that `timestamp > 0`
+        if (is_undefined (other)) {
+            return UNDEFINED;
+        }
+
+        return timestamp < MAX - other
+            ? timestamp + other
+            : MAX;
+    }
+
+    public int64 add_interval (int64 timestamp,
+                               int64 interval)
+    {
+        // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+
+        if (is_undefined (timestamp)) {
+            return UNDEFINED;
+        }
 
         if (interval >= 0) {
             return interval < MAX - timestamp
@@ -123,15 +180,33 @@ namespace Pomodoro.Timestamp
     }
 
     public int64 subtract (int64 timestamp,
-                           int64 interval)
+                           int64 other)
     {
-        return add (timestamp, -interval);
+        // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+
+        if (is_undefined (timestamp)) {
+            return UNDEFINED;
+        }
+
+        if (is_undefined (other)) {
+            return UNDEFINED;
+        }
+
+        return timestamp > MIN + other
+            ? timestamp - other
+            : MIN;
+    }
+
+    public int64 subtract_interval (int64 timestamp,
+                                    int64 interval)
+    {
+        return add_interval (timestamp, -interval);
     }
 
     // public int64 multiply (int64 timestamp,
     //                        int64 value)
     // {
-    //     if (is_infinite (timestamp)) {
+    //     if (is_defined (timestamp)) {
     //         return timestamp;
     //     }
 
@@ -141,26 +216,11 @@ namespace Pomodoro.Timestamp
     // public int64 divide (int64 timestamp,
     //                      int64 value)
     // {
-    //     if (is_infinite (timestamp)) {
+    //     if (is_defined (timestamp)) {
     //         return timestamp;
     //     }
 
         // TODO
-    // }
-
-    // public int64 round_seconds (int64 timestamp)
-    // {
-    //     var remainder = timestamp % Pomodoro.Interval.SECOND;
-
-    //     if (remainder > 500000) {
-    //         return timestamp - remainder + Pomodoro.Interval.SECOND;
-    //     }
-
-    //     if (remainder < -500000) {
-    //         return timestamp - remainder - Pomodoro.Interval.SECOND;
-    //     }
-
-    //     return timestamp - remainder;
     // }
 
     public int64 round (int64 timestamp,
@@ -178,6 +238,11 @@ namespace Pomodoro.Timestamp
         }
 
         return timestamp - remainder;
+    }
+
+    public int64 round_seconds (int64 timestamp)
+    {
+        return round (timestamp, Pomodoro.Interval.SECOND);
     }
 
     //
