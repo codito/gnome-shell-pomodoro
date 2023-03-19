@@ -965,11 +965,18 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            Pomodoro.SchedulerState  state;
+            var context = Pomodoro.SchedulerContext.initial ();
 
             // this.prepare_reschedule (session, out state, out scheduled_time_blocks_meta);
 
             this.freeze_changed ();
+
+
+            // if ()
+            //     context.state = Pomodoro.State.UNDEFINED;
+
+            // TODO: when the timer is stopped we want to start from Pomodoro.State.UNDEFINED, not from the previous block
+
 
             // session.@foreach_meta (
             //     (time_block_meta) => {

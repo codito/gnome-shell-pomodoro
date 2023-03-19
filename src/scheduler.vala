@@ -3,25 +3,36 @@ namespace Pomodoro
     /**
      * Structure describing current cycle or energy level within a session.
      *
-     * For simplicity, same structure is shared between all schedulers. Which also allows
+     * For simplicity, same structure is shared between all schedulers. Which accidentally also allows
      * changing a strategy during session.
-     *
-     * Perhaps it `context` would be a more appropriate name, but for project consistency its `state`.
      */
-    public struct SchedulerState
+    public struct SchedulerContext
     {
         public int64          timestamp;
         public Pomodoro.State state;
         public uint           cycle;
-        public bool           is_long_break_pending;
+        public bool           needs_long_break;
         public double         energy;
+
+        public static SchedulerContext initial (int64 timestamp = -1)
+        {
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            return SchedulerContext () {
+                timestamp = timestamp,
+                state = Pomodoro.State.UNDEFINED,
+                cycle = 0,
+                needs_long_break = false,
+                energy = 1.0
+            };
+        }
     }
 
 
     /**
      * Scheduler helps in determining next time-block in a session.
      *
-     * It works in a step-wise fashion. It tries to make a best guess according to `SchedulerState`.
+     * It works in a step-wise fashion. It tries to make a best guess according to `SchedulerContext`.
      *
      * In future we would like to align time-blocks to calendar events and working time.
      */
@@ -30,22 +41,18 @@ namespace Pomodoro
         public const int64 MIN_ELAPSED = 10 * Pomodoro.Interval.SECOND;
         public const int64 MIN_DURATION = Pomodoro.Interval.MINUTE;
 
-        // TODO: session template should be adjusted according to available time
-        public Pomodoro.SessionTemplate session_template {
-            get;
-            set;
-        }
+        public Pomodoro.SessionTemplate session_template { get; set; }
 
         /**
          * Update given state according to given time-block.
          */
-        public abstract void resolve_state (Pomodoro.TimeBlockMeta      time_block_meta,
-                                            ref Pomodoro.SchedulerState state);
+        public abstract void resolve_context (Pomodoro.TimeBlockMeta        time_block_meta,
+                                              ref Pomodoro.SchedulerContext context);
 
         /**
          * Resolve next time-block according to scheduler state.
          */
-        public abstract Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerState state);
+        public abstract Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerContext context);
 
         /**
          * Check whether time-block can be marked as completed or uncompleted.
@@ -69,26 +76,51 @@ namespace Pomodoro
 
     public class StrictScheduler : Scheduler
     {
-        public override void resolve_state (Pomodoro.TimeBlockMeta      time_block_meta,
-                                            ref Pomodoro.SchedulerState state)
+        public override void resolve_context (Pomodoro.TimeBlockMeta        time_block_meta,
+                                              ref Pomodoro.SchedulerContext context)
         {
-            // state = SchedulerState () {
-            //     current_state = Pomodoro.State.UNDEFINED,
-            //     current_cycle = 0,
-            //     needs_long_break = false,
-            //     energy = 1.0
-            // };
+            var time_block = time_block_meta.time_block;
 
-            //     return state.current_cycle >= this.session_template.cycles;
+            if (!time_block_meta.is_completed && !time_block_meta.is_uncompleted) {
+                return;
+            }
 
-            // TODO
+            context.timestamp = time_block.end_time;
+            context.state = time_block.state;
+
+            // TODO: count longer pomodoros as two or more, according to elapsed time
+            if (time_block.state == Pomodoro.State.POMODORO) {
+                context.cycle++;
+            }
+
+            context.needs_long_break = context.needs_long_break || context.cycle >= this.session_template.cycles;
         }
 
-        public override Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerState state)
+        public override Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerContext context)
         {
-            var time_block = new Pomodoro.TimeBlock ();
+            var time_block = new Pomodoro.TimeBlock.with_start_time (
+                context.timestamp,
+                context.state == Pomodoro.State.POMODORO ? Pomodoro.State.BREAK : Pomodoro.State.POMODORO,
+                Pomodoro.Source.SCHEDULER);
 
-            // TODO
+            // TODO: adjust session template according to available time
+            var session_template = this.session_template;
+
+            switch (time_block.state)
+            {
+                case Pomodoro.State.POMODORO:
+                    time_block.duration = session_template.pomodoro_duration;
+                    break;
+
+                case Pomodoro.State.BREAK:
+                    time_block.duration = context.needs_long_break
+                        ? session_template.long_break_duration
+                        : session_template.short_break_duration;
+                    break;
+
+                default:
+                    assert_not_reached ();
+            }
 
             return time_block;
         }
