@@ -116,11 +116,6 @@ namespace Pomodoro
                                                       Pomodoro.TimeBlockMeta time_block_meta,
                                                       int64                  timestamp);
 
-        // /**
-        //  * Check whether upcoming break should be a long one.
-        //  */
-        // public abstract bool is_long_break_needed (Pomodoro.SchedulerContext context);
-
         /**
          * Reschedule time-blocks if needed.
          *
@@ -185,42 +180,47 @@ namespace Pomodoro
 
             if (time_block.state == Pomodoro.State.POMODORO)
             {
-                if (time_block_meta.is_scheduled ()) {
-                    // For scheduled time-blocks pretend that cycles are completed
-                    // in order to resolve context.
-                    context.is_cycle_completed = true;
-                }
-
                 // GLib.debug (
                 //     "is_scheduled = %s, is_cycle_completed = %s",
                 //     time_block_meta.is_scheduled () ? "true" : "false",
                 //     context.is_cycle_completed ? "true" : "false"
                 // );
 
+                // Start new cycle with first pomodoro.
                 if (context.is_cycle_completed) {
                     context.cycle++;
                     context.is_cycle_completed = false;
-                    context.needs_long_break = context.cycle >= this.session_template.cycles;
                 }
 
-                if (time_block_meta.is_completed)
+                // For scheduled time-blocks assume best-case scenario, that they will get completed
+                // as planned. Cycle need to be marked as completed in order to schedule next cycles.
+                if (time_block_meta.status <= Pomodoro.TimeBlockStatus.IN_PROGRESS) {
+                    context.is_cycle_completed = true;
+                }
+
+                // Count completed pomodoros / cycles, even if time-block is in progress.
+                if (time_block_meta.status != Pomodoro.TimeBlockStatus.SCHEDULED)
                 {
                     var cycles_completed = this.calculate_cycles_completed (time_block, time_block_meta, context.timestamp);
 
-                    // Long pomodoros may count as multiple cycles.
                     if (cycles_completed > 1) {
                         context.cycle += cycles_completed - 1;
                     }
 
-                    context.is_cycle_completed = true;
+                    if (!context.is_cycle_completed) {
+                        context.is_cycle_completed = cycles_completed > 0;
+                    }
                 }
+
+                context.needs_long_break = context.cycle > this.session_template.cycles ||
+                                           context.cycle == this.session_template.cycles && context.is_cycle_completed;
             }
 
             // if (!context.needs_long_break) {
                 // debug ("%u / %u", context.cycle, this.session_template.cycles);
             // }
 
-            if (time_block_meta.is_long_break && (time_block_meta.is_completed || time_block_meta.is_scheduled ())) {
+            if (time_block_meta.is_long_break && time_block_meta.status != Pomodoro.TimeBlockStatus.UNCOMPLETED) {
                 context.is_session_completed = true;
             }
         }
@@ -273,189 +273,5 @@ namespace Pomodoro
         {
             return this.calculate_cycles_completed (time_block, time_block_meta, timestamp) > 0;
         }
-
-        // public override bool is_long_break_needed (Pomodoro.SchedulerContext context)
-        // {
-        //     debug (
-        //         "is_long_break_needed: context.is_cycle_completed = %s",
-        //         context.is_cycle_completed ? "true" : "false"
-        //     );
-        //     return !context.is_session_completed &&
-        //             context.cycle >= this.session_template.cycles &&
-        //             context.is_cycle_completed;
-        // }
     }
 }
-
-
-
-
-
-        // /**
-        //  * Check whether you .
-        //  *
-        //  * It assumes that we reached time-block end-time. Trim the time-block before calling this function.
-        //  */
-        // public abstract bool should_take_long_break (Pomodoro.SchedulerState state);
-
-
-
-        // public override bool should_take_long_break (Pomodoro.SchedulerState state)
-        // {
-        //     return state.current_cycle >= this.session_template.cycles;
-        // }
-
-
-
-        /**
-         * Figure out current state of the session.
-         */
-        // public abstract Pomodoro.SchedulerState resolve_state (Pomodoro.Session session,
-        //                                                        int64            timestamp = -1);
-
-
-
-        // public void reschedule (Pomodoro.Session session,
-        //                         int64            timestamp = -1)
-        // {
-        // }
-
-        // /**
-        //  * Reschedule time-blocks if needed.
-        //  *
-        //  * It will affect time-blocks not marked as completed or uncompleted. May add/remove time-blocks.
-        //  */
-        // public void reschedule (Pomodoro.Session session,
-        //                         int64            timestamp = -1)
-        // {
-        //     session.reschedule (this, timestamp);
-
-
-            // Pomodoro.ensure_timestamp (ref timestamp);
-
-            // Pomodoro.SchedulerState  state;
-            // Pomodoro.TimeBlockMeta[] scheduled_time_blocks_meta;
-
-            // this.prepare_reschedule (session, out state, out scheduled_time_blocks_meta);
-
-            // session.freeze_changed ();
-
-            // session.@foreach_meta (
-            //     (time_block_meta) => {
-            //         if (time_block_meta.is_completed || time_block_meta.is_uncompleted) {
-            //             this.resolve_state (time_block_meta, ref state);
-            //         }
-            //         else {
-            //             scheduled_time_blocks_meta += time_block_meta;
-            //         }
-            //     }
-            // );
-
-            // while (true) {
-            //     var time_block = this.resolve_time_block (state);
-            //     var existing_time_block = this.match_time_block (session, time_block)
-
-            //     session.insert_after (time_block);
-
-            //     var time_block_meta = session.get_time_block_meta (time_block);
-            //     this.resolve_state (time_block_meta, ref state);
-            // }
-
-            // session.thaw_changed ();
-        // }
-
-        // private Pomodoro.TimeBlockMeta[] get_session_time_blocks ()
-        // {
-        //     var state = Pomodoro.SchedulerState ();
-            // var time_blocks = this.get_scheduled_time_blocks (session);
-        //     Pomodoro.TimeBlockMeta scheduled_time_blocks_meta;
-
-        //     session.@foreach_meta (
-        //         (time_block_meta) => {
-        //             if (time_block_meta.is_completed || time_block_meta.is_uncompleted) {
-        //                 this.resolve_state (time_block_meta, ref state);
-        //             }
-        //             else {
-        //                 scheduled_time_blocks_meta += time_block_meta;
-        //             }
-        //         }
-        //     );
-        // }
-
-        // private Pomodoro.TimeBlockMeta[] get_state ()
-        // {
-        // }
-
-        // var time_blocks = this.get_scheduled_time_blocks (session);
-
-        // private void prepare_reschedule (Pomodoro.Session             session,
-        //                                  out Pomodoro.SchedulerState  state,
-        //                                  out Pomodoro.TimeBlockMeta[] scheduled_time_blocks_meta)
-        // {
-        //     var resolving_state = true;
-        //     state = Pomodoro.SchedulerState () {
-        //         current_state = Pomodoro.State.POMODORO,
-        //         current_cycle = 0,
-        //         needs_long_break = false,
-        //         energy = 1.0
-        //     };
-
-            // TODO
-            // session.@foreach_meta (
-            //     (time_block_meta) => {
-            //         if (resolving_state && (time_block_meta.is_completed || time_block_meta.is_uncompleted)) {
-            //             this.resolve_state (time_block_meta, ref state);
-            //         }
-            //         else {
-            //             resolving_state = false;
-            //             scheduled_time_blocks_meta += time_block_meta;
-            //         }
-            //     }
-            // );
-        // }
-
-
-
-
-        // public Pomodoro.TimeBlockMeta[] get_scheduled_time_blocks (Pomodoro.Session session)
-        // {
-        //     Pomodoro.TimeBlockMeta[] time_blocks_meta;
-
-        //     session.@foreach_meta ((time_block_meta) => {
-        //         if (!time_block_meta.is_completed && !time_block_meta.is_uncompleted) {
-        //             time_blocks_meta += time_block_meta;
-        //         }
-        //     }
-
-        //     return time_blocks_meta;
-        // }
-
-
-        // /**
-        //  * Fit time-block to first available slot.
-        //  *
-        //  * Try to preserve time blocks original duration.
-        //  * It must be autonomous - pick best candidate in case of conflict.
-        //  */
-        // public bool fit (Pomodoro.TimeBlock time_block,
-        //                  int64              minimum_start_time,
-        //                  int64              natural_start_time)
-        // {
-            // TODO
-
-        //     return true;
-        // }
-
-        // /**
-        //  * Fit time-blocks to available time.
-        //  *
-        //  * Like `fit()`, but additionally allows to spread time-blocks more evenly in case of conflict.
-        //  */
-        // public bool fit_many (Pomodoro.TimeBlock[] time_blocks,
-        //                       int64                minimum_start_time,
-        //                       int64                natural_start_time)
-        // {
-            // TODO
-
-        //     return true;
-        // }

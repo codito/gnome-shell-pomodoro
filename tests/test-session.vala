@@ -78,13 +78,13 @@ namespace Tests
             this.add_test ("move_to", this.test_move_to);
 
             this.add_test ("get_time_block_meta", this.test_get_time_block_meta);
-            this.add_test ("mark_time_block_completed", this.test_mark_time_block_completed);
-            this.add_test ("mark_time_block_uncompleted", this.test_mark_time_block_uncompleted);
+            this.add_test ("set_time_block_status__completed", this.test_set_time_block_status__completed);
+            this.add_test ("set_time_block_status__uncompleted", this.test_set_time_block_status__uncompleted);
             this.add_test ("is_expired", this.test_is_expired);
             this.add_test ("calculate_elapsed", this.test_calculate_elapsed);
             this.add_test ("calculate_remaining", this.test_calculate_remaining);
             // this.add_test ("calculate_progress", this.test_calculate_progress);
-            this.add_test ("calculate_energy", this.test_calculate_energy);
+            // this.add_test ("calculate_energy", this.test_calculate_energy);
             // this.add_test ("calculate_pomodoro_break_ratio", this.test_calculate_pomodoro_break_ratio);
             this.add_test ("calculate_break_ratio", this.test_calculate_break_ratio);
 
@@ -288,7 +288,7 @@ namespace Tests
             var uncompleted_time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
             session_6.append (uncompleted_time_block);
             assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 1);
-            session_6.mark_time_block_uncompleted (uncompleted_time_block);
+            session_6.set_time_block_status (uncompleted_time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
             assert_cmpuint (session_6.cycles, GLib.CompareOperator.EQ, 0);
             assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 2);
             session_6.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
@@ -347,7 +347,7 @@ namespace Tests
             assert_cmpuint (notify_duration_emitted, GLib.CompareOperator.EQ, 3);
 
             // Uncompleted time-blocks should be included in duration.
-            session_1.mark_time_block_uncompleted (time_block_2);
+            session_1.set_time_block_status (time_block_2, Pomodoro.TimeBlockStatus.UNCOMPLETED);
             assert_cmpvariant (
                 new GLib.Variant.int64 (session_1.duration),
                 new GLib.Variant.int64 (6 * Pomodoro.Interval.MINUTE)
@@ -420,7 +420,7 @@ namespace Tests
 
             // Uncompleted time-blocks should be included in start_time.
             expected_start_time = session_1.start_time;
-            session_1.mark_time_block_uncompleted (time_block_1);
+            session_1.set_time_block_status (time_block_1, Pomodoro.TimeBlockStatus.UNCOMPLETED);
             assert_cmpvariant (
                 new GLib.Variant.int64 (session_1.start_time),
                 new GLib.Variant.int64 (expected_start_time)
@@ -493,7 +493,7 @@ namespace Tests
 
             // Uncompleted time-blocks should be included in end_time.
             expected_end_time = session_1.end_time;
-            session_1.mark_time_block_uncompleted (time_block_1);
+            session_1.set_time_block_status (time_block_1, Pomodoro.TimeBlockStatus.UNCOMPLETED);
             assert_cmpvariant (
                 new GLib.Variant.int64 (session_1.end_time),
                 new GLib.Variant.int64 (expected_end_time)
@@ -764,9 +764,8 @@ namespace Tests
                 new GLib.Variant.int64 (this.session_template.pomodoro_duration)
             );
             assert_cmpuint (first_time_block_meta.cycle, GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (first_time_block_meta.status, GLib.CompareOperator.EQ, Pomodoro.TimeBlockStatus.SCHEDULED);
             assert_false (first_time_block_meta.is_long_break);
-            assert_false (first_time_block_meta.is_completed);
-            assert_false (first_time_block_meta.is_uncompleted);
 
             var last_time_block = session.get_last_time_block ();
             var last_time_block_meta = session.get_time_block_meta (last_time_block);
@@ -775,12 +774,11 @@ namespace Tests
                 new GLib.Variant.int64 (this.session_template.long_break_duration)
             );
             assert_cmpuint (last_time_block_meta.cycle, GLib.CompareOperator.EQ, this.session_template.cycles);
+            assert_cmpuint (first_time_block_meta.status, GLib.CompareOperator.EQ, Pomodoro.TimeBlockStatus.SCHEDULED);
             assert_true (last_time_block_meta.is_long_break);
-            assert_false (last_time_block_meta.is_completed);
-            assert_false (last_time_block_meta.is_uncompleted);
         }
 
-        public void test_mark_time_block_completed ()
+        public void test_set_time_block_status__completed ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
 
@@ -788,22 +786,28 @@ namespace Tests
             var time_block_2 = session.get_nth_time_block (1);
             var time_block_3 = session.get_nth_time_block (2);
 
-            session.mark_time_block_completed (time_block_1);
-            assert_true (session.get_time_block_meta (time_block_1).is_completed);
-            assert_false (session.get_time_block_meta (time_block_2).is_completed);
+            session.set_time_block_status (time_block_1, Pomodoro.TimeBlockStatus.COMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_1).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.COMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_2).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.SCHEDULED);
 
-            session.mark_time_block_completed (time_block_3);
-            assert_true (session.get_time_block_meta (time_block_3).is_completed);
-            assert_false (session.get_time_block_meta (time_block_2).is_completed);
-            assert_true (session.get_time_block_meta (time_block_2).is_uncompleted);
-
-            session.mark_time_block_uncompleted (time_block_2);
-            assert_false (session.get_time_block_meta (time_block_2).is_completed);
-            assert_true (session.get_time_block_meta (time_block_2).is_uncompleted);
-            assert_true (session.get_time_block_meta (time_block_1).is_completed);
+            session.set_time_block_status (time_block_1, Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            session.set_time_block_status (time_block_3, Pomodoro.TimeBlockStatus.COMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_3).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.COMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_2).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.UNCOMPLETED);  // change from scheduled
+            assert_cmpuint (session.get_time_block_meta (time_block_1).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.UNCOMPLETED);  // no change
         }
 
-        public void test_mark_time_block_uncompleted ()
+        public void test_set_time_block_status__uncompleted ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
 
@@ -811,19 +815,25 @@ namespace Tests
             var time_block_2 = session.get_nth_time_block (1);
             var time_block_3 = session.get_nth_time_block (2);
 
-            session.mark_time_block_uncompleted (time_block_1);
-            assert_true (session.get_time_block_meta (time_block_1).is_uncompleted);
-            assert_false (session.get_time_block_meta (time_block_2).is_uncompleted);
+            session.set_time_block_status (time_block_1, Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_1).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_2).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.SCHEDULED);
 
-            session.mark_time_block_uncompleted (time_block_3);
-            assert_true (session.get_time_block_meta (time_block_3).is_uncompleted);
-            assert_false (session.get_time_block_meta (time_block_3).is_completed);
-            assert_true (session.get_time_block_meta (time_block_2).is_uncompleted);
-
-            session.mark_time_block_completed (time_block_2);
-            assert_true (session.get_time_block_meta (time_block_2).is_completed);
-            assert_false (session.get_time_block_meta (time_block_2).is_uncompleted);
-            assert_true (session.get_time_block_meta (time_block_1).is_uncompleted);
+            session.set_time_block_status (time_block_1, Pomodoro.TimeBlockStatus.COMPLETED);
+            session.set_time_block_status (time_block_3, Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_3).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.UNCOMPLETED);
+            assert_cmpuint (session.get_time_block_meta (time_block_2).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.UNCOMPLETED);  // change from scheduled
+            assert_cmpuint (session.get_time_block_meta (time_block_1).status,
+                            GLib.CompareOperator.EQ,
+                            Pomodoro.TimeBlockStatus.COMPLETED);  // no change
         }
 
         public void test_is_expired ()
@@ -851,10 +861,10 @@ namespace Tests
         // {
         // }
 
-        public void test_calculate_energy ()
-        {
+        // public void test_calculate_energy ()
+        // {
             // TODO
-        }
+        // }
 
         // public void test_calculate_pomodoro_break_ratio ()
         // {

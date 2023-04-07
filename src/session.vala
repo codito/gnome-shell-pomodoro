@@ -77,24 +77,17 @@ namespace Pomodoro
     /**
      * Pomodoro.TimeBlockMeta struct.
      *
-     * A `TimeBlock` on its own do not have a session context nor status. These are mere annotations that should
-     * not trigger `TimeBlock.changed` signal, but `Session.changed`.
+     * A `TimeBlock` on its own do not have a session context nor status. These are considered as annotations
+     * that should not trigger `TimeBlock.changed` signal, but `Session.changed`.
      *
-     * A break time-block on its own is not aware whether it is long or short. It depends on the context, hence it's
-     * managed at a session-level.
+     * `TimeBlockMeta` is a public representation of `Session.Child` and is read-only.
      */
     public struct TimeBlockMeta
     {
-        public uint  cycle;
-        public int64 intended_duration;
-        public bool  is_long_break;
-        public bool  is_completed;
-        public bool  is_uncompleted;
-
-        public bool is_scheduled ()
-        {
-            return !is_completed && !is_uncompleted;
-        }
+        public Pomodoro.TimeBlockStatus status;
+        public uint                     cycle;
+        public int64                    intended_duration;
+        public bool                     is_long_break;
     }
 
 
@@ -115,21 +108,19 @@ namespace Pomodoro
         protected class Child
         {
             public Pomodoro.TimeBlock       time_block;
+            public Pomodoro.TimeBlockStatus status;
             public uint                     cycle;  // first pomodoro starts with "1""
             public int64                    intended_duration;
             public bool                     is_long_break;
-            public bool                     is_completed;
-            public bool                     is_uncompleted;
             public ulong                    changed_id;
 
             public Child (Pomodoro.TimeBlock time_block)
             {
                 this.time_block = time_block;
+                this.status = Pomodoro.TimeBlockStatus.SCHEDULED;
                 this.cycle = 0;
                 this.intended_duration = time_block.duration;
                 this.is_long_break = false;
-                this.is_completed = false;
-                this.is_uncompleted = false;
                 this.changed_id = 0;
             }
         }
@@ -266,7 +257,9 @@ namespace Pomodoro
 
             while (link != null)
             {
-                if (link.data.time_block.state == Pomodoro.State.POMODORO && !link.data.is_uncompleted) {
+                if (link.data.time_block.state == Pomodoro.State.POMODORO &&
+                    link.data.status != Pomodoro.TimeBlockStatus.UNCOMPLETED)
+                {
                     cycles++;
                 }
 
@@ -849,7 +842,7 @@ namespace Pomodoro
             this.freeze_changed ();
 
             this.children.@foreach ((child) => {
-                if (!logged_warnining && (child.is_completed || child.is_uncompleted)) {
+                if (!logged_warnining && child.status > Pomodoro.TimeBlockStatus.IN_PROGRESS) {
                     GLib.debug ("Moving a time-blocks that have been completed.");
                     logged_warnining = true;
                 }
@@ -885,11 +878,10 @@ namespace Pomodoro
         private inline Pomodoro.TimeBlockMeta get_child_meta (Child child)
         {
             return TimeBlockMeta () {
+                status = child.status,
                 cycle = child.cycle,
                 intended_duration = child.intended_duration,
-                is_long_break = child.is_long_break,
-                is_completed = child.is_completed,
-                is_uncompleted = child.is_uncompleted,
+                is_long_break = child.is_long_break
             };
         }
 
@@ -908,7 +900,8 @@ namespace Pomodoro
             return this.get_child_meta (link.data);
         }
 
-        public void mark_time_block_completed (Pomodoro.TimeBlock time_block)
+        public void set_time_block_status (Pomodoro.TimeBlock       time_block,
+                                           Pomodoro.TimeBlockStatus status)
         {
             unowned GLib.List<Child> link = this.children.first ();
             var changed = false;
@@ -920,49 +913,15 @@ namespace Pomodoro
             while (link != null)
             {
                 if (link.data.time_block == time_block) {
-                    if (!link.data.is_completed) {
-                        link.data.is_completed = true;
-                        link.data.is_uncompleted = false;
+                    if (link.data.status != status) {
+                        link.data.status = status;
                         changed = true;
                     }
                     break;
                 }
 
-                if (!link.data.is_completed && !link.data.is_uncompleted) {
-                    link.data.is_uncompleted = true;
-                    changed = true;
-                }
-
-                link = link.next;
-            }
-
-            if (changed) {
-                this.emit_changed ();
-            }
-        }
-
-        public void mark_time_block_uncompleted (Pomodoro.TimeBlock time_block)
-        {
-            unowned GLib.List<Child> link = this.children.first ();
-            var changed = false;
-
-            if (!this.contains (time_block)) {
-                return;
-            }
-
-            while (link != null)
-            {
-                if (link.data.time_block == time_block) {
-                    if (!link.data.is_uncompleted) {
-                        link.data.is_uncompleted = true;
-                        link.data.is_completed = false;
-                        changed = true;
-                    }
-                    break;
-                }
-
-                if (!link.data.is_completed && !link.data.is_uncompleted) {
-                    link.data.is_uncompleted = true;
+                if (link.data.status <= Pomodoro.TimeBlockStatus.IN_PROGRESS) {
+                    link.data.status = Pomodoro.TimeBlockStatus.UNCOMPLETED;
                     changed = true;
                 }
 
@@ -989,7 +948,7 @@ namespace Pomodoro
                 var time_block = link.data.time_block;
                 var time_block_meta = this.get_child_meta (link.data);
 
-                if (time_block_meta.is_completed || time_block_meta.is_uncompleted) {
+                if (time_block_meta.status > Pomodoro.TimeBlockStatus.SCHEDULED) {
                     scheduler.resolve_context (time_block, time_block_meta, ref context);
                 }
                 else {
