@@ -61,19 +61,40 @@ namespace Pomodoro
 
 
     /**
+     * Pomodoro.TimeBlockStatus enum.
+     *
+     * A time-block status is managed at a session-level by `SessionManager`.
+     */
+    public enum TimeBlockStatus
+    {
+        SCHEDULED = 0,
+        IN_PROGRESS = 1,
+        COMPLETED = 2,
+        UNCOMPLETED = 3
+    }
+
+
+    /**
      * Pomodoro.TimeBlockMeta struct.
      *
      * A `TimeBlock` on its own do not have a session context nor status. These are mere annotations that should
      * not trigger `TimeBlock.changed` signal, but `Session.changed`.
+     *
+     * A break time-block on its own is not aware whether it is long or short. It depends on the context, hence it's
+     * managed at a session-level.
      */
     public struct TimeBlockMeta
     {
-        public unowned Pomodoro.TimeBlock time_block;
-        public uint                       cycle;
-        public int64                      intended_duration;
-        public bool                       is_long_break;
-        public bool                       is_completed;
-        public bool                       is_uncompleted;
+        public uint  cycle;
+        public int64 intended_duration;
+        public bool  is_long_break;
+        public bool  is_completed;
+        public bool  is_uncompleted;
+
+        public bool is_scheduled ()
+        {
+            return !is_completed && !is_uncompleted;
+        }
     }
 
 
@@ -864,7 +885,6 @@ namespace Pomodoro
         private inline Pomodoro.TimeBlockMeta get_child_meta (Child child)
         {
             return TimeBlockMeta () {
-                time_block = child.time_block,
                 cycle = child.cycle,
                 intended_duration = child.intended_duration,
                 is_long_break = child.is_long_break,
@@ -954,6 +974,77 @@ namespace Pomodoro
             }
         }
 
+        private void build_scheduler_context (Pomodoro.Scheduler            scheduler,
+                                              int64                         timestamp,
+                                              out Pomodoro.SchedulerContext context,
+                                              out unowned GLib.List<Child>  first_scheduled_link)
+        {
+            unowned GLib.List<Child> link = this.children.first ();
+
+            context = Pomodoro.SchedulerContext.initial (link != null ? link.data.time_block.start_time : timestamp);
+            first_scheduled_link = null;
+
+            while (link != null && !context.is_session_completed)
+            {
+                var time_block = link.data.time_block;
+                var time_block_meta = this.get_child_meta (link.data);
+
+                if (time_block_meta.is_completed || time_block_meta.is_uncompleted) {
+                    scheduler.resolve_context (time_block, time_block_meta, ref context);
+                }
+                else {
+                    first_scheduled_link = link;
+                    break;
+                }
+
+                link = link.next;
+            }
+        }
+
+        /*
+        private void populate (Pomodoro.Scheduler        scheduler,
+                               Pomodoro.SchedulerContext context)
+        {
+            var start_time = timestamp;
+            var n = 1;
+
+            while (true)
+            {
+                var time_block = scheduler.resolve_time_block (context);
+
+                if (time_block != null) {
+                    var child = new Child (time_block);
+
+                    // Deduct whether resolve_time_block() created a long break.
+                    // TODO: should resolve_time_block() return the break type?
+                    child.is_long_break = time_block.state == Pomodoro.State.BREAK && context.needs_long_break;
+
+                    this.children.append (child);
+                    this.emit_added (break_child);
+
+                    var time_block_meta = this.get_child_meta (child);
+                    scheduler.resolve_context (time_block, time_block_meta, ref context);
+                }
+                else {
+                    break;
+                }
+
+                if (n >= 1000) {
+                    GLib.error ("Looks like `.populate()` will be generating time-blocks for the end of times.");
+                    break;
+                }
+
+                n++;
+            }
+        }
+        */
+
+        // private void reschedule_child (Child              child,
+        //                                Pomodoro.TimeBlock reference_time_block)
+        // {
+        //     child.set_time_range (reference_time_block.start_time, reference_time_block.end_time);
+        //     child.intended_duration = reference_time_block.duration;
+        // }
 
         /**
          * Reschedule time-blocks if needed.
@@ -965,42 +1056,171 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            var context = Pomodoro.SchedulerContext.initial ();
+            Pomodoro.SchedulerContext context;
+            Pomodoro.TimeBlock time_block;
+            Pomodoro.TimeBlockMeta time_block_meta;
+            Child child;
+            unowned GLib.List<Child> link;
+            var n = 1;
 
-            // this.prepare_reschedule (session, out state, out scheduled_time_blocks_meta);
+            this.build_scheduler_context (scheduler, timestamp, out context, out link);
 
             this.freeze_changed ();
 
+            while (true)
+            {
+                GLib.debug (
+                    "cycle = %u, state = %s, is_cycle_completed = %s, needs_long_break = %s",
+                    context.cycle,
+                    context.state.to_string (),
+                    context.is_cycle_completed ? "true" : "false",
+                    context.needs_long_break ? "true" : "false"
+                );
 
-            // if ()
-            //     context.state = Pomodoro.State.UNDEFINED;
+                time_block = scheduler.resolve_time_block (context);
 
-            // TODO: when the timer is stopped we want to start from Pomodoro.State.UNDEFINED, not from the previous block
+                if (time_block == null) {
+                    // GLib.debug ("reschedule done");
+                    break;
+                }
 
+                if (n++ >= 20) {
+                    GLib.error ("`Session.reschedule()` reached iterations limit.");
+                    break;
+                }
 
-            // session.@foreach_meta (
-            //     (time_block_meta) => {
-            //         if (time_block_meta.is_completed || time_block_meta.is_uncompleted) {
-            //             this.resolve_state (time_block_meta, ref state);
-            //         }
-            //         else {
-            //             scheduled_time_blocks_meta += time_block_meta;
-            //         }
-            //     }
-            // );
+                var existing_child = link != null ? link.data : null;
+                if (existing_child != null && existing_child.time_block.state == time_block.state)
+                {
+                    // Update existing time-block.
+                    existing_child.time_block.set_time_range (time_block.start_time, time_block.end_time);
+                    existing_child.intended_duration = time_block.duration;
+                    // existing_child.is_long_break = time_block.state == Pomodoro.State.BREAK && context.needs_long_break;
+                    // existing_child.is_long_break = time_block.state == Pomodoro.State.BREAK && scheduler.is_long_break_needed (context);
 
-            // while (true) {
-            //     var time_block = this.resolve_time_block (state);
-            //     var existing_time_block = this.match_time_block (session, time_block)
+                    child = existing_child;
+                    time_block = existing_child.time_block;
+                    link = link.next;
+                }
+                else {
+                    // Add new time-block.
+                    child = new Child (time_block);
+                    // child.is_long_break = time_block.state == Pomodoro.State.BREAK && context.needs_long_break;
+                    // existing_child.is_long_break = time_block.state == Pomodoro.State.BREAK && scheduler.is_long_break_needed (context);
 
-            //     session.insert_after (time_block);
+                    if (existing_child != null) {
+                        this.children.insert_before (link, child);
+                    }
+                    else {
+                        this.children.append (child);
+                    }
 
-            //     var time_block_meta = session.get_time_block_meta (time_block);
-            //     this.resolve_state (time_block_meta, ref state);
-            // }
+                    // child.is_long_break = time_block.state == Pomodoro.State.BREAK &&
+                    //                       scheduler.is_long_break_needed (context);
+
+                    child.is_long_break = time_block.state == Pomodoro.State.BREAK && context.needs_long_break;
+
+                    this.emit_added (child);
+                }
+
+                time_block_meta = this.get_child_meta (child);
+                scheduler.resolve_context (time_block, time_block_meta, ref context);
+            }
+
+            this.remove_links_after (link);
+            this.remove_link (link);
+
+            this.update_time_range ();
+            this.update_cycles ();
 
             this.thaw_changed ();
         }
+
+
+
+                // if (time_block != null) {
+                //     var child = new Child (time_block);
+
+                    // Deduct whether resolve_time_block() created a long break.
+                    // TODO: should resolve_time_block() return the break type?
+                //     child.is_long_break = time_block.state == Pomodoro.State.BREAK && context.needs_long_break;
+
+                //     this.children.append (child);
+                //     this.emit_added (break_child);
+
+                //     var time_block_meta = this.get_child_meta (child);
+                //     scheduler.resolve_context (time_block, time_block_meta, ref context);
+                // }
+                // else {
+                //     break;
+                // }
+
+                // if (n >= 1000) {
+                //     GLib.error ("Looks like `.reschedule()` will be generating time-blocks forever.");
+                //     break;
+                // }
+
+                // n++;
+
+
+
+            // if (!context.completed && link)
+            // {
+            //     // TODO: try reschedule existing time_blocks
+            //
+            // }
+
+            // if (!context.completed && !link)
+            // {
+            //     this.populate (scheduler, context, timestamp);
+            //
+            //     link = null;
+            // }
+
+                // var time_block_meta = this.get_child_meta (link.data);
+
+                // var session_template = scheduler.session_template;  // TODO: prepare template that will fit to available time
+
+                // if (!link) {
+                //     context.state
+                // }
+                // else
+
+                // while (link != null)
+                // {
+                //     this.append_child ();
+
+                //     var time_block_meta = this.get_child_meta (link.data);
+                    // this.resolve_state (time_block_meta, ref state);
+
+                //     link = link.next;
+                // }
+
+                // if ()
+                //     context.state = Pomodoro.State.UNDEFINED;
+
+                // TODO: when the timer is stopped we want to start from Pomodoro.State.UNDEFINED, not from the previous block
+
+                // session.@foreach_meta (
+                //     (time_block_meta) => {
+                //         if (time_block_meta.is_completed || time_block_meta.is_uncompleted) {
+                //             this.resolve_state (time_block_meta, ref state);
+                //         }
+                //         else {
+                //             scheduled_time_blocks_meta += time_block_meta;
+                //         }
+                //     }
+                // );
+
+                // while (true) {
+                //     var time_block = this.resolve_time_block (state);
+                //     var existing_time_block = this.match_time_block (session, time_block)
+
+                //     session.insert_after (time_block);
+
+                //     var time_block_meta = session.get_time_block_meta (time_block);
+                //     this.resolve_state (time_block_meta, ref state);
+                // }
 
 
         /*
