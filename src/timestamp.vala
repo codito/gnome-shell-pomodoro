@@ -49,16 +49,16 @@ namespace Pomodoro.Timestamp
     public const int64 MIN = 0;
     public const int64 MAX = int64.MAX;
 
-    private int64 frozen_time = UNDEFINED;
+    private int64 current_time = UNDEFINED;
     private int64 advance_by = 0;
 
     public int64 from_now ()
     {
         GLib.debug ("Timestamp.from_now ()");
 
-        if (frozen_time >= 0) {
-            var tmp = frozen_time;
-            frozen_time += advance_by;
+        if (current_time >= 0) {
+            var tmp = current_time;
+            current_time += advance_by;
 
             return tmp;
         }
@@ -255,11 +255,13 @@ namespace Pomodoro.Timestamp
     public void freeze (int64 timestamp = -1,
                         int64 _advance_by = 0)  // TODO: remove arg, return frozen time
     {
+        debug ("################# Timestamp.freeze()");
+
         if (timestamp < 0) {
             timestamp = Pomodoro.Timestamp.from_now ();
         }
 
-        frozen_time = timestamp;
+        current_time = timestamp;
         advance_by = _advance_by;
     }
 
@@ -269,7 +271,9 @@ namespace Pomodoro.Timestamp
     public void freeze_to (int64 timestamp,
                            int64 _advance_by = 0)
     {
-        frozen_time = timestamp;
+        debug ("################# Timestamp.freeze_to()");
+
+        current_time = timestamp;
         advance_by = _advance_by;
     }
 
@@ -278,12 +282,20 @@ namespace Pomodoro.Timestamp
      */
     public void unfreeze ()  // TODO: rename to "thaw"
     {
-        frozen_time = UNDEFINED;
+        current_time = UNDEFINED;
     }
 
     public bool is_frozen ()
     {
-        return frozen_time != UNDEFINED;
+        return current_time != UNDEFINED;
+    }
+
+    /**
+     * Return current time if frozen.
+     */
+    public int64 peek ()
+    {
+        return current_time;
     }
 
     /**
@@ -296,8 +308,10 @@ namespace Pomodoro.Timestamp
             freeze ();
         }
 
-        frozen_time += interval;
+        current_time += interval;
 
-        return frozen_time;
+        debug ("################# Timestamp.advance(): %lld", current_time);
+
+        return current_time;
     }
 }

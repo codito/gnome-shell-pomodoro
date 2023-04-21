@@ -371,7 +371,7 @@ namespace Pomodoro
 
             var previous_state = this._state;
 
-            this.resolve_state_internal (ref state);
+            this.resolve_state_internal (ref state, timestamp);
             assert (state.is_valid ());
 
             if (this._state.equals (state)) {
@@ -410,7 +410,8 @@ namespace Pomodoro
          *
          * It's a wrapper for `this.resolve_state`, handling a possible recursion.
          */
-        private void resolve_state_internal (ref Pomodoro.TimerState state)
+        private void resolve_state_internal (ref Pomodoro.TimerState state,
+                                             int64                   timestamp)
         {
             var recursion_count = 0;
 
@@ -425,9 +426,13 @@ namespace Pomodoro
 
             this.resolving_state = true;
 
+            GLib.debug ("resolve_state_internal() begin %lld", timestamp);
+
             while (true)
             {
-                this.resolve_state (ref state);
+                GLib.debug ("resolve_state() begin");
+                this.resolve_state (ref state, timestamp);
+                GLib.debug ("resolve_state() end");
 
                 if (this.state_to_resolve == null) {
                     break;
@@ -444,6 +449,8 @@ namespace Pomodoro
 
                 recursion_count++;
             }
+
+            GLib.debug ("resolve_state_internal() end");
 
             this.resolving_state = false;
         }
@@ -700,7 +707,7 @@ namespace Pomodoro
          */
         public int64 get_current_time (int64 monotonic_time = -1)
         {
-           if (this.monotonic_time_offset == 0 || Pomodoro.Timestamp.is_frozen ()) {
+            if (this.monotonic_time_offset == 0 || Pomodoro.Timestamp.is_frozen ()) {
                 return Pomodoro.Timestamp.from_now ();
             }
             else {
@@ -1018,7 +1025,8 @@ namespace Pomodoro
          * It allows for fine-tuning the state before emitting state-changed signal.
          * Default handler ensures that state is valid.
          */
-        public signal void resolve_state (ref Pomodoro.TimerState state)
+        public signal void resolve_state (ref Pomodoro.TimerState state,
+                                          int64                   timestamp)
         {
             if (state.started_time < 0) {
                 state.paused_time = Pomodoro.Timestamp.UNDEFINED;

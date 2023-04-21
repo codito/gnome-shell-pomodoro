@@ -357,6 +357,34 @@ namespace Pomodoro
         {
             this.handle_changed ();
         }
+
+
+        /**
+         * Convenience alias for `Session.get_time_block_meta(...)`
+         */
+        internal inline Pomodoro.TimeBlockMeta get_meta ()
+                                                         requires (this.session != null)
+        {
+            return this.session.get_time_block_meta (this);
+        }
+
+        /**
+         * Convenience alias for `Session.get_time_block_status(...)`
+         */
+        internal inline Pomodoro.TimeBlockStatus get_status ()
+                                                             requires (this.session != null)
+        {
+            return this.session.get_time_block_status (this);
+        }
+
+        /**
+         * Convenience alias for `Session.set_time_block_status(...)`
+         */
+        internal inline void set_status (Pomodoro.TimeBlockStatus status)
+                                         requires (this.session != null)
+        {
+            this.session.set_time_block_status (this, status);
+        }
     }
 
 

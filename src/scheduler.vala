@@ -3,8 +3,7 @@ namespace Pomodoro
     /**
      * Structure describing current cycle or energy level within a session.
      *
-     * For simplicity, same structure is shared between all schedulers. Which accidentally also allows
-     * changing a strategy during session.
+     * For simplicity, the same structure is shared between all schedulers.
      */
     public struct SchedulerContext
     {
@@ -124,8 +123,14 @@ namespace Pomodoro
         public void reschedule (Pomodoro.Session session,
                                 int64            timestamp = -1)
         {
+            GLib.debug ("Scheduler.reschedule: %lld", timestamp);
+
             session.reschedule (this, timestamp);
         }
+
+        public signal void populated_session (Pomodoro.Session session);
+
+        public signal void rescheduled_session (Pomodoro.Session session);
     }
 
 
@@ -223,6 +228,8 @@ namespace Pomodoro
             if (time_block_meta.is_long_break && time_block_meta.status != Pomodoro.TimeBlockStatus.UNCOMPLETED) {
                 context.is_session_completed = true;
             }
+
+            debug ("StrictScheduler.resolve_context() context = %s", context.to_representation ());
         }
 
         /**

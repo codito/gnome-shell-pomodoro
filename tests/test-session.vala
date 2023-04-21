@@ -4,10 +4,10 @@ namespace Tests
     {
         public SessionTemplateTest ()
         {
-            this.add_test ("calculate_break_ratio", this.test_calculate_break_ratio);
+            this.add_test ("calculate_break_percentage", this.test_calculate_break_percentage);
         }
 
-        public void test_calculate_break_ratio ()
+        public void test_calculate_break_percentage ()
         {
             var session_template_1 = Pomodoro.SessionTemplate () {
                 pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
@@ -15,7 +15,7 @@ namespace Tests
                 long_break_duration = 0 * Pomodoro.Interval.MINUTE,
                 cycles = 4
             };
-            assert_cmpfloat_with_epsilon (session_template_1.calculate_break_ratio (), 0.0, 0.0001);
+            assert_cmpfloat_with_epsilon (session_template_1.calculate_break_percentage (), 0.0, 0.0001);
 
             var session_template_2 = Pomodoro.SessionTemplate () {
                 pomodoro_duration = 0 * Pomodoro.Interval.MINUTE,
@@ -23,7 +23,7 @@ namespace Tests
                 long_break_duration = 15 * Pomodoro.Interval.MINUTE,
                 cycles = 4
             };
-            assert_cmpfloat_with_epsilon (session_template_2.calculate_break_ratio (), 1.0, 0.0001);
+            assert_cmpfloat_with_epsilon (session_template_2.calculate_break_percentage (), 100.0, 0.0001);
 
             var session_template_3 = Pomodoro.SessionTemplate () {
                 pomodoro_duration = 3 * Pomodoro.Interval.MINUTE,
@@ -32,7 +32,7 @@ namespace Tests
                 cycles = 1
             };
             // 1 / (3 + 1)
-            assert_cmpfloat_with_epsilon (session_template_3.calculate_break_ratio (), 0.25, 0.0001);
+            assert_cmpfloat_with_epsilon (session_template_3.calculate_break_percentage (), 25.0, 0.0001);
 
             var session_template_4 = Pomodoro.SessionTemplate () {
                 pomodoro_duration = 25 * Pomodoro.Interval.MINUTE,
@@ -41,7 +41,7 @@ namespace Tests
                 cycles = 4
             };
             // (5 + 5 + 5 + 10) / (25 + 5 + 25 + 5 + 25 + 5 + 25 + 10)
-            assert_cmpfloat_with_epsilon (session_template_4.calculate_break_ratio (), 0.2, 0.0001);
+            assert_cmpfloat_with_epsilon (session_template_4.calculate_break_percentage (), 20.0, 0.0001);
         }
     }
 

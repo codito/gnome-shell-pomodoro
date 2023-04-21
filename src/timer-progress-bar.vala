@@ -131,7 +131,9 @@ namespace Pomodoro
 
         public override double resolve_value ()
         {
-            var timestamp = this._timer.get_current_time (this.get_frame_clock ().get_frame_time ());
+            var timestamp = this._timer.is_running ()
+                ? this._timer.get_current_time (this.get_frame_clock ().get_frame_time ())
+                : this._timer.get_last_state_changed_time ();
 
             return this._timer.is_started ()
                 ? this._timer.calculate_progress (timestamp)

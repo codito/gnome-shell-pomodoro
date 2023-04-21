@@ -25,8 +25,7 @@ test_names = [
   'timestamp',
   'scheduler',
   'session',
-  # 'session-manager',
-  # 'session-manager-strategy',
+  'session-manager',
   # 'utils',
 ]
 

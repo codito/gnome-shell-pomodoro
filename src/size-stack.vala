@@ -28,7 +28,7 @@ namespace Pomodoro
     /**
      * Container for transitioning between widgets of varying sizes.
      *
-     * The purpuse is to swap widgets of varying complexity or just different variants. It's tailored for interpolating
+     * The purpose is to swap widgets of varying complexity or just different variants. It's tailored for interpolating
      * window size - origin of the transition is at top left corner.
      */
     public class SizeStack : Gtk.Widget, Gtk.Buildable
@@ -185,7 +185,7 @@ namespace Pomodoro
             this.transition_animation.pause ();
             this.transition_animation = null;
 
-            // Unset last_visible_child. It was kept for the pupuse of transition.
+            // Unset last_visible_child. It was kept for the purpose of transition.
             if (this.last_visible_child != null) {
                 this.last_visible_child.page.child.set_child_visible (false);
                 this.last_visible_child = null;
