@@ -23,58 +23,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    public enum TimerAction
-    {
-        NONE,
-        RESET,
-        START,
-        STOP,
-        PAUSE,
-        RESUME,
-        SKIP,
-        REWIND,
-        // SHORTEN,  // TODO: handle duration change
-        // EXTEND,
-        FINISH,
-        SUSPEND;  // TODO: treat suspend as PAUSE/RESUME
-
-        public string to_string ()
-        {
-            switch (this)
-            {
-                case NONE:
-                    return "none";
-
-                case RESET:
-                    return "reset";
-
-                case START:
-                    return "start";
-
-                case STOP:
-                    return "stop";
-
-                case PAUSE:
-                    return "pause";
-
-                case RESUME:
-                    return "resume";
-
-                case SKIP:
-                    return "rewind";
-
-                case FINISH:
-                    return "finish";
-
-                case SUSPEND:
-                    return "suspend";
-
-                default:
-                    return "";
-            }
-        }
-    }
-
     /**
      * Helper structure for changing several fields at once. Together they can be regarded as a timer state.
      *
@@ -229,7 +177,7 @@ namespace Pomodoro
                 return this._state;
             }
             set {
-                this.set_state_full (value, Pomodoro.TimerAction.NONE);
+                this.set_state_full (value);
             }
         }
 
@@ -317,7 +265,6 @@ namespace Pomodoro
             user_data = null
         };
         private uint                 timeout_id = 0;
-        private Pomodoro.TimerAction last_action = Pomodoro.TimerAction.NONE;
         private int64                last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                last_tick_time = 0;
         private bool                 resolving_state = false;
@@ -364,7 +311,6 @@ namespace Pomodoro
          * Try to change state and update fields related to state change
          */
         private void set_state_full (Pomodoro.TimerState  state,
-                                     Pomodoro.TimerAction action,
                                      int64                timestamp = -1)
         {
             this.ensure_timestamp (ref timestamp);
@@ -380,7 +326,6 @@ namespace Pomodoro
 
             // note that some actions won't be recorded
             this.last_state_changed_time = timestamp;
-            this.last_action = action;
             this._state = state;
             this.synchronize (-1, this.last_state_changed_time);
 
@@ -538,8 +483,7 @@ namespace Pomodoro
                     paused_time = Pomodoro.Timestamp.UNDEFINED,
                     finished_time = Pomodoro.Timestamp.UNDEFINED,
                     user_data = user_data
-                },
-                Pomodoro.TimerAction.RESET
+                }
             );
         }
 
@@ -558,7 +502,7 @@ namespace Pomodoro
             new_state.started_time = timestamp;
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
-            this.set_state_full (new_state, Pomodoro.TimerAction.START, timestamp);
+            this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -577,7 +521,7 @@ namespace Pomodoro
             var new_state = this._state.copy ();
             new_state.paused_time = timestamp;
 
-            this.set_state_full (new_state, Pomodoro.TimerAction.PAUSE, timestamp);
+            this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -595,7 +539,7 @@ namespace Pomodoro
             new_state.offset += timestamp - new_state.paused_time;
             new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
-            this.set_state_full (new_state, Pomodoro.TimerAction.RESUME, timestamp);
+            this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -637,7 +581,7 @@ namespace Pomodoro
 
             new_state.offset = timestamp - new_state.started_time - new_elapsed;
 
-            this.set_state_full (new_state, Pomodoro.TimerAction.REWIND, timestamp);
+            this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -659,7 +603,7 @@ namespace Pomodoro
                 new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
-            this.set_state_full (new_state, Pomodoro.TimerAction.SKIP, timestamp);
+            this.set_state_full (new_state, timestamp);
         }
 
         /**
@@ -683,7 +627,7 @@ namespace Pomodoro
                 new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
-            this.set_state_full (new_state, Pomodoro.TimerAction.FINISH, timestamp);
+            this.set_state_full (new_state, timestamp);
         }
 
         public void synchronize (int64 monotonic_time = -1,
@@ -943,11 +887,6 @@ namespace Pomodoro
         public int64 get_last_state_changed_time ()
         {
             return this.last_state_changed_time;
-        }
-
-        public Pomodoro.TimerAction get_last_action ()
-        {
-            return this.last_action;
         }
 
         /**
