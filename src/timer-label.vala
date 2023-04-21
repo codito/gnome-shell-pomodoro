@@ -2,7 +2,7 @@
 namespace Pomodoro
 {
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-label.ui")]
-    public class TimerLabel : Gtk.Box, Gtk.Buildable
+    public class TimerLabel : Adw.Bin, Gtk.Buildable
     {
         public unowned Pomodoro.Timer timer {
             get {
@@ -41,6 +41,16 @@ namespace Pomodoro
         }
 
         [GtkChild]
+        private unowned Gtk.Stack               stack;
+        [GtkChild]
+        private unowned Gtk.Box                 box;
+        [GtkChild]
+        private unowned Pomodoro.MonospaceLabel placeholder_minutes_label;
+        [GtkChild]
+        private unowned Pomodoro.MonospaceLabel placeholder_separator_label;
+        [GtkChild]
+        private unowned Pomodoro.MonospaceLabel placeholder_seconds_label;
+        [GtkChild]
         private unowned Pomodoro.MonospaceLabel minutes_label;
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel separator_label;
@@ -61,32 +71,60 @@ namespace Pomodoro
         construct
         {
             this._session_manager = Pomodoro.SessionManager.get_default ();
-            this._timer           = _session_manager.timer;
+            this._timer           = Pomodoro.Timer.get_default ();
         }
 
         private void set_default_direction_ltr ()
         {
-            this.set_direction (Gtk.TextDirection.LTR);
+            this.placeholder_minutes_label.set_direction (Gtk.TextDirection.LTR);
+            this.placeholder_separator_label.set_direction (Gtk.TextDirection.LTR);
+            this.placeholder_seconds_label.set_direction (Gtk.TextDirection.LTR);
+
             this.minutes_label.set_direction (Gtk.TextDirection.LTR);
             this.separator_label.set_direction (Gtk.TextDirection.LTR);
             this.seconds_label.set_direction (Gtk.TextDirection.LTR);
         }
 
-        private void update_css_classes ()
+        private void update_visible_child ()
         {
-            if (this._timer.is_paused ()) {
-                this.add_css_class ("blinking");
-            }
-            else {
-                this.remove_css_class ("blinking");
-            }
+            if (this._timer.is_started ())
+            {
+                // FIXME: css animation not always kicks in
+                if (this._timer.is_paused ()) {
+                    this.box.add_css_class ("blinking");
+                }
+                else {
+                    this.box.remove_css_class ("blinking");
+                }
 
-            if (!this._timer.is_started ()) {
-                this.add_css_class ("timer-stopped");
+                this.stack.visible_child_name = "running";
             }
             else {
-                this.remove_css_class ("timer-stopped");
+                this.stack.visible_child_name = "stopped";
             }
+        }
+
+        private void update_placeholder_time (int64 timestamp = -1)
+        {
+            // TODO: should use real time-block duration, not template
+            var pomodoro_duration = this._session_manager.scheduler.session_template.pomodoro_duration;
+            var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (pomodoro_duration);
+            var minutes_uint = remaining_uint / 60;
+            var seconds_uint = remaining_uint % 60;
+
+            this.placeholder_minutes_label.text = minutes_uint.to_string ();
+            this.placeholder_seconds_label.text = "%02u".printf (seconds_uint);
+        }
+
+        private void update_remaining_time (int64 timestamp = -1)
+        {
+            var remaining = this._timer.calculate_remaining (timestamp);
+            var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (remaining);
+            var minutes_uint = remaining_uint / 60;
+            var seconds_uint = remaining_uint % 60;
+
+            this.minutes_label.text = minutes_uint.to_string ();
+            this.seconds_label.text = "%02u".printf (seconds_uint);
         }
 
         private void connect_signals ()
@@ -98,8 +136,6 @@ namespace Pomodoro
             if (this.timer_state_changed_id == 0) {
                 this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
             }
-
-            // TODO: monitor for next time-block duration when the timer is stopped
         }
 
         private void disconnect_signals ()
@@ -115,20 +151,6 @@ namespace Pomodoro
             }
         }
 
-        private void update_remaining_time (int64 timestamp = -1)
-        {
-            var remaining = this._timer.is_started ()
-                ? this._timer.calculate_remaining (timestamp)
-                : Pomodoro.State.POMODORO.get_default_duration ();
-            // TODO: when stopped show duration of next time-block
-            var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (remaining);
-            var minutes = remaining_uint / 60;
-            var seconds = remaining_uint % 60;
-
-            this.minutes_label.text = minutes.to_string ();
-            this.seconds_label.text = "%02u".printf (seconds);
-        }
-
         private void on_timer_tick (int64 timestamp)
         {
             this.update_remaining_time (timestamp);
@@ -139,14 +161,21 @@ namespace Pomodoro
         {
             var timestamp = this._timer.get_last_state_changed_time ();
 
-            this.update_remaining_time (timestamp);
-            this.update_css_classes ();
+            if (this._timer.is_started ()) {
+                this.update_remaining_time (timestamp);
+            }
+            else {
+                this.update_placeholder_time (timestamp);
+            }
+
+            this.update_visible_child ();
         }
 
         public override void map ()
         {
+            this.update_placeholder_time ();
             this.update_remaining_time ();
-            this.update_css_classes ();
+            this.update_visible_child ();
 
             this.connect_signals ();
 

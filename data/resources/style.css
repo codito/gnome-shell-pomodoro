@@ -55,10 +55,6 @@
     font-weight: bold;
 }
 
-.pomodoro-separator-label:backdrop {
-    color: @insensitive_fg_color;
-}
-
 .pomodoro-screen-notification.background {
     background-color: rgba(0, 0, 0, 0.7);
 }
@@ -123,7 +119,7 @@ sessionprogressbar {
 /**
  * PomodoroTimerLabel widget
  */
-timerlabel.timer-stopped {
+timerlabel .timer-stopped {
     opacity: 0.2;  /* same as blink */
 }
 
@@ -187,10 +183,9 @@ timerview .pomodoro-timer-state arrow {
 timerview timerlabel {
     font-size: 55pt;
     font-weight: 400;
-    opacity: 1.0;
 }
 
-timerview timerlabel > .separator-label {
+timerview timerlabel .separator-label {
     margin-left: -10px;
     margin-right: -10px;
 }
@@ -225,7 +220,7 @@ compacttimerview timerlabel {
     font-size: 16pt;
 }
 
-compacttimerview timerlabel > .separator-label {
+compacttimerview timerlabel .separator-label {
     margin-left: -3px;
     margin-right: -3px;
 }

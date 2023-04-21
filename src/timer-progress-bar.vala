@@ -29,8 +29,6 @@ namespace Pomodoro
         construct
         {
             this._timer = Pomodoro.Timer.get_default ();
-
-            // this.fade_out ();
         }
 
         private uint calculate_timeout_interval ()
@@ -94,18 +92,7 @@ namespace Pomodoro
                 this.stop_timeout ();
             }
 
-            // if (this._timer.is_started ())
-            // {
-            //     if (previous_state.started_time < 0) {
-            //         this.fade_in ();
-            //     }
-            // }
-            // else {
-            //     this.fade_out ();
-            // }
-
             this.invalidate_value ();
-            // this.queue_draw ();
         }
 
         private void connect_signals ()
