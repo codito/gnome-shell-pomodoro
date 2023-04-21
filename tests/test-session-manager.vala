@@ -1178,7 +1178,7 @@ namespace Tests
 
             debug ("\n\n================================================\nTimer.skip()");
             now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
-            timer.skip (now);
+            session_manager.advance (now);
             assert_true (session_manager.current_session == session);
             assert_false (session_manager.current_time_block == time_block_1);  // FIXME
             assert_true (session_manager.current_time_block == time_block_2);  // FIXME

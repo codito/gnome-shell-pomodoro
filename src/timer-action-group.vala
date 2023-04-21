@@ -26,47 +26,34 @@ namespace Pomodoro
     {
         public Pomodoro.Timer timer { get; construct; }
 
-        private GLib.SimpleAction start_action;
-        private GLib.SimpleAction reset_action;
-        private GLib.SimpleAction pause_action;
-        private GLib.SimpleAction resume_action;
-        private GLib.SimpleAction skip_action;
-        private GLib.SimpleAction state_action;
-        private GLib.SimpleAction skip_action;
-        private GLib.SimpleAction rewind_action;
-
-        public TimerActionGroup (Pomodoro.Timer timer)
+        public TimerActionGroup ()
         {
             GLib.Object (
-                timer: timer
+                timer: Pomodoro.Timer.get_default ()
             );
         }
 
         construct
         {
-            this.start_action = new GLib.SimpleAction ("start", null);
-            this.start_action.activate.connect (this.activate_start);
-            this.add_action (this.start_action);
+            var start_action = new GLib.SimpleAction ("start", null);
+            start_action.activate.connect (this.activate_start);
+            this.add_action (start_action);
 
-            this.reset_action = new GLib.SimpleAction ("reset", null);
-            this.reset_action.activate.connect (this.activate_reset);
-            this.add_action (this.reset_action);
+            var reset_action = new GLib.SimpleAction ("reset", null);
+            reset_action.activate.connect (this.activate_reset);
+            this.add_action (reset_action);
 
-            this.pause_action = new GLib.SimpleAction ("pause", null);
-            this.pause_action.activate.connect (this.activate_pause);
-            this.add_action (this.pause_action);
+            var pause_action = new GLib.SimpleAction ("pause", null);
+            pause_action.activate.connect (this.activate_pause);
+            this.add_action (pause_action);
 
-            this.resume_action = new GLib.SimpleAction ("resume", null);
-            this.resume_action.activate.connect (this.activate_resume);
-            this.add_action (this.resume_action);
+            var resume_action = new GLib.SimpleAction ("resume", null);
+            resume_action.activate.connect (this.activate_resume);
+            this.add_action (resume_action);
 
-            this.skip_action = new GLib.SimpleAction ("skip", null);
-            this.skip_action.activate.connect (this.activate_skip);
-            this.add_action (this.skip_action);
-
-            this.rewind_action = new GLib.SimpleAction ("rewind", null);
-            this.rewind_action.activate.connect (this.activate_rewind);
-            this.add_action (this.rewind_action);
+            var rewind_action = new GLib.SimpleAction ("rewind", null);
+            rewind_action.activate.connect (this.activate_rewind);
+            this.add_action (rewind_action);
         }
 
         private void activate_start (GLib.SimpleAction action,
@@ -91,12 +78,6 @@ namespace Pomodoro
                                       GLib.Variant?     parameter)
         {
             this.timer.resume ();
-        }
-
-        private void activate_skip (GLib.SimpleAction action,
-                                    GLib.Variant?     parameter)
-        {
-            this.timer.skip ();
         }
 
         private void activate_rewind (GLib.SimpleAction action,

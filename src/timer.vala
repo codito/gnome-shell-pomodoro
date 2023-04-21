@@ -585,28 +585,6 @@ namespace Pomodoro
         }
 
         /**
-         * Jump to end position. Mark state as "finished".
-         */
-        public void skip (int64 timestamp = -1)
-        {
-            if (!this.is_started () || this.is_finished ()) {
-                return;
-            }
-
-            this.ensure_timestamp (ref timestamp);
-
-            var new_state = this._state.copy ();
-            new_state.finished_time = timestamp;
-
-            if (new_state.paused_time >= 0) {
-                new_state.offset += timestamp - new_state.paused_time;
-                new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
-            }
-
-            this.set_state_full (new_state, timestamp);
-        }
-
-        /**
          * Mark state as "finished".
          */
         private void finish (int64 timestamp = -1)

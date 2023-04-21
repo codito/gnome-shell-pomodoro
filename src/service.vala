@@ -286,6 +286,10 @@ namespace Pomodoro
         INVALID_ELAPSED,
     }
 
+
+    /**
+     * Timer service provides similar functionality to the timer view in the app.
+     */
     [DBus (name = "org.gnomepomodoro.Pomodoro")]
     public class TimerService : GLib.Object
     {
@@ -316,12 +320,14 @@ namespace Pomodoro
         // public Stats stats { get; }  // TODO: mainly on today
 
         private Pomodoro.Timer timer;
+        private Pomodoro.SessionManager session_manager;
 
 
-        public TimerService (GLib.DBusConnection  connection,
-                             Pomodoro.Timer       timer)
+        public TimerService (GLib.DBusConnection connection)
         {
-            this.timer = timer;
+            this.session_manager = Pomodoro.SessionManager.get_default ();
+            this.timer           = Pomodoro.Timer.get_default ();
+
             this.timer.state_changed.connect (this.on_timer_state_changed);
             this.timer.finished.connect (this.on_timer_finished);
             // this.timer.suspended.connect (this.on_timer_suspended);
@@ -353,7 +359,7 @@ namespace Pomodoro
         // Optionally, hint that state should me marked as completed.
         public void skip () throws GLib.Error
         {
-            this.timer.skip ();
+            this.session_manager.advance ();
         }
 
         // TODO: rewind()

@@ -661,13 +661,6 @@ namespace Pomodoro
                 return;
             }
 
-            if (state.finished_time >= 0 && this.timer.get_last_action () == Pomodoro.TimerAction.SKIP)
-            {
-                this.advance (state.finished_time);
-
-                return;
-            }
-
             // Timer is paused or has finished. Nothing to resolve.
             // Advancing to a next time-block should be done after emitting `Timer.state_changed`.
             if (state.finished_time >= 0 || state.paused_time >= 0) {
@@ -679,8 +672,8 @@ namespace Pomodoro
             // Adjust state as if the timer has already stopped. Handling will be continued in `Timer.state_changed`.
             if (state.started_time < 0) {
                 debug ("SessionManager.on_timer_resolve_state: C");
-                state.user_data = null;
                 this.advance_to_time_block (null, timestamp);
+                state.user_data = null;
                 return;
             }
 
@@ -690,18 +683,11 @@ namespace Pomodoro
                 return;
             }
 
-            // Starting the timer. Handle expired session.
+            // Starting the timer when current session expired.
             if (this._current_session != null && this._current_session.is_expired (timestamp))
             {
                 debug ("SessionManager.on_timer_resolve_state: session expired %lld", timestamp);
-                // TODO: are timestamps correct here?
-                // var next_session = this.initialize_session (state.started_time);
-                // var next_time_block = current_session.get_first_time_block ();
-
-                // this.advance_to_time_block (next_time_block, state.started_time);
-
                 this.advance (state.started_time);
-
                 this.initialize_timer_state (ref state, timestamp);  // TODO: can we use update_timer_state() ?
                 return;
             }
@@ -710,7 +696,6 @@ namespace Pomodoro
             if (this._current_time_block == null) {  // || !this.current_time_block_entered
                 debug ("SessionManager.on_timer_resolve_state: F");
                 this.advance_to_state (Pomodoro.State.POMODORO, state.started_time);
-
                 this.initialize_timer_state (ref state, timestamp);  // TODO: can we use update_timer_state() ?
                 return;
             }
@@ -726,15 +711,6 @@ namespace Pomodoro
             this.resolve_timer_state (ref state, timestamp);
             this.resolving_timer_state--;
         }
-
-        // public void handle_timer_finished ()
-        // {
-            // TODO: pause state and wait for user activity or popup notification to do so
-            // TODO: we only want to pause or ask for confirmation only if timer finished on its own, not through
-            //       skip action
-
-        //     this.advance (this.timer.state.finished_time);
-        // }
 
         /**
          * React to timer state changes.

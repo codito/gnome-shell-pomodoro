@@ -26,11 +26,24 @@ namespace Pomodoro
     {
         public Pomodoro.SessionManager session_manager { get; construct; }
 
-        public SessionManagerActionGroup (Pomodoro.SessionManager session_manager)
+        public SessionManagerActionGroup ()
         {
             GLib.Object (
-                session_manager: session_manager
+                session_manager: Pomodoro.SessionManager.get_default ()
             );
+        }
+
+        construct
+        {
+            var advance_action = new GLib.SimpleAction ("advance", null);
+            advance_action.activate.connect (this.activate_advance);
+            this.add_action (advance_action);
+        }
+
+        private void activate_advance (GLib.SimpleAction action,
+                                       GLib.Variant?     parameter)
+        {
+            this.session_manager.advance ();
         }
     }
 }

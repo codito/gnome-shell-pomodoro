@@ -79,7 +79,7 @@ namespace Pomodoro
         construct
         {
             this.session_manager = Pomodoro.SessionManager.get_default ();
-            this.timer           = session_manager.timer;
+            this.timer           = Pomodoro.Timer.get_default ();
 
             // Right button should mirror the opacity of left button.
             this.left_button.bind_property ("opacity", this.right_button, "opacity");
@@ -139,6 +139,18 @@ namespace Pomodoro
             this.fade_animation.play ();
         }
 
+        private string get_action_name (string page_name)
+        {
+            switch (page_name)
+            {
+                case "skip":
+                    return "session-manager.advance";
+
+                default:
+                    return "timer.%s".printf (page_name);
+            }
+        }
+
         private void update_buttons ()
         {
             var current_time_block = this.session_manager.current_time_block;
@@ -178,7 +190,7 @@ namespace Pomodoro
 
             if (center_page != null) {
                 this.center_image_stack.visible_child = center_page.child;
-                this.center_button.action_name = "timer.%s".printf (center_page.name);
+                this.center_button.action_name = this.get_action_name (center_page.name);
                 this.center_button.tooltip_text = center_page.title;
             }
 
@@ -190,7 +202,7 @@ namespace Pomodoro
                     this.right_image_stack.set_visible_child_full (right_page.name, Gtk.StackTransitionType.NONE);
                 }
 
-                this.right_button.action_name = "timer.%s".printf (right_page.name);
+                this.right_button.action_name = this.get_action_name (right_page.name);
                 this.right_button.tooltip_text = right_page.name == "skip"
                     ? (is_break ? _("Start pomodoro") : _("Take a break"))
                     : right_page.title;

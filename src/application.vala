@@ -635,7 +635,7 @@ namespace Pomodoro
                 }
 
                 if (Options.skip) {
-                    this.timer.skip ();
+                    this.session_manager.advance ();
                 }
                 else if (Options.extend && this.timer.duration > 0) {
                     this.timer.duration += Pomodoro.Interval.MINUTE;

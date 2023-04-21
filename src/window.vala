@@ -167,8 +167,8 @@ namespace Pomodoro
                 this.update_timer_indicator ();
             });
 
-            this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup (this.session_manager));
-            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup (this.timer));
+            this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup ());
+            this.insert_action_group ("timer", new Pomodoro.TimerActionGroup ());
 
             this.update_title ();
             this.update_timer_indicator ();
