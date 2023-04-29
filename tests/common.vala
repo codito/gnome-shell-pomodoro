@@ -84,29 +84,46 @@ namespace Tests
         }
     }
 
-
-    /*
-    public struct SignalHandlerLogEntry
+    public void wait_for_object_finalized (owned GLib.Object object)
     {
-        public int64               timestamp;
-        public unowned GLib.Object instance;
-        public string              signal_name;
+        void* weak_object = object;
+
+        object.add_weak_pointer (&weak_object);
+        object = null;
+
+        assert_null (weak_object);
     }
 
+    // public struct SignalHandlerLogEntry
+    // {
+    //     public unowned GLib.Object instance;
+    //     public string              signal_name;
+    //     public int64               timestamp;
+    // }
 
-    public class SignalHandlerLog
+    public class SignalLogger
     {
-        public SignalHandlerLogEntry[] entries;
-
-        public SignalHandlerLog ()
+        public class Entry
         {
-            this.entries = new SignalHandlerLogEntry[0];
+            unowned GLib.Object instance;
+            string              detailed_signal;
+            int64               timestamp;
+        }
+
+        public Entry[] entries;
+
+        // private GLib.List<GLib.SignalGroup> signal_groups;
+
+        public SignalLogger ()
+        {
+            this.entries = new Entry[0];
+
             // this.handlers = new GLib.HashTable<str, ulong> ();
         }
 
         public void clear ()
         {
-            this.entries = new SignalHandlerLogEntry[0];
+            this.entries = new Entry[0];
         }
 
         public void watch (GLib.Object instance,
@@ -115,24 +132,23 @@ namespace Tests
             // public unowned GLib.Object instance;
             // this.handlers[signal_name] = this.object.connect (signal_name);
 
-            instance.connect (@"signal::$signal_name", () => {
-                message (@"Emitted $signal_name");
-            });
+            // instance.connect (@"signal::$signal_name", () => {
+            //     message (@"Emitted $signal_name");
+            // });
         }
 
-        public int count (GLib.Object instance,
-                          string      signal_name)
-        {
-            var count = 0;
+        // public int count (GLib.Object instance,
+        //                   string      signal_name)
+        // {
+        //     var count = 0;
 
-            return count;
-        }
+        //     return count;
+        // }
 
         // public string[] list (GLib.Object instance)
         // {
         // }
     }
-    */
 
 
     private class TestCase

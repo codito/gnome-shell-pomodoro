@@ -40,9 +40,9 @@ namespace Tests
         }
     }
 
-    public class StrictSchedulerTest : BaseSchedulerTest
+    public class SimpleSchedulerTest : BaseSchedulerTest
     {
-        public StrictSchedulerTest ()
+        public SimpleSchedulerTest ()
         {
             this.add_test ("calculate_cycles_completed", this.test_calculate_cycles_completed);
 
@@ -93,7 +93,7 @@ namespace Tests
         public void test_calculate_cycles_completed ()
         {
             var now = Pomodoro.Timestamp.advance (0);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             var time_block_1 = new Pomodoro.TimeBlock ();
             time_block_1.set_time_range (now, now + 2 * Pomodoro.Interval.MINUTE);
@@ -143,7 +143,7 @@ namespace Tests
         // public void test_is_time_block_completed__undefined ()
         // {
         //     var now = Pomodoro.Timestamp.advance (0);
-        //     var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+        //     var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
         //     var time_block = new Pomodoro.TimeBlock ();
         //     time_block.set_time_range (now, now + Pomodoro.Interval.MINUTE);
@@ -159,7 +159,7 @@ namespace Tests
         public void test_is_time_block_completed__pomodoro ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             var time_block = session.get_nth_time_block (2);
             var time_block_meta = session.get_time_block_meta (time_block);
@@ -179,7 +179,7 @@ namespace Tests
         public void test_is_time_block_completed__short_break ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             var time_block = session.get_nth_time_block (3);
             var time_block_meta = session.get_time_block_meta (time_block);
@@ -199,7 +199,7 @@ namespace Tests
         public void test_is_time_block_completed__long_break ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             var time_block = session.get_last_time_block ();
             var time_block_meta = session.get_time_block_meta (time_block);
@@ -222,7 +222,7 @@ namespace Tests
          */
         public void test_resolve_context__update_state ()
         {
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             Pomodoro.State[] states = {
                 Pomodoro.State.UNDEFINED,
@@ -244,7 +244,7 @@ namespace Tests
         public void test_resolve_context__update_timestamp ()
         {
             var now = Pomodoro.Timestamp.advance (0);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             int64[] timestamps = {
                 now + Pomodoro.Interval.MINUTE,
@@ -270,7 +270,7 @@ namespace Tests
 
         public void test_resolve_context__first_cycle ()
         {
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             Pomodoro.State[] states = {
                 Pomodoro.State.UNDEFINED,
@@ -312,7 +312,7 @@ namespace Tests
         public void test_resolve_context__increment_cycle ()
         {
             var now = Pomodoro.Timestamp.advance (0);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext ();
 
             // Mark `is_cycle_completed=true` for any time-block when `cycle` is 0.
@@ -381,7 +381,7 @@ namespace Tests
         public void test_resolve_context__increment_several_cycles ()
         {
             var now = Pomodoro.Timestamp.advance (0);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext () {
                 cycle = 0,
                 is_cycle_completed = true,
@@ -403,7 +403,7 @@ namespace Tests
 
         public void test_resolve_context__is_cycle_completed ()
         {
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext ();
 
             // Complete a break. Expect cycle to remain 0 and uncompleted.
@@ -521,7 +521,7 @@ namespace Tests
 
         public void test_resolve_context__is_session_completed ()
         {
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext () {
                 state = Pomodoro.State.POMODORO,
                 cycle = this.session_template.cycles,
@@ -605,7 +605,7 @@ namespace Tests
         public void test_resolve_context__completed_pomodoro ()
         {
             // var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext.initial ();
 
             // var time_block_1 = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
@@ -635,7 +635,7 @@ namespace Tests
         public void test_resolve_context__uncompleted_pomodoro ()
         {
             // var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext.initial ();
 
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
@@ -665,7 +665,7 @@ namespace Tests
         public void test_resolve_context__completed_short_break ()
         {
             // var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext.initial ();
 
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
@@ -695,7 +695,7 @@ namespace Tests
         public void test_resolve_context__uncompleted_short_break ()
         {
             // var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext.initial ();
 
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
@@ -725,7 +725,7 @@ namespace Tests
         public void test_resolve_context__completed_long_break ()
         {
             // var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext.initial ();
 
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
@@ -755,7 +755,7 @@ namespace Tests
         public void test_resolve_context__uncompleted_long_break ()
         {
             // var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext.initial ();
 
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
@@ -786,7 +786,7 @@ namespace Tests
         public void test_resolve_time_block__completed_session ()
         {
             var session = new Pomodoro.Session.from_template (this.session_template);
-            var scheduler = new Pomodoro.StrictScheduler ();  //.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler ();  //.with_template (this.session_template);
 
             // TODO
         }
@@ -822,7 +822,7 @@ namespace Tests
         {
             var timestamp = Pomodoro.Timestamp.advance (0) + Pomodoro.Interval.MINUTE;
             var session = new Pomodoro.Session ();
-            var scheduler = new Pomodoro.StrictScheduler.with_template (this.session_template);
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             scheduler.reschedule (session, timestamp);
             assert_cmpuint (session.cycles, GLib.CompareOperator.EQ, this.session_template.cycles);
@@ -868,6 +868,6 @@ public static int main (string[] args)
     Tests.init (args);
 
     return Tests.run (
-        new Tests.StrictSchedulerTest ()
+        new Tests.SimpleSchedulerTest ()
     );
 }

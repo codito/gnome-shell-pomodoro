@@ -842,7 +842,7 @@ namespace Tests
             var session = new Pomodoro.Session.from_template (this.session_template);
             assert_false (session.is_expired (now));
 
-            session.set_expiry_time (now + Pomodoro.Interval.MINUTE);
+            session.expiry_time = now + Pomodoro.Interval.MINUTE;
             assert_false (session.is_expired (now));
             assert_true (session.is_expired (now + Pomodoro.Interval.MINUTE));
         }

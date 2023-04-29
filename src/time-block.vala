@@ -9,11 +9,16 @@ namespace Pomodoro
         public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
         public weak Pomodoro.Session session { get; set; }
 
+        [CCode(notify = false)]
         public int64 start_time {
             get {
                 return this._start_time;
             }
             set {
+                if (this._start_time == value) {
+                    return;
+                }
+
                 if (value < this._end_time || Pomodoro.Timestamp.is_undefined (this._end_time)) {
                     this.set_time_range (value, this._end_time);
                 }
@@ -24,11 +29,16 @@ namespace Pomodoro
             }
         }
 
+        [CCode(notify = false)]
         public int64 end_time {
             get {
                 return this._end_time;
             }
             set {
+                if (this._end_time == value) {
+                    return;
+                }
+
                 if (value >= this._start_time || Pomodoro.Timestamp.is_undefined (this._start_time)) {
                     this.set_time_range (this._start_time, value);
                 }
@@ -42,6 +52,7 @@ namespace Pomodoro
         /**
          * `duration` of a time block, including gaps
          */
+        [CCode(notify = false)]
         public int64 duration {
             get {
                 return Pomodoro.Timestamp.subtract (this._end_time, this._start_time);
@@ -286,10 +297,6 @@ namespace Pomodoro
             gap.time_block = this;
 
             this.gaps.insert_sorted (gap, Pomodoro.TimeBlock.compare);
-
-            // TODO:
-            // - fix overlaps
-            // - make routine to sort and normalize gaps on Gap.changed
 
             this.changed ();
         }

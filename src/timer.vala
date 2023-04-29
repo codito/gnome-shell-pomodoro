@@ -182,7 +182,7 @@ namespace Pomodoro
         }
 
         /**
-         * The intended duration of the state, or running time of the timer.
+         * The intended duration of the state, not counting gaps/interruptions.
          */
         [CCode(notify = false)]
         public int64 duration {
@@ -207,7 +207,6 @@ namespace Pomodoro
                     new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
                 }
 
-                // TODO: log action: SHORTEN / EXTEND
                 this.state = new_state;
             }
         }
@@ -296,8 +295,6 @@ namespace Pomodoro
 
                 this.update_timeout (this.last_state_changed_time);
             }
-
-            // TODO: determine last action?
         }
 
         ~Timer ()
@@ -571,7 +568,6 @@ namespace Pomodoro
 
             if (new_state.paused_time >= 0) {
                 new_state.offset += timestamp - new_state.paused_time;
-                new_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
             }
 
             if (new_state.finished_time >= 0) {
@@ -917,6 +913,24 @@ namespace Pomodoro
             var duration = (double) this._state.duration;
 
             return duration > 0.0 ? elapsed / duration : 0.0;
+        }
+
+        /**
+         * Calculate finish time.
+         *
+         * When paused it returns `Timestamp.UNDEFINED`.
+         */
+        public int64 calculate_finish_time ()
+        {
+            if (!this.is_running ()) {
+                return Pomodoro.Timestamp.UNDEFINED;
+            }
+
+            if (this.is_finished ()) {
+                return this._state.finished_time;
+            }
+
+            return this._state.started_time + this._state.offset + this._state.duration;
         }
 
         /**

@@ -16,7 +16,6 @@ libgnome_pomodoro_sources = files(
   'settings.vala',
   'source.vala',
   'state.vala',
-  'strictness.vala',
   'time-block.vala',
   'time-block-entry.vala',
   'timeline.vala',

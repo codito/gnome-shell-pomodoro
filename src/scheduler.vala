@@ -87,10 +87,40 @@ namespace Pomodoro
      */
     public abstract class Scheduler : GLib.Object
     {
+        /**
+         * Time threshold below which to discard a time-block, it won't be recorded in history.
+         */
         public const int64 MIN_ELAPSED = 10 * Pomodoro.Interval.SECOND;
+
+        /**
+         * Time threshold below which to discard a time-block, it won't be recorded in history.
+         */
         public const int64 MIN_DURATION = Pomodoro.Interval.MINUTE;
 
-        public Pomodoro.SessionTemplate session_template { get; set; }
+        /**
+         * Max number of time-blocks scheduled in case scheduler enters into an infinite loop.
+         */
+        internal const uint MAX_ITERATIONS = 1000;
+
+
+        [CCode(notify = false)]
+        public Pomodoro.SessionTemplate session_template {
+            get {
+                return this._session_template;
+            }
+            set {
+                if (this._session_template.equals (value)) {
+                    return;
+                }
+
+                this._session_template = value;
+
+                this.notify_property ("session-template");
+            }
+        }
+
+        private Pomodoro.SessionTemplate _session_template;
+
 
         /**
          * Update given state according to given time-block.
@@ -134,9 +164,9 @@ namespace Pomodoro
     }
 
 
-    public class StrictScheduler : Scheduler
+    public class SimpleScheduler : Scheduler
     {
-        public StrictScheduler.with_template (Pomodoro.SessionTemplate session_template)
+        public SimpleScheduler.with_template (Pomodoro.SessionTemplate session_template)
         {
             GLib.Object (
                 session_template: session_template
@@ -229,7 +259,7 @@ namespace Pomodoro
                 context.is_session_completed = true;
             }
 
-            debug ("StrictScheduler.resolve_context() context = %s", context.to_representation ());
+            // debug ("SimpleScheduler.resolve_context() context = %s", context.to_representation ());
         }
 
         /**

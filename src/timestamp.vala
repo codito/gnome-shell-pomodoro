@@ -116,18 +116,6 @@ namespace Pomodoro.Timestamp
     // {
     // }
 
-    // TODO: remove
-    // public bool is_finite (int64 timestamp)
-    // {
-    //     return timestamp >= MIN;
-    // }
-
-    // TODO: remove
-    // public bool is_infinite (int64 timestamp)
-    // {
-    //     return timestamp < MIN;
-    // }
-
     public inline bool is_defined (int64 timestamp)
     {
         return timestamp >= MIN;
@@ -202,26 +190,6 @@ namespace Pomodoro.Timestamp
     {
         return add_interval (timestamp, -interval);
     }
-
-    // public int64 multiply (int64 timestamp,
-    //                        int64 value)
-    // {
-    //     if (is_defined (timestamp)) {
-    //         return timestamp;
-    //     }
-
-        // TODO
-    // }
-
-    // public int64 divide (int64 timestamp,
-    //                      int64 value)
-    // {
-    //     if (is_defined (timestamp)) {
-    //         return timestamp;
-    //     }
-
-        // TODO
-    // }
 
     public int64 round (int64 timestamp,
                         int64 unit)

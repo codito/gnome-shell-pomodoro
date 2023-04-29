@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
-  <enum id="org.gnomepomodoro.Pomodoro.Strictness">
-    <value nick="strict" value="0"/>
-    <value nick="lenient" value="1"/>
+  <enum id="org.gnomepomodoro.Pomodoro.Scheduler">
+    <value nick="simple" value="0"/>
+    <value nick="adaptive" value="1"/>
   </enum>
 
   <schema id="org.gnomepomodoro.Pomodoro" path="/org/gnomepomodoro/Pomodoro/">
@@ -35,8 +35,8 @@
       <summary>Number of pomodoros to a long break</summary>
       <description>Number of pomodoros to a long break.</description>
     </key>
-    <key name="strictness" enum="org.gnomepomodoro.Pomodoro.Strictness">
-      <default>"strict"</default>
+    <key name="scheduler" enum="org.gnomepomodoro.Pomodoro.Scheduler">
+      <default>"simple"</default>
       <summary>Strategy of the scheduler</summary>
       <description>Strategy of the scheduler in case you deviate from target durations.</description>
     </key>

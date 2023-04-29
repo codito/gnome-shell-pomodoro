@@ -118,9 +118,9 @@ namespace Tests
     /**
      * Wait until timer finishes
      */
-    private bool run_timer_with_timeout (Pomodoro.Timer timer,
-                                         uint           timeout = 0)
-                                         requires (!Pomodoro.Timestamp.is_frozen ())
+    private bool run_timer (Pomodoro.Timer timer,
+                            uint           timeout = 0)
+                            requires (!Pomodoro.Timestamp.is_frozen ())
     {
         var timeout_id = (uint) 0;
         var cancellable = new GLib.Cancellable ();
@@ -1750,7 +1750,7 @@ namespace Tests
             timer.start ();
             assert_false (timer.is_running ());
             assert_true (timer.is_finished ());
-            assert_true (run_timer_with_timeout (timer));
+            assert_true (run_timer (timer));
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
 
             timer.start ();
@@ -1773,7 +1773,7 @@ namespace Tests
             timer.start ();
             assert_true (timer.is_running ());
             assert_false (timer.is_finished ());
-            assert_true (run_timer_with_timeout (timer));
+            assert_true (run_timer (timer));
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
 
             timer.start ();
@@ -1796,7 +1796,7 @@ namespace Tests
             timer.start ();
             assert_true (timer.is_running ());
             assert_false (timer.is_finished ());
-            assert_true (run_timer_with_timeout (timer));
+            assert_true (run_timer (timer));
             assert_cmpint (finished_emitted, GLib.CompareOperator.EQ, 1);
 
             timer.start ();
@@ -1826,7 +1826,7 @@ namespace Tests
                 call_count++;
             });
             timer.start (reference_timestamp);
-            assert_true (run_timer_with_timeout (timer));
+            assert_true (run_timer (timer));
 
             assert_cmpint (call_count, GLib.CompareOperator.GE, 2);
             assert_cmpint (call_count, GLib.CompareOperator.LE, 3);
