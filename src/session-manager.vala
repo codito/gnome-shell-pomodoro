@@ -181,14 +181,17 @@ namespace Pomodoro
             this.freeze_timer ();
 
             if (time_block != null) {
-                this._timer.state = Pomodoro.TimerState () {
-                    duration      = time_block.end_time - time_block.start_time,
-                    offset        = time_block.calculate_elapsed (timestamp),
-                    started_time  = time_block.start_time,
-                    paused_time   = Pomodoro.Timestamp.UNDEFINED,  // TODO: when advancing to a new state, we may pause the timer
-                    finished_time = Pomodoro.Timestamp.UNDEFINED,
-                    user_data     = time_block
-                };
+                this._timer.set_state_full (
+                    Pomodoro.TimerState () {
+                        duration      = time_block.end_time - time_block.start_time,
+                        offset        = time_block.calculate_elapsed (timestamp),
+                        started_time  = time_block.start_time,
+                        paused_time   = Pomodoro.Timestamp.UNDEFINED,  // TODO: when advancing to a new state, we may pause the timer
+                        finished_time = Pomodoro.Timestamp.UNDEFINED,
+                        user_data     = time_block
+                    },
+                    timestamp
+                );
             }
             else {
                 this._timer.reset ();

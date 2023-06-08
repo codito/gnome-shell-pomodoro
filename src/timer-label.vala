@@ -161,6 +161,7 @@ namespace Pomodoro
         {
             var timestamp = this._timer.get_last_state_changed_time ();
 
+            // Prevent from displaying 0:00 while stopping the timer.
             if (this._timer.is_started ()) {
                 this.update_remaining_time (timestamp);
             }

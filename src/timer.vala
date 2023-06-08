@@ -293,7 +293,7 @@ namespace Pomodoro
                 this.last_state_changed_time = Pomodoro.Timestamp.from_now ();
                 // this.synchronize (-1, this.last_state_changed_time);
 
-                this.update_timeout (this.last_state_changed_time);
+                this.start_timeout (this.last_state_changed_time);
             }
         }
 
@@ -307,8 +307,8 @@ namespace Pomodoro
         /**
          * Try to change state and update fields related to state change
          */
-        private void set_state_full (Pomodoro.TimerState  state,
-                                     int64                timestamp = -1)
+        internal void set_state_full (Pomodoro.TimerState  state,
+                                      int64                timestamp = -1)
         {
             this.ensure_timestamp (ref timestamp);
 
@@ -321,10 +321,15 @@ namespace Pomodoro
                 return;
             }
 
-            // note that some actions won't be recorded
             this.last_state_changed_time = timestamp;
             this._state = state;
-            this.synchronize (-1, this.last_state_changed_time);
+
+            // Reset internal ticking interval, so that it aligns to seconds after skipping or rewinding.
+            if (state.started_time != previous_state.started_time ||
+                state.offset != previous_state.offset)
+            {
+                this.stop_timeout (timestamp);
+            }
 
             this.notify_property ("state");
 
@@ -513,10 +518,8 @@ namespace Pomodoro
 
             this.ensure_timestamp (ref timestamp);
 
-            timestamp = this.round_seconds (timestamp);
-
             var new_state = this._state.copy ();
-            new_state.paused_time = timestamp;
+            new_state.paused_time = this.round_seconds (timestamp);
 
             this.set_state_full (new_state, timestamp);
         }
@@ -540,7 +543,7 @@ namespace Pomodoro
         }
 
         /**
-         * Rewind and resume timer
+         * Rewind
          */
         public void rewind (int64 microseconds,
                             int64 timestamp = -1)
@@ -560,22 +563,18 @@ namespace Pomodoro
 
             this.ensure_timestamp (ref timestamp);
 
-            var timestamp_rounded = this.round_seconds (timestamp);
+            var elapsed = this.calculate_elapsed (timestamp);
+            var new_elapsed = Pomodoro.Timestamp.round (int64.max (elapsed - microseconds, 0), TICKING_INTERVAL);
+            var new_state = this._state.copy ();
 
-            var elapsed     = this.calculate_elapsed (timestamp_rounded);
-            var new_elapsed = int64.max (elapsed - microseconds, 0);
-            var new_state   = this._state.copy ();
+            new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
 
-            if (new_state.paused_time >= 0) {
-                new_state.offset += timestamp - new_state.paused_time;
+            if (Pomodoro.Timestamp.is_defined (new_state.paused_time)) {
+                new_state.offset = new_state.paused_time - new_state.started_time - new_elapsed;
             }
-
-            if (new_state.finished_time >= 0) {
-                new_state.offset += timestamp - new_state.finished_time;
-                new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
+            else {
+                new_state.offset = timestamp - new_state.started_time - new_elapsed;
             }
-
-            new_state.offset = timestamp - new_state.started_time - new_elapsed;
 
             this.set_state_full (new_state, timestamp);
         }
@@ -629,11 +628,11 @@ namespace Pomodoro
                 return Pomodoro.Timestamp.from_now ();
             }
             else {
-                if (monotonic_time < 0) {
+                if (Pomodoro.Timestamp.is_undefined (monotonic_time)) {
                     monotonic_time = GLib.get_monotonic_time ();
                 }
 
-                return this.monotonic_time_offset + monotonic_time;
+                return monotonic_time + this.monotonic_time_offset;
             }
         }
 
@@ -798,7 +797,7 @@ namespace Pomodoro
             }
 
             if (Pomodoro.Timestamp.is_frozen ()) {
-                return;  // don't run timeout in most unittests
+                return;  // don't run timeout in unittests
             }
 
             this.synchronize (-1, timestamp);
@@ -823,17 +822,7 @@ namespace Pomodoro
             }
 
             this.monotonic_time_offset = 0;
-        }
-
-        // TODO: use start_timeout() and stop_timeout()
-        private void update_timeout (int64 timestamp = -1)
-        {
-            if (this.is_running ()) {
-                this.start_timeout (timestamp);
-            }
-            else {
-                this.stop_timeout (timestamp);
-            }
+            this.last_tick_time = 0;
         }
 
         /**
@@ -980,17 +969,12 @@ namespace Pomodoro
         public signal void state_changed (Pomodoro.TimerState current_state,
                                           Pomodoro.TimerState previous_state)
         {
-            // assert (current_state == this._state);  // TODO?
-
-            // if (current_state.started_time > 0 && current_state.started_time > this.last_state_changed_time) {
-            //     this.last_state_changed_time = current_state.started_time;
-            // }
-
-            // if (current_state.paused_time > 0 && current_state.paused_time > this.last_state_changed_time) {
-            //     this.last_state_changed_time = current_state.paused_time;
-            // }
-
-            this.update_timeout (this.last_state_changed_time);
+            if (this.is_running ()) {
+                this.start_timeout (this.last_state_changed_time);
+            }
+            else {
+                this.stop_timeout (this.last_state_changed_time);
+            }
 
             if (current_state.finished_time >= 0 && previous_state.finished_time < 0) {
                 this.finished (current_state);

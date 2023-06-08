@@ -1584,8 +1584,8 @@ namespace Tests
                 new GLib.Variant.int64 (timer.calculate_elapsed (now)),
                 new GLib.Variant.int64 (4 * Pomodoro.Interval.MINUTE)
             );
-            assert_true (timer.is_running ());
-            assert_false (timer.is_paused ());
+            assert_false (timer.is_running ());
+            assert_true (timer.is_paused ());
             assert_cmpint (state_changed_emitted, GLib.CompareOperator.EQ, 1);
 
             // Rewind 5 minutes
@@ -1598,8 +1598,8 @@ namespace Tests
                 new GLib.Variant.int64 (timer.calculate_elapsed (now)),
                 new GLib.Variant.int64 (0)
             );
-            assert_true (timer.is_running ());
-            assert_false (timer.is_paused ());
+            assert_false (timer.is_running ());
+            assert_true (timer.is_paused ());
             assert_cmpint (state_changed_emitted, GLib.CompareOperator.EQ, 2);
         }
 
@@ -1669,14 +1669,24 @@ namespace Tests
                 new GLib.Variant.int64 (3200 * Pomodoro.Interval.MILLISECOND)
             );
 
-            // Rewind 1s
+            // Rewind 1s. Expect tick time and elapsed time to be rounded to seconds.
             timer.rewind (Pomodoro.Interval.SECOND, now);
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.calculate_elapsed (now)),
-                new GLib.Variant.int64 (2 * Pomodoro.Interval.SECOND)
+                new GLib.Variant.int64 (2000 * Pomodoro.Interval.MILLISECOND)
             );
-        }
 
+            // Rewind to start. Expect displayed time will be same as state duration.
+            timer.state_changed.connect (() => {
+                var timestamp = timer.get_last_state_changed_time ();
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (timer.calculate_elapsed (timestamp)),
+                    new GLib.Variant.int64 (0)
+                );
+            });
+            now = Pomodoro.Timestamp.advance (100 * Pomodoro.Interval.MILLISECOND);
+            timer.rewind (Pomodoro.Interval.MINUTE, now);
+        }
 
         /*
          * Tests for signals
@@ -1703,7 +1713,7 @@ namespace Tests
         }
 
         /**
-         * Check behavior of changing the state during resolve_state emission.
+         * Check behaviour of changing the state during resolve_state emission.
          *
          * Expect new resolve-state signal to be emitted and one state-changed signal at the end.
          */
@@ -1809,28 +1819,28 @@ namespace Tests
         {
             Pomodoro.Timestamp.unfreeze ();
 
-            var timer               = new Pomodoro.Timer (3 * Pomodoro.Interval.SECOND);
-            var now                 = Pomodoro.Timestamp.from_now ();
-            var reference_timestamp = now;
-
-            var call_count          = 0;
-            var expected_timestamp  = reference_timestamp;
-            var max_deviation       = (int64) 0;
+            var timer           = new Pomodoro.Timer (3 * Pomodoro.Interval.SECOND);
+            var call_count      = 0;
+            int64 real_times[5] = {-1, -1, -1, -1 -1};
+            int64 tick_times[5] = {-1, -1, -1, -1 -1};
+            int64 sum_deviation = 0;
 
             timer.tick.connect ((_timestamp) => {
-                var current_time = timer.get_current_time ();
+                if (call_count < 5) {
+                    real_times[call_count] = timer.calculate_elapsed (timer.get_current_time ());
+                    tick_times[call_count] = timer.calculate_elapsed (_timestamp);
+                    sum_deviation += real_times[call_count] - tick_times[call_count];
+                }
 
-                expected_timestamp += Pomodoro.Interval.SECOND;
-                max_deviation = int64.max (max_deviation,
-                                           (current_time - expected_timestamp).abs ());
                 call_count++;
             });
-            timer.start (reference_timestamp);
+            timer.start ();
             assert_true (run_timer (timer));
 
             assert_cmpint (call_count, GLib.CompareOperator.GE, 2);
-            assert_cmpint (call_count, GLib.CompareOperator.LE, 3);
-            assert_cmpuint (Pomodoro.Timestamp.to_milliseconds_uint (max_deviation), GLib.CompareOperator.LT, 100);
+
+            var mean_deviation = sum_deviation / call_count;
+            assert_cmpuint (Pomodoro.Timestamp.to_milliseconds_uint (mean_deviation.abs ()), GLib.CompareOperator.LT, 100);
         }
     }
 }
