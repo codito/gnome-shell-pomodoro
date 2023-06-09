@@ -263,13 +263,39 @@ namespace Pomodoro
             finished_time = Pomodoro.Timestamp.UNDEFINED,
             user_data = null
         };
-        private uint                 timeout_id = 0;
-        private int64                last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
-        private int64                last_tick_time = 0;
-        private bool                 resolving_state = false;
-        private Pomodoro.TimerState? state_to_resolve = null;
-        private int                  tick_freeze_count = 0;
-        private int64                monotonic_time_offset = 0;
+        private uint                  timeout_id = 0;
+        private int64                 last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
+        private int64                 last_tick_time = 0;
+        private int64                 suspend_time = Pomodoro.Timestamp.UNDEFINED;
+        private bool                  resolving_state = false;
+        private Pomodoro.TimerState?  state_to_resolve = null;
+        private int                   tick_freeze_count = 0;
+        private int                   inhibit_count = 0;
+        private int64                 monotonic_time_offset = 0;
+        private Pomodoro.SleepMonitor sleep_monitor;
+        private ulong                 prepare_for_sleep_id = 0;
+        private ulong                 woke_up_id = 0;
+
+
+        construct
+        {
+            this.sleep_monitor = Pomodoro.SleepMonitor.get_default ();
+            this.prepare_for_sleep_id = this.sleep_monitor.prepare_for_sleep.connect (
+                () => {
+                    if (this.is_running ()) {
+                        this.suspend_time = this.get_current_time ();
+                        this.stop_timeout (this.suspend_time);
+                    }
+                }
+            );
+            this.woke_up_id = this.sleep_monitor.woke_up.connect (
+                () => {
+                    if (this.is_running ()) {
+                        this.suspended (this.suspend_time, Pomodoro.Timestamp.from_now ());
+                    }
+                }
+            );
+        }
 
         public Timer (int64 duration = 0,
                       void* user_data = null)
@@ -998,11 +1024,41 @@ namespace Pomodoro
          */
         public signal void synchronized ();
 
+        /**
+         * Emitted after system wakes up.
+         */
+        [Signal (run = "first")]
+        public signal void suspended (int64 start_time,
+                                      int64 end_time)
+        {
+            this.suspend_time = Pomodoro.Timestamp.UNDEFINED;
+
+            if (this.is_running ())
+            {
+                var new_state = this._state.copy ();
+                new_state.offset += end_time - start_time;
+
+                this.set_state_full (new_state, end_time);
+            }
+        }
+
         public override void dispose ()
         {
             if (this.timeout_id != 0) {
                 GLib.Source.remove (this.timeout_id);
             }
+
+            if (this.prepare_for_sleep_id != 0) {
+                this.sleep_monitor.disconnect (this.prepare_for_sleep_id);
+                this.prepare_for_sleep_id = 0;
+            }
+
+            if (this.woke_up_id != 0) {
+                this.sleep_monitor.disconnect (this.woke_up_id);
+                this.woke_up_id = 0;
+            }
+
+            this.sleep_monitor = null;
 
             base.dispose ();
         }

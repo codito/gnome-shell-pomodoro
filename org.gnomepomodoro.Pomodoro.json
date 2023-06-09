@@ -9,7 +9,8 @@
         "--share=ipc",
         "--socket=fallback-x11",
         "--socket=wayland",
-        "--device=dri"
+        "--device=dri",
+        "--system-talk-name=org.freedesktop.login1"
     ],
     "build-options" : {
         "cflags" : "-O2 -g",
