@@ -26,6 +26,7 @@ namespace Pomodoro
                 this.timer_resolve_state_id = this._timer.resolve_state.connect (this.on_timer_resolve_state);
                 this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
                 this.timer_finished_id = this._timer.finished.connect (this.on_timer_finished);
+                this.timer_suspended_id = this._timer.suspended.connect (this.on_timer_suspended);
             }
         }
 
@@ -121,8 +122,8 @@ namespace Pomodoro
         private int                              timer_freeze_count = 0;
         private ulong                            timer_resolve_state_id = 0;
         private ulong                            timer_state_changed_id = 0;
-        private ulong                            timer_suspended_id = 0;
         private ulong                            timer_finished_id = 0;
+        private ulong                            timer_suspended_id = 0;
         private uint                             expiry_timeout_id = 0;
         private ulong                            scheduler_notify_session_template_id = 0;
         private ulong                            scheduler_rescheduled_session_id = 0;
@@ -700,6 +701,11 @@ namespace Pomodoro
             }
         }
 
+        private void expire_current_session (int64 timestamp = -1)
+        {
+            this.advance_to_state (Pomodoro.State.UNDEFINED, timestamp);
+        }
+
         private void update_current_time_block (Pomodoro.TimerState current_state,
                                                 Pomodoro.TimerState previous_state,
                                                 int64               timestamp)
@@ -839,6 +845,19 @@ namespace Pomodoro
             this.advance (state.finished_time);
         }
 
+        private void on_timer_suspended (int64 start_time,
+                                         int64 end_time)
+        {
+            if (this._current_session != null)
+            {
+                this._current_session.expiry_time = start_time + SESSION_EXPIRY_TIMEOUT;
+
+                if (this._current_session.is_expired (end_time)) {
+                    this.expire_current_session (end_time);
+                }
+            }
+        }
+
         private void on_current_time_block_changed (Pomodoro.TimeBlock time_block)
         {
             if (this.resolving_timer_state == 0) {
@@ -866,7 +885,7 @@ namespace Pomodoro
             return GLib.Timeout.add_seconds (seconds,
                 () => {
                     session_manager.expiry_timeout_id = 0;
-                    session_manager.current_session = null;
+                    session_manager.expire_current_session ();
 
                     return GLib.Source.REMOVE;
                 }
@@ -981,14 +1000,14 @@ namespace Pomodoro
                 this.timer_state_changed_id = 0;
             }
 
-            if (this._timer != null && this.timer_suspended_id != 0) {
-                this._timer.disconnect (this.timer_suspended_id);
-                this.timer_suspended_id = 0;
-            }
-
             if (this._timer != null && this.timer_finished_id != 0) {
                 this._timer.disconnect (this.timer_finished_id);
                 this.timer_finished_id = 0;
+            }
+
+            if (this._timer != null && this.timer_suspended_id != 0) {
+                this._timer.disconnect (this.timer_suspended_id);
+                this.timer_suspended_id = 0;
             }
 
             if (this._scheduler != null && this.scheduler_notify_session_template_id != 0) {

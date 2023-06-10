@@ -294,8 +294,13 @@ namespace Pomodoro
             this.woke_up_id = this.sleep_monitor.woke_up.connect (
                 () => {
                     if (this.is_running ()) {
-                        this.suspended (this.suspend_time, Pomodoro.Timestamp.from_now ());
+                        var timestamp = Pomodoro.Timestamp.from_now ();
+
+                        this.synchronize (Pomodoro.Timestamp.UNDEFINED, timestamp);
+                        this.suspended (this.suspend_time, timestamp);
                     }
+
+                    this.suspend_time = Pomodoro.Timestamp.UNDEFINED;
                 }
             );
         }
@@ -1026,13 +1031,16 @@ namespace Pomodoro
         public signal void synchronized ();
 
         /**
-         * Emitted after system wakes up.
+         * Emitted right after system wakes up and the timer synchronizes.
          */
-        [Signal (run = "first")]
+        [Signal (run = "last")]
         public signal void suspended (int64 start_time,
                                       int64 end_time)
         {
-            this.suspend_time = Pomodoro.Timestamp.UNDEFINED;
+            if (this.last_state_changed_time > start_time) {
+                // Signal handler pushed a new state.
+                return;
+            }
 
             if (this.is_running ())
             {
