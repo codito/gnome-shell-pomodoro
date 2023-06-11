@@ -4,6 +4,9 @@ namespace Pomodoro
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-label.ui")]
     public class TimerLabel : Adw.Bin, Gtk.Buildable
     {
+        private const uint BLINK_DURATION = 1000;
+        private const double BLINK_FADE_VALUE = 0.2;
+
         public unowned Pomodoro.Timer timer {
             get {
                 return this._timer;
@@ -61,6 +64,7 @@ namespace Pomodoro
         private Pomodoro.Timer          _timer;
         private ulong                   timer_state_changed_id = 0;
         private ulong                   timer_tick_id = 0;
+        private Adw.TimedAnimation?     blink_animation;
 
 
         static construct
@@ -89,12 +93,11 @@ namespace Pomodoro
         {
             if (this._timer.is_started ())
             {
-                // FIXME: css animation not always kicks in
                 if (this._timer.is_paused ()) {
-                    this.box.add_css_class ("blinking");
+                    this.start_blinking_animation ();
                 }
                 else {
-                    this.box.remove_css_class ("blinking");
+                    this.stop_blinking_animation ();
                 }
 
                 this.stack.visible_child_name = "running";
@@ -125,6 +128,72 @@ namespace Pomodoro
 
             this.minutes_label.text = minutes_uint.to_string ();
             this.seconds_label.text = "%02u".printf (seconds_uint);
+        }
+
+        private void start_blinking_animation ()
+        {
+            if (!this.get_mapped ()) {
+                return;
+            }
+
+            if (this.blink_animation != null &&
+                this.blink_animation.alternate &&
+                this.blink_animation.state == Adw.AnimationState.PLAYING)
+            {
+                return;
+            }
+
+            var animation_target = new Adw.PropertyAnimationTarget (this.box, "opacity");
+            var animation = new Adw.TimedAnimation (this.box,
+                                                    this.box.opacity, BLINK_FADE_VALUE, BLINK_DURATION,
+                                                    animation_target);
+            animation.alternate = this.box.opacity == 1.0;
+            // animation.follow_enable_animations_setting = false;  // TODO: added in libadwaita 1.3
+
+            if (animation.value_from <= BLINK_FADE_VALUE) {
+                animation.value_to = 1.0;
+            }
+
+            if (animation.alternate) {
+                animation.repeat_count = uint.MAX;
+                animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
+            }
+            else {
+                animation.easing = Adw.Easing.EASE_OUT_QUAD;
+                animation.done.connect (this.start_blinking_animation);
+            }
+
+            if (this.blink_animation != null) {
+                this.blink_animation.reset ();
+            }
+
+            this.blink_animation = animation;
+            this.blink_animation.play ();
+        }
+
+        private void stop_blinking_animation ()
+        {
+            if (this.blink_animation == null) {
+                return;
+            }
+
+            if (this.get_mapped () && this.box.opacity != 1.0)
+            {
+                var animation_target = new Adw.PropertyAnimationTarget (this.box, "opacity");
+                var animation = new Adw.TimedAnimation (this.box,
+                                                        this.box.opacity, 1.0, 500,
+                                                        animation_target);
+                animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
+                // animation.follow_enable_animations_setting = false;  // TODO: added in libadwaita 1.3
+
+                this.blink_animation.reset ();
+                this.blink_animation = animation;
+                this.blink_animation.play ();
+            }
+            else {
+                this.blink_animation.reset ();
+                this.box.opacity = 1.0;
+            }
         }
 
         private void connect_signals ()
@@ -181,11 +250,16 @@ namespace Pomodoro
             this.connect_signals ();
 
             base.map ();
+
+            if (this._timer.is_paused ()) {
+                this.start_blinking_animation ();
+            }
         }
 
         public override void unmap ()
         {
             this.disconnect_signals ();
+            this.stop_blinking_animation ();
 
             base.unmap ();
         }
@@ -200,6 +274,7 @@ namespace Pomodoro
         public override void dispose ()
         {
             this.disconnect_signals ();
+            this.stop_blinking_animation ();
 
             base.dispose ();
         }
