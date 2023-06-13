@@ -158,11 +158,11 @@ timerview .suggested-action:disabled {
     background-color: @insensitive_fg_color;
 }
 
-timerview .pomodoro-timer-state {
-    font-weight: 700;
+timerview .pomodoro-state-menu > button {
+    padding: 8px 12px 8px 16px;
 }
 
-timerview .pomodoro-timer-state arrow {
+timerview .pomodoro-state-menu arrow {
     opacity: 0;
     margin-left: -16px;
 }
@@ -183,7 +183,7 @@ timerview progressbar {
 }
 
 timerview timerlabel:backdrop,
-timerview .pomodoro-timer-state label:backdrop,
+timerview timerstatemenu label:backdrop,
 timerview progressbar:backdrop,
 timerview sessionprogressbar:backdrop {
     color: @insensitive_fg_color;
@@ -196,11 +196,19 @@ timerview sessionprogressbar:backdrop {
 compacttimerview {
     min-width: 300px;
     padding: 5px;
-    padding-left: 12px;
 }
 
 compacttimerview > grid > separator {
     margin-left: 7px;
+}
+
+compacttimerview .pomodoro-state-menu > button {
+    padding: 3px 5px 3px 9px;
+}
+
+compacttimerview .pomodoro-state-menu arrow {
+    opacity: 0;
+    margin-left: -16px;
 }
 
 compacttimerview timerlabel {
@@ -210,6 +218,10 @@ compacttimerview timerlabel {
 compacttimerview timerlabel .separator-label {
     margin-left: -3px;
     margin-right: -3px;
+}
+
+compacttimerview progressbar {
+    padding-left: 9px;
 }
 
 compacttimerview timercontrolbuttons button {

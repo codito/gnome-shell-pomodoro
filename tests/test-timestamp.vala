@@ -29,8 +29,6 @@ namespace Tests
             this.add_test ("round__negative",
                            this.test_round__negative);
 
-            this.add_test ("add",
-                           this.test_add);
             this.add_test ("add_interval",
                            this.test_add_interval);
             this.add_test ("subtract",
@@ -115,34 +113,6 @@ namespace Tests
             );
         }
 
-        public void test_add ()
-        {
-            var interval    = Pomodoro.Interval.MINUTE;
-            var timestamp_1 = Pomodoro.Timestamp.from_now ();
-            var timestamp_2 = timestamp_1 + interval;
-
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.add (timestamp_1, 0)),
-                new GLib.Variant.int64 (timestamp_1)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.add (timestamp_1, timestamp_2)),
-                new GLib.Variant.int64 (timestamp_1 + timestamp_2)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.add (timestamp_1, Pomodoro.Timestamp.UNDEFINED)),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.add (Pomodoro.Timestamp.UNDEFINED, timestamp_1)),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.add (Pomodoro.Timestamp.MAX, timestamp_1)),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.MAX)
-            );
-        }
-
         public void test_add_interval ()
         {
             var interval    = Pomodoro.Interval.MINUTE;
@@ -190,16 +160,16 @@ namespace Tests
                 new GLib.Variant.int64 (interval)
             );
             assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Timestamp.subtract (timestamp_1, timestamp_2)),
+                new GLib.Variant.int64 (-interval)
+            );
+            assert_cmpvariant (
                 new GLib.Variant.int64 (Pomodoro.Timestamp.subtract (timestamp_1, Pomodoro.Timestamp.UNDEFINED)),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
+                new GLib.Variant.int64 (0)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (Pomodoro.Timestamp.subtract (Pomodoro.Timestamp.UNDEFINED, timestamp_1)),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.subtract (Pomodoro.Timestamp.MIN, timestamp_1)),
-                new GLib.Variant.int64 (Pomodoro.Timestamp.MIN)
+                new GLib.Variant.int64 (0)
             );
         }
 

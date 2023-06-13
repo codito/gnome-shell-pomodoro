@@ -179,19 +179,16 @@ namespace Tests
                         new GLib.Variant.int64 (meta.intended_duration),
                         new GLib.Variant.int64 (template.pomodoro_duration)
                     );
-                    assert_false (meta.is_long_break);
                 }
                 else if (index < time_blocks.length - 1) {
-                    assert_true (time_block.state == Pomodoro.State.BREAK);
-                    assert_false (meta.is_long_break);
+                    assert_true (time_block.state == Pomodoro.State.SHORT_BREAK);
                     assert_cmpvariant (
                         new GLib.Variant.int64 (meta.intended_duration),
                         new GLib.Variant.int64 (template.short_break_duration)
                     );
                 }
                 else {
-                    assert_true (time_block.state == Pomodoro.State.BREAK);
-                    assert_true (meta.is_long_break);
+                    assert_true (time_block.state == Pomodoro.State.LONG_BREAK);
                     assert_cmpvariant (
                         new GLib.Variant.int64 (meta.intended_duration),
                         new GLib.Variant.int64 (template.long_break_duration)
@@ -251,7 +248,7 @@ namespace Tests
             session_3.notify["cycles"].connect (() => {
                 notify_cycles_emitted++;
             });
-            session_3.append (new Pomodoro.TimeBlock (Pomodoro.State.BREAK));
+            session_3.append (new Pomodoro.TimeBlock (Pomodoro.State.SHORT_BREAK));
             assert_cmpuint (session_3.cycles, GLib.CompareOperator.EQ, 0);
             assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 0);
             session_3.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
@@ -765,7 +762,6 @@ namespace Tests
             );
             assert_cmpuint (first_time_block_meta.cycle, GLib.CompareOperator.EQ, 1);
             assert_cmpuint (first_time_block_meta.status, GLib.CompareOperator.EQ, Pomodoro.TimeBlockStatus.SCHEDULED);
-            assert_false (first_time_block_meta.is_long_break);
 
             var last_time_block = session.get_last_time_block ();
             var last_time_block_meta = session.get_time_block_meta (last_time_block);
@@ -775,7 +771,6 @@ namespace Tests
             );
             assert_cmpuint (last_time_block_meta.cycle, GLib.CompareOperator.EQ, this.session_template.cycles);
             assert_cmpuint (first_time_block_meta.status, GLib.CompareOperator.EQ, Pomodoro.TimeBlockStatus.SCHEDULED);
-            assert_true (last_time_block_meta.is_long_break);
         }
 
         public void test_set_time_block_status__completed ()

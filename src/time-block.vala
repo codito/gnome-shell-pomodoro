@@ -5,7 +5,14 @@ namespace Pomodoro
 {
     public class TimeBlock : GLib.InitiallyUnowned
     {
-        public Pomodoro.State state { get; construct; default = Pomodoro.State.UNDEFINED; }
+        public Pomodoro.State state {
+            get {
+                return this._state;
+            }
+            construct {
+                this._state = value;
+            }
+        }
         public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
         public weak Pomodoro.Session session { get; set; }
 
@@ -71,6 +78,7 @@ namespace Pomodoro
         protected GLib.SList<Pomodoro.Gap> gaps = null;
         protected int64                    _start_time = Pomodoro.Timestamp.UNDEFINED;
         protected int64                    _end_time = Pomodoro.Timestamp.UNDEFINED;
+        private   Pomodoro.State           _state = Pomodoro.State.UNDEFINED;
         private   int                      changed_freeze_count = 0;
         private   bool                     changed_is_pending = false;
 
@@ -365,6 +373,14 @@ namespace Pomodoro
             this.handle_changed ();
         }
 
+        /**
+         * We don't allow changing of `TimeBlock.state` after the time-block changes status to in-progress.
+         * However, it's allowed to change state of a scheduled time-block.
+         */
+        internal void set_state_internal (Pomodoro.State state)
+        {
+            this._state = state;
+        }
 
         /**
          * Convenience alias for `Session.get_time_block_meta(...)`

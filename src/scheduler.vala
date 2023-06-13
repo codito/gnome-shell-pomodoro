@@ -26,7 +26,7 @@ namespace Pomodoro
             this.energy = 1.0;
         }
 
-        public static Pomodoro.SchedulerContext initial (int64 timestamp = -1)
+        public static Pomodoro.SchedulerContext initial (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -149,13 +149,14 @@ namespace Pomodoro
          * Reschedule time-blocks if needed.
          *
          * It will affect time-blocks not marked as completed or uncompleted. May add/remove time-blocks.
+         *
+         * `next_time_block` - indicates a time-block that is in-progress of is selected to be in-progress.
          */
-        public void reschedule (Pomodoro.Session session,
-                                int64            timestamp = -1)
+        public void reschedule (Pomodoro.Session    session,
+                                Pomodoro.TimeBlock? next_time_block = null,
+                                int64               timestamp = -1)
         {
-            GLib.debug ("Scheduler.reschedule: %lld", timestamp);
-
-            session.reschedule (this, timestamp);
+            session.reschedule (this, next_time_block, timestamp);
         }
 
         public signal void populated_session (Pomodoro.Session session);
@@ -182,7 +183,7 @@ namespace Pomodoro
             }
 
             if (time_block_meta.intended_duration == 0) {
-                GLib.debug ("Can't tell whether time-block has completed. There is no `intended_duration`.");
+                GLib.warning ("Can't tell whether time-block has completed. There is no `intended_duration`.");
                 return 0;
             }
 
@@ -215,12 +216,6 @@ namespace Pomodoro
 
             if (time_block.state == Pomodoro.State.POMODORO)
             {
-                // GLib.debug (
-                //     "is_scheduled = %s, is_cycle_completed = %s",
-                //     time_block_meta.is_scheduled () ? "true" : "false",
-                //     context.is_cycle_completed ? "true" : "false"
-                // );
-
                 // Start new cycle with first pomodoro.
                 if (context.is_cycle_completed) {
                     context.cycle++;
@@ -251,15 +246,11 @@ namespace Pomodoro
                                            context.cycle == this.session_template.cycles && context.is_cycle_completed;
             }
 
-            // if (!context.needs_long_break) {
-                // debug ("%u / %u", context.cycle, this.session_template.cycles);
-            // }
-
-            if (time_block_meta.is_long_break && time_block_meta.status != Pomodoro.TimeBlockStatus.UNCOMPLETED) {
+            if (time_block.state == Pomodoro.State.LONG_BREAK &&
+                time_block_meta.status != Pomodoro.TimeBlockStatus.UNCOMPLETED)
+            {
                 context.is_session_completed = true;
             }
-
-            // debug ("SimpleScheduler.resolve_context() context = %s", context.to_representation ());
         }
 
         /**
@@ -267,19 +258,17 @@ namespace Pomodoro
          */
         public override Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerContext context)
         {
-            // Suggest to start new session.
+            // Suggest to start a new session.
             if (context.is_session_completed) {
                 return null;
             }
 
-            // Ensure last cycle ends with a break.
-            // if (context.state != Pomodoro.State.POMODORO && context.cycle >= this.session_template.cycles) {
-            //     return null;
-            // }
-
+            var state = context.state == Pomodoro.State.POMODORO
+                ? (context.needs_long_break ? Pomodoro.State.LONG_BREAK : Pomodoro.State.SHORT_BREAK)
+                : Pomodoro.State.POMODORO;
             var time_block = new Pomodoro.TimeBlock.with_start_time (
                 context.timestamp,
-                context.state == Pomodoro.State.POMODORO ? Pomodoro.State.BREAK : Pomodoro.State.POMODORO,
+                state,
                 Pomodoro.Source.SCHEDULER);
 
             // TODO: adjust session template according to available time
@@ -291,10 +280,12 @@ namespace Pomodoro
                     time_block.duration = session_template.pomodoro_duration;
                     break;
 
-                case Pomodoro.State.BREAK:
-                    time_block.duration = context.needs_long_break
-                        ? session_template.long_break_duration
-                        : session_template.short_break_duration;
+                case Pomodoro.State.SHORT_BREAK:
+                    time_block.duration = session_template.short_break_duration;
+                    break;
+
+                case Pomodoro.State.LONG_BREAK:
+                    time_block.duration = session_template.long_break_duration;
                     break;
 
                 default:

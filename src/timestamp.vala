@@ -126,26 +126,6 @@ namespace Pomodoro.Timestamp
         return timestamp < MIN;
     }
 
-    public int64 add (int64 timestamp,
-                      int64 other)
-    {
-        // assert_not_reached ();  // TODO: remove
-
-        // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
-
-        if (is_undefined (timestamp)) {
-            return timestamp;
-        }
-
-        if (is_undefined (other)) {
-            return UNDEFINED;
-        }
-
-        return timestamp < MAX - other
-            ? timestamp + other
-            : MAX;
-    }
-
     public int64 add_interval (int64 timestamp,
                                int64 interval)
     {
@@ -167,22 +147,23 @@ namespace Pomodoro.Timestamp
         }
     }
 
+    /**
+     * Subtract two timestamps. The result is an interval.
+     */
     public int64 subtract (int64 timestamp,
                            int64 other)
     {
         // TODO: use hardware acceleration for handling overflow https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
 
         if (is_undefined (timestamp)) {
-            return UNDEFINED;
+            return 0;
         }
 
         if (is_undefined (other)) {
-            return UNDEFINED;
+            return 0;
         }
 
-        return timestamp > MIN + other
-            ? timestamp - other
-            : MIN;
+        return timestamp - other;
     }
 
     public int64 subtract_interval (int64 timestamp,

@@ -24,7 +24,24 @@ namespace Pomodoro
 {
     public class SessionManagerActionGroup : GLib.SimpleActionGroup
     {
-        public Pomodoro.SessionManager session_manager { get; construct; }
+        public Pomodoro.SessionManager session_manager {
+            get {
+                return this._session_manager;
+            }
+            construct {
+                this._session_manager = value;
+
+                this.notify_current_time_block_id = this._session_manager.notify["current-time-block"].connect (
+                    () => {
+                        this.state_action.set_state (new Variant.string (this.get_current_state ()));
+                    }
+                );
+            }
+        }
+
+        private Pomodoro.SessionManager _session_manager;
+        private GLib.SimpleAction       state_action;
+        private ulong                   notify_current_time_block_id = 0;
 
         public SessionManagerActionGroup ()
         {
@@ -38,12 +55,50 @@ namespace Pomodoro
             var advance_action = new GLib.SimpleAction ("advance", null);
             advance_action.activate.connect (this.activate_advance);
             this.add_action (advance_action);
+
+            var state_action = new GLib.SimpleAction.stateful ("state",
+                                                               GLib.VariantType.STRING,
+                                                               new GLib.Variant.string (this.get_current_state ()));
+            state_action.activate.connect (this.activate_state);
+            this.add_action (state_action);
+
+            this.state_action = state_action;
+        }
+
+        private string get_current_state ()
+        {
+            var current_time_block = this.session_manager.current_time_block;
+            var state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+
+            return state.to_string ();
         }
 
         private void activate_advance (GLib.SimpleAction action,
                                        GLib.Variant?     parameter)
         {
             this.session_manager.advance ();
+        }
+
+        private void activate_state (GLib.SimpleAction action,
+                                     GLib.Variant?     parameter)
+        {
+            if (parameter == null) {
+                return;
+            }
+
+            this.session_manager.advance_to_state (Pomodoro.State.from_string (parameter.get_string ()));
+        }
+
+        public override void dispose ()
+        {
+            if (this.notify_current_time_block_id != 0) {
+                this.session_manager.disconnect (notify_current_time_block_id);
+                this.notify_current_time_block_id = 0;
+            }
+
+            this.state_action = null;
+
+            base.dispose ();
         }
     }
 }

@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
+  <menu id="state_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Pomodoro</attribute>
+        <attribute name="action">session-manager.state</attribute>
+        <attribute name="target">pomodoro</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Short Break</attribute>
+        <attribute name="action">session-manager.state</attribute>
+        <attribute name="target">short-break</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Long Break</attribute>
+        <attribute name="action">session-manager.state</attribute>
+        <attribute name="target">long-break</attribute>
+      </item>
+    </section>
+  </menu>
+
   <template class="PomodoroCompactTimerView" parent="GtkWidget">
 <!--    <property name="width-request">300</property>-->
     <child>
@@ -17,21 +37,17 @@
             <property name="spacing">20</property>
             <property name="height-request">50</property>
             <child>
-              <object class="GtkLabel">
-                <property name="can-focus">False</property>
+              <object class="GtkMenuButton" id="state_menubutton">
+                <property name="receives-default">0</property>
                 <property name="halign">start</property>
-                <property name="valign">center</property>
-                <property name="label" translatable="yes">Task</property>
+                <property name="has-frame">0</property>
+                <property name="use-underline">0</property>
+                <property name="direction">down</property>
+                <property name="menu-model">state_menu</property>
                 <style>
                   <class name="title-3"/>
+                  <class name="pomodoro-state-menu"/>
                 </style>
-                <!--
-                <layout>
-                  <property name="expand">True</property>
-                  <property name="fill">True</property>
-                  <property name="position">0</property>
-                </layout>
-                -->
               </object>
             </child>
             <child>
@@ -43,14 +59,6 @@
                   <class name="pomodoro-timer-label"/>
                   <class name="title-3"/>
                 </style>
-                <!--
-                <layout>
-                  <property name="expand">False</property>
-                  <property name="fill">True</property>
-                  <property name="pack-type">end</property>
-                  <property name="position">1</property>
-                </layout>
-                -->
               </object>
             </child>
             <layout>
@@ -60,7 +68,7 @@
           </object>
         </child>
         <child>
-          <object class="PomodoroTimerProgressBar">
+          <object class="PomodoroTimerProgressBar" id="timer_progressbar">
             <property name="line-width">5</property>
             <property name="halign">fill</property>
             <property name="hexpand">True</property>

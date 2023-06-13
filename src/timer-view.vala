@@ -5,7 +5,7 @@ namespace Pomodoro
     public class TimerView : Gtk.Widget, Gtk.Buildable
     {
         [GtkChild]
-        private unowned Gtk.MenuButton timer_state_menubutton;
+        private unowned Gtk.MenuButton state_menubutton;
         [GtkChild]
         private unowned Pomodoro.SessionProgressBar session_progressbar;
         [GtkChild]
@@ -30,25 +30,29 @@ namespace Pomodoro
             this.layout_manager  = new Gtk.BinLayout ();
         }
 
+        private string get_state_label ()
+        {
+            var current_time_block = this.session_manager.current_time_block;
+            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+
+            return current_state.get_label ();
+        }
+
         private void update_css_classes ()
         {
             if (this.timer.is_running ()) {
-                this.timer_state_menubutton.add_css_class ("timer-running");
+                this.state_menubutton.add_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
             }
             else {
-                this.timer_state_menubutton.remove_css_class ("timer-running");
+                this.state_menubutton.remove_css_class ("timer-running");
                 this.session_progressbar.add_css_class ("timer-running");
             }
         }
 
         private void update_buttons ()
         {
-            var current_time_block = this.session_manager.current_time_block;
-
-            this.timer_state_menubutton.label = current_time_block != null
-                ? current_time_block.state.get_label ()
-                : _("Stopped");
+            this.state_menubutton.label = this.get_state_label ();
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,

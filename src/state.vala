@@ -2,14 +2,18 @@ namespace Pomodoro
 {
     /**
      * Pomodoro.State
+     *
+     * In general, there are main states UNDEFINED, POMODORO and BREAK.
+     * BREAK will be resolved to either SHORT_BREAK or LONG_BREAK by the session-manager / scheduler.
      */
     public enum State
     {
-        UNDEFINED = 0,
-        POMODORO = 1,
-        BREAK = 2,
-        SHORT_BREAK = 2,  // TODO: remove
-        LONG_BREAK = 2;  // TODO: remove
+        UNDEFINED ,
+        POMODORO,
+        BREAK,
+        SHORT_BREAK,
+        LONG_BREAK;
+
 
         public string to_string ()
         {
@@ -21,11 +25,11 @@ namespace Pomodoro
                 case BREAK:
                     return "break";
 
-                // case SHORT_BREAK:
-                //     return "short-break";
+                case SHORT_BREAK:
+                    return "short-break";
 
-                // case LONG_BREAK:
-                //     return "long-break";
+                case LONG_BREAK:
+                    return "long-break";
 
                 default:
                     return "";
@@ -42,18 +46,18 @@ namespace Pomodoro
                 case "break":
                     return BREAK;
 
-                // case "short-break":
-                //     return SHORT_BREAK;
+                case "short-break":
+                    return SHORT_BREAK;
 
-                // case "long-break":
-                //     return LONG_BREAK;
+                case "long-break":
+                    return LONG_BREAK;
 
                 default:
                     return UNDEFINED;
             }
         }
 
-        public string get_label ()  // TODO: remove?
+        public string get_label ()
         {
             switch (this)
             {
@@ -66,24 +70,38 @@ namespace Pomodoro
                 case BREAK:
                     return _("Break");
 
-                // case SHORT_BREAK:
-                //     return _("Short Break");
+                case SHORT_BREAK:
+                    return _("Short Break");
 
-                // case LONG_BREAK:
-                //     return _("Long Break");
+                case LONG_BREAK:
+                    return _("Long Break");
 
                 default:
-                    return "";
+                    assert_not_reached ();
            }
         }
 
-        public bool is_break ()  // TODO: remove
+        public bool compare (Pomodoro.State other)
         {
-            return this == SHORT_BREAK ||
+            if (this == BREAK) {
+                return other.is_break ();
+            }
+
+            if (other == Pomodoro.State.BREAK) {
+                return this.is_break ();
+            }
+
+            return this == other;
+        }
+
+        public bool is_break ()
+        {
+            return this == BREAK ||
+                   this == SHORT_BREAK ||
                    this == LONG_BREAK;
         }
 
-        public int64 get_default_duration ()  // TODO: remove
+        public int64 get_default_duration ()
         {
             var settings = Pomodoro.get_settings ();
             uint seconds;
@@ -95,12 +113,13 @@ namespace Pomodoro
                     break;
 
                 case BREAK:
+                case SHORT_BREAK:
                     seconds = settings.get_uint ("short-break-duration");
                     break;
 
-                // case LONG_BREAK:
-                //     seconds = settings.get_uint ("long-break-duration");
-                //     break;
+                case LONG_BREAK:
+                    seconds = settings.get_uint ("long-break-duration");
+                    break;
 
                 default:
                     seconds = 0;
@@ -109,31 +128,5 @@ namespace Pomodoro
 
             return (int64) seconds * Pomodoro.Interval.SECOND;
         }
-
-        /*
-        public static int64 get_pomodoro_duration ()
-        {
-            var settings = Pomodoro.get_settings ();
-            var seconds = settings.get_uint ("pomodoro-duration");
-
-            return (int64) seconds * Pomodoro.Interval.SECOND;
-        }
-
-        public static int64 get_short_break_duration ()
-        {
-            var settings = Pomodoro.get_settings ();
-            var seconds = settings.get_uint ("short-break-duration");
-
-            return (int64) seconds * Pomodoro.Interval.SECOND;
-        }
-
-        public static int64 get_long_break_duration ()
-        {
-            var settings = Pomodoro.get_settings ();
-            var seconds = settings.get_uint ("long-break-duration");
-
-            return (int64) seconds * Pomodoro.Interval.SECOND;
-        }
-        */
     }
 }

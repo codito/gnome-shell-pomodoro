@@ -8,8 +8,10 @@ namespace Tests
                            this.test_new__undefined);
             this.add_test ("new__pomodoro",
                            this.test_new__pomodoro);
-            this.add_test ("new__break",
-                           this.test_new__break);
+            this.add_test ("new__short_break",
+                           this.test_new__short_break);
+            this.add_test ("new__long_break",
+                           this.test_new__long_break);
 
             this.add_test ("set_session",
                            this.test_set_session);
@@ -85,9 +87,19 @@ namespace Tests
             assert_true (Pomodoro.Timestamp.is_undefined (time_block.end_time));
         }
 
-        public void test_new__break ()
+        public void test_new__short_break ()
         {
-            var state = Pomodoro.State.BREAK;
+            var state = Pomodoro.State.SHORT_BREAK;
+            var time_block = new Pomodoro.TimeBlock (state);
+
+            assert_true (time_block.state == state);
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.start_time));
+            assert_true (Pomodoro.Timestamp.is_undefined (time_block.end_time));
+        }
+
+        public void test_new__long_break ()
+        {
+            var state = Pomodoro.State.LONG_BREAK;
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
@@ -217,6 +229,7 @@ namespace Tests
                 changed_emitted++;
             });
 
+            // Move +1 minute, while range is not defined.
             time_block.set_time_range (Pomodoro.Timestamp.UNDEFINED, now);
             time_block.move_to (now + Pomodoro.Interval.MINUTE);
             assert_cmpvariant (
@@ -229,6 +242,7 @@ namespace Tests
             );
             assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 1);
 
+            // Move +1 minute, while range is not defined.
             time_block.set_time_range (now, Pomodoro.Timestamp.UNDEFINED);
             time_block.move_to (now + Pomodoro.Interval.MINUTE);
             assert_cmpvariant (
@@ -241,6 +255,7 @@ namespace Tests
             );
             assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 3);
 
+            // Move +1 minute.
             time_block.set_time_range (now, now + Pomodoro.Interval.MINUTE);
             time_block.move_to (now + Pomodoro.Interval.MINUTE);
             assert_cmpvariant (
@@ -253,8 +268,22 @@ namespace Tests
             );
             assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 5);
 
+            // Move -1 minute.
+            time_block.set_time_range (now + Pomodoro.Interval.MINUTE, now + 2 * Pomodoro.Interval.MINUTE);
+            time_block.move_to (now);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.start_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block.end_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE)
+            );
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 6);
+
+            // Move 0 minutes.
             time_block.move_to (time_block.start_time);
-            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 5);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 6);
         }
 
         // public void test_has_bounds ()
