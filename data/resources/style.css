@@ -164,6 +164,7 @@ timerview .pomodoro-state-menu > button {
 
 timerview .pomodoro-state-menu arrow {
     opacity: 0;
+    margin: 0;
     margin-left: -16px;
 }
 
@@ -189,6 +190,15 @@ timerview sessionprogressbar:backdrop {
     color: @insensitive_fg_color;
 }
 
+timerview:dir(rtl) .pomodoro-state-menu > button {
+    padding: 8px 16px 8px 12px;
+}
+
+timerview:dir(rtl) .pomodoro-state-menu arrow {
+    margin: 0;
+    margin-right: -16px;
+}
+
 
 /**
  * PomodoroCompactTimerView widget
@@ -208,6 +218,7 @@ compacttimerview .pomodoro-state-menu > button {
 
 compacttimerview .pomodoro-state-menu arrow {
     opacity: 0;
+    margin: 0;
     margin-left: -16px;
 }
 
@@ -221,12 +232,33 @@ compacttimerview timerlabel .separator-label {
 }
 
 compacttimerview progressbar {
+    padding: 0;
     padding-left: 9px;
 }
 
 compacttimerview timercontrolbuttons button {
     padding: 3px;
 }
+
+compacttimerview:dir(rtl) > grid > separator {
+    margin: 0;
+    margin-right: 7px;
+}
+
+compacttimerview:dir(rtl) .pomodoro-state-menu > button {
+    padding: 3px 9px 3px 5px;
+}
+
+compacttimerview:dir(rtl) .pomodoro-state-menu arrow {
+    margin: 0;
+    margin-right: -16px;
+}
+
+compacttimerview:dir(rtl) progressbar {
+    padding: 0;
+    padding-right: 9px;
+}
+
 
 /* classes backported from Gtk4 */
 /*

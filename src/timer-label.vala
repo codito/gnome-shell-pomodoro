@@ -48,6 +48,8 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Box                 box;
         [GtkChild]
+        private unowned Gtk.Box                 placeholder_box;
+        [GtkChild]
         private unowned Pomodoro.MonospaceLabel placeholder_minutes_label;
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel placeholder_separator_label;
@@ -80,10 +82,14 @@ namespace Pomodoro
 
         private void set_default_direction_ltr ()
         {
+            this.set_default_direction (Gtk.TextDirection.LTR);
+
+            this.placeholder_box.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_minutes_label.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_separator_label.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_seconds_label.set_direction (Gtk.TextDirection.LTR);
 
+            this.box.set_direction (Gtk.TextDirection.LTR);
             this.minutes_label.set_direction (Gtk.TextDirection.LTR);
             this.separator_label.set_direction (Gtk.TextDirection.LTR);
             this.seconds_label.set_direction (Gtk.TextDirection.LTR);

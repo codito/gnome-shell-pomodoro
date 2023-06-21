@@ -12,7 +12,7 @@
           <object class="GtkStackPage">
             <property name="name">stopped</property>
             <property name="child">
-              <object class="GtkBox">
+              <object class="GtkBox" id="placeholder_box">
                 <property name="orientation">horizontal</property>
                 <property name="spacing">0</property>
                 <property name="halign">center</property>

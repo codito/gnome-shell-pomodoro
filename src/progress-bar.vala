@@ -286,10 +286,11 @@ namespace Pomodoro
             {
                 case Pomodoro.ProgressBarShape.BAR:
                     var outline = Gsk.RoundedRect ();
+                    var highlight_width = float.max (width * (float) displayed_value.clamp (0.0, 1.0), line_width);
 
-                    bounds.init (0.0f,
+                    bounds.init (this.get_direction () == Gtk.TextDirection.RTL ? width - highlight_width : 0.0f,
                                  0.0f,
-                                 float.max (width * (float) displayed_value.clamp (0.0, 1.0), line_width),
+                                 highlight_width,
                                  line_width);
                     outline.init_from_rect (bounds, 0.5f * line_width);
 
