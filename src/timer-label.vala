@@ -28,21 +28,6 @@ namespace Pomodoro
             }
         }
 
-        public unowned Pomodoro.SessionManager session_manager {
-            get {
-                return this._session_manager;
-            }
-            set {
-                if (value == this._session_manager) {
-                    return;
-                }
-
-                this._session_manager = value;
-
-                this.timer = this._session_manager.timer;
-            }
-        }
-
         [GtkChild]
         private unowned Gtk.Stack               stack;
         [GtkChild]
@@ -62,7 +47,6 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel seconds_label;
 
-        private Pomodoro.SessionManager _session_manager;
         private Pomodoro.Timer          _timer;
         private ulong                   timer_state_changed_id = 0;
         private ulong                   timer_tick_id = 0;
@@ -76,8 +60,7 @@ namespace Pomodoro
 
         construct
         {
-            this._session_manager = Pomodoro.SessionManager.get_default ();
-            this._timer           = Pomodoro.Timer.get_default ();
+            this._timer = Pomodoro.Timer.get_default ();
         }
 
         private void set_default_direction_ltr ()
@@ -111,18 +94,6 @@ namespace Pomodoro
             else {
                 this.stack.visible_child_name = "stopped";
             }
-        }
-
-        private void update_placeholder_time (int64 timestamp = -1)
-        {
-            // TODO: should use real time-block duration, not template
-            var pomodoro_duration = this._session_manager.scheduler.session_template.pomodoro_duration;
-            var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (pomodoro_duration);
-            var minutes_uint = remaining_uint / 60;
-            var seconds_uint = remaining_uint % 60;
-
-            this.placeholder_minutes_label.text = minutes_uint.to_string ();
-            this.placeholder_seconds_label.text = "%02u".printf (seconds_uint);
         }
 
         private void update_remaining_time (int64 timestamp = -1)
@@ -240,16 +211,12 @@ namespace Pomodoro
             if (this._timer.is_started ()) {
                 this.update_remaining_time (timestamp);
             }
-            else {
-                this.update_placeholder_time (timestamp);
-            }
 
             this.update_visible_child ();
         }
 
         public override void map ()
         {
-            this.update_placeholder_time ();
             this.update_remaining_time ();
             this.update_visible_child ();
 
