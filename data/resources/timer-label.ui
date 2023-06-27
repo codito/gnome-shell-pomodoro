@@ -26,6 +26,7 @@
                     <property name="text">00</property>
                     <style>
                       <class name="minutes-label"/>
+                      <class name="placeholder"/>
                     </style>
                   </object>
                 </child>
@@ -37,6 +38,7 @@
                     <property name="text">:</property>
                     <style>
                       <class name="separator-label"/>
+                      <class name="placeholder"/>
                     </style>
                   </object>
                 </child>
@@ -48,12 +50,10 @@
                     <property name="text">00</property>
                     <style>
                       <class name="seconds-label"/>
+                      <class name="placeholder"/>
                     </style>
                   </object>
                 </child>
-                <style>
-                  <class name="timer-stopped"/>
-                </style>
               </object>
             </property>
           </object>

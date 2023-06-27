@@ -106,8 +106,8 @@ sessionprogressbar {
 /**
  * PomodoroTimerLabel widget
  */
-timerlabel .timer-stopped {
-    opacity: 0.2;  /* same as blink */
+timerlabel .placeholder {
+    color: @unfocused_borders;
 }
 
 
