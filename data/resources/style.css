@@ -89,17 +89,6 @@ timercontrolbuttons.circular button {
  * PomodoroProgressBar widget
  */
 progressbar {
-    /*
-    min-width: 300px;
-    min-height: 300px;
-    */
-}
-
-
-/**
- * PomodoroSessionProgressBar widget
- */
-sessionprogressbar {
 }
 
 
@@ -124,7 +113,8 @@ timerview button:disabled {
 }
 
 timerview sessionprogressbar {
-    margin: 10px 0;
+    padding: 10px 0;
+    margin: 0 3px;
 }
 
 timerview timercontrolbuttons button {

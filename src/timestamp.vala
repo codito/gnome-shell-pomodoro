@@ -34,6 +34,29 @@ namespace Pomodoro.Interval
     {
         return add (interval, -other);
     }
+
+
+    public int64 round (int64 interval,
+                        int64 unit)
+    {
+        var unit_half = unit / 2;
+        var remainder = interval % unit;
+
+        if (remainder > unit_half) {
+            return interval - remainder + unit;
+        }
+
+        if (remainder < -unit_half) {
+            return interval - remainder - unit;
+        }
+
+        return interval - remainder;
+    }
+
+    public int64 round_seconds (int64 interval)
+    {
+        return round (interval, Pomodoro.Interval.SECOND);
+    }
 }
 
 
@@ -54,7 +77,7 @@ namespace Pomodoro.Timestamp
 
     public int64 from_now ()
     {
-        GLib.debug ("Timestamp.from_now ()");
+        // GLib.debug ("Timestamp.from_now ()");  // TODO uncomment
 
         if (current_time >= 0) {
             var tmp = current_time;
@@ -175,18 +198,9 @@ namespace Pomodoro.Timestamp
     public int64 round (int64 timestamp,
                         int64 unit)
     {
-        var unit_half = unit / 2;
-        var remainder = timestamp % unit;
-
-        if (remainder > unit_half) {
-            return timestamp - remainder + unit;
-        }
-
-        if (remainder < -unit_half) {
-            return timestamp - remainder - unit;
-        }
-
-        return timestamp - remainder;
+        return is_defined (timestamp)
+            ? Pomodoro.Interval.round (timestamp, unit)
+            : Pomodoro.Timestamp.UNDEFINED;
     }
 
     public int64 round_seconds (int64 timestamp)
@@ -204,7 +218,7 @@ namespace Pomodoro.Timestamp
     public void freeze (int64 timestamp = -1,
                         int64 _advance_by = 0)  // TODO: remove arg, return frozen time
     {
-        debug ("################# Timestamp.freeze()");
+        // debug ("################# Timestamp.freeze()");
 
         if (timestamp < 0) {
             timestamp = Pomodoro.Timestamp.from_now ();
@@ -220,7 +234,7 @@ namespace Pomodoro.Timestamp
     public void freeze_to (int64 timestamp,
                            int64 _advance_by = 0)
     {
-        debug ("################# Timestamp.freeze_to()");
+        // debug ("################# Timestamp.freeze_to()");
 
         current_time = timestamp;
         advance_by = _advance_by;
@@ -259,7 +273,7 @@ namespace Pomodoro.Timestamp
 
         current_time += interval;
 
-        debug ("################# Timestamp.advance(): %lld", current_time);
+        // debug ("################# Timestamp.advance(): %lld", current_time);
 
         return current_time;
     }

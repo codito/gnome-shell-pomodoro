@@ -56,14 +56,15 @@ namespace Pomodoro
          */
         public Pomodoro.TimerState copy ()
         {
-            return Pomodoro.TimerState () {
-                duration = this.duration,
-                offset = this.offset,
-                started_time = this.started_time,
-                paused_time = this.paused_time,
-                finished_time = this.finished_time,
-                user_data = this.user_data
-            };
+            return this;
+            // return Pomodoro.TimerState () {
+            //     duration = this.duration,
+            //     offset = this.offset,
+            //     started_time = this.started_time,
+            //     paused_time = this.paused_time,
+            //     finished_time = this.finished_time,
+            //     user_data = this.user_data
+            // };
         }
 
         public bool equals (Pomodoro.TimerState other)
@@ -573,26 +574,26 @@ namespace Pomodoro
         /**
          * Rewind
          */
-        public void rewind (int64 microseconds,
+        public void rewind (int64 interval,
                             int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             if (!this.is_started ()) {
                 return;
             }
 
-            if (microseconds == 0) {
+            if (interval == 0) {
                 return;
             }
 
-            if (microseconds < 0) {
+            if (interval < 0) {
                 GLib.debug ("Rewinding timer with negative value (%.1fs).",
-                            Pomodoro.Timestamp.to_seconds (microseconds));
+                            Pomodoro.Timestamp.to_seconds (interval));
             }
 
             this.ensure_timestamp (ref timestamp);
 
             var elapsed = this.calculate_elapsed (timestamp);
-            var new_elapsed = Pomodoro.Timestamp.round (int64.max (elapsed - microseconds, 0), TICKING_INTERVAL);
+            var new_elapsed = Pomodoro.Timestamp.round (int64.max (elapsed - interval, 0), TICKING_INTERVAL);
             var new_state = this._state.copy ();
 
             new_state.finished_time = Pomodoro.Timestamp.UNDEFINED;
@@ -882,6 +883,11 @@ namespace Pomodoro
             return this.last_state_changed_time;
         }
 
+        public int64 get_last_tick_time ()
+        {
+            return this.last_tick_time;
+        }
+
         /**
          * Calculate elapsed time.
          *
@@ -966,6 +972,27 @@ namespace Pomodoro
             while (this.is_running () && (cancellable == null || !cancellable.is_cancelled ()))
             {
                 main_context.iteration (true);
+            }
+        }
+
+        /**
+         * Manually perform a tick or check whether timer has finished.
+         *
+         * Intended for unit tests.
+         */
+        public void iterate ()
+        {
+            var timestamp         = Pomodoro.Timestamp.peek ();
+            var timestamp_rounded = this.calculate_tick_time (timestamp);
+            var remaining         = this.calculate_remaining (timestamp);
+
+            if (remaining > 0 && this.last_tick_time != timestamp_rounded) {
+                this.last_tick_time = timestamp_rounded;
+                this.tick (timestamp_rounded);
+            }
+
+            if (remaining < TICKING_TOLERANCE) {
+                this.finish (timestamp);
             }
         }
 

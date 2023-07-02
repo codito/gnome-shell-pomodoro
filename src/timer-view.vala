@@ -8,6 +8,9 @@ namespace Pomodoro
         private unowned Gtk.MenuButton state_menubutton;
         [GtkChild]
         private unowned Pomodoro.SessionProgressBar session_progressbar;
+        // TODO: make custom widget that will handle opacity animation and wont clip the child actor
+        [GtkChild]
+        private unowned Gtk.Revealer session_progressbar_revealer;
         [GtkChild]
         private unowned Gtk.GestureClick click_gesture;
         [GtkChild]
@@ -16,6 +19,7 @@ namespace Pomodoro
         private Pomodoro.SessionManager session_manager;
         private Pomodoro.Timer          timer;
         private ulong                   timer_state_changed_id = 0;
+        private ulong                   session_manager_notify_has_cycles_id = 0;
 
 
         static construct
@@ -53,6 +57,11 @@ namespace Pomodoro
         private void update_buttons ()
         {
             this.state_menubutton.label = this.get_state_label ();
+        }
+
+        private void update_session_progressbar ()
+        {
+            this.session_progressbar_revealer.reveal_child = !this.session_manager.has_uniform_breaks;
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
@@ -118,10 +127,22 @@ namespace Pomodoro
             }
         }
 
+        private void on_session_manager_notify_has_cycles ()
+        {
+            if (this.get_mapped ()) {
+                this.update_session_progressbar ();
+            }
+        }
+
         private void connect_signals ()
         {
             if (this.timer_state_changed_id == 0) {
                 this.timer_state_changed_id = timer.state_changed.connect (this.on_timer_state_changed);
+            }
+
+            if (this.session_manager_notify_has_cycles_id == 0) {
+                this.session_manager_notify_has_cycles_id = this.session_manager.notify["has-cycles"].connect (
+                            this.on_session_manager_notify_has_cycles);
             }
         }
 
@@ -131,11 +152,28 @@ namespace Pomodoro
                 this.timer.disconnect (this.timer_state_changed_id);
                 this.timer_state_changed_id = 0;
             }
+
+            if (this.session_manager_notify_has_cycles_id != 0) {
+                this.session_manager.disconnect (this.session_manager_notify_has_cycles_id);
+                this.session_manager_notify_has_cycles_id = 0;
+            }
+        }
+
+        public override void realize ()
+        {
+            base.realize ();
+
+            this.session_manager.bind_property ("current-session", this.session_progressbar, "session",
+                                                GLib.BindingFlags.SYNC_CREATE);
         }
 
         public override void map ()
         {
-            this.on_timer_state_changed (this.timer.state, this.timer.state);
+            this.session_manager.ensure_session ();
+
+            this.update_css_classes ();
+            this.update_buttons ();
+            this.update_session_progressbar ();
 
             base.map ();
 

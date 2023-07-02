@@ -19,6 +19,7 @@ test_names = [
   # 'capability',
   # 'capability-group',
   # 'capability-manager',
+  'cycle',
   'time-block',
   'timer',
   # 'timer-view-action-group',

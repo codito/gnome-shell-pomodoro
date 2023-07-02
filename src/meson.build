@@ -5,6 +5,7 @@ libgnome_pomodoro_sources = files(
   'capability-group.vala',
   'capability-manager.vala',
   'capability.vala',
+  'cycle.vala',
   'database.vala',
   'desktop-extension.vala',
   'entry.vala',

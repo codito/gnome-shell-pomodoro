@@ -2,6 +2,8 @@ namespace Pomodoro
 {
     public class TimerProgressBar : Pomodoro.ProgressBar
     {
+        private const uint MIN_TIMEOUT_INTERVAL = 50;
+
         public unowned Pomodoro.Timer timer {
             get {
                 return this._timer;
@@ -57,7 +59,7 @@ namespace Pomodoro
 
         private void start_timeout ()
         {
-            var timeout_interval = uint.max (this.calculate_timeout_interval (), 50);
+            var timeout_interval = uint.max (this.calculate_timeout_interval (), MIN_TIMEOUT_INTERVAL);
 
             if (this.timeout_interval != timeout_interval) {
                 this.timeout_interval = timeout_interval;

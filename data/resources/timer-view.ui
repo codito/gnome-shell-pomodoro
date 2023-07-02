@@ -55,9 +55,16 @@
                   </object>
                 </child>
                 <child>
-                  <object class="PomodoroSessionProgressBar" id="session_progressbar">
-                    <property name="halign">center</property>
-                  </object>
+                  <object class="GtkRevealer" id="session_progressbar_revealer">
+                    <property name="reveal-child">true</property>
+                    <property name="transition-type">slide-up</property>
+                    <property name="transition-duration">500</property>
+                    <child>
+                      <object class="PomodoroSessionProgressBar" id="session_progressbar">
+                        <property name="halign">fill</property>
+                      </object>
+                    </child>
+                </object>
                 </child>
               </object>
             </child>

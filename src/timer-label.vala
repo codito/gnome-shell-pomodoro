@@ -103,7 +103,9 @@ namespace Pomodoro
             var minutes_uint = remaining_uint / 60;
             var seconds_uint = remaining_uint % 60;
 
-            this.minutes_label.text = minutes_uint.to_string ();
+            // TODO: hours
+
+            this.minutes_label.text = "%02u".printf (minutes_uint);
             this.seconds_label.text = "%02u".printf (seconds_uint);
         }
 
@@ -118,6 +120,11 @@ namespace Pomodoro
                 this.blink_animation.state == Adw.AnimationState.PLAYING)
             {
                 return;
+            }
+
+            if (this.blink_animation != null) {
+                this.blink_animation.pause ();
+                this.blink_animation = null;
             }
 
             var animation_target = new Adw.PropertyAnimationTarget (this.box, "opacity");
@@ -138,10 +145,6 @@ namespace Pomodoro
             else {
                 animation.easing = Adw.Easing.EASE_OUT_QUAD;
                 animation.done.connect (this.start_blinking_animation);
-            }
-
-            if (this.blink_animation != null) {
-                this.blink_animation.reset ();
             }
 
             this.blink_animation = animation;

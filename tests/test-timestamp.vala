@@ -24,10 +24,10 @@ namespace Tests
     {
         public TimestampTest ()
         {
-            this.add_test ("round__positive",
-                           this.test_round__positive);
-            this.add_test ("round__negative",
-                           this.test_round__negative);
+            this.add_test ("round",
+                           this.test_round);
+            this.add_test ("round__undefined",
+                           this.test_round__undefined);
 
             this.add_test ("add_interval",
                            this.test_add_interval);
@@ -45,7 +45,7 @@ namespace Tests
         {
         }
 
-        public void test_round__positive ()
+        public void test_round ()
         {
             var unit            = Pomodoro.Interval.SECOND;
             var timestamp_lower = 20 * unit;
@@ -79,37 +79,13 @@ namespace Tests
             );
         }
 
-        public void test_round__negative ()
+        public void test_round__undefined ()
         {
-            var unit            = Pomodoro.Interval.SECOND;
-            var timestamp_upper = -20 * unit;
-            var timestamp_lower = timestamp_upper - unit;
-
-            var timestamp_1 = timestamp_upper - 1;
-            var timestamp_2 = timestamp_upper - (unit/ 2 - 1);
-            var timestamp_3 = timestamp_upper - (unit / 2);
-            var timestamp_4 = timestamp_upper - (unit / 2 + 1);
-            var timestamp_5 = timestamp_upper - (unit - 1);
+            var unit = Pomodoro.Interval.SECOND;
 
             assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.round (timestamp_1, unit)),
-                new GLib.Variant.int64 (timestamp_upper)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.round (timestamp_2, unit)),
-                new GLib.Variant.int64 (timestamp_upper)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.round (timestamp_3, unit)),
-                new GLib.Variant.int64 (timestamp_upper)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.round (timestamp_4, unit)),
-                new GLib.Variant.int64 (timestamp_lower)
-            );
-            assert_cmpvariant (
-                new GLib.Variant.int64 (Pomodoro.Timestamp.round (timestamp_5, unit)),
-                new GLib.Variant.int64 (timestamp_lower)
+                new GLib.Variant.int64 (Pomodoro.Timestamp.round (Pomodoro.Timestamp.UNDEFINED, unit)),
+                new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)
             );
         }
 
@@ -201,6 +177,94 @@ namespace Tests
             );
         }
     }
+
+
+    public class IntervalTest : Tests.TestSuite
+    {
+        public IntervalTest ()
+        {
+            this.add_test ("round__positive",
+                           this.test_round__positive);
+            this.add_test ("round__negative",
+                           this.test_round__negative);
+        }
+
+        public override void setup ()
+        {
+        }
+
+        public override void teardown ()
+        {
+        }
+
+        public void test_round__positive ()
+        {
+            var unit            = Pomodoro.Interval.SECOND;
+            var interval_lower = 20 * unit;
+            var interval_upper = interval_lower + unit;
+
+            var interval_1 = interval_lower + 1;
+            var interval_2 = interval_lower + (unit / 2 - 1);
+            var interval_3 = interval_lower + (unit / 2);
+            var interval_4 = interval_lower + (unit / 2 + 1);
+            var interval_5 = interval_lower + (unit - 1);
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_1, unit)),
+                new GLib.Variant.int64 (interval_lower)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_2, unit)),
+                new GLib.Variant.int64 (interval_lower)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_3, unit)),
+                new GLib.Variant.int64 (interval_lower)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_4, unit)),
+                new GLib.Variant.int64 (interval_upper)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_5, unit)),
+                new GLib.Variant.int64 (interval_upper)
+            );
+        }
+
+        public void test_round__negative ()
+        {
+            var unit           = Pomodoro.Interval.SECOND;
+            var interval_upper = -20 * unit;
+            var interval_lower = interval_upper - unit;
+
+            var interval_1 = interval_upper - 1;
+            var interval_2 = interval_upper - (unit / 2 - 1);
+            var interval_3 = interval_upper - (unit / 2);
+            var interval_4 = interval_upper - (unit / 2 + 1);
+            var interval_5 = interval_upper - (unit - 1);
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_1, unit)),
+                new GLib.Variant.int64 (interval_upper)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_2, unit)),
+                new GLib.Variant.int64 (interval_upper)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_3, unit)),
+                new GLib.Variant.int64 (interval_upper)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_4, unit)),
+                new GLib.Variant.int64 (interval_lower)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (Pomodoro.Interval.round (interval_5, unit)),
+                new GLib.Variant.int64 (interval_lower)
+            );
+        }
+    }
 }
 
 
@@ -209,6 +273,7 @@ public static int main (string[] args)
     Tests.init (args);
 
     return Tests.run (
-        new Tests.TimestampTest ()
+        new Tests.TimestampTest (),
+        new Tests.IntervalTest ()
     );
 }

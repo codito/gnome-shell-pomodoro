@@ -11,7 +11,6 @@ namespace Pomodoro
     {
         private const uint  FADE_IN_DURATION = 500;
         private const uint  FADE_OUT_DURATION = 500;
-        private const uint  MIN_VALUE_ANIMATION_DURATION = 50;
         private const float DEFAULT_LINE_WIDTH = 6.0f;
         private const int   MIN_WIDTH = 16;
 
@@ -258,24 +257,18 @@ namespace Pomodoro
                 ? this.opacity_animation.value
                 : this.last_opacity;
 
-            // TODO: take into account style modifier like :backdrop
-
             Gdk.RGBA background_color;
             style_context.lookup_color ("theme_bg_color", out background_color);
 
-            // debug ("color = rgba(%f, %f, %f, %f)", color.red, color.green, color.blue, color.alpha);
-            // debug ("background_color = rgba(%f, %f, %f, %f)", background_color.red, background_color.green, background_color.blue, background_color.alpha);
-
             color = blend_colors (background_color, color);
-
-            // debug ("result = rgba(%f, %f, %f, %f)\n", color.red, color.green, color.blue, color.alpha);
 
             if (this.opacity_animation != null && this.opacity_animation.value_to == 0.0) {
                 displayed_value = this.last_value;
             }
             else {
                 if (!this._value_set) {
-                    displayed_value = this._value = this.resolve_value ();
+                    displayed_value = this.resolve_value ();
+                    this._value = displayed_value;
                     this.notify_property ("value");
                 }
 
@@ -352,24 +345,30 @@ namespace Pomodoro
                 return;
             }
 
-            var max_duration = this._shape == Pomodoro.ProgressBarShape.RING ? 600.0 : 300.0;
-            var animation_duration = (uint) (Math.pow ((this._value - this.last_value).abs (), 0.5) * max_duration);
-            if (animation_duration < MIN_VALUE_ANIMATION_DURATION) {
+            var last_value = this.last_value.is_nan () ? 0.0 : this.last_value;
+            var value_diff = ((this._value.is_nan () ? 0.0 : this._value) - last_value).abs ();
+            if (value_diff < 0.01) {
                 return;
             }
 
+            var max_duration = this._shape == Pomodoro.ProgressBarShape.RING ? 600.0 : 300.0;
+            var animation_duration = (uint) (Math.sqrt (value_diff) * max_duration);
             var animation_target = new Adw.CallbackAnimationTarget (this.queue_draw_highlight);
+
             this.value_animation = new Adw.TimedAnimation (this,
                                                            0.0,
                                                            1.0,
                                                            animation_duration,
                                                            animation_target);
-            this.value_animation.set_easing (Adw.Easing.EASE_OUT_CUBIC);
+            this.value_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
+            // this.value_animation.set_easing (timer.is_running ()
+            //                                  ? Adw.Easing.EASE_IN_OUT_CUBIC
+            //                                  : Adw.Easing.EASE_OUT_QUAD);
             this.value_animation.done.connect (() => {
                 this.stop_value_animation ();
             });
             this.value_animation.play ();
-            this.value_animation_start_value = this.last_value;
+            this.value_animation_start_value = last_value;
         }
 
         private void stop_value_animation ()
@@ -384,14 +383,10 @@ namespace Pomodoro
 
         private void update_value_animation ()
         {
-            if (this.get_mapped () &&
-                this.opacity_animation == null &&
-                !this.last_value.is_nan () &&
-                !this._value.is_nan ())
-            {
+            if (this.get_mapped () && this.opacity_animation == null) {
                 this.start_value_animation ();
             }
-            else if (this.value_animation != null) {
+            else {
                 this.stop_value_animation ();
             }
         }
@@ -535,13 +530,11 @@ namespace Pomodoro
                                             int height,
                                             int baseline)
         {
-            warning ("size_allocate: %dx%d", width, height);
-
             this.through.allocate (width, height, baseline, null);
             this.highlight.allocate (width, height, baseline, null);
         }
 
-        public void snapshot (Gtk.Snapshot snapshot)
+        public override void snapshot (Gtk.Snapshot snapshot)
         {
             this.snapshot_child (this.through, snapshot);
             this.snapshot_child (this.highlight, snapshot);
@@ -563,6 +556,8 @@ namespace Pomodoro
             this.stop_opacity_animation ();
 
             base.unmap ();
+
+            // this.last_value = double.NAN;  // TODO?
         }
 
 

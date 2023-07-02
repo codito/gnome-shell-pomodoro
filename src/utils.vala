@@ -35,18 +35,17 @@ namespace Pomodoro
         var hours = (seconds / 3600);
         var str = "";
 
-        if (hours > 0) {
-            str = ngettext ("%d hour", "%d hours", hours)
-                            .printf (hours);
+        if (hours > 0)
+        {
+            str = ngettext ("%d hour", "%d hours", hours).printf (hours);
+
+            if (minutes > 0) {
+                str += " ";
+            }
         }
 
-        if (minutes > 0 && str != null) {
-            str += " ";
-        }
-
-        if (minutes > 0) {
-            str += ngettext ("%d minute", "%d minutes", minutes)
-                            .printf (minutes);
+        if (hours == 0 || minutes > 0) {
+            str += ngettext ("%d minute", "%d minutes", minutes).printf (minutes);
         }
 
         return str;
