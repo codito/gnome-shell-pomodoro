@@ -85,6 +85,7 @@ gnome_pomodoro_vala_sources = files(
   'timer-label.vala',
   'timer-progress-bar.vala',
   'timer-view.vala',
+  'utils-ui.vala',
   'window.vala',
   'notifications-capability.vala',  # TODO: move it to lib?
   'service.vala',  # TODO: move it to lib?

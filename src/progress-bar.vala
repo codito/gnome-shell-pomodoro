@@ -258,6 +258,18 @@ namespace Pomodoro
                 ? this.opacity_animation.value
                 : this.last_opacity;
 
+            // TODO: take into account style modifier like :backdrop
+
+            Gdk.RGBA background_color;
+            style_context.lookup_color ("theme_bg_color", out background_color);
+
+            // debug ("color = rgba(%f, %f, %f, %f)", color.red, color.green, color.blue, color.alpha);
+            // debug ("background_color = rgba(%f, %f, %f, %f)", background_color.red, background_color.green, background_color.blue, background_color.alpha);
+
+            color = blend_colors (background_color, color);
+
+            // debug ("result = rgba(%f, %f, %f, %f)\n", color.red, color.green, color.blue, color.alpha);
+
             if (this.opacity_animation != null && this.opacity_animation.value_to == 0.0) {
                 displayed_value = this.last_value;
             }
