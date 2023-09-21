@@ -1155,6 +1155,13 @@ namespace Pomodoro
             }
         }
 
+        public void reset ()
+        {
+            if (this._current_session != null && !this._current_session.is_scheduled ()) {
+                this.current_session = this.initialize_session (Pomodoro.Timestamp.from_now ());
+            }
+        }
+
         /**
          * Session is entered as soon as current-session property is set.
          */

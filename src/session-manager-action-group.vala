@@ -56,6 +56,10 @@ namespace Pomodoro
             advance_action.activate.connect (this.activate_advance);
             this.add_action (advance_action);
 
+            var reset_action = new GLib.SimpleAction ("reset", null);
+            reset_action.activate.connect (this.activate_reset);
+            this.add_action (reset_action);
+
             var state_action = new GLib.SimpleAction.stateful ("state",
                                                                GLib.VariantType.STRING,
                                                                new GLib.Variant.string (this.get_current_state ()));
@@ -77,6 +81,12 @@ namespace Pomodoro
                                        GLib.Variant?     parameter)
         {
             this.session_manager.advance ();
+        }
+
+        private void activate_reset (GLib.SimpleAction action,
+                                     GLib.Variant?     parameter)
+        {
+            this.session_manager.reset ();
         }
 
         private void activate_state (GLib.SimpleAction action,

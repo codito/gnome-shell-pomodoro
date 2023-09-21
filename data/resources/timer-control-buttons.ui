@@ -10,21 +10,47 @@
     </style>
     <child>
       <object class="GtkButton" id="left_button">
-        <property name="receives-default">0</property>
-        <property name="tooltip-text" translatable="yes">Rewind one minute</property>
+        <property name="receives-default">false</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
-        <property name="action-name">timer.rewind</property>
         <style>
-<!--          <class name="circular"/>-->
           <class name="flat"/>
         </style>
         <child>
-          <object class="GtkImage">
-            <property name="icon-name">timer-rewind-symbolic</property>
-            <style>
-              <class name="symbolic"/>
-            </style>
+          <object class="GtkStack" id="left_image_stack">
+            <property name="transition-type">crossfade</property>
+            <property name="transition-duration">100</property>
+            <property name="interpolate-size">false</property>
+            <property name="hhomogeneous">true</property>
+            <property name="vhomogeneous">true</property>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">rewind</property>
+                <property name="title" translatable="yes">Rewind one minute</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-rewind-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">reset</property>
+                <property name="title" translatable="yes">Reset</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-reset-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
       </object><!-- left_button -->
@@ -32,20 +58,19 @@
 
     <child>
       <object class="GtkButton" id="center_button">
-        <property name="receives-default">True</property>
+        <property name="receives-default">true</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
         <style>
-<!--          <class name="circular"/>-->
           <class name="flat"/>
         </style>
         <child>
           <object class="GtkStack" id="center_image_stack">
             <property name="transition-type">crossfade</property>
             <property name="transition-duration">100</property>
-            <property name="interpolate-size">False</property>
-            <property name="hhomogeneous">True</property>
-            <property name="vhomogeneous">True</property>
+            <property name="interpolate-size">false</property>
+            <property name="hhomogeneous">true</property>
+            <property name="vhomogeneous">true</property>
             <child>
               <object class="GtkStackPage">
                 <property name="name">start</property>
@@ -95,23 +120,22 @@
 
     <child>
       <object class="GtkButton" id="right_button">
-        <property name="receives-default">0</property>
+        <property name="receives-default">false</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
         <style>
-<!--          <class name="circular"/>-->
           <class name="flat"/>
         </style>
         <child>
           <object class="GtkStack" id="right_image_stack">
             <property name="transition-type">crossfade</property>
             <property name="transition-duration">100</property>
-            <property name="interpolate-size">False</property>
-            <property name="hhomogeneous">True</property>
-            <property name="vhomogeneous">True</property>
+            <property name="interpolate-size">false</property>
+            <property name="hhomogeneous">true</property>
+            <property name="vhomogeneous">true</property>
             <child>
               <object class="GtkStackPage">
-                <property name="name">reset</property>
+                <property name="name">stop</property>
                 <property name="title" translatable="yes">Stop</property>
                 <property name="child">
                   <object class="GtkImage">
