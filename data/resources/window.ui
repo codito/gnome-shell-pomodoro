@@ -118,41 +118,45 @@
                   </object><!-- header_bar -->
                 </child>
                 <child>
-                  <object class="AdwClamp"><!-- TODO: views should define clamp themselves -->
-                    <!-- TODO: Update the panel size in CSS accordingly. -->
-                    <property name="maximum-size">668</property>
-                    <property name="tightening-threshold">550</property>
-                    <child>
-                      <object class="AdwViewStack" id="view_stack">
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
+                  <object class="AdwToastOverlay" id="toast_overlay">
+                    <property name="child">
+                      <object class="AdwClamp"><!-- TODO: views should define clamp themselves -->
+                        <!-- TODO: Update the panel size in CSS accordingly. -->
+                        <property name="maximum-size">668</property>
+                        <property name="tightening-threshold">550</property>
                         <child>
-                          <object class="AdwViewStackPage">
-                            <property name="name">timer</property>
-                            <property name="title" translatable="yes">Timer</property>
-                            <property name="icon-name">timer-symbolic</property>
-                            <property name="child">
-                              <object class="PomodoroTimerView" id="timer_view"/>
-                            </property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="AdwViewStackPage">
-                            <property name="name">stats</property>
-                            <property name="title" translatable="yes">Stats</property>
-                            <property name="icon-name">stats-symbolic</property>
-                            <property name="child">
-                              <!-- TODO: change to History -->
-                              <object class="GtkLabel">
-                                <property name="label">Stats</property>
+                          <object class="AdwViewStack" id="view_stack">
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <child>
+                              <object class="AdwViewStackPage">
+                                <property name="name">timer</property>
+                                <property name="title" translatable="yes">Timer</property>
+                                <property name="icon-name">timer-symbolic</property>
+                                <property name="child">
+                                  <object class="PomodoroTimerView" id="timer_view"/>
+                                </property>
                               </object>
-                            </property>
-                          </object>
+                            </child>
+                            <child>
+                              <object class="AdwViewStackPage">
+                                <property name="name">stats</property>
+                                <property name="title" translatable="yes">Stats</property>
+                                <property name="icon-name">stats-symbolic</property>
+                                <property name="child">
+                                  <!-- TODO: change to History -->
+                                  <object class="GtkLabel">
+                                    <property name="label">Stats</property>
+                                  </object>
+                                </property>
+                              </object>
+                            </child>
+                            <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
+                          </object><!-- stack -->
                         </child>
-                        <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
-                      </object><!-- stack -->
-                    </child>
-                  </object><!-- clamp -->
+                      </object><!-- clamp -->
+                    </property>
+                  </object><!-- toast_overlay -->
                 </child>
               </object><!-- box -->
             </property>

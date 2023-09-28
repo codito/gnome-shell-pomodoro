@@ -105,6 +105,9 @@ namespace Pomodoro
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
     public class Window : Adw.ApplicationWindow, Gtk.Buildable
     {
+        private const uint TOAST_DISMISS_TIMEOUT = 3;
+
+
         [CCode (notify = false)]
         public Pomodoro.WindowSize size {
             get {
@@ -148,6 +151,8 @@ namespace Pomodoro
         private unowned Pomodoro.SizeStack size_stack;
         [GtkChild]
         private unowned Adw.ViewStack view_stack;
+        [GtkChild]
+        private unowned Adw.ToastOverlay toast_overlay;
         [GtkChild]
         private unowned Pomodoro.TimerView timer_view;
 
@@ -196,6 +201,57 @@ namespace Pomodoro
                                                      ensures (result != Pomodoro.WindowView.DEFAULT)
         {
             return Pomodoro.WindowView.TIMER;
+        }
+
+        /**
+         *  Keep the toast until window is focused.
+         */
+        private void dismiss_toast_once_focused (Adw.Toast toast)
+        {
+            toast.timeout = 0;
+
+            var state_flags_changed_id = this.state_flags_changed.connect (
+                (previous_state_flags) => {
+                    var is_backdrop = Gtk.StateFlags.BACKDROP in this.get_state_flags ();
+
+                    if (!is_backdrop) {
+                        toast.timeout = TOAST_DISMISS_TIMEOUT;
+                        this.toast_overlay.add_toast (toast);  // necessary for updating the timeout
+                    }
+                }
+            );
+
+            toast.dismissed.connect (() => {
+                if (state_flags_changed_id != 0) {
+                    this.disconnect (state_flags_changed_id);
+                    state_flags_changed_id = 0;
+                }
+            });
+        }
+
+        /**
+         * Monitor user activity and dismiss notification once user becomes active.
+         */
+        private void dismiss_toast_once_user_becomes_active (Adw.Toast toast)
+        {
+            // toast.timeout = 0;
+
+            // TODO
+        }
+
+        public void add_toast (owned Adw.Toast toast)
+        {
+            if (toast.timeout != 0 && this._size == Pomodoro.WindowSize.NORMAL)
+            {
+                if (Gtk.StateFlags.BACKDROP in this.get_state_flags ()) {
+                    this.dismiss_toast_once_focused (toast);
+                }
+                else {
+                    this.dismiss_toast_once_user_becomes_active (toast);
+                }
+            }
+
+            this.toast_overlay.add_toast (toast);
         }
 
         [GtkCallback]

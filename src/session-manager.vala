@@ -878,15 +878,25 @@ namespace Pomodoro
         }
 
         private void expire_current_session (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
-                                             requires (this._current_session != null)
         {
+            if (this._current_session == null) {
+                return;
+            }
+
             if (Pomodoro.Timestamp.is_undefined (timestamp)) {
                 timestamp = this._current_session.expiry_time;
             }
 
+            var previous_session = this._current_session;
+
             this.session_expired (this._current_session);
 
-            this.set_current_time_block_internal (null, null, timestamp);
+            if (this._current_session != previous_session) {
+                GLib.debug ("The session was changed during `session-expired` emission.");
+            }
+            else {
+                this.reset (timestamp);
+            }
         }
 
         private void freeze_current_session_changed ()
@@ -1150,15 +1160,31 @@ namespace Pomodoro
          */
         public void ensure_session ()
         {
-            if (this._current_session == null || this._current_session.is_expired ()) {
-                this.current_session = this.initialize_session (Pomodoro.Timestamp.from_now ());
+            if (this.timer.is_running ()) {
+                return;
+            }
+
+            var timestamp = Pomodoro.Timestamp.from_now ();
+
+            if (this._current_session == null || this._current_session.is_expired (timestamp))
+            {
+                var session = this.initialize_session (timestamp);
+
+                this.set_current_time_block_internal (session, null, timestamp);
             }
         }
 
-        public void reset ()
+        /**
+         * Start a new session. The timestamp marks the end time of ongoing session.
+         */
+        public void reset (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
-            if (this._current_session != null && !this._current_session.is_scheduled ()) {
-                this.current_session = this.initialize_session (Pomodoro.Timestamp.from_now ());
+            if (this._current_session != null && !this._current_session.is_scheduled ())
+            {
+                var now = int64.max (timestamp, Pomodoro.Timestamp.from_now ());
+                var session = this.initialize_session (now);
+
+                this.set_current_time_block_internal (session, null, timestamp);
             }
         }
 
@@ -1235,7 +1261,10 @@ namespace Pomodoro
             }
         }
 
-        public signal void session_expired (Pomodoro.Session session);
+        public signal void session_expired (Pomodoro.Session session)
+        {
+            GLib.debug ("Session expired");
+        }
 
         public override void dispose ()
         {

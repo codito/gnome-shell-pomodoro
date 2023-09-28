@@ -20,6 +20,8 @@ namespace Pomodoro
         private Pomodoro.Timer          timer;
         private ulong                   timer_state_changed_id = 0;
         private ulong                   session_manager_notify_has_cycles_id = 0;
+        private ulong                   session_expired_id = 0;
+        private Adw.Toast?              session_expired_toast;
 
 
         static construct
@@ -69,6 +71,10 @@ namespace Pomodoro
         {
             this.update_css_classes ();
             this.update_buttons ();
+
+            if (this.session_expired_toast != null && this.timer.is_running ()) {
+                this.session_expired_toast.dismiss ();
+            }
         }
 
         [GtkCallback]
@@ -134,6 +140,38 @@ namespace Pomodoro
             }
         }
 
+        /**
+         * We want to notify that the app stopped the timer because session has expired.
+         * But, its not worth users attention in cases where resetting a session is to be expected.
+         */
+        private void on_session_expired (Pomodoro.Session session)
+        {
+            var timestamp = Pomodoro.Timestamp.from_now ();
+
+            // Skip the toast if the timer was stopped and no cycle was completed.
+            if (!this.timer.is_started () && !session.has_completed_cycle ()) {
+                return;
+            }
+
+            // Skip the toast if session expired more than 4 hours ago.
+            if (timestamp - session.expiry_time >= 4 * Pomodoro.Interval.HOUR) {
+                return;
+            }
+
+            var window = this.get_root () as Pomodoro.Window;
+            assert (window != null);
+
+            var toast = new Adw.Toast (_("Session has expired"));
+            // toast.use_markup = false;  // TODO
+            toast.priority = Adw.ToastPriority.HIGH;
+            toast.dismissed.connect (() => {
+                this.session_expired_toast = null;
+            });
+            this.session_expired_toast = toast;
+
+            window.add_toast (toast);
+        }
+
         private void connect_signals ()
         {
             if (this.timer_state_changed_id == 0) {
@@ -165,6 +203,7 @@ namespace Pomodoro
 
             this.session_manager.bind_property ("current-session", this.session_progressbar, "session",
                                                 GLib.BindingFlags.SYNC_CREATE);
+            this.session_expired_id = this.session_manager.session_expired.connect (this.on_session_expired);
         }
 
         public override void map ()
@@ -190,6 +229,11 @@ namespace Pomodoro
         public override void dispose ()
         {
             this.disconnect_signals ();
+
+            if (this.session_expired_id != 0) {
+                this.session_manager.disconnect (this.session_expired_id);
+                this.session_expired_id = 0;
+            }
 
             base.dispose ();
         }
