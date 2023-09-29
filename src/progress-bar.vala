@@ -341,12 +341,11 @@ namespace Pomodoro
 
         private void start_value_animation ()
         {
-            if (this.value_animation != null) {
+            if (this.value_animation != null || this.last_value.is_nan ()) {
                 return;
             }
 
-            var last_value = this.last_value.is_nan () ? 0.0 : this.last_value;
-            var value_diff = ((this._value.is_nan () ? 0.0 : this._value) - last_value).abs ();
+            var value_diff = ((this._value.is_nan () ? 0.0 : this._value) - this.last_value).abs ();
             if (value_diff < 0.01) {
                 return;
             }
@@ -364,9 +363,7 @@ namespace Pomodoro
             // this.value_animation.set_easing (timer.is_running ()
             //                                  ? Adw.Easing.EASE_IN_OUT_CUBIC
             //                                  : Adw.Easing.EASE_OUT_QUAD);
-            this.value_animation.done.connect (() => {
-                this.stop_value_animation ();
-            });
+            this.value_animation.done.connect (this.stop_value_animation);
             this.value_animation.play ();
             this.value_animation_start_value = last_value;
         }
@@ -425,9 +422,7 @@ namespace Pomodoro
                                                                  FADE_IN_DURATION,
                                                                  animation_target);
                 this.opacity_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
-                this.opacity_animation.done.connect (() => {
-                    this.stop_opacity_animation ();
-                });
+                this.opacity_animation.done.connect (this.stop_opacity_animation);
                 this.opacity_animation.play ();
             }
 
@@ -459,9 +454,7 @@ namespace Pomodoro
                                                                  FADE_OUT_DURATION,
                                                                  animation_target);
                 this.opacity_animation.set_easing (Adw.Easing.EASE_IN_OUT_CUBIC);
-                this.opacity_animation.done.connect (() => {
-                    this.stop_opacity_animation ();
-                });
+                this.opacity_animation.done.connect (this.stop_opacity_animation);
                 this.opacity_animation.play ();
             }
 
@@ -557,7 +550,7 @@ namespace Pomodoro
 
             base.unmap ();
 
-            // this.last_value = double.NAN;  // TODO?
+            this.last_value = double.NAN;
         }
 
 
