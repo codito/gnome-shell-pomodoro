@@ -594,7 +594,7 @@ namespace Pomodoro
 
             this.session_manager.save_async.begin ();
 
-            this.capabilities.disable_all ();
+            // this.capabilities.disable_all ();  // FIXME
 
             // var engine = Peas.Engine.get_default ();
 
