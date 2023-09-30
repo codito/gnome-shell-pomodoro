@@ -247,8 +247,10 @@ namespace Pomodoro
             this.move_by (Pomodoro.Timestamp.subtract (start_time, this._start_time));
         }
 
-        internal int64 calculate_elapsed_internal (bool  include_uncompleted_gaps,
-                                                   int64 timestamp)
+        /**
+         * Calculate elapsed time excluding gaps/interruptions.
+         */
+        public int64 calculate_elapsed (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -267,17 +269,7 @@ namespace Pomodoro
             var elapsed     = Pomodoro.Timestamp.subtract (range_end, range_start);
 
             this.gaps.@foreach ((gap) => {
-                if (Pomodoro.Timestamp.is_undefined (gap.end_time))
-                {
-                    if (include_uncompleted_gaps) {
-                        elapsed = Pomodoro.Interval.subtract (
-                            elapsed,
-                            Pomodoro.Timestamp.subtract (
-                                range_end,
-                                gap.start_time.clamp (range_start, range_end)
-                            )
-                        );
-                    }
+                if (Pomodoro.Timestamp.is_undefined (gap.end_time)) {
                     range_start = range_end;
                     return;
                 }
@@ -297,14 +289,6 @@ namespace Pomodoro
             });
 
             return elapsed;
-        }
-
-        /**
-         * Calculate elapsed time excluding gaps/interruptions.
-         */
-        public int64 calculate_elapsed (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
-        {
-            return this.calculate_elapsed_internal (false, timestamp);
         }
 
         /**

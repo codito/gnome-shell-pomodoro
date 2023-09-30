@@ -258,7 +258,6 @@ namespace Pomodoro
                                 Pomodoro.TimeBlock? next_time_block = null,
                                 int64               timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
-            // debug ("--------------------------------------- reschedule begin ----------------------------------");
             Pomodoro.ensure_timestamp (ref timestamp);
 
             Pomodoro.SchedulerContext context;
@@ -312,8 +311,6 @@ namespace Pomodoro
                     }
                 }
 
-                // debug ("context = %s", context.to_representation ());
-
                 if (existing_time_block != null && existing_time_block.state == time_block.state)
                 {
                     // Update existing time-block.
@@ -342,7 +339,6 @@ namespace Pomodoro
             session.remove_links_after (link);
             session.remove_link (link);
 
-            // debug ("--------------------------------------- reschedule thaw-changed ----------------------------------");
             session.thaw_changed ();
 
             if (is_populating) {
@@ -351,8 +347,6 @@ namespace Pomodoro
             else {
                 this.rescheduled_session (session);
             }
-
-            // debug ("--------------------------------------- reschedule end ----------------------------------");
         }
 
         public bool is_long_break_needed (Pomodoro.Session session,
@@ -407,14 +401,25 @@ namespace Pomodoro
                 return 0.0;
             }
 
-            var elapsed = time_block.calculate_elapsed_internal (include_uncompleted_gaps, timestamp);
-            var elapsed_target = time_block.calculate_elapsed_internal (false,
-                                                                        time_block_meta.completion_time);
+            var elapsed = time_block.calculate_elapsed (timestamp);
+            var elapsed_target = time_block.calculate_elapsed (time_block_meta.completion_time);
+            var last_gap = time_block.get_last_gap ();
+
+            if (include_uncompleted_gaps &&
+                last_gap != null &&
+                Pomodoro.Timestamp.is_undefined (last_gap.end_time) &&
+                timestamp > last_gap.start_time)
+            {
+                elapsed = Pomodoro.Interval.subtract (elapsed,
+                                                      Pomodoro.Timestamp.subtract (timestamp, last_gap.start_time));
+            }
+
             var base_score = elapsed / time_block_meta.intended_duration;
             var score = (double) base_score;
 
             if (elapsed_target > 0) {
-                score += (double) ((elapsed - base_score * time_block_meta.intended_duration) / elapsed_target);
+                score += (double) ((elapsed - (int64) (base_score * time_block_meta.intended_duration)) /
+                                   elapsed_target);
             }
 
             return score;
@@ -423,7 +428,7 @@ namespace Pomodoro
         public override double calculate_time_block_score (Pomodoro.TimeBlock time_block,
                                                            int64              timestamp)
         {
-            return this.calculate_time_block_score_internal (time_block, true, time_block.end_time);  // TODO: try always passing include_uncompleted_gaps=false and remove calculate_time_block_score_internal
+            return this.calculate_time_block_score_internal (time_block, true, time_block.end_time);
         }
 
         public override double calculate_time_block_weight (Pomodoro.TimeBlock time_block)
@@ -457,6 +462,8 @@ namespace Pomodoro
         }
 
         /**
+         * Create next time-block.
+         *
          * Alternate between a pomodoro and a break, regardless whether previous time-block has been completed.
          */
         public override Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerContext context)

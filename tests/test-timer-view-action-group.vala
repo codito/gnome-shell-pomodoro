@@ -17,7 +17,7 @@ namespace Tests
 
         public override void setup ()
         {
-            Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
+            Pomodoro.Timestamp.freeze_to (2000000000 * Pomodoro.Interval.SECOND);
 
             this.timer = new Pomodoro.Timer ();
             this.session_manager = new Pomodoro.SessionManager.with_timer (this.timer);
@@ -25,7 +25,7 @@ namespace Tests
 
         public override void teardown ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             this.timer = null;
             this.session_manager = null;

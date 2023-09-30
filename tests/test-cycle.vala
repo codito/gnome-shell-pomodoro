@@ -13,17 +13,18 @@ namespace Tests
             this.add_test ("calculate_progress__scheduled", this.test_calculate_progress__scheduled);
             this.add_test ("calculate_progress__in_progress", this.test_calculate_progress__in_progress);
             this.add_test ("calculate_progress__completed", this.test_calculate_progress__completed);
+            this.add_test ("calculate_progress__uncompleted", this.test_calculate_progress__uncompleted);
             this.add_test ("calculate_progress__with_gaps", this.test_calculate_progress__with_gaps);
         }
 
         public override void setup ()
         {
-            Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
+            Pomodoro.Timestamp.freeze_to (2000000000 * Pomodoro.Interval.SECOND);
         }
 
         public override void teardown ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var settings = Pomodoro.get_settings ();
             settings.revert ();
@@ -273,54 +274,6 @@ namespace Tests
                                           0.0001);
         }
 
-        /*
-        public void test_calculate_progress__break ()
-        {
-            var now = Pomodoro.Timestamp.peek ();
-
-            var time_block_1 = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
-            time_block_1.set_time_range (now, now + 5 * Pomodoro.Interval.MINUTE);
-            time_block_1.set_meta (
-                Pomodoro.TimeBlockMeta () {
-                    status = Pomodoro.TimeBlockStatus.UNCOMPLETED,
-                    weight = 1.0,
-                    completion_time = now + 20 * Pomodoro.Interval.MINUTE,
-                    intended_duration = 25 * Pomodoro.Interval.MINUTE,
-                }
-            );
-
-            var time_block_2 = new Pomodoro.TimeBlock (Pomodoro.State.SHORT_BREAK);
-            time_block_2.set_time_range (now + 30 * Pomodoro.Interval.MINUTE, now + 35 * Pomodoro.Interval.MINUTE);
-            time_block_2.set_meta (
-                Pomodoro.TimeBlockMeta () {
-                    status = Pomodoro.TimeBlockStatus.SCHEDULED,
-                    weight = 0.0,
-                    completion_time = now + 29 * Pomodoro.Interval.MINUTE,
-                    intended_duration = 5 * Pomodoro.Interval.MINUTE,
-                }
-            );
-
-            var cycle = new Pomodoro.Cycle ();
-            cycle.append (time_block_1);
-            cycle.append (time_block_2);
-
-            assert_cmpfloat_with_epsilon (cycle.calculate_progress (time_block_1.end_time),
-                                          double.NAN,
-                                          0.0001);
-            assert_cmpfloat_with_epsilon (cycle.calculate_progress (time_block_2.end_time),
-                                          double.NAN,
-                                          0.0001);
-
-
-            assert_cmpfloat_with_epsilon (cycle.calculate_progress (time_block_2.start_time + 5 * Pomodoro.Interval.MINUTE),
-                                          0.0,
-                                          0.0001);
-            assert_cmpfloat_with_epsilon (cycle.calculate_progress (time_block_2.end_time),
-                                          0.0,
-                                          0.0001);
-        }
-        */
-
         public void test_calculate_progress__completed ()
         {
             var now = Pomodoro.Timestamp.peek ();
@@ -354,6 +307,40 @@ namespace Tests
             assert_cmpfloat_with_epsilon (cycle.calculate_progress (time_block_2.end_time),
                                           1.0,
                                           0.0001);
+        }
+
+        public void test_calculate_progress__uncompleted ()
+        {
+            var now = Pomodoro.Timestamp.peek ();
+
+            var time_block_1 = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block_1.set_time_range (now, now + 10 * Pomodoro.Interval.MINUTE);
+            time_block_1.set_meta (
+                Pomodoro.TimeBlockMeta () {
+                    status = Pomodoro.TimeBlockStatus.UNCOMPLETED,
+                    weight = 1.0,
+                    completion_time = now + 20 * Pomodoro.Interval.MINUTE,
+                    intended_duration = 25 * Pomodoro.Interval.MINUTE,
+                }
+            );
+
+            var time_block_2 = new Pomodoro.TimeBlock (Pomodoro.State.SHORT_BREAK);
+            time_block_2.set_time_range (now + 10 * Pomodoro.Interval.MINUTE, now + 15 * Pomodoro.Interval.MINUTE);
+            time_block_2.set_meta (
+                Pomodoro.TimeBlockMeta () {
+                    status = Pomodoro.TimeBlockStatus.IN_PROGRESS,
+                    weight = 0.0,
+                    completion_time = now + 14 * Pomodoro.Interval.MINUTE,
+                    intended_duration = 5 * Pomodoro.Interval.MINUTE,
+                }
+            );
+
+            var cycle = new Pomodoro.Cycle ();
+            cycle.append (time_block_1);
+            cycle.append (time_block_2);
+
+            assert_true (cycle.calculate_progress (time_block_1.end_time).is_nan ());
+            assert_true (cycle.calculate_progress (time_block_2.end_time).is_nan ());
         }
 
         public void test_calculate_progress__with_gaps ()

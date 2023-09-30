@@ -196,9 +196,7 @@ namespace Pomodoro
 
         private void start_transition (uint transition_duration)
         {
-            var visible_child      = this._visible_child;
             var last_visible_child = this.last_visible_child;
-            var natural_size       = Gtk.Requisition ();
 
             // Store size of current child and estimate size of next one.
             if (last_visible_child != null)

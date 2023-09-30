@@ -31,10 +31,10 @@ namespace Pomodoro
             // this.long_break_duration = 20 * Pomodoro.Interval.SECOND;
             // this.cycles = 2;
 
-            this.pomodoro_duration = 10 * Pomodoro.Interval.SECOND;
-            this.short_break_duration = 5 * Pomodoro.Interval.SECOND;
-            this.long_break_duration = 10 * Pomodoro.Interval.SECOND;
-            this.cycles = 3;
+            // this.pomodoro_duration = 10 * Pomodoro.Interval.SECOND;
+            // this.short_break_duration = 5 * Pomodoro.Interval.SECOND;
+            // this.long_break_duration = 10 * Pomodoro.Interval.SECOND;
+            // this.cycles = 3;
         }
 
         public bool equals (Pomodoro.SessionTemplate other)
@@ -492,8 +492,7 @@ namespace Pomodoro
         {
             unowned GLib.List<Pomodoro.TimeBlock> sibling_link = this.time_blocks.find (sibling);
 
-            // if (sibling_link)
-            //     time_block.move_to (sibling.start_time);
+            // time_block.move_to (sibling.start_time);
 
             this.time_blocks.insert_before (sibling_link, time_block);
 
@@ -514,7 +513,7 @@ namespace Pomodoro
                 this.append (time_block);
             }
             else {
-                time_block.move_to (sibling.end_time);
+                // time_block.move_to (sibling.end_time);
 
                 this.time_blocks.insert_before (sibling_link.next, time_block);
 

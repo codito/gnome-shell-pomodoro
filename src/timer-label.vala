@@ -16,8 +16,6 @@ namespace Pomodoro
                     return;
                 }
 
-                var is_ticking = this.timer_tick_id != 0;
-
                 this.disconnect_signals ();
 
                 this._timer = value;
@@ -65,8 +63,6 @@ namespace Pomodoro
 
         private void set_default_direction_ltr ()
         {
-            this.set_default_direction (Gtk.TextDirection.LTR);
-
             this.placeholder_box.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_minutes_label.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_separator_label.set_direction (Gtk.TextDirection.LTR);

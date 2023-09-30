@@ -14,12 +14,12 @@ namespace Tests
 
         public override void setup ()
         {
-            Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
+            Pomodoro.Timestamp.freeze_to (2000000000 * Pomodoro.Interval.SECOND);
         }
 
         public override void teardown ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var settings = Pomodoro.get_settings ();
             settings.revert ();

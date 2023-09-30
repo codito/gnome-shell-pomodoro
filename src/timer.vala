@@ -57,14 +57,6 @@ namespace Pomodoro
         public Pomodoro.TimerState copy ()
         {
             return this;
-            // return Pomodoro.TimerState () {
-            //     duration = this.duration,
-            //     offset = this.offset,
-            //     started_time = this.started_time,
-            //     paused_time = this.paused_time,
-            //     finished_time = this.finished_time,
-            //     user_data = this.user_data
-            // };
         }
 
         public bool equals (Pomodoro.TimerState other)
@@ -340,15 +332,18 @@ namespace Pomodoro
         /**
          * Try to change state and update fields related to state change
          */
-        internal void set_state_full (Pomodoro.TimerState  state,
-                                      int64                timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void set_state_full (Pomodoro.TimerState  state,
+                                    int64                timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             this.ensure_timestamp (ref timestamp);
 
             var previous_state = this._state;
 
             this.resolve_state_internal (ref state, timestamp);
-            assert (state.is_valid ());
+
+            if (!state.is_valid ()) {
+                GLib.error ("Trying to set timer an invalid state: %s", state.to_representation ());
+            }
 
             if (this._state.equals (state)) {
                 return;

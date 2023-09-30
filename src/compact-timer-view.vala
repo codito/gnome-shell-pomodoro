@@ -6,8 +6,6 @@ namespace Pomodoro
     {
         [GtkChild]
         private unowned Gtk.MenuButton state_menubutton;
-        [GtkChild]
-        private unowned Pomodoro.TimerProgressBar timer_progressbar;
 
         private Pomodoro.SessionManager session_manager;
         private Pomodoro.Timer          timer;

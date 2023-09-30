@@ -86,7 +86,6 @@ namespace Tests
             this.add_test ("calculate_elapsed", this.test_calculate_elapsed);
             this.add_test ("calculate_remaining", this.test_calculate_remaining);
             // this.add_test ("calculate_progress", this.test_calculate_progress);
-            // this.add_test ("calculate_energy", this.test_calculate_energy);
             // this.add_test ("calculate_pomodoro_break_ratio", this.test_calculate_pomodoro_break_ratio);
             this.add_test ("calculate_break_ratio", this.test_calculate_break_ratio);
             this.add_test ("get_cycles", this.test_get_cycles);
@@ -101,12 +100,12 @@ namespace Tests
 
         public override void setup ()
         {
-            Pomodoro.Timestamp.freeze (2000000000 * Pomodoro.Interval.SECOND);
+            Pomodoro.Timestamp.freeze_to (2000000000 * Pomodoro.Interval.SECOND);
         }
 
         public override void teardown ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var settings = Pomodoro.get_settings ();
             settings.revert ();
@@ -167,15 +166,6 @@ namespace Tests
             {
                 var time_block = time_blocks[index];
                 var time_block_meta = time_block.get_meta ();
-
-                // GLib.info ("TimeBlock #%u", index);
-                // GLib.info ("  state: %s", time_block.state.to_string ());
-                // GLib.info ("  start_time: %lld", time_block.start_time);
-                // GLib.info ("  duration: %lld", time_block.duration);
-                // GLib.info ("  meta.intended_duration: %lld", meta.intended_duration);
-                // GLib.info ("  meta.is_long_break: %s", meta.is_long_break ? "true" : "false");
-                // GLib.info ("  meta.cycle: %u", meta.cycle);
-                // GLib.info ("");
 
                 if ((index & 1) == 0) {
                     assert_true (time_block.state == Pomodoro.State.POMODORO);
@@ -858,11 +848,6 @@ namespace Tests
         // {
         // }
 
-        // public void test_calculate_energy ()
-        // {
-            // TODO
-        // }
-
         // public void test_calculate_pomodoro_break_ratio ()
         // {
         //     var session = new Pomodoro.Session ();
@@ -905,8 +890,6 @@ namespace Tests
 
         public void test_get_cycles ()
         {
-            // var notify_cycles_emitted = 0;
-
             var session_0 = new Pomodoro.Session ();
             assert_cmpuint (session_0.get_cycles ().length (), GLib.CompareOperator.EQ, 0);
 
@@ -931,35 +914,20 @@ namespace Tests
             assert_cmpuint (session_2.get_cycles ().length (), GLib.CompareOperator.EQ, 2);
 
             // When session starts with a break, expect cycles to be 0.
-            debug ("------------------------- 3 -------------------------------");
             var session_3 = new Pomodoro.Session ();
-            // session_3.notify["cycles"].connect (() => {
-            //     notify_cycles_emitted++;
-            // });
             session_3.append (new Pomodoro.TimeBlock (Pomodoro.State.SHORT_BREAK));
             assert_cmpuint (session_3.get_cycles ().length (), GLib.CompareOperator.EQ, 1);
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 0);
             session_3.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
             assert_cmpuint (session_3.get_cycles ().length (), GLib.CompareOperator.EQ, 2);
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 1);
-            // notify_cycles_emitted = 0;
 
             // When pomodoros are after one another, expect cycle to increment; though it's not a true cycle.
             // In normal case pomodoro would be extended and counted properly.
-            debug ("------------------------- 4 -------------------------------");
             var session_4 = new Pomodoro.Session ();
-            // session_4.notify["cycles"].connect (() => {
-            //     notify_cycles_emitted++;
-            // });
             session_4.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
             assert_cmpuint (session_4.get_cycles ().length (), GLib.CompareOperator.EQ, 1);
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 1);
             session_4.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
             assert_cmpuint (session_4.get_cycles ().length (), GLib.CompareOperator.EQ, 2);
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 2);
-            // notify_cycles_emitted = 0;
 
-            debug ("------------------------- 5 -------------------------------");
             // Treat undefined states same as breaks.
             var session_5 = new Pomodoro.Session ();
             session_5.append (new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED));
@@ -967,22 +935,14 @@ namespace Tests
             session_5.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
             assert_cmpuint (session_5.get_cycles ().length (), GLib.CompareOperator.EQ, 2);
 
-            debug ("------------------------- 6 -------------------------------");
             // Cycles with uncompleted time-blocks still should be included.
             var session_6 = new Pomodoro.Session ();
-            // session_6.notify["cycles"].connect (() => {
-            //     notify_cycles_emitted++;
-            // });
             var uncompleted_time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
             session_6.append (uncompleted_time_block);
-
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 1);
             session_6.set_time_block_status (uncompleted_time_block, Pomodoro.TimeBlockStatus.UNCOMPLETED);
             assert_cmpuint (session_6.get_cycles ().length (), GLib.CompareOperator.EQ, 1);
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 2);
             session_6.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
             assert_cmpuint (session_6.get_cycles ().length (), GLib.CompareOperator.EQ, 2);
-            // assert_cmpuint (notify_cycles_emitted, GLib.CompareOperator.EQ, 3);
         }
 
         /**

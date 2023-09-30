@@ -1,5 +1,8 @@
 
 // TODO: move to interval.vala
+/**
+ * Helper functions for handling duration.
+ */
 namespace Pomodoro.Interval
 {
     public const int64 MICROSECOND = 1;
@@ -61,14 +64,14 @@ namespace Pomodoro.Interval
 
 
 /**
- * Helper structure to represent real time or duration
+ * Helper functions for handling time.
  */
 namespace Pomodoro.Timestamp
 {
-    // Special value. Assume that timestamps do not go below 0.
+    // Special value indicating that timestamp is not set. Assume that timestamps do not go below 0.
     public const int64 UNDEFINED = -1;
 
-    // Constants for infinite values.
+    // Value range of a timestamp.
     public const int64 MIN = 0;
     public const int64 MAX = int64.MAX;
 
@@ -77,8 +80,6 @@ namespace Pomodoro.Timestamp
 
     public int64 from_now ()
     {
-        // GLib.debug ("Timestamp.from_now ()");  // TODO uncomment
-
         if (current_time >= 0) {
             var tmp = current_time;
             current_time += advance_by;
@@ -141,12 +142,12 @@ namespace Pomodoro.Timestamp
 
     public inline bool is_defined (int64 timestamp)
     {
-        return timestamp >= MIN;
+        return timestamp >= Pomodoro.Timestamp.MIN;
     }
 
     public inline bool is_undefined (int64 timestamp)
     {
-        return timestamp < MIN;
+        return timestamp < Pomodoro.Timestamp.MIN;
     }
 
     public int64 add_interval (int64 timestamp,
@@ -208,49 +209,41 @@ namespace Pomodoro.Timestamp
         return round (timestamp, Pomodoro.Interval.SECOND);
     }
 
-    //
-    // Functions for unit tests
-    //
+    /*
+     * Functions for unit tests
+     */
 
     /**
-     * Freeze Pomodoro.Timestamp.from_now () to current time. Added for unittesting.
+     * Freeze `Pomodoro.Timestamp.from_now()` to current time. Used in unittests.
      */
-    public void freeze (int64 timestamp = -1,
-                        int64 _advance_by = 0)  // TODO: remove arg, return frozen time
+    public int64 freeze ()
     {
-        // debug ("################# Timestamp.freeze()");
-
-        if (timestamp < 0) {
-            timestamp = Pomodoro.Timestamp.from_now ();
+        if (Pomodoro.Timestamp.is_undefined (current_time)) {
+            current_time = Pomodoro.Timestamp.from_now ();
         }
 
-        current_time = timestamp;
-        advance_by = _advance_by;
+        return current_time;
     }
 
     /**
-     * Freeze Pomodoro.Timestamp.from_now () to a given value. Added for unittesting.
+     * Freeze `Pomodoro.Timestamp.from_now()` to a given value. Used in unittests.
      */
-    public void freeze_to (int64 timestamp,
-                           int64 _advance_by = 0)
+    public void freeze_to (int64 timestamp)
     {
-        // debug ("################# Timestamp.freeze_to()");
-
         current_time = timestamp;
-        advance_by = _advance_by;
     }
 
     /**
-     * Revert freeze() call. Added for unittesting.
+     * Revert `freeze()` call. Used in unittests.
      */
-    public void unfreeze ()  // TODO: rename to "thaw"
+    public void thaw ()
     {
-        current_time = UNDEFINED;
+        current_time = Pomodoro.Timestamp.UNDEFINED;
     }
 
     public bool is_frozen ()
     {
-        return current_time != UNDEFINED;
+        return Pomodoro.Timestamp.is_defined (current_time);
     }
 
     /**
@@ -262,19 +255,26 @@ namespace Pomodoro.Timestamp
     }
 
     /**
-     * Advance frozen time. Added for unittesting.
+     * Advance frozen time. Used in unittests.
      */
     public int64 advance (int64 interval)
                           requires (interval >= 0)
     {
         if (!is_frozen ()) {
-            freeze ();
+            Pomodoro.Timestamp.freeze ();
         }
 
         current_time += interval;
 
-        // debug ("################# Timestamp.advance(): %lld", current_time);
-
         return current_time;
+    }
+
+    /**
+     * If frozen, make every call `Pomodoro.Timestamp.from_now ()` advance by given interval. Used in unittests.
+     */
+    public void set_auto_advance (int64 interval)
+                                  requires (interval >= 0)
+    {
+        advance_by = interval;
     }
 }

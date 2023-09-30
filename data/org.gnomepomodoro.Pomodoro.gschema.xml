@@ -13,25 +13,25 @@
 
     <key name="pomodoro-duration" type="u">
       <default>1500</default>
-      <range min="5" max="36000"/>
+      <range min="1" max="36000"/>
       <summary>Pomodoro duration</summary>
       <description>Time in seconds you are supposed to be working.</description>
     </key>
     <key name="short-break-duration" type="u">
       <default>300</default>
-      <range min="5" max="36000"/>
+      <range min="1" max="36000"/>
       <summary>Short pause duration</summary>
       <description>Time in seconds you are supposed to take a short break.</description>
     </key>
     <key name="long-break-duration" type="u">
       <default>900</default>
-      <range min="5" max="36000"/>
+      <range min="1" max="36000"/>
       <summary>Long pause duration</summary>
       <description>Time in seconds you are supposed to take a longer break.</description>
     </key>
     <key name="pomodoros-per-session" type="u">
       <default>4</default>
-      <range min="1" max="10"/>
+      <range min="1" max="5"/>
       <summary>Number of pomodoros to a long break</summary>
       <description>Number of pomodoros to a long break.</description>
     </key>

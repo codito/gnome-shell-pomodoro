@@ -550,13 +550,6 @@ namespace Pomodoro
             this.layout_manager = new Gtk.BinLayout ();
         }
 
-        private inline int64 get_current_time ()
-        {
-            return this._timer.is_running ()
-                ? this._timer.get_current_time (this.get_frame_clock ().get_frame_time ())
-                : this._timer.get_last_state_changed_time ();
-        }
-
         private void queue_draw_blocks ()
         {
             var child = this.get_first_child ();
@@ -881,13 +874,6 @@ namespace Pomodoro
             if (this.get_mapped ()) {
                 this.update_blocks ();
                 this.update_tooltip ();
-            }
-        }
-
-        private void update_if_queued ()
-        {
-            if (this.update_idle_id != 0) {
-                this.update ();
             }
         }
 

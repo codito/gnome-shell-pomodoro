@@ -298,12 +298,13 @@ namespace Tests
 
         public override void setup ()
         {
-            Pomodoro.Timestamp.freeze (TEST_TIME, Pomodoro.Interval.MICROSECOND);
+            Pomodoro.Timestamp.freeze_to (TEST_TIME);
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
         }
 
         public override void teardown ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             Pomodoro.Timer.set_default (null);
         }
@@ -620,7 +621,7 @@ namespace Tests
 
         public void test_calculate_elapsed__initial_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_initial_state (
@@ -643,8 +644,6 @@ namespace Tests
 
         public void test_calculate_elapsed__started_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
-
             var timer = new Pomodoro.Timer.with_state (
                 create_started_state (
                     20 * Pomodoro.Interval.MINUTE
@@ -669,7 +668,8 @@ namespace Tests
                 new GLib.Variant.int64 (timer.duration)
             );
 
-            Pomodoro.Timestamp.freeze_to (now, Pomodoro.Interval.MICROSECOND);
+            var now = Pomodoro.Timestamp.peek ();
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
 
             var timer_with_offset = new Pomodoro.Timer.with_state (
                 create_started_state (
@@ -698,7 +698,7 @@ namespace Tests
 
         public void test_calculate_elapsed__paused_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_paused_state (
@@ -729,7 +729,7 @@ namespace Tests
 
         public void test_calculate_elapsed__finished_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_finished_state (
@@ -765,7 +765,7 @@ namespace Tests
 
         public void test_calculate_remaining__initial_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_initial_state (
@@ -788,8 +788,6 @@ namespace Tests
 
         public void test_calculate_remaining__started_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
-
             var timer = new Pomodoro.Timer.with_state (
                 create_started_state (
                     20 * Pomodoro.Interval.MINUTE
@@ -814,7 +812,8 @@ namespace Tests
                 new GLib.Variant.int64 (0)
             );
 
-            Pomodoro.Timestamp.freeze_to (now, Pomodoro.Interval.MICROSECOND);
+            var now = Pomodoro.Timestamp.peek ();
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
 
             var timer_with_offset = new Pomodoro.Timer.with_state (
                 create_started_state (
@@ -843,7 +842,7 @@ namespace Tests
 
         public void test_calculate_remaining__paused_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_paused_state (
@@ -878,7 +877,7 @@ namespace Tests
          */
         public void test_calculate_remaining__finished_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_finished_state (
@@ -915,7 +914,7 @@ namespace Tests
 
         public void test_calculate_progress__initial_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_initial_state (
@@ -934,8 +933,6 @@ namespace Tests
 
         public void test_calculate_progress__started_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
-
             var timer = new Pomodoro.Timer.with_state (
                 create_started_state (
                     20 * Pomodoro.Interval.MINUTE
@@ -957,7 +954,8 @@ namespace Tests
                 20.0 / 20.0
             );
 
-            Pomodoro.Timestamp.freeze_to (now, Pomodoro.Interval.MICROSECOND);
+            var now = Pomodoro.Timestamp.peek ();
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
 
             var timer_with_offset = new Pomodoro.Timer.with_state (
                 create_started_state (
@@ -984,7 +982,7 @@ namespace Tests
 
         public void test_calculate_progress__paused_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_paused_state (
@@ -1016,7 +1014,7 @@ namespace Tests
          */
         public void test_calculate_progress__finished_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_finished_state (
@@ -1085,7 +1083,7 @@ namespace Tests
 
         public void test_start__initial_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
             var signals = new string[0];
             var state_changed_time = Pomodoro.Timestamp.UNDEFINED;
 
@@ -1252,7 +1250,8 @@ namespace Tests
                 state_changed_emitted++;
             });
 
-            Pomodoro.Timestamp.freeze_to (expected_state.paused_time, Pomodoro.Interval.MICROSECOND);
+            Pomodoro.Timestamp.freeze_to (expected_state.paused_time);
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
             timer.pause (expected_state.paused_time);
 
             assert_cmpvariant (
@@ -1335,7 +1334,8 @@ namespace Tests
             var timer = new Pomodoro.Timer.with_state (started_state);
             var pause_time = timer.state.started_time + 3200 * Pomodoro.Interval.MILLISECOND;
 
-            Pomodoro.Timestamp.freeze_to (pause_time, Pomodoro.Interval.MICROSECOND);
+            Pomodoro.Timestamp.freeze_to (pause_time);
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.calculate_elapsed (pause_time)),
                 new GLib.Variant.int64 (3200 * Pomodoro.Interval.MILLISECOND)
@@ -1410,7 +1410,7 @@ namespace Tests
          */
         public void test_resume__paused_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var paused_state = create_paused_state ();
             var expected_state = paused_state.copy ();
@@ -1424,8 +1424,8 @@ namespace Tests
                 state_changed_emitted++;
             });
 
-            now += 1 * Pomodoro.Interval.MINUTE;
-            Pomodoro.Timestamp.freeze_to (now, Pomodoro.Interval.MICROSECOND);
+            Pomodoro.Timestamp.freeze_to (now + Pomodoro.Interval.MINUTE);
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
 
             timer.resume ();
 
@@ -1502,7 +1502,7 @@ namespace Tests
          */
         public void test_rewind__started_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_started_state (
@@ -1554,7 +1554,7 @@ namespace Tests
          */
         public void test_rewind__paused_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_paused_state (
@@ -1605,7 +1605,7 @@ namespace Tests
 
         public void test_rewind__finished_state ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
 
             var timer = new Pomodoro.Timer.with_state (
                 create_finished_state (
@@ -1657,7 +1657,7 @@ namespace Tests
          */
         public void test_rewind__align_to_seconds ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
             var timer = new Pomodoro.Timer.with_state (
                 create_started_state (
                     Pomodoro.Interval.MINUTE,
@@ -1748,7 +1748,7 @@ namespace Tests
 
         public void test_finished_signal__0s ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var timer = new Pomodoro.Timer (0);
 
@@ -1771,7 +1771,7 @@ namespace Tests
 
         public void test_finished_signal__1s ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var timer = new Pomodoro.Timer (1 * Pomodoro.Interval.SECOND);
 
@@ -1794,7 +1794,7 @@ namespace Tests
 
         public void test_finished_signal__3s ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var timer = new Pomodoro.Timer (3 * Pomodoro.Interval.SECOND);
 
@@ -1817,7 +1817,7 @@ namespace Tests
 
         public void test_tick_signal ()
         {
-            Pomodoro.Timestamp.unfreeze ();
+            Pomodoro.Timestamp.thaw ();
 
             var timer           = new Pomodoro.Timer (3 * Pomodoro.Interval.SECOND);
             var call_count      = 0;
