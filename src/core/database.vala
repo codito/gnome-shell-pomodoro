@@ -29,7 +29,7 @@ namespace Pomodoro
         GLib.debug ("Migrating database to version %u", version);
 
         var file = File.new_for_uri (
-            "resource:///org/gnomepomodoro/Pomodoro/database/version-%u.sql".printf (version)
+            "resource:///org/gnomepomodoro/Pomodoro/migrations/version-%u.sql".printf (version)
         );
         file.load_contents (null, out file_contents, null);
 

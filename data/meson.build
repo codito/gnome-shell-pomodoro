@@ -84,5 +84,4 @@ compiled_schemas = gnome.compile_schemas(
 #)
 
 subdir('icons')
-subdir('resources')
 subdir('sounds')

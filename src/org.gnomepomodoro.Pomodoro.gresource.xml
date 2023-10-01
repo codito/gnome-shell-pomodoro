@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnomepomodoro/Pomodoro">
+    <!-- Migrations -->
+    <file compressed="true">migrations/version-1.sql</file>
+
+    <!-- Views -->
+    <file alias="ui/compact-timer-view.ui" compressed="true" preprocess="xml-stripblanks">views/compact-timer-view.ui</file>
+    <file alias="ui/install-extension-dialog.ui" compressed="true" preprocess="xml-stripblanks">views/install-extension-dialog.ui</file>
+    <file alias="ui/preferences-keyboard-shortcut-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-keyboard-shortcut-page.ui</file>
+    <file alias="ui/preferences-main-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-main-page.ui</file>
+    <file alias="ui/preferences-plugins-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-plugins-page.ui</file>
+    <file alias="ui/preferences.ui" compressed="true" preprocess="xml-stripblanks">views/preferences.ui</file>
+    <file alias="ui/screen-notification.ui" compressed="true" preprocess="xml-stripblanks">views/screen-notification.ui</file>
+    <file alias="ui/stats-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-page.ui</file>
+    <file alias="ui/stats-view.ui" compressed="true" preprocess="xml-stripblanks">views/stats-view.ui</file>
+    <file alias="ui/timer-view.ui" compressed="true" preprocess="xml-stripblanks">views/timer-view.ui</file>
+    <file alias="ui/window.ui"  compressed="true" preprocess="xml-stripblanks">views/window.ui</file>
+    <file alias="ui/menus.ui" compressed="true" preprocess="xml-stripblanks">views/menus.ui</file>
+
+    <!-- Widgets -->
+    <file alias="ui/timer-control-buttons.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-control-buttons.ui</file>
+    <file alias="ui/timer-label.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-label.ui</file>
+
+    <!-- CSS -->
+    <file>style.css</file>
+    <file>style-dark.css</file>
+    <file>style-hc.css</file>
+    <file>style-hc-dark.css</file>
+
+    <!-- Icons -->
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-pause-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-reset-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-rewind-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-skip-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-start-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/24x24/actions/timer-stop-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/dark-theme-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/stats-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-pause-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-reset-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-rewind-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-skip-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-expand-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-shrink-symbolic.svg</file>
+  </gresource>
+</gresources>

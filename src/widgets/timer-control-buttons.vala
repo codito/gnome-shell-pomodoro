@@ -7,7 +7,7 @@ namespace Pomodoro
         return stack.get_page (stack.get_child_by_name (name));
     }
 
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-control-buttons.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/timer-control-buttons.ui")]
     public class TimerControlButtons : Gtk.Box, Gtk.Buildable
     {
         private const uint FADE_IN_DURATION = 500;

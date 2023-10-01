@@ -102,7 +102,7 @@ namespace Pomodoro
     }
 
 
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/window.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/window.ui")]
     public class Window : Adw.ApplicationWindow, Gtk.Buildable
     {
         private const uint TOAST_DISMISS_TIMEOUT = 3;
@@ -371,7 +371,7 @@ namespace Pomodoro
         REPORT_ISSUE = 3
     }
 
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/install-extension-dialog.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/install-extension-dialog.ui")]
     public class InstallExtensionDialog : Gtk.Dialog
     {
         private delegate void ForeachChildFunc (Gtk.Widget child);

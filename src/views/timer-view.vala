@@ -1,7 +1,7 @@
 
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-view.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/timer-view.ui")]
     public class TimerView : Gtk.Widget, Gtk.Buildable
     {
         [GtkChild]

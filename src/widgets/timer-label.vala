@@ -1,7 +1,7 @@
 
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/timer-label.ui")]
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/timer-label.ui")]
     public class TimerLabel : Adw.Bin, Gtk.Buildable
     {
         private const uint BLINK_DURATION = 1000;
