@@ -472,13 +472,6 @@ namespace Pomodoro
 
         private bool is_legacy_plugin (string plugin_name)
         {
-            foreach (var name in Pomodoro.Application.LEGACY_PLUGINS)
-            {
-                if (name == plugin_name) {
-                    return true;
-                }
-            }
-
             return false;
         }
 
