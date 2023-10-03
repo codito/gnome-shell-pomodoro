@@ -162,7 +162,7 @@ namespace Pomodoro
             assert (window != null);
 
             var toast = new Adw.Toast (_("Session has expired"));
-            // toast.use_markup = false;  // TODO
+            toast.use_markup = false;
             toast.priority = Adw.ToastPriority.HIGH;
             toast.dismissed.connect (() => {
                 this.session_expired_toast = null;
