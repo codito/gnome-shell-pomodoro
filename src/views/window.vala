@@ -358,7 +358,7 @@ namespace Pomodoro
         {
             this.setup_actions ();
 
-            base.parser_finished (builder);
+            // base.parser_finished (builder);
         }
     }
 

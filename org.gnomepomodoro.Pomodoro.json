@@ -1,7 +1,7 @@
 {
     "app-id" : "org.gnomepomodoro.Pomodoro",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "44",
+    "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
     "command" : "gnome-pomodoro",
     "tags" : [],
@@ -74,6 +74,51 @@
                     "type" : "git",
                     "branch" : "1.34",
                     "url" : "https://gitlab.gnome.org/GNOME/libpeas.git"
+                }
+            ]
+        },
+        {
+            "name" : "libadwaita",
+            "buildsystem" : "meson",
+            "config-opts" : [
+                "-Dexamples=false",
+                "-Dtests=false"
+            ],
+            "sources" : [
+                {
+                    "type" : "git",
+                    "url" : "https://gitlab.gnome.org/GNOME/libadwaita.git",
+                    "branch" : "libadwaita-1-4"
+                }
+            ],
+            "modules" : [
+                {
+                    "name" : "libsass",
+                    "buildsystem" : "meson",
+                    "cleanup" : [
+                        "*"
+                    ],
+                    "sources" : [
+                        {
+                            "type" : "git",
+                            "url" : "https://github.com/lazka/libsass.git",
+                            "branch" : "meson"
+                        }
+                    ]
+                },
+                {
+                    "name" : "sassc",
+                    "buildsystem" : "meson",
+                    "cleanup" : [
+                        "*"
+                    ],
+                    "sources" : [
+                        {
+                            "type" : "git",
+                            "url" : "https://github.com/lazka/sassc.git",
+                            "branch" : "meson"
+                        }
+                    ]
                 }
             ]
         },
