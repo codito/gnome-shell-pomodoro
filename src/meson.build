@@ -80,7 +80,7 @@ gnome_pomodoro_vala_sources = files(
   'service.vala',
   'views/about-window.vala',
   'views/compact-timer-view.vala',
-  'views/preferences-dialog.vala',
+  'views/preferences-window.vala',
   'views/screen-notification.vala',
   'views/stats-day-page.vala',
   'views/stats-month-page.vala',

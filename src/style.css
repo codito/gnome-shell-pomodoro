@@ -250,6 +250,16 @@ compacttimerview:dir(rtl) progressbar {
 }
 
 
+/*
+ * Preferences window
+ */
+
+.preferences .sidebar {
+    border: none;
+}
+
+
+
 /* classes backported from Gtk4 */
 /*
 .dialog.message .title {

@@ -23,12 +23,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    const double TIMER_SCALE_LOWER = 60.0;
-    const double TIMER_SCALE_UPPER = 60.0 * 120.0;
-
-    const double LONG_BREAK_INTERVAL_LOWER = 1.0;
-    const double LONG_BREAK_INTERVAL_UPPER = 10.0;
-
     /**
      * Mapping from settings to accelerator
      */
@@ -86,28 +80,15 @@ namespace Pomodoro
         }
     }
 
-    // TODO: refactor code, it can be removed
-    private void listbox_foreach (Gtk.ListBox            listbox,
-                                  Gtk.ListBoxForeachFunc func)
-    {
-        var selection_mode = listbox.selection_mode;
-
-        listbox.selection_mode = Gtk.SelectionMode.MULTIPLE;
-        listbox.select_all ();
-        listbox.selected_foreach (func);
-        listbox.unselect_all ();
-        listbox.selection_mode = selection_mode;
-    }
-
-    public interface PreferencesDialogExtension : Peas.ExtensionBase
+    public interface PreferencesWindowExtension : Peas.ExtensionBase
     {
     }
 
     public interface PreferencesPage : Gtk.Widget
     {
-        public unowned Pomodoro.PreferencesDialog get_preferences_dialog ()
+        public unowned Pomodoro.PreferencesWindow get_preferences_dialog ()
         {
-            return this.root as Pomodoro.PreferencesDialog;
+            return this.root as Pomodoro.PreferencesWindow;
         }
 
         public virtual void configure_header_bar (Gtk.HeaderBar header_bar)
@@ -661,11 +642,11 @@ namespace Pomodoro
             switch (row.name)
             {
                 case "keyboard-shortcut":
-                    preferences_dialog.set_page ("keyboard-shortcut");
+                    preferences_dialog.visible_page_name = "keyboard-shortcuts";
                     break;
 
                 case "plugins":
-                    preferences_dialog.set_page ("plugins");
+                    preferences_dialog.visible_page_name = "plugins";
                     break;
 
                 default:
@@ -771,258 +752,89 @@ namespace Pomodoro
         }
     }
 
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences.ui")]
-    public class PreferencesDialog : Gtk.ApplicationWindow, Gtk.Buildable
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-window.ui")]
+    public class PreferencesWindow : Adw.ApplicationWindow, Gtk.Buildable
     {
-        private const int DEFAULT_WIDTH = 600;
-        private const int DEFAULT_HEIGHT = 720;
-
-        private const GLib.ActionEntry[] ACTION_ENTRIES = {
-            { "back", on_back_activate }
-        };
-
-        private static unowned Pomodoro.PreferencesDialog instance;
+        private static unowned Pomodoro.PreferencesWindow? instance;
 
         [GtkChild]
-        private unowned Gtk.HeaderBar header_bar;
+        private unowned Adw.ToastOverlay toast_overlay;
+        [GtkChild]
+        private unowned Adw.NavigationSplitView split_view;
+        [GtkChild]
+        private unowned Adw.HeaderBar content_headerbar;
+        [GtkChild]
+        private unowned Adw.NavigationPage content_page;
         [GtkChild]
         private unowned Gtk.Stack stack;
-        [GtkChild]
-        private unowned Gtk.Button back_button;
 
-        private GLib.HashTable<string, PageMeta?> pages;
-        private GLib.List<string>                 history;
-        private Peas.ExtensionSet                 extensions;
+        [CCode (notify = false)]
+        public unowned Gtk.StackPage? visible_page {
+            get {
+                return this.stack.visible_child != null
+                    ? this.stack.get_page (this.stack.visible_child)
+                    : null;
+            }
+        }
 
-        private struct PageMeta
+        [CCode (notify = false)]
+        public string visible_page_name {
+            get {
+                return this.stack.visible_child_name;
+            }
+            set {
+                this.stack.visible_child_name = value;
+            }
+        }
+
+        public static Pomodoro.PreferencesWindow? get_default ()
         {
-            GLib.Type type;
-            string    name;
-            string    title;
+            return  Pomodoro.PreferencesWindow.instance;
         }
 
         construct
         {
-            PreferencesDialog.instance = this;
+            PreferencesWindow.instance = this;
 
-            this.pages = new GLib.HashTable<string, PageMeta?> (str_hash, str_equal);
-
-            this.add_page ("main",
-                           _("Preferences"),
-                           typeof (Pomodoro.PreferencesMainPage));
-
-            this.add_page ("plugins",
-                          _("Plugins"),
-                          typeof (Pomodoro.PreferencesPluginsPage));
-
-            this.add_page ("keyboard-shortcut",
-                          _("Keyboard Shortcut"),
-                          typeof (Pomodoro.PreferencesKeyboardShortcutPage));
-
-            this.add_action_entries (PreferencesDialog.ACTION_ENTRIES, this);
-
-            this.history_clear ();
-
-            this.set_page ("main");
-
-            /* let page be modified by extensions */
-            this.extensions = new Peas.ExtensionSet (Peas.Engine.get_default (),
-                                                     typeof (Pomodoro.PreferencesDialogExtension));
-
-            this.stack.notify["visible-child"].connect (this.on_visible_child_notify);
-
-            this.on_visible_child_notify ();
+            this.update_title ();
         }
 
-        ~PreferencesDialog ()
+        private void update_title ()
         {
-            PreferencesDialog.instance = this;
-        }
+            var visible_page = this.visible_page;
 
-        public static PreferencesDialog? get_default ()
-        {
-            return PreferencesDialog.instance;
-        }
-
-        public void parser_finished (Gtk.Builder builder)
-        {
-            base.parser_finished (builder);
-        }
-
-        private void on_page_notify (Gtk.StackPage stack_page)
-        {
-            var preferences_page = stack_page.child as Pomodoro.PreferencesPage;
-
-            this.history_push (stack_page.name);
-
-            var title_label = this.header_bar.title_widget as Gtk.Label;
-            if (title_label != null) {
-                title_label.label = stack_page.title;
-            }
-
-            this.back_button.visible = this.history.length () > 1;
-
-            if (this.back_button.parent == (Gtk.Widget) this.header_bar) {
-                this.back_button.unparent ();
-            }
-
-            preferences_page.configure_header_bar (this.header_bar);
-        }
-
-        private void on_visible_child_notify ()
-        {
-            var window_width = 0;
-            var window_height = 0;
-            var header_bar_height = 0;
-            var page_height = 0;
-            var stack_page = this.stack.get_page (this.stack.visible_child);
-
-            this.on_page_notify (stack_page);
-
-            window_width = this.get_size (Gtk.Orientation.HORIZONTAL);
-            window_height = this.get_size (Gtk.Orientation.VERTICAL);
-
-            /* calculate window size */
-            this.header_bar.measure (Gtk.Orientation.VERTICAL, -1, null, out header_bar_height, null, null);
-
-            stack_page.child.measure (Gtk.Orientation.VERTICAL, window_width, null, out page_height, null, null);
-
-            if (stack_page.child is Gtk.ScrolledWindow) {
-                var scrolled_window = stack_page.child as Gtk.ScrolledWindow;
-                scrolled_window.set_min_content_height (int.min (page_height, DEFAULT_HEIGHT));
-
-                // TODO: the dialog needs to be redesigned, so that changing its height is no longer needed
-                // this.resize (window_width, header_bar_height + DEFAULT_HEIGHT);
+            if (visible_page != null) {
+                this.content_page.title = visible_page.title;
+                this.content_headerbar.show_title = true;
             }
             else {
-                // TODO: the dialog needs to be redesigned, so that changing its height is no longer needed
-                // this.resize (window_width, header_bar_height + page_height);
+                this.content_headerbar.show_title = false;
+                this.content_page.title = "";
             }
         }
 
-        private void on_back_activate (GLib.SimpleAction action,
-                                       GLib.Variant?     parameter)
+        public void add_toast (owned Adw.Toast toast)
         {
-            this.history_pop ();
+            this.toast_overlay.add_toast (toast);
         }
 
-        public unowned Pomodoro.PreferencesPage? get_page (string name)
+        [GtkCallback]
+        private void on_stack_visible_child_notify (GLib.Object    object,
+                                                    GLib.ParamSpec pspec)
         {
-            if (this.stack != null) {
-                var page_widget = this.stack.get_child_by_name (name);
+            this.split_view.show_content = true;
+            this.update_title ();
 
-                if (page_widget != null) {
-                    return page_widget as Pomodoro.PreferencesPage;
-                }
-            }
-
-            if (this.pages != null && this.pages.contains (name)) {
-                var meta = this.pages.lookup (name);
-                var page = GLib.Object.new (meta.type) as Pomodoro.PreferencesPage;
-
-                this.stack.add_titled (page as Gtk.Widget,
-                                       meta.name,
-                                       meta.title);
-
-                return page as Pomodoro.PreferencesPage;
-            }
-
-            return null;
+            this.notify_property ("visible-page");
+            this.notify_property ("visible-page-name");
         }
 
-        private void history_clear ()
+        public override void dispose ()
         {
-            this.history = new GLib.List<string> ();
-        }
+            base.dispose ();
 
-        private void history_push (string name)
-        {
-            if (name == "main") {
-                this.history_clear ();
-            }
-            else {
-                unowned GLib.List<string> last = this.history.last ();
-
-                /* ignore if last element is the same */
-                if (last != null && last.data == name) {
-                    return;
-                }
-
-                /* go back if previous element is the same */
-                if (last != null && last.prev != null && last.prev.data == name) {
-                    this.history_pop ();
-
-                    return;
-                }
-            }
-
-            this.history.append (name);
-        }
-
-        private string? history_pop ()
-        {
-            unowned GLib.List<string> last = this.history.last ();
-
-            string? last_name = null;
-            string  next_name = "main";
-
-            if (last != null) {
-                last_name = last.data.dup ();
-
-                this.history.delete_link (last);
-                last = this.history.last ();
-            }
-
-            if (last != null) {
-                next_name = last.data.dup ();
-            }
-
-            this.set_page (next_name);
-
-            return last_name;
-        }
-
-        public void add_page (string    name,
-                              string    title,
-                              GLib.Type type)
-                    requires (type.is_a (typeof (Pomodoro.PreferencesPage)))
-        {
-            var meta = PageMeta () {
-                name = name,
-                title = title,
-                type = type
-            };
-
-            this.pages.insert (name, meta);
-        }
-
-        public void remove_page (string name)
-        {
-            if (this.stack != null)
-            {
-                var child = this.stack.get_child_by_name (name);
-
-                if (this.stack.get_visible_child_name () == name) {
-                    this.set_page ("main");
-                }
-
-                if (child != null) {
-                    this.stack.remove (child);
-                }
-            }
-
-            this.pages.remove (name);
-        }
-
-        public void set_page (string name)
-        {
-            var page = this.get_page (name);
-
-            if (page != null) {
-                this.stack.set_visible_child_name (name);
-            }
-            else {
-                GLib.warning ("Could not change page to \"%s\"", name);
+            if (PreferencesWindow.instance == this) {
+                PreferencesWindow.instance = null;
             }
         }
     }

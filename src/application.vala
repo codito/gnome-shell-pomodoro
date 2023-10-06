@@ -128,7 +128,7 @@ namespace Pomodoro
 
         // private Gom.Repository repository;
         // private Gom.Adapter adapter;
-        private weak Pomodoro.PreferencesDialog? preferences_dialog;
+        private weak Pomodoro.PreferencesWindow? preferences_window;
         private weak Pomodoro.Window? window;
         private weak Adw.AboutWindow? about_window;
         private Pomodoro.ApplicationService? service;
@@ -235,22 +235,22 @@ namespace Pomodoro
             }
         }
 
-        public void show_preferences (int64 timestamp = -1)
+        public void show_preferences (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
-            var preferences_dialog = (Gtk.Window?) this.get_window_by_type (typeof (Pomodoro.PreferencesDialog));
+            var preferences_window = this.get_window_by_type (typeof (Pomodoro.PreferencesWindow))
+                                     as Pomodoro.PreferencesWindow;
 
-            if (preferences_dialog == null)
+            if (preferences_window == null)
             {
-                preferences_dialog = new Pomodoro.PreferencesDialog ();
-
-                this.add_window (preferences_dialog);
+                preferences_window = new Pomodoro.PreferencesWindow ();
+                this.add_window (preferences_window);
             }
 
-            if (timestamp >= 0) {
-                preferences_dialog.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
+            if (Pomodoro.Timestamp.is_defined (timestamp)) {
+                preferences_window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
             }
             else {
-                preferences_dialog.present ();
+                preferences_window.present ();
             }
         }
 
