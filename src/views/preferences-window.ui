@@ -57,9 +57,7 @@
                             <property name="title" translatable="yes">Timer</property>
                             <property name="icon-name">timer-symbolic</property>
                             <property name="child">
-                              <object class="GtkLabel">
-                                <property name="label">Timer</property>
-                              </object>
+                              <object class="PomodoroPreferencesPageTimer"/>
                             </property>
                           </object>
                         </child>

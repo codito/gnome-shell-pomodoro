@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
+  <enum id="org.gnomepomodoro.Pomodoro.AdvancementMode">
+    <value nick="auto" value="0"/>
+    <value nick="manual" value="1"/>
+    <value nick="wait-for-activity" value="2"/>
+  </enum>
   <enum id="org.gnomepomodoro.Pomodoro.Scheduler">
     <value nick="simple" value="0"/>
     <value nick="adaptive" value="1"/>
@@ -13,27 +18,37 @@
 
     <key name="pomodoro-duration" type="u">
       <default>1500</default>
-      <range min="1" max="36000"/>
+      <range min="1" max="14400"/>
       <summary>Pomodoro duration</summary>
-      <description>Time in seconds you are supposed to be working.</description>
+      <description>Time in seconds destined for an focused work.</description>
     </key>
     <key name="short-break-duration" type="u">
       <default>300</default>
-      <range min="1" max="36000"/>
-      <summary>Short pause duration</summary>
-      <description>Time in seconds you are supposed to take a short break.</description>
+      <range min="1" max="14400"/>
+      <summary>Short break duration</summary>
+      <description>Time in seconds destined for a short rest.</description>
     </key>
     <key name="long-break-duration" type="u">
       <default>900</default>
-      <range min="1" max="36000"/>
-      <summary>Long pause duration</summary>
-      <description>Time in seconds you are supposed to take a longer break.</description>
+      <range min="1" max="14400"/>
+      <summary>Long break duration</summary>
+      <description>Time in seconds destined for a longer rest.</description>
     </key>
-    <key name="pomodoros-per-session" type="u">
+    <key name="cycles" type="u">
       <default>4</default>
-      <range min="1" max="5"/>
-      <summary>Number of pomodoros to a long break</summary>
-      <description>Number of pomodoros to a long break.</description>
+      <range min="1" max="6"/>
+      <summary>Number of pomodoros before a long break</summary>
+      <description>Number of pomodoros before a long break.</description>
+    </key>
+    <key name="pomodoro-advancement-mode" enum="org.gnomepomodoro.Pomodoro.AdvancementMode">
+      <default>"auto"</default>
+      <summary>Advancement mode at the end of Pomodoro</summary>
+      <description>How the timer should behave at the end of a pomodoro.</description>
+    </key>
+    <key name="break-advancement-mode" enum="org.gnomepomodoro.Pomodoro.AdvancementMode">
+      <default>"wait-for-activity"</default>
+      <summary>Advancement mode at the end of break</summary>
+      <description>How the timer should behave at the end of a break.</description>
     </key>
     <key name="scheduler" enum="org.gnomepomodoro.Pomodoro.Scheduler">
       <default>"simple"</default>

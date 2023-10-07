@@ -8,7 +8,7 @@ namespace Pomodoro
      */
     public enum State
     {
-        UNDEFINED ,
+        UNDEFINED,
         POMODORO,
         BREAK,
         SHORT_BREAK,

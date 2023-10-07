@@ -23,18 +23,7 @@ namespace Pomodoro
             this.long_break_duration = Pomodoro.Timestamp.from_seconds_uint (
                 settings.get_uint ("long-break-duration")
             );
-            this.cycles = settings.get_uint ("pomodoros-per-session");
-
-            // TODO: remove
-            // this.pomodoro_duration = 10 * Pomodoro.Interval.SECOND;
-            // this.short_break_duration = 30 * Pomodoro.Interval.SECOND;
-            // this.long_break_duration = 20 * Pomodoro.Interval.SECOND;
-            // this.cycles = 2;
-
-            // this.pomodoro_duration = 10 * Pomodoro.Interval.SECOND;
-            // this.short_break_duration = 5 * Pomodoro.Interval.SECOND;
-            // this.long_break_duration = 10 * Pomodoro.Interval.SECOND;
-            // this.cycles = 3;
+            this.cycles = settings.get_uint ("cycles");
         }
 
         public bool equals (Pomodoro.SessionTemplate other)
@@ -45,12 +34,19 @@ namespace Pomodoro
                    this.cycles == other.cycles;
         }
 
+        public int64 calculate_total_duration ()
+        {
+            return this.pomodoro_duration * this.cycles +
+                   this.short_break_duration * (this.cycles - 1) +
+                   this.long_break_duration;
+        }
+
         /**
          * Calculate percentage of time allocated for breaks compared to total.
          *
          * Result is in 0 - 100 range.
          */
-        public float calculate_break_percentage ()
+        public double calculate_break_percentage ()
         {
             var breaks_total = this.short_break_duration * (this.cycles - 1) + this.long_break_duration;
             var total        = this.pomodoro_duration * this.cycles + breaks_total;
@@ -59,7 +55,7 @@ namespace Pomodoro
                 ? 100.0 * (double) breaks_total / (double) total
                 : 0.0;
 
-            return (float) ratio;
+            return ratio;
         }
 
         public GLib.Variant to_variant ()

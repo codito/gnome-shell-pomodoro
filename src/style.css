@@ -19,12 +19,9 @@
     border-radius: 5px;
 }
 
-.pomodoro-list > row {
-    padding: 12px 20px;
-}
 
-.pomodoro-list > row.pomodoro-wide-row {
-    padding: 12px 15px;
+row.pomodoro-log-scale {
+    padding: 14px 14px 7px 14px;
 }
 
 .pomodoro-list > row.pomodoro-slim-row {

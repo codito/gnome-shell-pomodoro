@@ -83,7 +83,7 @@ namespace Tests
             settings.set_uint ("pomodoro-duration", 1500);
             settings.set_uint ("short-break-duration", 300);
             settings.set_uint ("long-break-duration", 900);
-            settings.set_uint ("pomodoros-per-session", 4);
+            settings.set_uint ("cycles", 4);
             // settings.set_boolean ("pause-when-idle", false);
         }
 
@@ -107,7 +107,7 @@ namespace Tests
             settings.set_uint ("pomodoro-duration", 1);
             settings.set_uint ("short-break-duration", 2);
             settings.set_uint ("long-break-duration", 3);
-            settings.set_uint ("pomodoros-per-session", 5);
+            settings.set_uint ("cycles", 5);
 
             var session_manager = new Pomodoro.SessionManager ();
 
@@ -1466,7 +1466,7 @@ namespace Tests
             settings.set_uint ("pomodoro-duration", 10);
             settings.set_uint ("short-break-duration", 20);
             settings.set_uint ("long-break-duration", 30);
-            settings.set_uint ("pomodoros-per-session", 3);
+            settings.set_uint ("cycles", 3);
 
             // Expect changes to be applied at idle.
             assert_cmpstrv (signals, {});
@@ -1555,7 +1555,7 @@ namespace Tests
             settings.set_uint ("pomodoro-duration", 1500);
             settings.set_uint ("short-break-duration", 300);
             settings.set_uint ("long-break-duration", 900);
-            settings.set_uint ("pomodoros-per-session", 4);
+            settings.set_uint ("cycles", 4);
             // settings.set_boolean ("pause-when-idle", false);
         }
 

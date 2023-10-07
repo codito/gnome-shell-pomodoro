@@ -10,6 +10,7 @@
     <file alias="ui/preferences-keyboard-shortcut-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-keyboard-shortcut-page.ui</file>
     <file alias="ui/preferences-main-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-main-page.ui</file>
     <file alias="ui/preferences-plugins-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-plugins-page.ui</file>
+    <file alias="ui/preferences-page-timer.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-timer.ui</file>
     <file alias="ui/preferences-window.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-window.ui</file>
     <file alias="ui/screen-notification.ui" compressed="true" preprocess="xml-stripblanks">views/screen-notification.ui</file>
     <file alias="ui/stats-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-page.ui</file>
@@ -19,6 +20,7 @@
     <file alias="ui/menus.ui" compressed="true" preprocess="xml-stripblanks">views/menus.ui</file>
 
     <!-- Widgets -->
+    <file alias="ui/log-scale-row.ui" compressed="true" preprocess="xml-stripblanks">widgets/log-scale-row.ui</file>
     <file alias="ui/timer-control-buttons.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-control-buttons.ui</file>
     <file alias="ui/timer-label.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-label.ui</file>
 

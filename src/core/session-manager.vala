@@ -3,6 +3,50 @@ using GLib;
 
 namespace Pomodoro
 {
+    public enum AdvancementMode
+    {
+        AUTO,
+        MANUAL,
+        WAIT_FOR_ACTIVITY;
+
+        public string to_string ()
+        {
+            switch (this)
+            {
+                case AUTO:
+                    return "auto";
+
+                case MANUAL:
+                    return "manual";
+
+                case WAIT_FOR_ACTIVITY:
+                    return "wait-for-activity";
+
+                default:
+                    return "";
+            }
+        }
+
+        public static Pomodoro.AdvancementMode from_string (string? str)
+        {
+            switch (str)
+            {
+                case "auto":
+                    return AUTO;
+
+                case "manual":
+                    return MANUAL;
+
+                case "wait-for-activity":
+                    return WAIT_FOR_ACTIVITY;
+
+                default:
+                    return AUTO;
+            }
+        }
+    }
+
+
     /**
      * `SessionManager` sets up the timer, advances time-blocks and sessions.
      */
@@ -1113,7 +1157,7 @@ namespace Pomodoro
                 case "pomodoro-duration":
                 case "short-break-duration":
                 case "long-break-duration":
-                case "pomodoros-per-session":
+                case "cycles":
                     this.update_session_template ();
                     break;
             }

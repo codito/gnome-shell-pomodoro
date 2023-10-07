@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroPreferencesPageTimer" parent="AdwPreferencesPage">
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Session</property>
+        <child>
+          <object class="PomodoroLogScaleRow">
+            <property name="title" translatable="yes">Pomodoro Duration</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment" id="pomodoro_duration_adjustment">
+                <property name="lower">30</property>
+                <property name="upper">7200</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroLogScaleRow">
+            <property name="title" translatable="yes">Short Break Duration</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment" id="short_break_duration_adjustment">
+                <property name="lower">30</property>
+                <property name="upper">7200</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroLogScaleRow">
+            <property name="title" translatable="yes">Long Break Duration</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment" id="long_break_duration_adjustment">
+                <property name="lower">30</property>
+                <property name="upper">7200</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSpinRow">
+            <property name="title" translatable="yes">Number of Cycles</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment" id="cycles_adjustment">
+                <property name="lower">1.0</property>
+                <property name="upper">6.0</property>
+                <property name="step_increment">1.0</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="spacing">12</property>
+            <property name="margin-top">18</property>
+            <property name="margin-bottom">6</property>
+            <child>
+              <object class="GtkLabel" id="session_stats_label">
+                <property name="halign">start</property>
+                <property name="label"></property>
+                <property name="use-markup">True</property>
+                <property name="single-line-mode">True</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="breaks_stats_label">
+                <property name="halign">start</property>
+                <property name="label"></property>
+                <property name="use-markup">True</property>
+                <property name="single-line-mode">True</property>
+              </object>
+            </child>
+            <style>
+              <class name="dim-label"/>
+              <class name="body"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Behavior</property>
+        <child>
+          <object class="AdwComboRow" id="pomodoro_auto_start_mode_comborow">
+            <property name="title" translatable="yes">Automatically Start a Break</property>
+            <property name="subtitle" translatable="yes">Whether to proceed to a break when Pomodoro ends.</property>
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Yes</item>
+                  <item translatable="yes">No</item>
+                  <item translatable="yes">Wait for activity</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected" handler="on_pomodoro_auto_start_mode_selected_notify" swapped="no" />
+         </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="break_auto_start_mode_comborow">
+            <property name="title" translatable="yes">Automatically Start Pomodoro</property>
+            <property name="subtitle" translatable="yes">Whether to proceed to Pomodoro when break ends.</property>
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Yes</item>
+                  <item translatable="yes">No</item>
+                  <item translatable="yes">Wait for activity</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected" handler="on_break_auto_start_mode_selected_notify" swapped="no" />
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

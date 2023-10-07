@@ -29,23 +29,35 @@ namespace Pomodoro
         }
     }
 
-    public string format_time (int seconds)
+    public string format_time (uint seconds)
     {
-        var minutes = (seconds / 60) % 60;
-        var hours = (seconds / 3600);
+        var hours = seconds / 3600;
+        var minutes = (seconds % 3600) / 60;
         var str = "";
+
+        seconds = seconds % 60;
 
         if (hours > 0)
         {
-            str = ngettext ("%d hour", "%d hours", hours).printf (hours);
-
-            if (minutes > 0) {
-                str += " ";
-            }
+            str = ngettext ("%u hour", "%u hours", hours).printf (hours);
         }
 
-        if (hours == 0 || minutes > 0) {
-            str += ngettext ("%d minute", "%d minutes", minutes).printf (minutes);
+        if (minutes > 0)
+        {
+            if (str != "") {
+                str += " ";
+            }
+
+            str += ngettext ("%u minute", "%u minutes", minutes).printf (minutes);
+        }
+
+        if (seconds > 0 && hours == 0)
+        {
+            if (str != "") {
+                str += " ";
+            }
+
+            str += ngettext ("%u second", "%u seconds", seconds).printf (seconds);
         }
 
         return str;

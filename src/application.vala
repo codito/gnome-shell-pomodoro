@@ -430,6 +430,7 @@ namespace Pomodoro
 
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
+            this.set_accels_for_action ("app.preferences", {"<Primary>comma"});
             this.set_accels_for_action ("app.quit", {"<Primary>q"});
             this.set_accels_for_action ("win.toggle-shrinked", {"F9"});
         }
