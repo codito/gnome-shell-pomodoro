@@ -24,16 +24,12 @@ namespace Pomodoro
     public enum WindowSize
     {
         NORMAL = 0,
-        COMPACT = 1,
-        TINY = 2;
+        COMPACT = 1;
 
         public static WindowSize from_string (string? name)
         {
             switch (name)
             {
-                case "tiny":
-                    return WindowSize.TINY;
-
                 case "compact":
                     return WindowSize.COMPACT;
 
@@ -51,9 +47,6 @@ namespace Pomodoro
 
                 case COMPACT:
                     return "compact";
-
-                case TINY:
-                    return "tiny";
 
                 default:
                     assert_not_reached ();

@@ -168,6 +168,7 @@ namespace Pomodoro
          * The context will hold info about current state of the session.
          */
         public abstract void resolve_context (Pomodoro.TimeBlock            time_block,
+                                              int64                         timestamp,
                                               ref Pomodoro.SchedulerContext context);
 
         /**
@@ -176,11 +177,10 @@ namespace Pomodoro
         public abstract Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerContext context);
 
         /**
-         * Check whether time-block can be marked as completed or uncompleted.
-         *
-         * It assumes that we reached time-block end-time. Set time-block time range before calling this function.
+         * Check whether time-block has been completed at given time.
          */
-        public abstract bool is_time_block_completed (Pomodoro.TimeBlock time_block);
+        public abstract bool is_time_block_completed (Pomodoro.TimeBlock time_block,
+                                                      int64              timestamp);
 
         /**
          * Build a scheduler context from completed/in-progress time-blocks.
@@ -208,7 +208,7 @@ namespace Pomodoro
                     break;
                 }
 
-                this.resolve_context (time_block, ref context);
+                this.resolve_context (time_block, timestamp, ref context);
 
                 link = link.next;
             }
@@ -232,6 +232,9 @@ namespace Pomodoro
             }
         }
 
+        /**
+         * Adjust time-block start-time and duration.
+         */
         public void reschedule_time_block (Pomodoro.TimeBlock time_block,
                                            int64              timestamp = Pomodoro.Timestamp.UNDEFINED)
                                            requires (time_block.state != Pomodoro.State.UNDEFINED)
@@ -253,10 +256,9 @@ namespace Pomodoro
          *
          * `next_time_block` - indicates a time-block that is in-progress of is selected to be in-progress.
          */
-        // TODO: rename to reschedule_session
-        public void reschedule (Pomodoro.Session    session,
-                                Pomodoro.TimeBlock? next_time_block = null,
-                                int64               timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void reschedule_session (Pomodoro.Session    session,
+                                        Pomodoro.TimeBlock? next_time_block = null,
+                                        int64               timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
@@ -332,7 +334,7 @@ namespace Pomodoro
                     session.emit_added (time_block);
                 }
 
-                this.resolve_context (time_block, ref context);
+                this.resolve_context (time_block, timestamp, ref context);
             }
 
             // Remove time-blocks after a long-break.
@@ -437,28 +439,53 @@ namespace Pomodoro
         }
 
         public override void resolve_context (Pomodoro.TimeBlock            time_block,
+                                              int64                         timestamp,
                                               ref Pomodoro.SchedulerContext context)
         {
-            var timestamp = time_block.end_time;
-            var time_block_weight = this.calculate_time_block_weight (time_block);
-
-            // Treat scheduled and in-progress time-blocks as if they will be completed according to plan.
             context.state = time_block.state;
-            context.timestamp = timestamp;
+            context.timestamp = time_block.end_time;
 
-            if (!time_block_weight.is_nan ()) {
-                context.score += time_block_weight;
-            }
-
-            if (time_block.get_status () != Pomodoro.TimeBlockStatus.UNCOMPLETED)
+            switch (time_block.get_status ())
             {
-                if (time_block.state == Pomodoro.State.LONG_BREAK) {
-                    context.is_session_completed = true;
-                }
+                case Pomodoro.TimeBlockStatus.UNCOMPLETED:
+                    // Ignore uncompleted blocks, mostly.
+                    break;
 
-                context.needs_long_break = !context.is_session_completed &&
-                                            context.score >= this.session_template.cycles;
+                case Pomodoro.TimeBlockStatus.IN_PROGRESS:
+                    // Treat in-progress block as it's going to be skipped.
+                    context.timestamp = timestamp;
+
+                    var time_block_score = this.calculate_time_block_score (time_block, timestamp);
+
+                    if (!time_block_score.is_nan ()) {
+                        context.score += time_block_score;
+                    }
+
+                    if (time_block.state == Pomodoro.State.LONG_BREAK && !context.is_session_completed) {
+                        context.is_session_completed = this.is_time_block_completed (time_block, timestamp);
+                    }
+                    break;
+
+                case Pomodoro.TimeBlockStatus.SCHEDULED:
+                case Pomodoro.TimeBlockStatus.COMPLETED:
+                    // Treat scheduled block as if it was completed according to plan.
+                    var time_block_weight = this.calculate_time_block_weight (time_block);
+
+                    if (!time_block_weight.is_nan ()) {
+                        context.score += time_block_weight;
+                    }
+
+                    if (time_block.state == Pomodoro.State.LONG_BREAK) {
+                        context.is_session_completed = true;
+                    }
+                    break;
+
+                default:
+                    assert_not_reached ();
             }
+
+            context.needs_long_break = !context.is_session_completed &&
+                                        context.score >= this.session_template.cycles;
         }
 
         /**
@@ -484,25 +511,21 @@ namespace Pomodoro
         }
 
         /**
-         * Determine whether time-block should be marked as completed after the new `TimeBlock.end_time` has been set.
-         *
-         * It does not take into account current status.
+         * Determine whether time-block should be marked as completed.
          */
-        public override bool is_time_block_completed (Pomodoro.TimeBlock time_block)
+        public override bool is_time_block_completed (Pomodoro.TimeBlock time_block,
+                                                      int64              timestamp)
         {
+            assert (time_block.get_status () == Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
             var completion_time = time_block.get_completion_time ();
 
             if (Pomodoro.Timestamp.is_undefined (completion_time)) {
                 GLib.debug ("is_time_block_completed: `completion_time` is not set");
-                return false;
+                completion_time = this.calculate_time_block_completion_time (time_block);
             }
 
-            if (Pomodoro.Timestamp.is_undefined (time_block.end_time)) {
-                GLib.debug ("is_time_block_completed: `end_time` is not set");
-                return false;
-            }
-
-            return time_block.end_time >= completion_time;
+            return timestamp >= completion_time;
         }
     }
 }

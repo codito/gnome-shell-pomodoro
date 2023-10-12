@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
   <enum id="org.gnomepomodoro.Pomodoro.AdvancementMode">
-    <value nick="auto" value="0"/>
+    <value nick="continuous" value="0"/>
     <value nick="manual" value="1"/>
     <value nick="wait-for-activity" value="2"/>
   </enum>
@@ -41,7 +41,7 @@
       <description>Number of pomodoros before a long break.</description>
     </key>
     <key name="pomodoro-advancement-mode" enum="org.gnomepomodoro.Pomodoro.AdvancementMode">
-      <default>"auto"</default>
+      <default>"continuous"</default>
       <summary>Advancement mode at the end of Pomodoro</summary>
       <description>How the timer should behave at the end of a pomodoro.</description>
     </key>
@@ -59,30 +59,6 @@
 
 <!--
   <schema id="org.gnomepomodoro.Pomodoro.preferences" path="/org/gnomepomodoro/Pomodoro/preferences/">
-    <key name="pomodoro-duration" type="u">
-      <default>1500</default>
-      <range min="1" max="36000"/>
-      <summary>Pomodoro duration</summary>
-      <description>Time in seconds you are supposed to be working.</description>
-    </key>
-    <key name="short-break-duration" type="u">
-      <default>300</default>
-      <range min="1" max="36000"/>
-      <summary>Short pause duration</summary>
-      <description>Time in seconds you are supposed to take a short break.</description>
-    </key>
-    <key name="long-break-duration" type="u">
-      <default>900</default>
-      <range min="1" max="36000"/>
-      <summary>Long pause duration</summary>
-      <description>Time in seconds you are supposed to take a longer break.</description>
-    </key>
-    <key name="pomodoros-per-session" type="u">
-      <default>4</default>
-      <range min="1" max="10"/>
-      <summary>Number of pomodoros to a long break</summary>
-      <description>Number of pomodoros to a long break.</description>
-    </key>
     <key name="toggle-timer-key" type="as">
       <default><![CDATA[["<Ctrl><Alt>p"]]]></default>
       <summary>Timer toggle key</summary>
@@ -92,11 +68,6 @@
       <default>true</default>
       <summary>Screen notifications</summary>
       <description>Whether to show a notification dialog when pause starts.</description>
-    </key>
-    <key name="pause-when-idle" type="b">
-      <default>true</default>
-      <summary>Wait after a break</summary>
-      <description>Postpone pomodoro until there is some activity.</description>
     </key>
     <key name="enabled-plugins" type="as">
       <default>["sounds"]</default>

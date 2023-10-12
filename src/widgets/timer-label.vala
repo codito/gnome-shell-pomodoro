@@ -78,7 +78,7 @@ namespace Pomodoro
         {
             if (this._timer.is_started ())
             {
-                if (this._timer.is_paused ()) {
+                if (this._timer.is_paused () || this._timer.is_finished ()) {
                     this.start_blinking_animation ();
                 }
                 else {
@@ -92,7 +92,7 @@ namespace Pomodoro
             }
         }
 
-        private void update_remaining_time (int64 timestamp = -1)
+        private void update_remaining_time (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             var remaining = this._timer.calculate_remaining (timestamp);
             var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (remaining);
@@ -128,7 +128,7 @@ namespace Pomodoro
                                                     this.box.opacity, BLINK_FADE_VALUE, BLINK_DURATION,
                                                     animation_target);
             animation.alternate = this.box.opacity == 1.0;
-            // animation.follow_enable_animations_setting = false;  // TODO: added in libadwaita 1.3
+            animation.follow_enable_animations_setting = false;
 
             if (animation.value_from <= BLINK_FADE_VALUE) {
                 animation.value_to = 1.0;
@@ -160,7 +160,7 @@ namespace Pomodoro
                                                         this.box.opacity, 1.0, 500,
                                                         animation_target);
                 animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
-                // animation.follow_enable_animations_setting = false;  // TODO: added in libadwaita 1.3
+                animation.follow_enable_animations_setting = false;
 
                 this.blink_animation.reset ();
                 this.blink_animation = animation;
@@ -223,7 +223,7 @@ namespace Pomodoro
 
             base.map ();
 
-            if (this._timer.is_paused ()) {
+            if (this._timer.is_paused () || this._timer.is_finished ()) {
                 this.start_blinking_animation ();
             }
         }

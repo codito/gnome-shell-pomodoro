@@ -58,7 +58,9 @@ namespace Pomodoro
 
         private void update_buttons ()
         {
-            this.state_menubutton.label = this.get_state_label ();
+            this.state_menubutton.label = !this.timer.is_finished ()
+                ? this.get_state_label ()
+                : _("Finished!");
         }
 
         private void update_session_progressbar ()

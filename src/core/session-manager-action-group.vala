@@ -60,6 +60,10 @@ namespace Pomodoro
             reset_action.activate.connect (this.activate_reset);
             this.add_action (reset_action);
 
+            // var skip_break_action = new GLib.SimpleAction ("skip-break", null);
+            // skip_break_action.activate.connect (this.activate_skip_break);
+            // this.add_action (skip_break_action);
+
             var state_action = new GLib.SimpleAction.stateful ("state",
                                                                GLib.VariantType.STRING,
                                                                new GLib.Variant.string (this.get_current_state ()));
@@ -72,9 +76,9 @@ namespace Pomodoro
         private string get_current_state ()
         {
             var current_time_block = this.session_manager.current_time_block;
-            var state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
 
-            return state.to_string ();
+            return current_state.to_string ();
         }
 
         private void activate_advance (GLib.SimpleAction action,
@@ -82,6 +86,18 @@ namespace Pomodoro
         {
             this.session_manager.advance ();
         }
+
+        // private void activate_skip_break (GLib.SimpleAction action,
+        //                                   GLib.Variant?     parameter)
+        // {
+        //     var current_time_block = this.session_manager.current_time_block;
+        //     var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+
+        //     if (current_state.is_break () || this.session_manager.timer.is_finished ())
+        //     {
+        //         this.session_manager.advance_to_state (Pomodoro.State.POMODORO);
+        //     }
+        // }
 
         private void activate_reset (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)

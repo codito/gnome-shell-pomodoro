@@ -20,6 +20,7 @@ libgnome_pomodoro_sources = files(
   'core/database.vala',
   'core/desktop-extension.vala',
   'core/entry.vala',
+  'core/notification-manager.vala',
   'core/presence.vala',
   'core/scheduler.vala',
   'core/session.vala',

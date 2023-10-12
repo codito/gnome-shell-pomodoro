@@ -1,54 +1,5 @@
 namespace Pomodoro
 {
-    /**
-     * Human-readable equivalent of `AdvancementMode` enum.
-     *
-     * The values must match item positions in the ui file.
-     */
-    public enum AutoStartMode
-    {
-        YES = 0,
-        NO = 1,
-        WAIT_FOR_ACTIVITY = 2;
-
-        public Pomodoro.AdvancementMode to_advancement_mode ()
-        {
-            switch (this)
-            {
-                case YES:
-                    return Pomodoro.AdvancementMode.AUTO;
-
-                case NO:
-                    return Pomodoro.AdvancementMode.MANUAL;
-
-                case WAIT_FOR_ACTIVITY:
-                    return Pomodoro.AdvancementMode.WAIT_FOR_ACTIVITY;
-
-                default:
-                    return Pomodoro.AdvancementMode.AUTO;
-            }
-        }
-
-        public static Pomodoro.AutoStartMode from_advancement_mode (Pomodoro.AdvancementMode mode)
-        {
-            switch (mode)
-            {
-                case Pomodoro.AdvancementMode.AUTO:
-                    return YES;
-
-                case Pomodoro.AdvancementMode.MANUAL:
-                    return NO;
-
-                case Pomodoro.AdvancementMode.WAIT_FOR_ACTIVITY:
-                    return WAIT_FOR_ACTIVITY;
-
-                default:
-                    return YES;
-            }
-        }
-    }
-
-
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-page-timer.ui")]
     public class PreferencesPageTimer : Adw.PreferencesPage
     {
@@ -68,9 +19,9 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Label breaks_stats_label;
         [GtkChild]
-        private unowned Adw.ComboRow pomodoro_auto_start_mode_comborow;
+        private unowned Adw.ComboRow break_advancement_mode_comborow;
         [GtkChild]
-        private unowned Adw.ComboRow break_auto_start_mode_comborow;
+        private unowned Adw.ComboRow pomodoro_advancement_mode_comborow;
 
         private GLib.Settings?  settings;
         private ulong           settings_changed_id = 0;
@@ -95,7 +46,7 @@ namespace Pomodoro
             }
 
             this.update_stats_labels ();
-            this.update_auto_start_modes ();
+            this.update_advancement_modes ();
         }
 
         private void update_stats_labels ()
@@ -108,13 +59,13 @@ namespace Pomodoro
             this.breaks_stats_label.label = _("<b>%u%%</b> of the time will be allocated for breaks.").printf (break_percentage);
         }
 
-        private void update_auto_start_modes ()
+        private void update_advancement_modes ()
         {
-            this.pomodoro_auto_start_mode_comborow.selected = (uint) Pomodoro.AutoStartMode.from_advancement_mode (
-                (Pomodoro.AdvancementMode) this.settings.get_enum ("break-advancement-mode"));
-
-            this.break_auto_start_mode_comborow.selected = (uint) Pomodoro.AutoStartMode.from_advancement_mode (
+            this.pomodoro_advancement_mode_comborow.selected = (uint) (
                 (Pomodoro.AdvancementMode) this.settings.get_enum ("pomodoro-advancement-mode"));
+
+            this.break_advancement_mode_comborow.selected = (uint) (
+                (Pomodoro.AdvancementMode) this.settings.get_enum ("break-advancement-mode"));
         }
 
         private void apply_changes ()
@@ -133,13 +84,11 @@ namespace Pomodoro
         private uint calculate_apply_changes_toast_timeout (Pomodoro.State changed_state)
         {
             var current_time_block = this.timer.user_data as Pomodoro.TimeBlock;
-            var intended_duration = current_time_block.state.get_default_duration ();
 
-            if (current_time_block == null || current_time_block.state != changed_state) {
-                return 0U;
-            }
-
-            if (current_time_block.get_intended_duration () == intended_duration) {
+            if (current_time_block == null ||
+                current_time_block.state != changed_state ||
+                current_time_block.get_intended_duration () == current_time_block.state.get_default_duration ())
+            {
                 return 0U;
             }
 
@@ -225,7 +174,7 @@ namespace Pomodoro
 
                 case "pomodoro-advancement-mode":
                 case "break-advancement-mode":
-                    this.update_auto_start_modes ();
+                    this.update_advancement_modes ();
                     break;
 
                 default:
@@ -243,23 +192,23 @@ namespace Pomodoro
         }
 
         [GtkCallback]
-        private void on_pomodoro_auto_start_mode_selected_notify (GLib.Object    object,
-                                                                  GLib.ParamSpec pspec)
+        private void on_pomodoro_advancement_mode_selected_notify (GLib.Object    object,
+                                                                   GLib.ParamSpec pspec)
         {
             var combo_row = (Adw.ComboRow) object;
-            var auto_start_mode = (Pomodoro.AutoStartMode) combo_row.selected;
+            var pomodoro_advancement_mode = (Pomodoro.AdvancementMode) combo_row.selected;
 
-            this.settings.set_enum ("break-advancement-mode", (int) auto_start_mode.to_advancement_mode ());
+            this.settings.set_enum ("pomodoro-advancement-mode", (int) pomodoro_advancement_mode);
         }
 
         [GtkCallback]
-        private void on_break_auto_start_mode_selected_notify (GLib.Object    object,
-                                                               GLib.ParamSpec pspec)
+        private void on_break_advancement_mode_selected_notify (GLib.Object    object,
+                                                                GLib.ParamSpec pspec)
         {
             var combo_row = (Adw.ComboRow) object;
-            var auto_start_mode = (Pomodoro.AutoStartMode) combo_row.selected;
+            var break_advancement_mode = (Pomodoro.AdvancementMode) combo_row.selected;
 
-            this.settings.set_enum ("pomodoro-advancement-mode", (int) auto_start_mode.to_advancement_mode ());
+            this.settings.set_enum ("break-advancement-mode", (int) break_advancement_mode);
         }
 
         public override void dispose ()

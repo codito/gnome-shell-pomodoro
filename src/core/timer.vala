@@ -252,14 +252,7 @@ namespace Pomodoro
             }
         }
 
-        private Pomodoro.TimerState  _state = Pomodoro.TimerState () {
-            duration = 0,
-            offset = 0,
-            started_time = Pomodoro.Timestamp.UNDEFINED,
-            paused_time = Pomodoro.Timestamp.UNDEFINED,
-            finished_time = Pomodoro.Timestamp.UNDEFINED,
-            user_data = null
-        };
+        private Pomodoro.TimerState   _state = Pomodoro.TimerState ();
         private uint                  timeout_id = 0;
         private int64                 last_state_changed_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                 last_tick_time = Pomodoro.Timestamp.UNDEFINED;
@@ -332,8 +325,8 @@ namespace Pomodoro
         /**
          * Try to change state and update fields related to state change
          */
-        public void set_state_full (Pomodoro.TimerState  state,
-                                    int64                timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void set_state_full (Pomodoro.TimerState state,
+                                    int64               timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             this.ensure_timestamp (ref timestamp);
 

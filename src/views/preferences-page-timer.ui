@@ -85,7 +85,7 @@
       <object class="AdwPreferencesGroup">
         <property name="title" translatable="yes">Behavior</property>
         <child>
-          <object class="AdwComboRow" id="pomodoro_auto_start_mode_comborow">
+          <object class="AdwComboRow" id="pomodoro_advancement_mode_comborow">
             <property name="title" translatable="yes">Automatically Start a Break</property>
             <property name="subtitle" translatable="yes">Whether to proceed to a break when Pomodoro ends.</property>
             <property name="model">
@@ -97,13 +97,13 @@
                 </items>
               </object>
             </property>
-            <signal name="notify::selected" handler="on_pomodoro_auto_start_mode_selected_notify" swapped="no" />
+            <signal name="notify::selected" handler="on_pomodoro_advancement_mode_selected_notify" swapped="no" />
          </object>
         </child>
         <child>
-          <object class="AdwComboRow" id="break_auto_start_mode_comborow">
-            <property name="title" translatable="yes">Automatically Start Pomodoro</property>
-            <property name="subtitle" translatable="yes">Whether to proceed to Pomodoro when break ends.</property>
+          <object class="AdwComboRow" id="break_advancement_mode_comborow">
+            <property name="title" translatable="yes">Automatically Start a Pomodoro</property>
+            <property name="subtitle" translatable="yes">Whether to proceed to a Pomodoro when break ends.</property>
             <property name="model">
               <object class="GtkStringList">
                 <items>
@@ -113,7 +113,7 @@
                 </items>
               </object>
             </property>
-            <signal name="notify::selected" handler="on_break_auto_start_mode_selected_notify" swapped="no" />
+            <signal name="notify::selected" handler="on_break_advancement_mode_selected_notify" swapped="no" />
           </object>
         </child>
       </object>

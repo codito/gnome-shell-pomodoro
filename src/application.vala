@@ -215,7 +215,7 @@ namespace Pomodoro
         }
 
         public void show_window (string view_name,
-                                 int64  timestamp = -1)
+                                 int64  timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             var window = (Pomodoro.Window?) this.get_window_by_type (typeof (Pomodoro.Window));
 
@@ -227,12 +227,14 @@ namespace Pomodoro
 
             window.view = Pomodoro.WindowView.from_string (view_name);
 
-            if (timestamp >= 0) {
+            if (timestamp > 0) {
                 window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
             }
             else {
                 window.present ();
             }
+
+            // Note: In GNOME Shell window will not get focus.
         }
 
         public void show_preferences (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
@@ -281,6 +283,8 @@ namespace Pomodoro
         private void activate_timer (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
+            debug ("### activate_timer");
+
             var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
 
             this.show_window ("timer", timestamp);
@@ -350,26 +354,19 @@ namespace Pomodoro
             this.quit ();
         }
 
-        private void activate_timer_skip (GLib.SimpleAction action,
-                                          GLib.Variant?     parameter)
+        private void activate_advance (GLib.SimpleAction action,
+                                       GLib.Variant?     parameter)
         {
-            try {
-                this.timer_service.skip ();
-            }
-            catch (GLib.Error error) {
-            }
+            this.session_manager.advance ();
         }
 
-        // private void activate_timer_set_state (GLib.SimpleAction action,
-        //                                        GLib.Variant?     parameter)
-        // {
-        //     try {
-        //         this.timer_service.set_state (parameter.get_string ());
-        //     }
-        //     catch (GLib.Error error) {
-                // TODO: log warning
-        //     }
-        // }
+        private void activate_advance_to_state (GLib.SimpleAction action,
+                                                GLib.Variant?     parameter)
+        {
+            var state = Pomodoro.State.from_string (parameter.get_string ());
+
+            this.session_manager.advance_to_state (state);
+        }
 
         // TODO: rename to swap_state?
         // private void activate_timer_switch_state (GLib.SimpleAction action,
@@ -386,6 +383,8 @@ namespace Pomodoro
 
         private void setup_actions ()
         {
+            debug ("#### setup_actions");
+
             GLib.SimpleAction action;
 
             action = new GLib.SimpleAction ("timer", GLib.VariantType.INT64);
@@ -416,8 +415,13 @@ namespace Pomodoro
             action.activate.connect (this.activate_quit);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("timer-skip", null);
-            action.activate.connect (this.activate_timer_skip);
+            // Proxy timer / session-manager actions under the "app" namespace.
+            action = new GLib.SimpleAction ("advance", null);
+            action.activate.connect (this.activate_advance);
+            this.add_action (action);
+
+            action = new GLib.SimpleAction ("advance-to-state", GLib.VariantType.STRING);
+            action.activate.connect (this.activate_advance_to_state);
             this.add_action (action);
 
             // TODO: timer-extend (by one minute)
@@ -432,7 +436,7 @@ namespace Pomodoro
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
             this.set_accels_for_action ("app.preferences", {"<Primary>comma"});
             this.set_accels_for_action ("app.quit", {"<Primary>q"});
-            this.set_accels_for_action ("win.toggle-shrinked", {"F9"});
+            this.set_accels_for_action ("win.toggle-shrinked", {"F9"});  // TODO: rename to toggle-compact
         }
 
         /**
@@ -495,6 +499,9 @@ namespace Pomodoro
             // this.setup_repository ();
             // this.setup_capabilities ();
             // this.setup_desktop_extension ();
+
+            // TODO: should be managed by capability manager
+            var notification_manager = Pomodoro.NotificationManager.get_default ();
 
             // this.setup_plugins.begin ((obj, res) => {
             //     this.setup_plugins.end (res);
@@ -604,6 +611,7 @@ namespace Pomodoro
             // }
 
             Pomodoro.close_repository ();
+            Pomodoro.NotificationManager.set_default (null);
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
             Pomodoro.SleepMonitor.set_default (null);

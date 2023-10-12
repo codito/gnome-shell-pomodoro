@@ -341,6 +341,11 @@ namespace Pomodoro
             return first_status == Pomodoro.TimeBlockStatus.SCHEDULED;
         }
 
+        /**
+         * Return whether session has a completed long break.
+         *
+         * The time-block must be marked with proper status; in-progress status won't do.
+         */
         public bool is_completed ()
         {
             unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.first ();

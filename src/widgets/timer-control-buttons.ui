@@ -113,6 +113,19 @@
                 </property>
               </object>
             </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">advance</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-start-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
       </object><!-- center_button -->
@@ -160,6 +173,22 @@
                 </property>
               </object>
             </child>
+            <!--
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">skip-break</property>
+                <property name="title" translatable="yes">Skip break</property>
+                <property name="child">
+                  <object class="GtkImage">
+                    <property name="icon-name">timer-skip-symbolic</property>
+                    <style>
+                      <class name="symbolic"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            -->
           </object>
         </child>
       </object><!-- right_button -->

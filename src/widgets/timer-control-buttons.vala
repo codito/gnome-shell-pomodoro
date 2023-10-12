@@ -197,8 +197,14 @@ namespace Pomodoro
         {
             switch (page_name)
             {
+                case "advance":
+                    return "session-manager.advance";
+
                 case "skip":
                     return "session-manager.advance";
+
+                case "skip-break":
+                    return "session-manager.skip-break";
 
                 case "reset":
                     return "session-manager.reset";
@@ -219,6 +225,7 @@ namespace Pomodoro
             var is_started = this.timer.is_started ();
             var is_stopped = !is_started;
             var is_paused = this.timer.is_paused ();
+            var is_finished = this.timer.is_finished ();
             var is_break = current_time_block != null
                 ? current_time_block.state.is_break ()
                 : true;
@@ -230,7 +237,8 @@ namespace Pomodoro
             Gtk.StackPage? center_page = null;
             Gtk.StackPage? right_page = null;
 
-            if (is_stopped) {
+            if (is_stopped)
+            {
                 left_page = can_reset
                     ? get_stack_page_by_name (this.left_image_stack, "reset")
                     : null;
@@ -251,6 +259,11 @@ namespace Pomodoro
                 if (is_paused) {
                     left_page = get_stack_page_by_name (this.left_image_stack, "rewind");
                     center_page = get_stack_page_by_name (this.center_image_stack, "resume");
+                    right_page = get_stack_page_by_name (this.right_image_stack, "stop");
+                }
+                else if (is_finished) {
+                    left_page = get_stack_page_by_name (this.left_image_stack, "rewind");
+                    center_page = get_stack_page_by_name (this.center_image_stack, "advance");
                     right_page = get_stack_page_by_name (this.right_image_stack, "stop");
                 }
                 else {
@@ -282,7 +295,9 @@ namespace Pomodoro
             if (center_page != null) {
                 this.center_image_stack.visible_child = center_page.child;
                 this.center_button.action_name = this.get_action_name (center_page.name);
-                this.center_button.tooltip_text = center_page.title;
+                this.center_button.tooltip_text = center_page.name == "advance"
+                    ? (is_break ? _("Start Pomodoro") : _("Take a break"))
+                    : center_page.title;
             }
 
             if (right_page != null) {
@@ -295,7 +310,7 @@ namespace Pomodoro
 
                 this.right_button.action_name = this.get_action_name (right_page.name);
                 this.right_button.tooltip_text = right_page.name == "skip"
-                    ? (is_break ? _("Start pomodoro") : _("Take a break"))
+                    ? (is_break ? _("Start Pomodoro") : _("Take a break"))
                     : right_page.title;
             }
 

@@ -848,8 +848,8 @@ namespace Tests
             assert_true (time_block_1.get_status () == Pomodoro.TimeBlockStatus.UNCOMPLETED);
             assert_true (time_block_2.get_status () == Pomodoro.TimeBlockStatus.IN_PROGRESS);
             assert_cmpstrv (signals, {
-                "leave-time-block",
                 "rescheduled-session",
+                "leave-time-block",
                 "enter-time-block",
                 "resolve-state",
                 "state-changed"
@@ -946,7 +946,6 @@ namespace Tests
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
-
 
             session_manager.ensure_session ();
 
@@ -1627,6 +1626,10 @@ namespace Tests
                 "state-changed"
             });
             assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.end_time),
+                new GLib.Variant.int64 (time_block_1.start_time + expected_duration)
+            );
+            assert_cmpvariant (
                 new GLib.Variant.int64 (time_block_2.start_time),
                 new GLib.Variant.int64 (time_block_1.end_time)
             );
@@ -2075,13 +2078,13 @@ namespace Tests
             var session = session_manager.current_session;
             session.@foreach (
                 (time_block) => {
-                    time_block.set_status (time_block.state != Pomodoro.State.LONG_BREAK
-                                           ? Pomodoro.TimeBlockStatus.COMPLETED
-                                           : Pomodoro.TimeBlockStatus.SCHEDULED);
+                    time_block.set_status (Pomodoro.TimeBlockStatus.COMPLETED);
                 }
             );
 
             var time_block = session.get_last_time_block ();
+            time_block.set_status (Pomodoro.TimeBlockStatus.SCHEDULED);
+
             var now = time_block.start_time;
             Pomodoro.Timestamp.freeze_to (now);
             session_manager.current_time_block = time_block;
@@ -2090,6 +2093,7 @@ namespace Tests
             session_manager.advance (now);
 
             time_block = session_manager.current_time_block;
+            assert_nonnull (time_block);
             assert_true (time_block.state == Pomodoro.State.POMODORO);
             assert_true (time_block.get_is_extra ());
 
