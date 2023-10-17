@@ -96,7 +96,6 @@ gnome_pomodoro_vala_sources = files(
   'widgets/log-scale.vala',
   'widgets/log-scale-row.vala',
   'widgets/monospace-label.vala',
-  'widgets/progress-bar.vala',
   'widgets/session-progress-bar.vala',
   'widgets/size-stack.vala',
   'widgets/timer-control-buttons.vala',

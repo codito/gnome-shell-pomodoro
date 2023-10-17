@@ -408,9 +408,9 @@ namespace Pomodoro
                 }
 
                 block_bounds.init (block_x,
-                                       0.0f,
-                                       block_width,
-                                       height);
+                                   0.0f,
+                                   block_width,
+                                   height);
                 block_outline.init_from_rect (block_bounds, 0.5f * height);
 
                 snapshot.push_rounded_clip (block_outline);

@@ -68,7 +68,7 @@
           </object>
         </child>
         <child>
-          <object class="PomodoroTimerProgressBar" id="timer_progressbar">
+          <object class="PomodoroTimerProgressBar">
             <property name="line-width">5</property>
             <property name="halign">fill</property>
             <property name="hexpand">True</property>
