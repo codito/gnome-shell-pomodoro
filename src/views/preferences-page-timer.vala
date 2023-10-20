@@ -27,7 +27,7 @@ namespace Pomodoro
         private ulong           settings_changed_id = 0;
         private Pomodoro.Timer? timer;
         private ulong           timer_state_changed_id = 0;
-        private Adw.Toast?     apply_changes_toast;
+        private Adw.Toast?      apply_changes_toast;
 
         construct
         {
@@ -150,6 +150,7 @@ namespace Pomodoro
                                           string        key)
         {
             var changed_state = Pomodoro.State.UNDEFINED;
+            var session_manager = Pomodoro.SessionManager.get_default ();
 
             switch (key)
             {
@@ -181,13 +182,17 @@ namespace Pomodoro
                     break;
             }
 
-            var apply_changes_toast_timeout = this.calculate_apply_changes_toast_timeout (changed_state);
+            if (session_manager.current_time_block != null &&
+                session_manager.current_time_block.state == changed_state)
+            {
+                var apply_changes_toast_timeout = this.calculate_apply_changes_toast_timeout (changed_state);
 
-            if (apply_changes_toast_timeout >= MIN_TOAST_TIMEOUT) {
-                this.show_apply_changes_toast (changed_state, apply_changes_toast_timeout);
-            }
-            else {
-                this.hide_apply_changes_toast ();
+                if (apply_changes_toast_timeout >= MIN_TOAST_TIMEOUT) {
+                    this.show_apply_changes_toast (changed_state, apply_changes_toast_timeout);
+                }
+                else {
+                    this.hide_apply_changes_toast ();
+                }
             }
         }
 
