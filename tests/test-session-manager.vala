@@ -66,7 +66,8 @@ namespace Tests
             this.add_test ("advance_to_state__completed_session", this.test_advance_to_state__completed_session);
 
             this.add_test ("reset", this.test_reset);
-            this.add_test ("expire_session", this.test_expire_session);
+            this.add_test ("expire_session__after_timeout", this.test_expire_session__after_timeout);
+            this.add_test ("expire_session__after_suspend", this.test_expire_session__after_suspend);
 
             this.add_test ("settings_change", this.test_settings_change);
         }
@@ -94,6 +95,20 @@ namespace Tests
 
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
+        }
+
+        public Pomodoro.Session create_session (Pomodoro.SessionManager session_manager)
+        {
+            var scheduler = session_manager.scheduler;
+            var session = new Pomodoro.Session.from_template (scheduler.session_template);
+            session.@foreach (
+                (time_block) => {
+                    time_block.set_intended_duration (time_block.duration);
+                    time_block.set_completion_time (scheduler.calculate_time_block_completion_time (time_block));
+                }
+            );
+
+            return session;
         }
 
 
@@ -1382,7 +1397,12 @@ namespace Tests
             assert_null (session_manager.current_time_block);
         }
 
-        public void test_expire_session ()
+        /**
+         * Check whether session expires after a timeout.
+         *
+         * In this test we manually set session `expiry-time`, which doesn't happen normally.
+         */
+        public void test_expire_session__after_timeout ()
         {
             Pomodoro.Timestamp.thaw ();
 
@@ -1438,18 +1458,29 @@ namespace Tests
             assert_true (session_manager.current_session.is_scheduled ());
         }
 
-        public Pomodoro.Session create_session (Pomodoro.SessionManager session_manager)
+        /**
+         * Check whether session expires after after a mock system suspend.
+         */
+        public void test_expire_session__after_suspend ()
         {
-            var scheduler = session_manager.scheduler;
-            var session = new Pomodoro.Session.from_template (scheduler.session_template);
-            session.@foreach (
-                (time_block) => {
-                    time_block.set_intended_duration (time_block.duration);
-                    time_block.set_completion_time (scheduler.calculate_time_block_completion_time (time_block));
-                }
-            );
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
-            return session;
+            timer.start ();
+
+            var now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            timer.reset (now);
+            assert_false (session_manager.current_session.is_scheduled ());
+
+            var suspend_start = now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            timer.suspending (suspend_start);
+
+            var suspend_end = Pomodoro.Timestamp.advance (Pomodoro.SessionManager.SESSION_EXPIRY_TIMEOUT);
+            timer.suspended (suspend_start, suspend_end);
+
+            // Expect to a next session to be initialized.
+            assert_nonnull (session_manager.current_session);
+            assert_true (session_manager.current_session.is_scheduled ());
         }
 
         public void test_settings_change ()

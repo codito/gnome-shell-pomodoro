@@ -70,6 +70,7 @@ namespace Pomodoro
                 this.timer_resolve_state_id = this._timer.resolve_state.connect (this.on_timer_resolve_state);
                 this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
                 this.timer_finished_id = this._timer.finished.connect (this.on_timer_finished);
+                this.timer_suspending_id = this._timer.suspended.connect (this.on_timer_suspending);
                 this.timer_suspended_id = this._timer.suspended.connect (this.on_timer_suspended);
             }
         }
@@ -196,11 +197,11 @@ namespace Pomodoro
         private ulong                            timer_resolve_state_id = 0;
         private ulong                            timer_state_changed_id = 0;
         private ulong                            timer_finished_id = 0;
+        private ulong                            timer_suspending_id = 0;
         private ulong                            timer_suspended_id = 0;
         private uint                             expiry_timeout_id = 0;
         private ulong                            scheduler_notify_session_template_id = 0;
         private uint                             reschedule_idle_id = 0;
-
 
         public SessionManager ()
         {
@@ -921,6 +922,11 @@ namespace Pomodoro
             // }
         }
 
+        /**
+         * Update session `expiry-time`.
+         *
+         * The given timeout is relative to last action in the session.
+         */
         private void bump_expiry_time (int64 timeout)
         {
             if (this.expiry_timeout_id != 0)
@@ -950,7 +956,12 @@ namespace Pomodoro
                     expiry_time = current_or_previous_time_block.end_time + timeout;
                 }
 
+                GLib.SignalHandler.block (this._current_session, this.current_session_notify_expiry_time_id);
                 this._current_session.expiry_time = expiry_time;
+                GLib.SignalHandler.unblock (this._current_session, this.current_session_notify_expiry_time_id);
+
+                // Notify signal may not kick in if there is no change. Therefore we trigger it manually.
+                this.on_current_session_notify_expiry_time ();
             }
         }
 
@@ -1188,15 +1199,44 @@ namespace Pomodoro
             }
         }
 
+        private void on_timer_suspending (int64 start_time)
+        {
+            if (this._current_gap != null)
+            {
+                this._current_gap.end_time = start_time;
+                this._current_gap = null;
+            }
+
+            if (this._current_time_block != null)
+            {
+                this._current_gap = new Pomodoro.Gap.with_start_time (start_time);  // TODO: mark gap as SLEEP
+                this._current_time_block.add_gap (this._current_gap);
+            }
+
+            if (this._current_session != null)
+            {
+                GLib.SignalHandler.block (this._current_session, this.current_session_notify_expiry_time_id);
+                this._current_session.expiry_time = start_time + SESSION_EXPIRY_TIMEOUT;
+                GLib.SignalHandler.unblock (this._current_session, this.current_session_notify_expiry_time_id);
+            }
+
+            if (this.expiry_timeout_id != 0)
+            {
+                GLib.Source.remove (this.expiry_timeout_id);
+                this.expiry_timeout_id = 0;
+            }
+        }
+
         private void on_timer_suspended (int64 start_time,
                                          int64 end_time)
         {
             if (this._current_session != null)
             {
-                this._current_session.expiry_time = start_time + SESSION_EXPIRY_TIMEOUT;
-
                 if (this._current_session.is_expired (end_time)) {
                     this.expire_current_session (end_time);
+                }
+                else {
+                    this.bump_expiry_time (SESSION_EXPIRY_TIMEOUT);
                 }
             }
         }
@@ -1413,6 +1453,11 @@ namespace Pomodoro
                 if (this.timer_finished_id != 0) {
                     this._timer.disconnect (this.timer_finished_id);
                     this.timer_finished_id = 0;
+                }
+
+                if (this.timer_suspending_id != 0) {
+                    this._timer.disconnect (this.timer_suspending_id);
+                    this.timer_suspending_id = 0;
                 }
 
                 if (this.timer_suspended_id != 0) {

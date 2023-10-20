@@ -271,20 +271,21 @@ namespace Pomodoro
             this.sleep_monitor = Pomodoro.SleepMonitor.get_default ();
             this.prepare_for_sleep_id = this.sleep_monitor.prepare_for_sleep.connect (
                 () => {
-                    if (this.is_running ()) {
-                        this.suspend_time = this.get_current_time ();
-                        this.stop_timeout (this.suspend_time);
-                    }
+                    this.suspend_time = this.get_current_time ();
+                    this.stop_timeout (this.suspend_time);
+
+                    this.suspending (this.suspend_time);
                 }
             );
             this.woke_up_id = this.sleep_monitor.woke_up.connect (
                 () => {
-                    if (this.is_running ()) {
-                        var timestamp = Pomodoro.Timestamp.from_now ();
+                    var timestamp = Pomodoro.Timestamp.from_now ();
 
+                    if (this.is_running ()) {
                         this.synchronize (Pomodoro.Timestamp.UNDEFINED, timestamp);
-                        this.suspended (this.suspend_time, timestamp);
                     }
+
+                    this.suspended (this.suspend_time, timestamp);
 
                     this.suspend_time = Pomodoro.Timestamp.UNDEFINED;
                 }
@@ -1046,7 +1047,18 @@ namespace Pomodoro
         public signal void synchronized ();
 
         /**
-         * Emitted right after system wakes up and the timer synchronizes.
+         * Emitted before system has suspended.
+         *
+         * It's emitted even when timer is not running.
+         */
+        public signal void suspending (int64 start_time)
+        {
+        }
+
+        /**
+         * Emitted right after system wakes up and the timer has been synchronised.
+         *
+         * It's emitted even when the timer is not running.
          */
         [Signal (run = "last")]
         public signal void suspended (int64 start_time,
