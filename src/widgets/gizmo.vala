@@ -75,10 +75,10 @@ namespace Pomodoro
             }
         }
 
-        // public override Gtk.SizeRequestMode get_request_mode ()
-        // {
-        //     return Gtk.SizeRequestMode.CONSTANT_SIZE;
-        // }
+        public override Gtk.SizeRequestMode get_request_mode ()
+        {
+            return Gtk.SizeRequestMode.HEIGHT_FOR_WIDTH;
+        }
 
         public override void measure (Gtk.Orientation orientation,
                                       int for_size,

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="PomodoroTimerLabel" parent="AdwBin">
-    <property name="child">
+  <template class="PomodoroTimerLabel" parent="GtkWidget">
+    <child>
       <object class="GtkStack" id="stack">
         <property name="transition-type">crossfade</property>
         <property name="transition-duration">250</property>
@@ -16,7 +16,7 @@
                 <property name="orientation">horizontal</property>
                 <property name="spacing">0</property>
                 <property name="halign">center</property>
-                <property name="valign">start</property>
+                <property name="valign">center</property>
                 <child>
                   <object class="PomodoroMonospaceLabel" id="placeholder_minutes_label">
                     <property name="halign">fill</property>
@@ -54,9 +54,9 @@
                     </style>
                   </object>
                 </child>
-              </object>
+              </object><!-- placeholder_box -->
             </property>
-          </object>
+          </object><!-- stack page -->
         </child>
         <child>
           <object class="GtkStackPage">
@@ -66,11 +66,11 @@
                 <property name="orientation">horizontal</property>
                 <property name="spacing">0</property>
                 <property name="halign">center</property>
-                <property name="valign">start</property>
+                <property name="valign">center</property>
                 <child>
                   <object class="PomodoroMonospaceLabel" id="minutes_label">
                     <property name="halign">fill</property>
-                    <property name="hexpand">1</property>
+                    <property name="hexpand">True</property>
                     <property name="valign">baseline</property>
                     <property name="xalign">1.0</property>
                     <property name="text">0</property>
@@ -101,11 +101,11 @@
                     </style>
                   </object>
                 </child>
-              </object>
+              </object><!-- box -->
             </property>
-          </object>
+          </object><!-- stack page -->
         </child>
-      </object>
-    </property>
+      </object><!-- stack -->
+    </child>
   </template>
 </interface>

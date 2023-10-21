@@ -21,69 +21,56 @@
   </menu>
 
   <template class="PomodoroTimerView" parent="GtkWidget">
+    <property name="halign">fill</property>
+    <property name="valign">fill</property>
     <child>
-      <object class="GtkBox">
+      <object class="GtkMenuButton" id="state_menubutton">
+        <property name="receives-default">0</property>
+        <property name="halign">start</property>
+        <property name="has-frame">0</property>
+        <property name="use-underline">0</property>
+        <property name="direction">down</property>
+        <property name="menu-model">state_menu</property>
+        <style>
+          <class name="title-1"/>
+          <class name="pomodoro-state-menu"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="inner_box">
         <property name="orientation">vertical</property>
-        <property name="spacing">50</property>
-        <property name="halign">center</property>
-        <property name="valign">center</property>
         <child>
-          <object class="GtkMenuButton" id="state_menubutton">
-            <property name="receives-default">0</property>
-            <property name="halign">start</property>
-            <property name="has-frame">0</property>
-            <property name="use-underline">0</property>
-            <property name="direction">down</property>
-            <property name="menu-model">state_menu</property>
-            <style>
-              <class name="title-1"/>
-              <class name="pomodoro-state-menu"/>
-            </style>
+          <object class="PomodoroTimerLabel" id="timer_label">
+            <property name="halign">fill</property>
           </object>
         </child>
         <child>
-          <object class="GtkOverlay">
-            <child type="overlay">
-              <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">5</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <child>
-                  <object class="PomodoroTimerLabel" id="timer_label">
-                    <property name="halign">center</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkRevealer" id="session_progressbar_revealer">
-                    <property name="reveal-child">true</property>
-                    <property name="transition-type">slide-up</property>
-                    <property name="transition-duration">500</property>
-                    <child>
-                      <object class="PomodoroSessionProgressBar" id="session_progressbar">
-                        <property name="halign">fill</property>
-                      </object>
-                    </child>
-                </object>
-                </child>
-              </object>
-            </child>
+          <object class="GtkRevealer" id="session_progressbar_revealer">
+            <property name="reveal-child">true</property>
+            <property name="transition-type">slide-up</property>
+            <property name="transition-duration">500</property>
             <child>
-              <object class="PomodoroTimerProgressRing">
-                <property name="halign">center</property>
-                <property name="valign">center</property>
+              <object class="PomodoroSessionProgressBar" id="session_progressbar">
+                <property name="halign">fill</property>
               </object>
             </child>
-          </object><!-- overlay -->
-        </child>
-        <child>
-          <object class="PomodoroTimerControlButtons">
-            <property name="has-suggested-action">True</property>
-            <property name="circular">True</property>
-            <property name="spacing">30</property>
           </object>
         </child>
-      </object><!-- box -->
+      </object>
+    </child>
+    <child>
+      <object class="PomodoroTimerProgressRing" id="timer_progressring">
+        <property name="halign">fill</property>
+        <property name="valign">center</property>
+      </object>
+    </child>
+    <child>
+      <object class="PomodoroTimerControlButtons" id="timer_control_buttons">
+        <property name="has-suggested-action">True</property>
+        <property name="circular">True</property>
+        <property name="spacing">30</property>
+      </object>
     </child>
     <child>
       <object class="GtkGestureClick" id="click_gesture">

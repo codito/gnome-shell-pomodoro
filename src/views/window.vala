@@ -170,6 +170,8 @@ namespace Pomodoro
 
             this.update_title ();
             this.update_timer_indicator ();
+
+            // this.layout_manager = null;
         }
 
         private void update_title ()

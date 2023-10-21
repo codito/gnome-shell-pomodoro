@@ -342,33 +342,6 @@ namespace Pomodoro
                 base.unmap ();
             }
 
-            public override Gtk.SizeRequestMode get_request_mode ()
-            {
-                return Gtk.SizeRequestMode.WIDTH_FOR_HEIGHT;
-            }
-
-            public override void measure (Gtk.Orientation orientation,
-                                          int             for_size,
-                                          out int         minimum,
-                                          out int         natural,
-                                          out int         minimum_baseline,
-                                          out int         natural_baseline)
-            {
-                var parent = this.get_parent () as Pomodoro.SessionProgressBar;
-
-                if (parent != null) {
-                    minimum = orientation == Gtk.Orientation.HORIZONTAL
-                        ? MIN_WIDTH : (int) Math.ceil (parent.line_width);
-                }
-                else {
-                    minimum = 0;
-                }
-
-                natural = minimum;
-                minimum_baseline = -1;
-                natural_baseline = -1;
-            }
-
             public override void snapshot (Gtk.Snapshot snapshot)
                                            requires (!this._span_start.is_nan () && !this._span_end.is_nan ())
             {
@@ -517,7 +490,7 @@ namespace Pomodoro
                 this._line_width = value;
 
                 this.notify_property ("line-width");
-                this.queue_draw_blocks ();
+                this.queue_resize ();
             }
         }
 
@@ -546,20 +519,6 @@ namespace Pomodoro
         {
             this._session_manager = Pomodoro.SessionManager.get_default ();
             this._timer           = Pomodoro.Timer.get_default ();
-
-            this.layout_manager = new Gtk.BinLayout ();
-        }
-
-        private void queue_draw_blocks ()
-        {
-            var child = this.get_first_child ();
-
-            while (child != null)
-            {
-                child.queue_draw ();
-
-                child = child.get_next_sibling ();
-            }
         }
 
         private void remove_blocks ()
@@ -993,9 +952,32 @@ namespace Pomodoro
 
             base.unmap ();
         }
+
         public override Gtk.SizeRequestMode get_request_mode ()
         {
-            return Gtk.SizeRequestMode.CONSTANT_SIZE;
+            return Gtk.SizeRequestMode.HEIGHT_FOR_WIDTH;
+        }
+
+        public override void measure (Gtk.Orientation orientation,
+                                      int             for_size,
+                                      out int         minimum,
+                                      out int         natural,
+                                      out int         minimum_baseline,
+                                      out int         natural_baseline)
+        {
+            var line_width = (int) Math.ceilf (this._line_width);
+
+            if (orientation == Gtk.Orientation.HORIZONTAL) {
+                minimum = int.max (line_width, MIN_WIDTH);
+                natural = int.max (minimum, for_size);
+            }
+            else {
+                minimum = line_width;
+                natural = minimum;
+            }
+
+            minimum_baseline = -1;
+            natural_baseline = -1;
         }
 
         /**

@@ -79,7 +79,6 @@
     <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
     <property name="default-width">400</property>
     <property name="default-height">600</property>
-    <property name="valign">fill</property>
     <property name="content">
       <object class="PomodoroSizeStack" id="size_stack">
         <property name="transition-duration">500</property>
@@ -91,8 +90,6 @@
             <property name="child">
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                <property name="halign">fill</property>
-                <property name="valign">fill</property>
                 <child>
                   <object class="AdwHeaderBar" id="header_bar">
                     <property name="centering-policy">strict</property>
@@ -119,42 +116,34 @@
                 </child>
                 <child>
                   <object class="AdwToastOverlay" id="toast_overlay">
+                    <property name="vexpand">True</property>
                     <property name="child">
-                      <object class="AdwClamp"><!-- TODO: views should define clamp themselves -->
-                        <!-- TODO: Update the panel size in CSS accordingly. -->
-                        <property name="maximum-size">668</property>
-                        <property name="tightening-threshold">550</property>
+                      <object class="AdwViewStack" id="view_stack">
                         <child>
-                          <object class="AdwViewStack" id="view_stack">
-                            <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
-                            <child>
-                              <object class="AdwViewStackPage">
-                                <property name="name">timer</property>
-                                <property name="title" translatable="yes">Timer</property>
-                                <property name="icon-name">timer-symbolic</property>
-                                <property name="child">
-                                  <object class="PomodoroTimerView" id="timer_view"/>
-                                </property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="AdwViewStackPage">
-                                <property name="name">stats</property>
-                                <property name="title" translatable="yes">Stats</property>
-                                <property name="icon-name">stats-symbolic</property>
-                                <property name="child">
-                                  <!-- TODO: change to History -->
-                                  <object class="GtkLabel">
-                                    <property name="label">Stats</property>
-                                  </object>
-                                </property>
-                              </object>
-                            </child>
-                            <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
-                          </object><!-- stack -->
+                          <object class="AdwViewStackPage">
+                            <property name="name">timer</property>
+                            <property name="title" translatable="yes">Timer</property>
+                            <property name="icon-name">timer-symbolic</property>
+                            <property name="child">
+                              <object class="PomodoroTimerView" id="timer_view"/>
+                            </property>
+                          </object>
                         </child>
-                      </object><!-- clamp -->
+                        <child>
+                          <object class="AdwViewStackPage">
+                            <property name="name">stats</property>
+                            <property name="title" translatable="yes">Stats</property>
+                            <property name="icon-name">stats-symbolic</property>
+                            <property name="child">
+                              <!-- TODO: change to History -->
+                              <object class="GtkLabel">
+                                <property name="label">Stats</property>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <signal name="notify::visible-child" handler="on_view_stack_visible_child_notify" swapped="false" />
+                      </object><!-- view_stack -->
                     </property>
                   </object><!-- toast_overlay -->
                 </child>

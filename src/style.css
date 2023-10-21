@@ -100,18 +100,18 @@ timerlabel .placeholder {
 /**
  * PomodoroTimerView widget
  */
-timerview > box {
-    margin: 20px 20px 50px 20px;
-}
-
 timerview button:backdrop,
 timerview button:disabled {
     color: @insensitive_fg_color;
 }
 
+timerview timerlabel {
+    font-size: 55pt;
+    font-weight: 400;
+}
+
 timerview sessionprogressbar {
-    padding: 10px 0;
-    margin: 0 3px;
+    padding: 12px 0;
 }
 
 timerview timercontrolbuttons button {
@@ -153,21 +153,6 @@ timerview .pomodoro-state-menu arrow {
     opacity: 0;
     margin: 0;
     margin-left: -16px;
-}
-
-timerview timerlabel {
-    font-size: 55pt;
-    font-weight: 400;
-}
-
-timerview timerlabel .separator-label {
-    margin-left: -10px;
-    margin-right: -10px;
-}
-
-timerview progressbar {
-    min-width: 300px;
-    min-height: 300px;
 }
 
 timerview timerlabel:backdrop,
@@ -213,11 +198,6 @@ compacttimerview timerlabel {
     font-size: 16pt;
 }
 
-compacttimerview timerlabel .separator-label {
-    margin-left: -3px;
-    margin-right: -3px;
-}
-
 compacttimerview progressbar {
     padding: 0;
     padding-left: 9px;
@@ -255,6 +235,14 @@ compacttimerview:dir(rtl) progressbar {
     border: none;
 }
 
+
+/*
+ * Common
+ */
+
+.numeric {
+    font-feature-settings: "tnum";
+}
 
 
 /* classes backported from Gtk4 */

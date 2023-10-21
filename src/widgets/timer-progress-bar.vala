@@ -1,5 +1,6 @@
 namespace Pomodoro
 {
+    // FIXME: using inspector causes warning: GLib-GObject-CRITICAL **: 14:27:43.337: value "inf" of type 'gdouble' is invalid or out of range for property 'page-increment' of type 'gdouble'
     public abstract class TimerProgress : Gtk.Widget
     {
         protected const uint   MIN_TIMEOUT_INTERVAL = 50;
@@ -8,7 +9,6 @@ namespace Pomodoro
         protected const float  DEFAULT_LINE_WIDTH = 6.0f;
         protected const int    MIN_WIDTH = 16;
         protected const double EPSILON = 0.00001;
-
 
         [CCode (notify = false)]
         public double value {
@@ -131,8 +131,6 @@ namespace Pomodoro
         construct
         {
             this._timer = Pomodoro.Timer.get_default ();
-
-            this.layout_manager = new Gtk.BinLayout ();
 
             var through = new Pomodoro.Gizmo (this.measure_child,
                                               null,
@@ -450,7 +448,7 @@ namespace Pomodoro
 
         public override Gtk.SizeRequestMode get_request_mode ()
         {
-            return Gtk.SizeRequestMode.CONSTANT_SIZE;
+            return Gtk.SizeRequestMode.HEIGHT_FOR_WIDTH;
         }
 
         public override void measure (Gtk.Orientation orientation,
@@ -585,7 +583,7 @@ namespace Pomodoro
         }
 
         protected override void snapshot_through (Pomodoro.Gizmo gizmo,
-                                             Gtk.Snapshot   snapshot)
+                                                  Gtk.Snapshot   snapshot)
         {
             var style_context = gizmo.get_style_context ();
             var width         = (float) gizmo.get_width ();
@@ -704,12 +702,12 @@ namespace Pomodoro
         }
 
         protected override void measure_child (Pomodoro.Gizmo  gizmo,
-                                          Gtk.Orientation orientation,
-                                          int             for_size,
-                                          out int         minimum,
-                                          out int         natural,
-                                          out int         minimum_baseline,
-                                          out int         natural_baseline)
+                                               Gtk.Orientation orientation,
+                                               int             for_size,
+                                               out int         minimum,
+                                               out int         natural,
+                                               out int         minimum_baseline,
+                                               out int         natural_baseline)
         {
             minimum          = int.max (for_size, MIN_WIDTH);
             natural          = minimum;
@@ -795,6 +793,20 @@ namespace Pomodoro
                                   angle_from,
                                   angle_to);
             context.stroke ();
+        }
+
+        public override void size_allocate (int width,
+                                            int height,
+                                            int baseline)
+        {
+            // HACK: Scale line-width according to size.
+            var min_size = 300.0;
+            var max_size = 450.0;
+            var line_width = Adw.lerp (6.0, 8.0, ((double) width - min_size) / (max_size - min_size));
+
+            this.line_width = (float) Math.round (line_width);
+
+            base.size_allocate (width, height, baseline);
         }
     }
 }

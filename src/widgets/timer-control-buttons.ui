@@ -3,8 +3,9 @@
   <template class="PomodoroTimerControlButtons" parent="GtkBox">
     <property name="orientation">horizontal</property>
     <property name="spacing">10</property>
-    <property name="halign">center</property>
+    <property name="halign">fill</property>
     <property name="valign">center</property>
+    <property name="homogeneous">True</property>
     <style>
       <class name="pomodoro-timer-control-buttons"/>
     </style>
