@@ -665,6 +665,7 @@ namespace Tests
             var context = Pomodoro.SchedulerContext () {
                 state = Pomodoro.State.POMODORO,
             };
+
             var time_block = scheduler.resolve_time_block (context);
             assert_true (time_block.state == Pomodoro.State.SHORT_BREAK);
         }

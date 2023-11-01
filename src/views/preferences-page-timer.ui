@@ -29,7 +29,7 @@
           </object>
         </child>
         <child>
-          <object class="PomodoroLogScaleRow">
+          <object class="PomodoroLogScaleRow" id="long_break_row">
             <property name="title" translatable="yes">Long Break Duration</property>
             <property name="adjustment">
               <object class="GtkAdjustment" id="long_break_duration_adjustment">

@@ -55,4 +55,32 @@
       </item>
     </section>
   </menu>
+  <menu id="state_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Pomodoro</attribute>
+        <attribute name="action">session-manager.start-pomodoro</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Short Break</attribute>
+        <attribute name="action">session-manager.start-short-break</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Long Break</attribute>
+        <attribute name="action">session-manager.start-long-break</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="uniform_state_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Pomodoro</attribute>
+        <attribute name="action">session-manager.start-pomodoro</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Break</attribute>
+        <attribute name="action">session-manager.start-break</attribute>
+      </item>
+    </section>
+  </menu>
 </interface>

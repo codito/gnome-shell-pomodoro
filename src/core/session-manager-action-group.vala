@@ -32,16 +32,17 @@ namespace Pomodoro
                 this._session_manager = value;
 
                 this.notify_current_time_block_id = this._session_manager.notify["current-time-block"].connect (
-                    () => {
-                        this.state_action.set_state (new Variant.string (this.get_current_state ()));
-                    }
-                );
+                    this.on_notify_current_time_block);
             }
         }
 
         private Pomodoro.SessionManager _session_manager;
         private GLib.SimpleAction       state_action;
+        private GLib.SimpleAction       start_short_break_action;
+        private GLib.SimpleAction       start_long_break_action;
+        private GLib.SimpleAction       start_break_action;
         private ulong                   notify_current_time_block_id = 0;
+
 
         public SessionManagerActionGroup ()
         {
@@ -70,7 +71,26 @@ namespace Pomodoro
             state_action.activate.connect (this.activate_state);
             this.add_action (state_action);
 
+            var start_pomodoro_action = new GLib.SimpleAction ("start-pomodoro", null);
+            start_pomodoro_action.activate.connect (this.activate_start_pomodoro);
+            this.add_action (start_pomodoro_action);
+
+            var start_short_break_action = new GLib.SimpleAction ("start-short-break", null);
+            start_short_break_action.activate.connect (this.activate_start_short_break);
+            this.add_action (start_short_break_action);
+
+            var start_long_break_action = new GLib.SimpleAction ("start-long-break", null);
+            start_long_break_action.activate.connect (this.activate_start_long_break);
+            this.add_action (start_long_break_action);
+
+            var start_break_action = new GLib.SimpleAction ("start-break", null);
+            start_break_action.activate.connect (this.activate_start_break);
+            this.add_action (start_break_action);
+
             this.state_action = state_action;
+            this.start_short_break_action = start_short_break_action;
+            this.start_long_break_action = start_long_break_action;
+            this.start_break_action = start_break_action;
         }
 
         private string get_current_state ()
@@ -115,14 +135,46 @@ namespace Pomodoro
             this.session_manager.advance_to_state (Pomodoro.State.from_string (parameter.get_string ()));
         }
 
+        private void activate_start_pomodoro (GLib.SimpleAction action,
+                                              GLib.Variant?     parameter)
+        {
+            this.session_manager.advance_to_state (Pomodoro.State.POMODORO);
+        }
+
+        private void activate_start_short_break (GLib.SimpleAction action,
+                                                 GLib.Variant?     parameter)
+        {
+            this.session_manager.advance_to_state (Pomodoro.State.SHORT_BREAK);
+        }
+
+        private void activate_start_long_break (GLib.SimpleAction action,
+                                                GLib.Variant?     parameter)
+        {
+            this.session_manager.advance_to_state (Pomodoro.State.LONG_BREAK);
+        }
+
+        private void activate_start_break (GLib.SimpleAction action,
+                                           GLib.Variant?     parameter)
+        {
+            this.session_manager.advance_to_state (Pomodoro.State.BREAK);
+        }
+
+        private void on_notify_current_time_block ()
+        {
+            this.state_action.set_state (new Variant.string (this.get_current_state ()));
+        }
+
         public override void dispose ()
         {
             if (this.notify_current_time_block_id != 0) {
-                this.session_manager.disconnect (notify_current_time_block_id);
+                this.session_manager.disconnect (this.notify_current_time_block_id);
                 this.notify_current_time_block_id = 0;
             }
 
             this.state_action = null;
+            this.start_short_break_action = null;
+            this.start_long_break_action = null;
+            this.start_break_action = null;
 
             base.dispose ();
         }

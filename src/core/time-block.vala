@@ -535,6 +535,9 @@ namespace Pomodoro
         internal void set_state_internal (Pomodoro.State state)
         {
             this._state = state;
+
+            this.notify_property ("state");
+            this.changed ();
         }
 
 

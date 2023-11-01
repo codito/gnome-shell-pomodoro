@@ -35,10 +35,9 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.MenuButton state_menubutton;
         [GtkChild]
+        private unowned Gtk.Revealer session_progressbar_revealer;
+        [GtkChild]
         private unowned Pomodoro.SessionProgressBar session_progressbar;
-        // TODO: make custom widget that will handle opacity animation and wont clip the child actor
-        // [GtkChild]
-        // private unowned Gtk.Revealer session_progressbar_revealer;
         [GtkChild]
         private unowned Pomodoro.TimerProgressRing timer_progressring;
         [GtkChild]
@@ -52,11 +51,15 @@ namespace Pomodoro
 
         private Pomodoro.SessionManager session_manager;
         private Pomodoro.Timer          timer;
+        private GLib.MenuModel?         state_menu;
+        private GLib.MenuModel?         uniform_state_menu;
         private ulong                   timer_state_changed_id = 0;
-        private ulong                   session_manager_notify_has_cycles_id = 0;
         private ulong                   session_expired_id = 0;
+        private ulong                   notify_current_time_block_id = 0;
+        private ulong                   notify_has_uniform_breaks_id = 0;
+        private ulong                   current_time_block_changed_id = 0;
         private Adw.Toast?              session_expired_toast;
-
+        private Pomodoro.TimeBlock?     current_time_block;
 
         static construct
         {
@@ -68,7 +71,31 @@ namespace Pomodoro
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.timer           = session_manager.timer;
 
-            this.timer_progressring.bind_property ("line-width", this.session_progressbar, "line-width", GLib.BindingFlags.SYNC_CREATE);
+            var builder = new Gtk.Builder.from_resource ("/org/gnomepomodoro/Pomodoro/ui/menus.ui");
+            this.state_menu = (GLib.MenuModel) builder.get_object ("state_menu");
+            this.uniform_state_menu = (GLib.MenuModel) builder.get_object ("uniform_state_menu");
+
+            this.timer_progressring.bind_property ("line-width",
+                                                   this.session_progressbar,
+                                                   "line-width",
+                                                   GLib.BindingFlags.SYNC_CREATE);
+            this.session_manager.bind_property ("current-session",
+                                                this.session_progressbar,
+                                                "session",
+                                                GLib.BindingFlags.SYNC_CREATE);
+            this.session_manager.bind_property ("has-uniform-breaks",
+                                                this.session_progressbar_revealer,
+                                                "reveal-child",
+                                                GLib.BindingFlags.SYNC_CREATE | GLib.BindingFlags.INVERT_BOOLEAN);
+
+            this.session_expired_id = this.session_manager.session_expired.connect (this.on_session_expired);
+            this.notify_current_time_block_id = this.session_manager.notify["current-time-block"].connect (
+                this.on_session_manager_notify_current_time_block);
+            this.notify_has_uniform_breaks_id = this.session_manager.notify["has-uniform-breaks"].connect (
+                this.on_session_manager_notify_has_uniform_breaks);
+
+            this.on_session_manager_notify_current_time_block ();
+            this.on_session_manager_notify_has_uniform_breaks ();
         }
 
         private string get_state_label ()
@@ -96,11 +123,6 @@ namespace Pomodoro
             this.state_menubutton.label = !this.timer.is_finished ()
                 ? this.get_state_label ()
                 : _("Finished!");
-        }
-
-        private void update_session_progressbar ()
-        {
-            // this.session_progressbar_revealer.reveal_child = !this.session_manager.has_uniform_breaks;
         }
 
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
@@ -170,13 +192,6 @@ namespace Pomodoro
             }
         }
 
-        private void on_session_manager_notify_has_cycles ()
-        {
-            if (this.get_mapped ()) {
-                this.update_session_progressbar ();
-            }
-        }
-
         /**
          * We want to notify that the app stopped the timer because session has expired.
          * But, its not worth users attention in cases where resetting a session is to be expected.
@@ -209,15 +224,40 @@ namespace Pomodoro
             window.add_toast (toast);
         }
 
+        private void on_current_time_block_changed ()
+        {
+            this.update_buttons ();
+        }
+
+        private void on_session_manager_notify_current_time_block ()
+        {
+            var current_time_block = this.session_manager.current_time_block;
+
+            if (this.current_time_block_changed_id != 0) {
+                this.current_time_block.disconnect (this.current_time_block_changed_id);
+                this.current_time_block_changed_id = 0;
+            }
+
+            if (current_time_block != null) {
+                this.current_time_block_changed_id = current_time_block.changed.connect (this.on_current_time_block_changed);
+            }
+
+            this.current_time_block = current_time_block;
+
+            this.on_current_time_block_changed ();
+        }
+
+        private void on_session_manager_notify_has_uniform_breaks ()
+        {
+            this.state_menubutton.menu_model = this.session_manager.has_uniform_breaks
+                ? this.uniform_state_menu
+                : this.state_menu;
+        }
+
         private void connect_signals ()
         {
             if (this.timer_state_changed_id == 0) {
                 this.timer_state_changed_id = timer.state_changed.connect (this.on_timer_state_changed);
-            }
-
-            if (this.session_manager_notify_has_cycles_id == 0) {
-                this.session_manager_notify_has_cycles_id = this.session_manager.notify["has-cycles"].connect (
-                            this.on_session_manager_notify_has_cycles);
             }
         }
 
@@ -227,20 +267,6 @@ namespace Pomodoro
                 this.timer.disconnect (this.timer_state_changed_id);
                 this.timer_state_changed_id = 0;
             }
-
-            if (this.session_manager_notify_has_cycles_id != 0) {
-                this.session_manager.disconnect (this.session_manager_notify_has_cycles_id);
-                this.session_manager_notify_has_cycles_id = 0;
-            }
-        }
-
-        public override void realize ()
-        {
-            base.realize ();
-
-            this.session_manager.bind_property ("current-session", this.session_progressbar, "session",
-                                                GLib.BindingFlags.SYNC_CREATE);
-            this.session_expired_id = this.session_manager.session_expired.connect (this.on_session_expired);
         }
 
         private void calculate_height_for_width (int     avaliable_width,
@@ -512,9 +538,7 @@ namespace Pomodoro
         {
             this.session_manager.ensure_session ();
 
-            this.update_css_classes ();
-            this.update_buttons ();
-            this.update_session_progressbar ();
+            this.on_timer_state_changed (this.timer.state, this.timer.state);
 
             base.map ();
 
@@ -526,7 +550,7 @@ namespace Pomodoro
             base.unmap ();
 
             this.disconnect_signals ();
-       }
+        }
 
         public override void dispose ()
         {
@@ -536,6 +560,27 @@ namespace Pomodoro
                 this.session_manager.disconnect (this.session_expired_id);
                 this.session_expired_id = 0;
             }
+
+            if (this.current_time_block_changed_id != 0) {
+                this.current_time_block.disconnect (this.current_time_block_changed_id);
+                this.current_time_block_changed_id = 0;
+            }
+
+            if (this.notify_current_time_block_id != 0) {
+                this.session_manager.disconnect (this.notify_current_time_block_id);
+                this.notify_current_time_block_id = 0;
+            }
+
+            if (this.notify_has_uniform_breaks_id != 0) {
+                this.session_manager.disconnect (this.notify_has_uniform_breaks_id);
+                this.notify_has_uniform_breaks_id = 0;
+            }
+
+            this.state_menu = null;
+            this.uniform_state_menu = null;
+            this.current_time_block = null;
+            this.session_manager = null;
+            this.timer = null;
 
             base.dispose ();
         }

@@ -52,10 +52,11 @@ namespace Tests
             this.add_test ("set_scheduler",
                            this.test_set_scheduler);
 
-            this.add_test ("advance", this.test_advance);
-            this.add_test ("advance__paused", this.test_advance__paused);
+            this.add_test ("advance__pomodoro", this.test_advance__pomodoro);
+            this.add_test ("advance__paused_pomodoro", this.test_advance__paused_pomodoro);
             this.add_test ("advance__uncompleted_long_break", this.test_advance__uncompleted_long_break);
             this.add_test ("advance__completed_long_break", this.test_advance__completed_long_break);
+            this.add_test ("advance__uniform_breaks", this.test_advance__uniform_breaks);
             this.add_test ("advance_to_state__pomodoro", this.test_advance_to_state__pomodoro);
             this.add_test ("advance_to_state__short_break", this.test_advance_to_state__short_break);
             this.add_test ("advance_to_state__undefined", this.test_advance_to_state__undefined);
@@ -808,7 +809,7 @@ namespace Tests
          * Tests for advance_* methods
          */
 
-        public void test_advance ()
+        public void test_advance__pomodoro ()
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
@@ -875,7 +876,7 @@ namespace Tests
         /**
          * Skipping to next state while being paused should keep timer paused.
          */
-        public void test_advance__paused ()
+        public void test_advance__paused_pomodoro ()
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
@@ -982,6 +983,42 @@ namespace Tests
 
             assert_true (time_block.get_status () == Pomodoro.TimeBlockStatus.COMPLETED);
             assert_true (session_manager.current_session != session);
+        }
+
+        /**
+         * When has-uniform-breaks is true, expect POMODORO advance to a BREAK.
+         */
+        public void test_advance__uniform_breaks ()
+        {
+            var settings = Pomodoro.get_settings ();
+            settings.set_uint ("cycles", 1);
+
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+            // Start timer
+            var now = Pomodoro.Timestamp.peek ();
+            timer.start (now);
+
+            var session = session_manager.current_session;
+            var time_block_1 = session.get_nth_time_block (0);
+            var time_block_2 = session.get_nth_time_block (1);
+
+            assert_true (session_manager.has_uniform_breaks);
+            assert_true (time_block_1.state == Pomodoro.State.POMODORO);
+            assert_true (time_block_2.state == Pomodoro.State.BREAK);
+
+            // Advance to a break once pomodoro finishes
+            session_manager.advance (time_block_1.end_time);
+            assert_true (session_manager.current_session == session);
+            assert_false (session_manager.current_time_block == time_block_1);
+            assert_true (session_manager.current_time_block == time_block_2);
+            assert_true (time_block_1.state == Pomodoro.State.POMODORO);
+            assert_true (time_block_2.state == Pomodoro.State.BREAK);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_2.duration),
+                new GLib.Variant.int64 (session_manager.scheduler.session_template.short_break_duration)
+            );
         }
 
         /**
@@ -1498,7 +1535,9 @@ namespace Tests
             settings.set_uint ("long-break-duration", 30);
             settings.set_uint ("cycles", 3);
 
-            // Expect changes to be applied at idle.
+            assert_false (session_manager.has_uniform_breaks);
+
+            // Expect reschedule to be applied at idle.
             assert_cmpstrv (signals, {});
 
             Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
@@ -1526,6 +1565,10 @@ namespace Tests
                 new GLib.Variant.int64 (time_block_2.get_intended_duration ()),
                 new GLib.Variant.int64 (20 * Pomodoro.Interval.SECOND)
             );
+
+            // Check whether has-uniform-breaks gets updated
+            settings.set_uint ("cycles", 1);
+            assert_true (session_manager.has_uniform_breaks);
         }
     }
 

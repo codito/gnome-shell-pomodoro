@@ -172,6 +172,11 @@ namespace Pomodoro
                                               ref Pomodoro.SchedulerContext context);
 
         /**
+         * Resolve next time-block state according to scheduler state.
+         */
+        public abstract Pomodoro.State resolve_state (Pomodoro.SchedulerContext context);
+
+        /**
          * Resolve next time-block according to scheduler state.
          */
         public abstract Pomodoro.TimeBlock? resolve_time_block (Pomodoro.SchedulerContext context);
@@ -221,6 +226,7 @@ namespace Pomodoro
                 case Pomodoro.State.POMODORO:
                     return this.session_template.pomodoro_duration;
 
+                case Pomodoro.State.BREAK:
                 case Pomodoro.State.SHORT_BREAK:
                     return this.session_template.short_break_duration;
 
@@ -351,17 +357,6 @@ namespace Pomodoro
             }
         }
 
-        public bool is_long_break_needed (Pomodoro.Session session,
-                                          int64            timestamp)
-        {
-            Pomodoro.SchedulerContext context;
-
-            this.build_scheduler_context (session, timestamp, out context, null);
-
-            return context.needs_long_break;
-        }
-
-
         public signal void populated_session (Pomodoro.Session session);
 
         public signal void rescheduled_session (Pomodoro.Session session);
@@ -461,8 +456,11 @@ namespace Pomodoro
                         context.score += time_block_score;
                     }
 
-                    if (time_block.state == Pomodoro.State.LONG_BREAK && !context.is_session_completed) {
-                        context.is_session_completed = this.is_time_block_completed (time_block, timestamp);
+                    if (time_block.state == Pomodoro.State.LONG_BREAK ||
+                        time_block.state == Pomodoro.State.BREAK)
+                    {
+                        context.is_session_completed = context.is_session_completed ||
+                                                       this.is_time_block_completed (time_block, timestamp);
                     }
                     break;
 
@@ -475,7 +473,9 @@ namespace Pomodoro
                         context.score += time_block_weight;
                     }
 
-                    if (time_block.state == Pomodoro.State.LONG_BREAK) {
+                    if (time_block.state == Pomodoro.State.LONG_BREAK ||
+                        time_block.state == Pomodoro.State.BREAK)
+                    {
                         context.is_session_completed = true;
                     }
                     break;
@@ -486,6 +486,19 @@ namespace Pomodoro
 
             context.needs_long_break = !context.is_session_completed &&
                                         context.score >= this.session_template.cycles;
+        }
+
+        public override Pomodoro.State resolve_state (Pomodoro.SchedulerContext context)
+        {
+            if (context.state != Pomodoro.State.POMODORO) {
+                return Pomodoro.State.POMODORO;
+            }
+
+            if (this.session_template.has_uniform_breaks ()) {
+                return Pomodoro.State.BREAK;
+            }
+
+            return context.needs_long_break ? Pomodoro.State.LONG_BREAK : Pomodoro.State.SHORT_BREAK;
         }
 
         /**
@@ -499,9 +512,7 @@ namespace Pomodoro
                 return null;  // Suggest starting a new session.
             }
 
-            var state = context.state == Pomodoro.State.POMODORO
-                ? (context.needs_long_break ? Pomodoro.State.LONG_BREAK : Pomodoro.State.SHORT_BREAK)
-                : Pomodoro.State.POMODORO;
+            var state = this.resolve_state (context);
             var time_block = new Pomodoro.TimeBlock (state);
             time_block.set_is_extra (state != Pomodoro.State.LONG_BREAK && context.needs_long_break);
 

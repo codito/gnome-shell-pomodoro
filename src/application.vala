@@ -745,43 +745,15 @@ namespace Pomodoro
                                           string        key)
         {
             // TODO: Consider removing this
-            //       Changing settings shouldn't affect current timer state
 
-            var current_time_block = this.session_manager.current_time_block;
-            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
-            var duration_seconds = (uint) 0;
+            // var current_time_block = this.session_manager.current_time_block;
+            // var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
 
-            switch (key)
-            {
-                case "pomodoro-duration":
-                    if (current_state == Pomodoro.State.POMODORO) {
-                        duration_seconds = settings.get_uint (key);
-                    }
-                    break;
-
-                case "short-break-duration":
-                    if (current_state == Pomodoro.State.BREAK) {  // TODO: determine whether is short break
-                        duration_seconds = settings.get_uint (key);
-                    }
-                    break;
-
-                case "long-break-duration":
-                    if (current_state == Pomodoro.State.BREAK) {  // TODO: determine whether is long break
-                        duration_seconds = settings.get_uint (key);
-                    }
-                    break;
-
-                // case "enabled-plugins":  // TODO: remove
-                //     this.load_plugins ();
-                //     break;
-            }
-
-            // TODO: pop up in-app notification whether to apply settings to current pomodoro/break
-            // if (duration_seconds > 0)
+            // switch (key)
             // {
-            //     this.timer.duration = int64.max (
-            //         duration_seconds * Pomodoro.Interval.SECOND,
-            //         this.timer.get_elapsed ());
+            //     case "enabled-plugins":  // TODO: remove
+            //         this.load_plugins ();
+            //         break;
             // }
         }
 

@@ -4,11 +4,12 @@ namespace Pomodoro
      * Pomodoro.State
      *
      * In general, there are main states UNDEFINED, POMODORO and BREAK.
-     * BREAK will be resolved to either SHORT_BREAK or LONG_BREAK by the session-manager / scheduler.
+     * BREAK may be resolved to either SHORT_BREAK or LONG_BREAK by the session-manager / scheduler,
+     * but can function on its own if session has no cycles.
      */
     public enum State
     {
-        UNDEFINED,  // TODO: rename to STOPPED
+        UNDEFINED,
         POMODORO,
         BREAK,
         SHORT_BREAK,

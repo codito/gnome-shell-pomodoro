@@ -103,6 +103,7 @@ namespace Pomodoro
                     title = _("Pomodoro is over!");
                     break;
 
+                case Pomodoro.State.BREAK:
                 case Pomodoro.State.SHORT_BREAK:
                 case Pomodoro.State.LONG_BREAK:
                     title = _("Break is over!");
@@ -117,6 +118,11 @@ namespace Pomodoro
                 case Pomodoro.State.POMODORO:
                     body = _("Confirm the start of a Pomodoro…");
                     action_label = _("Start Pomodoro");
+                    break;
+
+                case Pomodoro.State.BREAK:
+                    body = _("Confirm the start of a break…");
+                    action_label = _("Take a Break");
                     break;
 
                 case Pomodoro.State.SHORT_BREAK:

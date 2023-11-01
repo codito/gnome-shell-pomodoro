@@ -8,6 +8,8 @@ namespace Pomodoro
         private const uint  MIN_TIMEOUT_INTERVAL = 50;
         private const int   MIN_WIDTH = 100;
         private const uint  VALUE_ANIMATION_DURATION = 300;
+        private const uint  NORM_ANIMATION_DURATION = 700;
+        private const uint  OPACITY_ANIMATION_DURATION = 500;
 
         /**
          * Spacing is relative the block size.
@@ -500,15 +502,16 @@ namespace Pomodoro
         private Pomodoro.Session?                 _session;
         private weak Block?                       current_block;
         private double                            norm = double.NAN;
+        private double                            _opacity = 1.0;
         private Adw.TimedAnimation?               norm_animation;
         private Adw.TimedAnimation?               backfill_animation;
+        private Adw.TimedAnimation?               opacity_animation;
         private int64                             long_break_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                             long_break_timeout = Pomodoro.Timestamp.UNDEFINED;
         private uint                              update_idle_id = 0;
         private int                               update_freeze_count = 0;
         private ulong                             timer_tick_id = 0;
         private ulong                             session_changed_id = 0;
-
 
         static construct
         {
@@ -606,7 +609,7 @@ namespace Pomodoro
                 this.norm_animation = new Adw.TimedAnimation (this,
                                                               previous_norm,
                                                               this.norm,
-                                                              700,  // TODO: define constant
+                                                              NORM_ANIMATION_DURATION,
                                                               animation_target);
                 this.norm_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
                 this.norm_animation.done.connect (this.stop_norm_animation);
@@ -614,6 +617,36 @@ namespace Pomodoro
             }
             else {
                 this.remove_invisible_blocks ();
+            }
+        }
+
+        private void stop_opacity_animation ()
+        {
+            if (this.opacity_animation != null) {
+                this.opacity_animation.pause ();
+                this.opacity_animation = null;
+            }
+        }
+
+        private void start_opacity_animation (double previous_opacity)
+        {
+            if (this.opacity_animation != null) {
+                this.opacity_animation.pause ();
+                this.opacity_animation = null;
+            }
+
+            if (this.get_mapped () && this._opacity != previous_opacity)
+            {
+                var animation_target = new Adw.CallbackAnimationTarget (this.queue_draw);
+
+                this.opacity_animation = new Adw.TimedAnimation (this,
+                                                                 previous_opacity,
+                                                                 this._opacity,
+                                                                 OPACITY_ANIMATION_DURATION,
+                                                                 animation_target);
+                this.opacity_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
+                this.opacity_animation.done.connect (this.stop_opacity_animation);
+                this.opacity_animation.play ();
             }
         }
 
@@ -691,6 +724,7 @@ namespace Pomodoro
             var current_cycle_index = cycles.index (this._session_manager.get_current_cycle ());
             var total_weight = 0.0;
             var previous_norm = this.norm;
+            var previous_opacity = this._opacity;
 
             // Associate blocks with cycle. Create more blocks if needed.
             unowned GLib.List<unowned Pomodoro.Cycle> link = cycles.first ();
@@ -740,15 +774,28 @@ namespace Pomodoro
                 block = (Block?) block.get_next_sibling ();
             }
 
-            // Update blocks span.
+            // Update blocks span and opacity.
             var norm = this.calculate_norm (total_weight, cycles_count);
+            var opacity = norm != 1.0 ? 1.0 : 0.0;
 
-            if (this.norm != norm) {
-                this.norm = norm;
-                this.start_norm_animation (previous_norm);
+            if (this._opacity != opacity)
+            {
+                this._opacity = opacity;
+                this.start_opacity_animation (previous_opacity);
             }
 
-            this.update_blocks_span ();
+            if (this.norm != norm)
+            {
+                this.norm = norm;
+
+                if (previous_opacity > 0.0 && opacity > 0.0) {
+                    this.start_norm_animation (previous_norm);
+                }
+            }
+
+            if (opacity != 0.0) {
+                this.update_blocks_span ();
+            }
 
             if (this.norm_animation == null) {
                 this.remove_invisible_blocks ();
@@ -933,12 +980,18 @@ namespace Pomodoro
 
         public override void map ()
         {
+            var previous_opacity = this._opacity;
+
             this.update_blocks ();
             this.update_tooltip ();
 
             base.map ();
 
             this.connect_signals ();
+
+            if (previous_opacity == 0.0 && this._opacity > 0.0) {
+                this.start_opacity_animation (previous_opacity);
+            }
         }
 
         public override void unmap ()
@@ -946,6 +999,7 @@ namespace Pomodoro
             this.disconnect_signals ();
             this.stop_backfill_animation ();
             this.stop_norm_animation ();
+            this.stop_opacity_animation ();
             this.remove_blocks ();
 
             this.norm = double.NAN;
@@ -1005,7 +1059,12 @@ namespace Pomodoro
 
         public override void snapshot (Gtk.Snapshot snapshot)
         {
+            var opacity = this.opacity_animation != null
+                ? this.opacity_animation.value
+                : this._opacity;
             var child = this.get_first_child ();
+
+            snapshot.push_opacity (opacity);
 
             while (child != null)
             {
@@ -1013,6 +1072,8 @@ namespace Pomodoro
 
                 child = child.get_next_sibling ();
             }
+
+            snapshot.pop ();
         }
 
         public override bool focus (Gtk.DirectionType direction)
@@ -1030,6 +1091,7 @@ namespace Pomodoro
             this.disconnect_signals ();
             this.stop_backfill_animation ();
             this.stop_norm_animation ();
+            this.stop_opacity_animation ();
             this.remove_blocks ();
 
             this._session_manager = null;

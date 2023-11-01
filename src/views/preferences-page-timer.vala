@@ -22,6 +22,8 @@ namespace Pomodoro
         private unowned Adw.ComboRow break_advancement_mode_comborow;
         [GtkChild]
         private unowned Adw.ComboRow pomodoro_advancement_mode_comborow;
+        [GtkChild]
+        private unowned Pomodoro.LogScaleRow long_break_row;
 
         private GLib.Settings?  settings;
         private ulong           settings_changed_id = 0;
@@ -45,8 +47,14 @@ namespace Pomodoro
                 this.timer_state_changed_id = this.timer.state_changed.connect (this.on_timer_state_changed);
             }
 
+            this.update_long_break_row_sensitivity ();
             this.update_stats_labels ();
             this.update_advancement_modes ();
+        }
+
+        private void update_long_break_row_sensitivity ()
+        {
+            this.long_break_row.sensitive = this.cycles_adjustment.value > 1.0;
         }
 
         private void update_stats_labels ()
@@ -160,7 +168,9 @@ namespace Pomodoro
                     break;
 
                 case "short-break-duration":
-                    changed_state = Pomodoro.State.SHORT_BREAK;
+                    changed_state = settings.get_uint ("cycles") > 1
+                        ? Pomodoro.State.SHORT_BREAK
+                        : Pomodoro.State.BREAK;
                     this.update_stats_labels ();
                     break;
 
@@ -170,6 +180,7 @@ namespace Pomodoro
                     break;
 
                 case "cycles":
+                    this.update_long_break_row_sensitivity ();
                     this.update_stats_labels ();
                     break;
 

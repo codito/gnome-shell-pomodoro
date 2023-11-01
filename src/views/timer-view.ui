@@ -1,25 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <menu id="state_menu">
-    <section>
-      <item>
-        <attribute name="label" translatable="yes">_Pomodoro</attribute>
-        <attribute name="action">session-manager.state</attribute>
-        <attribute name="target">pomodoro</attribute>
-      </item>
-      <item>
-        <attribute name="label" translatable="yes">_Short Break</attribute>
-        <attribute name="action">session-manager.state</attribute>
-        <attribute name="target">short-break</attribute>
-      </item>
-      <item>
-        <attribute name="label" translatable="yes">_Long Break</attribute>
-        <attribute name="action">session-manager.state</attribute>
-        <attribute name="target">long-break</attribute>
-      </item>
-    </section>
-  </menu>
-
   <template class="PomodoroTimerView" parent="GtkWidget">
     <property name="halign">fill</property>
     <property name="valign">fill</property>
@@ -30,7 +10,6 @@
         <property name="has-frame">0</property>
         <property name="use-underline">0</property>
         <property name="direction">down</property>
-        <property name="menu-model">state_menu</property>
         <style>
           <class name="title-1"/>
           <class name="pomodoro-state-menu"/>
@@ -50,6 +29,7 @@
             <property name="reveal-child">true</property>
             <property name="transition-type">slide-up</property>
             <property name="transition-duration">500</property>
+            <property name="overflow">visible</property>
             <child>
               <object class="PomodoroSessionProgressBar" id="session_progressbar">
                 <property name="halign">fill</property>

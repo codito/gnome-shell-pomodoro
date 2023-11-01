@@ -101,6 +101,8 @@ namespace Pomodoro
                     }
                 }
 
+                this.update_has_uniform_breaks ();
+
                 this.notify_property ("scheduler");
             }
         }
@@ -188,7 +190,6 @@ namespace Pomodoro
         private bool                             current_session_entered = false;
         private bool                             current_session_changed_frozen = false;
         private ulong                            current_session_notify_expiry_time_id = 0;
-        private ulong                            current_session_changed_id = 0;
         private Pomodoro.Session?                previous_session = null;
         private Pomodoro.TimeBlock?              previous_time_block = null;
         private GLib.Settings                    settings;
@@ -303,8 +304,17 @@ namespace Pomodoro
                 next_session.freeze_changed ();
 
                 // Update break type. It's not done by scheduler, because we want to start a desired break at will.
-                if (next_time_block != null && next_time_block.state.is_break ()) {
-                    next_time_block.set_state_internal (this.resolve_next_break_state (timestamp));
+                if (next_time_block != null && next_time_block.state.is_break ())
+                {
+                    var next_state = Pomodoro.State.BREAK;
+
+                    if (!this._has_uniform_breaks) {
+                        next_state = this.is_long_break_needed (timestamp)
+                            ? Pomodoro.State.LONG_BREAK
+                            : Pomodoro.State.SHORT_BREAK;
+                    }
+
+                    next_time_block.set_state_internal (next_state);
                 }
 
                 this.reschedule (next_session, next_time_block, timestamp);
@@ -379,24 +389,27 @@ namespace Pomodoro
 
         private void update_has_uniform_breaks ()
         {
-            var has_uniform_breaks = this._scheduler.session_template.cycles == 1;
-
-            if (this._current_session != null)
-            {
-                this._current_session.@foreach (
-                    (time_block) => {
-                        if (time_block.state == Pomodoro.State.SHORT_BREAK) {
-                            has_uniform_breaks = false;
-                        }
-                    }
-                );
-            }
+            var has_uniform_breaks = this._scheduler.session_template.has_uniform_breaks ();
 
             if (has_uniform_breaks != this._has_uniform_breaks)
             {
                 this._has_uniform_breaks = has_uniform_breaks;
 
                 this.notify_property ("has-uniform-breaks");
+            }
+
+            if (this._current_time_block != null &&
+                this._current_time_block.state == Pomodoro.State.BREAK &&
+                !has_uniform_breaks)
+            {
+                this._current_time_block.set_state_internal (Pomodoro.State.SHORT_BREAK);
+            }
+
+            if (this._current_time_block != null &&
+                this._current_time_block.state == Pomodoro.State.SHORT_BREAK &&
+                has_uniform_breaks)
+            {
+                this._current_time_block.set_state_internal (Pomodoro.State.BREAK);
             }
         }
 
@@ -800,19 +813,17 @@ namespace Pomodoro
             session.thaw_changed ();
         }
 
-        private Pomodoro.State resolve_next_break_state (int64 timestamp)
+        private bool is_long_break_needed (int64 timestamp)
         {
+            Pomodoro.SchedulerContext context;
+
             if (this._current_session == null) {
-                return Pomodoro.State.SHORT_BREAK;
+                return false;
             }
 
-            // if (this._current_session.is_expired (timestamp) || this._current_session.is_completed ()) {
-            //     return Pomodoro.State.SHORT_BREAK;
-            // }
+            this._scheduler.build_scheduler_context (this._current_session, timestamp, out context, null);
 
-            return this._scheduler.is_long_break_needed (this._current_session, timestamp)
-                ? Pomodoro.State.LONG_BREAK
-                : Pomodoro.State.SHORT_BREAK;
+            return context.needs_long_break;
         }
 
         /**
@@ -858,8 +869,8 @@ namespace Pomodoro
 
             // Determine the type of break if Pomodoro.State.BREAK is given.
             // It's not efficient, as we build scheduler context again later.
-            if (state == Pomodoro.State.BREAK) {
-                state = this.resolve_next_break_state (timestamp);
+            if (state == Pomodoro.State.BREAK && !this._has_uniform_breaks) {
+                state = this.is_long_break_needed (timestamp) ? Pomodoro.State.LONG_BREAK : Pomodoro.State.SHORT_BREAK;
             }
 
             // Extend current time-block if possible.
@@ -907,19 +918,9 @@ namespace Pomodoro
 
             this.freeze_current_session_changed ();
 
-            // var previous_session = this._current_session;
-
-            // if (previous_session != null) {
-            //     previous_session.freeze_changed ();
-            // }
-
             var next_time_block = this.initialize_next_time_block (timestamp);
 
             this.advance_to_time_block (next_time_block, timestamp);
-
-            // if (previous_session != null) {
-            //     previous_session.thaw_changed ();
-            // }
         }
 
         /**
@@ -1251,13 +1252,9 @@ namespace Pomodoro
             }
         }
 
-        private void on_current_session_changed (Pomodoro.Session session)
-        {
-            this.update_has_uniform_breaks ();
-        }
-
         private void on_scheduler_notify_session_template ()
         {
+            this.update_has_uniform_breaks ();
             this.queue_reschedule ();
         }
 
@@ -1360,7 +1357,6 @@ namespace Pomodoro
             this.current_session_entered = true;
             this.current_session_notify_expiry_time_id = this._current_session.notify["expiry-time"].connect (
                     this.on_current_session_notify_expiry_time);
-            this.current_session_changed_id = this._current_session.changed.connect (this.on_current_session_changed);
 
             this.update_has_uniform_breaks ();
         }
@@ -1373,14 +1369,9 @@ namespace Pomodoro
             this.thaw_current_session_changed ();
 
             session.disconnect (this.current_session_notify_expiry_time_id);
-            session.disconnect (this.current_session_changed_id);
 
             this.current_session_entered = false;
             this.current_session_notify_expiry_time_id = 0;
-            this.current_session_changed_id = 0;
-
-            // TODO: schedule
-            // this.update_has_uniform_breaks ();
         }
 
         /**
@@ -1391,7 +1382,6 @@ namespace Pomodoro
         public signal void enter_time_block (Pomodoro.TimeBlock time_block)
         {
             assert (time_block == this._current_time_block);
-            assert (time_block.state != Pomodoro.State.BREAK);
             assert (time_block.get_status () == Pomodoro.TimeBlockStatus.SCHEDULED);
 
             if (this.current_time_block_changed_id != 0) {

@@ -36,9 +36,13 @@ namespace Pomodoro
 
         public int64 calculate_total_duration ()
         {
-            return this.pomodoro_duration * this.cycles +
-                   this.short_break_duration * (this.cycles - 1) +
-                   this.long_break_duration;
+            var total_duration = this.pomodoro_duration * this.cycles;
+
+            total_duration += cycles > 1
+                ? this.short_break_duration * (this.cycles - 1) + this.long_break_duration
+                : this.short_break_duration;
+
+            return total_duration;
         }
 
         /**
@@ -48,14 +52,21 @@ namespace Pomodoro
          */
         public double calculate_break_percentage ()
         {
-            var breaks_total = this.short_break_duration * (this.cycles - 1) + this.long_break_duration;
-            var total        = this.pomodoro_duration * this.cycles + breaks_total;
+            var breaks_duration = this.cycles > 1
+                ? this.short_break_duration * (this.cycles - 1) + this.long_break_duration
+                : this.short_break_duration;
+            var total_duration = this.pomodoro_duration * this.cycles + breaks_duration;
 
-            var ratio = total > 0
-                ? 100.0 * (double) breaks_total / (double) total
+            var ratio = total_duration > 0
+                ? 100.0 * (double) breaks_duration / (double) total_duration
                 : 0.0;
 
             return ratio;
+        }
+
+        public bool has_uniform_breaks ()
+        {
+            return this.cycles == 1;
         }
 
         public GLib.Variant to_variant ()
