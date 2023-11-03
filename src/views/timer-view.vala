@@ -30,7 +30,7 @@ namespace Pomodoro
         /**
          * Relative width of the timer label and session indicator.
          */
-        private float INNER_RELATIVE_WIDTH = 0.66f;
+        private float INNER_RELATIVE_WIDTH = 0.70f;
 
         [GtkChild]
         private unowned Gtk.MenuButton state_menubutton;
@@ -42,6 +42,8 @@ namespace Pomodoro
         private unowned Pomodoro.TimerProgressRing timer_progressring;
         [GtkChild]
         private unowned Gtk.Box inner_box;
+        [GtkChild]
+        private unowned Pomodoro.TimerLabel timer_label;
         [GtkChild]
         private unowned Pomodoro.TimerControlButtons timer_control_buttons;
         [GtkChild]
@@ -125,11 +127,19 @@ namespace Pomodoro
                 : _("Finished!");
         }
 
+        private void update_timer_label_placeholder ()
+        {
+            var session_template = this.session_manager.scheduler.session_template;
+
+            this.timer_label.placeholder_has_hours = session_template.pomodoro_duration >= Pomodoro.Interval.HOUR;
+        }
+
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
                                              Pomodoro.TimerState previous_state)
         {
             this.update_css_classes ();
             this.update_buttons ();
+            this.update_timer_label_placeholder ();
 
             if (this.session_expired_toast != null && this.timer.is_running ()) {
                 this.session_expired_toast.dismiss ();

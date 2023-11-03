@@ -3,8 +3,10 @@ namespace Pomodoro
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/timer-label.ui")]
     public class TimerLabel : Gtk.Widget, Gtk.Buildable
     {
-        private const uint BLINK_DURATION = 1000;
+        private const uint   BLINK_DURATION = 1000;
         private const double BLINK_FADE_VALUE = 0.2;
+        private const uint   FADE_IN_DURATION = 500;
+        private const uint   FADE_OUT_DURATION = 500;
 
         public unowned Pomodoro.Timer timer {
             get {
@@ -25,33 +27,63 @@ namespace Pomodoro
             }
         }
 
-        [GtkChild]
-        private unowned Gtk.Stack               stack;
-        [GtkChild]
-        private unowned Gtk.Box                 box;
+        public bool placeholder_has_hours {
+            get {
+                return this._placeholder_has_hours;
+            }
+            set {
+                if (value == this._placeholder_has_hours) {
+                    return;
+                }
+
+                this._placeholder_has_hours = value;
+                this.placeholder_hours_label.visible = value;
+                this.placeholder_hours_separator_label.visible = value;
+
+                this.update_css_classes ();
+                this.queue_resize ();
+            }
+        }
+
         [GtkChild]
         private unowned Gtk.Box                 placeholder_box;
         [GtkChild]
+        private unowned Pomodoro.MonospaceLabel placeholder_hours_label;
+        [GtkChild]
+        private unowned Pomodoro.MonospaceLabel placeholder_hours_separator_label;
+        [GtkChild]
         private unowned Pomodoro.MonospaceLabel placeholder_minutes_label;
         [GtkChild]
-        private unowned Pomodoro.MonospaceLabel placeholder_separator_label;
+        private unowned Pomodoro.MonospaceLabel placeholder_minutes_separator_label;
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel placeholder_seconds_label;
         [GtkChild]
+        private unowned Gtk.Box                 box;
+        [GtkChild]
+        private unowned Pomodoro.MonospaceLabel hours_label;
+        [GtkChild]
+        private unowned Pomodoro.MonospaceLabel hours_separator_label;
+        [GtkChild]
         private unowned Pomodoro.MonospaceLabel minutes_label;
         [GtkChild]
-        private unowned Pomodoro.MonospaceLabel separator_label;
+        private unowned Pomodoro.MonospaceLabel minutes_separator_label;
         [GtkChild]
         private unowned Pomodoro.MonospaceLabel seconds_label;
 
         private Pomodoro.Timer          _timer;
         private ulong                   timer_state_changed_id = 0;
         private ulong                   timer_tick_id = 0;
+        private Adw.TimedAnimation?     crossfade_animation;
         private Adw.TimedAnimation?     blink_animation;
-        private Pango.Layout?           reference_layout;
-        private int                     reference_width;
-        private int                     reference_height;
-        private int                     reference_baseline;
+        private Adw.TimedAnimation?     hours_animation;
+        private double                  reference_width_lower = 0.0;
+        private double                  reference_width_upper = 0.0;
+        private double                  reference_height = 0.0;
+        private double                  reference_baseline = 0.0;
+        private bool                    faded_in = false;
+        private bool                    _placeholder_has_hours = false;
+        private bool                    has_hours = false;
+        private double                  scale = 1.0;
 
 
         static construct
@@ -63,65 +95,244 @@ namespace Pomodoro
         {
             this._timer = Pomodoro.Timer.get_default ();
 
-            this.bind_property ("halign", this.stack, "halign", GLib.BindingFlags.SYNC_CREATE);
-            this.bind_property ("valign", this.stack, "valign", GLib.BindingFlags.SYNC_CREATE);
-
             this.set_default_direction_ltr ();
         }
 
         private void set_default_direction_ltr ()
         {
             this.placeholder_box.set_direction (Gtk.TextDirection.LTR);
+            this.placeholder_hours_label.set_direction (Gtk.TextDirection.LTR);
+            this.placeholder_hours_separator_label.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_minutes_label.set_direction (Gtk.TextDirection.LTR);
-            this.placeholder_separator_label.set_direction (Gtk.TextDirection.LTR);
+            this.placeholder_minutes_separator_label.set_direction (Gtk.TextDirection.LTR);
             this.placeholder_seconds_label.set_direction (Gtk.TextDirection.LTR);
 
             this.box.set_direction (Gtk.TextDirection.LTR);
+            this.hours_label.set_direction (Gtk.TextDirection.LTR);
+            this.hours_separator_label.set_direction (Gtk.TextDirection.LTR);
             this.minutes_label.set_direction (Gtk.TextDirection.LTR);
-            this.separator_label.set_direction (Gtk.TextDirection.LTR);
+            this.minutes_separator_label.set_direction (Gtk.TextDirection.LTR);
             this.seconds_label.set_direction (Gtk.TextDirection.LTR);
         }
 
-        private void set_scale_factor (double scale)
+        private double get_crossfade_progress ()
         {
-            this.placeholder_minutes_label.scale = scale;
-            this.placeholder_separator_label.scale = scale;
-            this.placeholder_seconds_label.scale = scale;
+            if (this.crossfade_animation != null) {
+                return this.crossfade_animation.value;
+            }
 
-            this.minutes_label.scale = scale;
-            this.separator_label.scale = scale;
-            this.seconds_label.scale = scale;
+            return this.faded_in ? 1.0 : 0.0;
         }
 
-        private void update_visible_child ()
+        private void update_children_scale ()
         {
-            if (this._timer.is_started ())
-            {
-                if (this._timer.is_paused () || this._timer.is_finished ()) {
-                    this.start_blinking_animation ();
-                }
-                else {
-                    this.stop_blinking_animation ();
-                }
+            this.placeholder_hours_label.scale = this.scale;
+            this.placeholder_hours_separator_label.scale = this.scale;
+            this.placeholder_minutes_label.scale = this.scale;
+            this.placeholder_minutes_separator_label.scale = this.scale;
+            this.placeholder_seconds_label.scale = this.scale;
 
-                this.stack.visible_child_name = "running";
+            this.hours_label.scale = this.scale;
+            this.hours_separator_label.scale = this.scale;
+            this.minutes_label.scale = this.scale;
+            this.minutes_separator_label.scale = this.scale;
+            this.seconds_label.scale = this.scale;
+        }
+
+        private void stop_hours_animation ()
+        {
+            if (this.hours_animation != null) {
+                this.hours_animation.pause ();
+                this.hours_animation = null;
+            }
+        }
+
+        /**
+         * TODO: hours animation is not smooth.
+         *
+         * When animating labels scale the labels are jittery. It's smoother to keep labels at constant scale during
+         * animation, but during snapshot children are pixelated. Either we could render glyphs directly in the
+         * snapshot, or render children onto a texture to have more interpolation options.
+         */
+        private void start_hours_animation ()
+        {
+            var has_hours = this.get_has_hours ();
+            var progress = !has_hours ? 1.0 : 0.0;  // assume previously it was reverse
+
+            if (this.hours_animation != null)
+            {
+                progress = this.hours_animation.value;
+
+                this.hours_animation.pause ();
+                this.hours_animation = null;
+            }
+
+            var animation_target = new Adw.CallbackAnimationTarget (this.queue_resize);
+
+            this.hours_animation = new Adw.TimedAnimation (this,
+                                                           progress,
+                                                           has_hours ? 1.0 : 0.0,
+                                                           300,
+                                                           animation_target);
+            this.hours_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
+            this.hours_animation.done.connect (this.stop_hours_animation);
+            this.hours_animation.play ();
+        }
+
+        private void stop_crossfade_animation ()
+        {
+            if (this.crossfade_animation != null) {
+                this.crossfade_animation.pause ();
+                this.crossfade_animation = null;
+            }
+
+            this.placeholder_box.set_child_visible (!this.faded_in);
+            this.box.set_child_visible (this.faded_in);
+
+            this.queue_allocate ();
+        }
+
+        private void fade_in ()
+        {
+            var crossfade_progress = this.get_crossfade_progress ();
+
+            if (this.faded_in) {
+                return;
+            }
+
+            if (this.crossfade_animation != null) {
+                this.crossfade_animation.pause ();
+                this.crossfade_animation = null;
+            }
+
+            var animation_target = new Adw.CallbackAnimationTarget (this.queue_draw);
+
+            this.crossfade_animation = new Adw.TimedAnimation (this,
+                                                               crossfade_progress,
+                                                               1.0,
+                                                               FADE_IN_DURATION,
+                                                               animation_target);
+            this.crossfade_animation.set_easing (Adw.Easing.EASE_OUT_QUAD);
+            this.crossfade_animation.done.connect (this.stop_crossfade_animation);
+            this.crossfade_animation.play ();
+
+            this.placeholder_box.set_child_visible (true);
+            this.box.set_child_visible (true);
+
+            if (this.has_hours != this._placeholder_has_hours && this.hours_animation == null) {
+                this.start_hours_animation ();
+            }
+
+            this.faded_in = true;
+        }
+
+        private void fade_out ()
+        {
+            var crossfade_progress = this.get_crossfade_progress ();
+
+            if (!this.faded_in) {
+                return;
+            }
+
+            if (this.crossfade_animation != null) {
+                this.crossfade_animation.pause ();
+                this.crossfade_animation = null;
+            }
+
+            var animation_target = new Adw.CallbackAnimationTarget (this.queue_draw);
+
+            this.crossfade_animation = new Adw.TimedAnimation (this,
+                                                               crossfade_progress,
+                                                               0.0,
+                                                               FADE_OUT_DURATION,
+                                                               animation_target);
+            this.crossfade_animation.set_easing (Adw.Easing.EASE_IN_OUT_CUBIC);
+            this.crossfade_animation.done.connect (this.stop_crossfade_animation);
+            this.crossfade_animation.play ();
+
+            this.placeholder_box.set_child_visible (true);
+            this.box.set_child_visible (true);
+
+            if (this.has_hours != this._placeholder_has_hours && this.hours_animation == null) {
+                this.start_hours_animation ();
+            }
+
+            this.faded_in = false;
+        }
+
+        private void update_css_classes ()
+        {
+            if (this._placeholder_has_hours) {
+                this.placeholder_box.add_css_class ("with-hours");
             }
             else {
-                this.stack.visible_child_name = "stopped";
+                this.placeholder_box.remove_css_class ("with-hours");
+            }
+
+            if (this.has_hours) {
+                this.box.add_css_class ("with-hours");
+            }
+            else {
+                this.box.remove_css_class ("with-hours");
             }
         }
 
-        private void update_remaining_time (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        private void update_remaining_time (int64 timestamp)
         {
             var remaining = this._timer.calculate_remaining (timestamp);
             var remaining_uint = Pomodoro.Timestamp.to_seconds_uint (remaining);
-            var minutes_uint = remaining_uint / 60;
-            var seconds_uint = remaining_uint % 60;
+            var has_hours = remaining_uint >= 3600;
 
-            // TODO: hours
+            if (this.has_hours != has_hours)
+            {
+                this.hours_label.visible = has_hours;
+                this.hours_separator_label.visible = has_hours;
+                this.has_hours = has_hours;
 
-            this.minutes_label.text = "%02u".printf (minutes_uint);
-            this.seconds_label.text = "%02u".printf (seconds_uint);
+                this.update_css_classes ();
+
+                if (this.faded_in) {
+                    this.start_hours_animation ();
+                }
+            }
+
+            if (has_hours)
+            {
+                this.hours_label.text = (remaining_uint / 3600).to_string ();
+
+                remaining_uint = remaining_uint % 3600;
+            }
+
+            this.minutes_label.text = "%02u".printf (remaining_uint / 60);
+            this.seconds_label.text = "%02u".printf (remaining_uint % 60);
+        }
+
+        private void stop_blinking_animation ()
+        {
+            if (this.blink_animation == null) {
+                return;
+            }
+
+            this.blink_animation.pause ();
+            this.blink_animation = null;
+
+            // Animate opacity back to a baseline value.
+            if (this.get_mapped () && this.box.opacity != 1.0)
+            {
+                var animation_target = new Adw.PropertyAnimationTarget (this.box, "opacity");
+                this.blink_animation = new Adw.TimedAnimation (this.box,
+                                                               this.box.opacity,
+                                                               1.0,
+                                                               FADE_IN_DURATION,
+                                                               animation_target);
+                this.blink_animation.easing = Adw.Easing.EASE_OUT_QUAD;
+                this.blink_animation.follow_enable_animations_setting = false;
+                this.blink_animation.done.connect (this.stop_blinking_animation);
+                this.blink_animation.play ();
+            }
+            else {
+                this.box.opacity = 1.0;
+            }
         }
 
         private void start_blinking_animation ()
@@ -143,52 +354,28 @@ namespace Pomodoro
             }
 
             var animation_target = new Adw.PropertyAnimationTarget (this.box, "opacity");
-            var animation = new Adw.TimedAnimation (this.box,
-                                                    this.box.opacity, BLINK_FADE_VALUE, BLINK_DURATION,
-                                                    animation_target);
-            animation.alternate = this.box.opacity == 1.0;
-            animation.follow_enable_animations_setting = false;
+            this.blink_animation = new Adw.TimedAnimation (this.box,
+                                                           this.box.opacity,
+                                                           BLINK_FADE_VALUE,
+                                                           BLINK_DURATION,
+                                                           animation_target);
+            this.blink_animation.alternate = this.box.opacity == 1.0;
+            this.blink_animation.follow_enable_animations_setting = false;
 
-            if (animation.value_from <= BLINK_FADE_VALUE) {
-                animation.value_to = 1.0;
+            if (this.blink_animation.value_from <= BLINK_FADE_VALUE) {
+                this.blink_animation.value_to = 1.0;
             }
 
-            if (animation.alternate) {
-                animation.repeat_count = uint.MAX;
-                animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
+            if (this.blink_animation.alternate) {
+                this.blink_animation.repeat_count = uint.MAX;
+                this.blink_animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
             }
             else {
-                animation.easing = Adw.Easing.EASE_OUT_QUAD;
-                animation.done.connect (this.start_blinking_animation);
+                this.blink_animation.easing = Adw.Easing.EASE_OUT_QUAD;
+                this.blink_animation.done.connect (this.start_blinking_animation);
             }
 
-            this.blink_animation = animation;
             this.blink_animation.play ();
-        }
-
-        private void stop_blinking_animation ()
-        {
-            if (this.blink_animation == null) {
-                return;
-            }
-
-            if (this.get_mapped () && this.box.opacity != 1.0)
-            {
-                var animation_target = new Adw.PropertyAnimationTarget (this.box, "opacity");
-                var animation = new Adw.TimedAnimation (this.box,
-                                                        this.box.opacity, 1.0, 500,
-                                                        animation_target);
-                animation.easing = Adw.Easing.EASE_IN_OUT_CUBIC;
-                animation.follow_enable_animations_setting = false;
-
-                this.blink_animation.reset ();
-                this.blink_animation = animation;
-                this.blink_animation.play ();
-            }
-            else {
-                this.blink_animation.reset ();
-                this.box.opacity = 1.0;
-            }
         }
 
         private void connect_signals ()
@@ -225,41 +412,86 @@ namespace Pomodoro
         {
             var timestamp = this._timer.get_last_state_changed_time ();
 
-            // Prevent from displaying 00:00 while stopping the timer.
-            if (this._timer.is_started ()) {
+            if (this._timer.is_started ())
+            {
+                if (this._timer.is_paused () || this._timer.is_finished ()) {
+                    this.start_blinking_animation ();
+                }
+                else {
+                    this.stop_blinking_animation ();
+                }
+
+                // Prevent from displaying 00:00 while stopping the timer.
                 this.update_remaining_time (timestamp);
+
+                this.fade_in ();
+            }
+            else {
+                this.stop_blinking_animation ();
+                this.update_css_classes ();
+                this.fade_out ();
             }
 
-            this.update_visible_child ();
+            if (this.get_mapped ()) {
+                this.queue_resize ();
+            }
         }
 
-        private void ensure_reference_layout ()
+        /**
+         * To estimate font scale we need to measure layout at reference scale.
+         */
+        private void ensure_reference_size ()
         {
-            if (this.reference_layout == null)
+            if (this.reference_width_lower == 0.0)
             {
-                this.reference_layout = this.minutes_label.create_pango_layout_with_scale ("00:00", 1.0);
-                this.reference_layout.get_pixel_size (out this.reference_width, out this.reference_height);
-                this.reference_baseline = this.reference_layout.get_baseline () / Pango.SCALE;
+                var layout = this.create_pango_layout ("00:00");
+                var layout_width = 0;
+                var layout_height = 0;
+
+                layout.get_size (out layout_width, out layout_height);
+                this.reference_width_lower = (double) layout_width / (double) Pango.SCALE;
+                this.reference_height = (double) layout_height / (double) Pango.SCALE;
+                this.reference_baseline = (double) layout.get_baseline () / (double) Pango.SCALE;
+
+                layout.set_text ("0:00:00", 7);
+                layout.get_size (out layout_width, out layout_height);
+                this.reference_width_upper = (double) layout_width / (double) Pango.SCALE;
             }
         }
 
-        private void clear_reference_layout ()
+        private void invalidate_reference_size ()
         {
-            if (this.reference_layout == null)
+            this.reference_width_lower = 0.0;
+            this.reference_width_upper = 0.0;
+            this.reference_height = 0.0;
+            this.reference_baseline = 0.0;
+        }
+
+        private bool get_has_hours ()
+        {
+            return this.timer.is_started () ? this.has_hours : this._placeholder_has_hours;
+        }
+
+        private double get_reference_width ()
+        {
+            if (this.hours_animation != null)
             {
-                this.reference_layout = null;
-                this.reference_width = 0;
-                this.reference_height = 0;
-                this.reference_baseline = 0;
+                return Adw.lerp (this.reference_width_lower,
+                                 this.reference_width_upper,
+                                 this.hours_animation.value);
             }
+
+            return this.faded_in
+                ? (double) (this.has_hours ? this.reference_width_upper : this.reference_width_lower)
+                : (double) (this._placeholder_has_hours ? this.reference_width_upper : this.reference_width_lower);
         }
 
-        public override void css_changed (Gtk.CssStyleChange change)
-        {
-            this.clear_reference_layout ();
-
-            base.css_changed (change);
-        }
+        // public override void css_changed (Gtk.CssStyleChange change)
+        // {
+        //     base.css_changed (change);
+        //
+        //     this.invalidate_reference_size ();  // NOTE: this is triggered on unfocus
+        // }
 
         public override Gtk.SizeRequestMode get_request_mode ()
         {
@@ -267,7 +499,9 @@ namespace Pomodoro
         }
 
         /**
-         * Estimate label size according to given size.
+         * Estimate size.
+         *
+         * Interpolate between two children and with-hours / without-hours.
          */
         public override void measure (Gtk.Orientation orientation,
                                       int             for_size,
@@ -276,27 +510,26 @@ namespace Pomodoro
                                       out int         minimum_baseline,
                                       out int         natural_baseline)
         {
-            var scale = 1.0;
+            this.ensure_reference_size ();
 
-            this.ensure_reference_layout ();
+            var reference_width = this.get_reference_width ();
+            var reference_height = this.reference_height;
+            var reference_baseline = this.reference_baseline;
+            var scale = 1.0;
 
             if (for_size != -1 && this.halign == Gtk.Align.FILL) {
                 scale = orientation == Gtk.Orientation.HORIZONTAL
-                    ? (double) for_size / (double) this.reference_height
-                    : (double) for_size / (double) this.reference_width;
+                    ? (double) for_size / reference_height
+                    : (double) for_size / reference_width;
             }
 
             if (orientation == Gtk.Orientation.HORIZONTAL) {
-                natural = scale != 1.0
-                    ? (int) Math.ceil (scale * (double) this.reference_width)
-                    : this.reference_width;
+                natural = (int) Math.round (scale * reference_width);
                 natural_baseline = -1;
             }
             else {
-                natural = scale != 1.0
-                    ? (int) Math.ceil (scale * (double) this.reference_height)
-                    : this.reference_height;
-                natural_baseline = this.reference_baseline;
+                natural = (int) Math.round (scale * reference_height);
+                natural_baseline = (int) Math.round (scale * reference_baseline);
             }
 
             minimum = natural;
@@ -307,30 +540,103 @@ namespace Pomodoro
                                             int height,
                                             int baseline)
         {
-            var child = this.get_first_child ();
-            var allocation = Gtk.Allocation () {
-                x = 0,
-                y = 0,
-                width = width,
-                height = height
-            };
+            var placeholder_allocation = Gtk.Allocation ();
+            var allocation             = Gtk.Allocation ();
 
-            if (this.halign == Gtk.Align.FILL)
+            this.ensure_reference_size ();
+
+            var scale = this.halign == Gtk.Align.FILL
+                ? (double) width / this.get_reference_width ()
+                : 1.0;
+
+            if (this.scale != scale)
             {
-                var scale = double.min ((double) width / (double) this.reference_width,
-                                        (double) height / (double) this.reference_height);
+                this.scale = scale;
 
-                this.set_scale_factor (scale);
+                this.update_children_scale ();
             }
 
-            child.allocate_size (allocation, baseline);
+            this.placeholder_box.measure (
+                              Gtk.Orientation.VERTICAL,
+                              -1,
+                              null,
+                              out placeholder_allocation.height,
+                              null,
+                              null);
+            this.placeholder_box.measure (
+                              Gtk.Orientation.HORIZONTAL,
+                              -1,
+                              null,
+                              out placeholder_allocation.width,
+                              null,
+                              null);
+            this.box.measure (Gtk.Orientation.VERTICAL,
+                              -1,
+                              null,
+                              out allocation.height,
+                              null,
+                              null);
+            this.box.measure (Gtk.Orientation.HORIZONTAL,
+                              -1,
+                              null,
+                              out allocation.width,
+                              null,
+                              null);
+
+            switch (this.halign)
+            {
+                case Gtk.Align.START:
+                    placeholder_allocation.x = 0;
+                    allocation.x = 0;
+                    break;
+
+                case Gtk.Align.END:
+                    placeholder_allocation.x = width - placeholder_allocation.width;
+                    allocation.x = width - allocation.width;
+                    break;
+
+                case Gtk.Align.CENTER:
+                case Gtk.Align.FILL:
+                    placeholder_allocation.x = (width - placeholder_allocation.width) / 2;
+                    allocation.x = (width - allocation.width) / 2;
+                    break;
+
+                default:
+                    assert_not_reached ();
+            }
+
+            placeholder_allocation.y = (height - placeholder_allocation.height) / 2;
+            allocation.y = (height - allocation.height) / 2;
+
+            this.placeholder_box.allocate_size (placeholder_allocation, baseline);
+            this.box.allocate_size (allocation, baseline);
+        }
+
+        public override void snapshot (Gtk.Snapshot snapshot)
+        {
+            if (this.crossfade_animation != null)
+            {
+                snapshot.push_cross_fade (this.crossfade_animation.value);
+
+                this.snapshot_child (this.placeholder_box, snapshot);
+                snapshot.pop ();
+
+                this.snapshot_child (this.box, snapshot);
+                snapshot.pop ();
+            }
+            else {
+                if (!this.faded_in) {
+                    this.snapshot_child (this.placeholder_box, snapshot);
+                }
+                else {
+                    this.snapshot_child (this.box, snapshot);
+                }
+            }
         }
 
         public override void map ()
         {
-            this.update_remaining_time ();
-            this.update_visible_child ();
-
+            this.on_timer_state_changed (this._timer.state, this._timer.state);
             this.connect_signals ();
 
             base.map ();
@@ -344,28 +650,25 @@ namespace Pomodoro
         {
             this.disconnect_signals ();
             this.stop_blinking_animation ();
+            this.stop_crossfade_animation ();
+            this.stop_hours_animation ();
 
             base.unmap ();
-        }
-
-        public override void realize ()
-        {
-            this.set_direction (Gtk.TextDirection.LTR);
-
-            base.realize ();
         }
 
         public override void unroot ()
         {
             base.unroot ();
 
-            this.clear_reference_layout ();
+            this.invalidate_reference_size ();
         }
 
         public override void dispose ()
         {
             this.disconnect_signals ();
             this.stop_blinking_animation ();
+            this.stop_crossfade_animation ();
+            this.stop_hours_animation ();
 
             base.dispose ();
         }

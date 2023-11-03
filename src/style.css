@@ -106,12 +106,13 @@ timerview button:disabled {
 }
 
 timerview timerlabel {
-    font-size: 55pt;
+    font-size: 55pt;  /* reference size */
     font-weight: 400;
 }
 
 timerview sessionprogressbar {
     padding: 12px 0;
+    margin: 0 6px;
 }
 
 timerview timercontrolbuttons button {
@@ -196,6 +197,7 @@ compacttimerview .pomodoro-state-menu arrow {
 
 compacttimerview timerlabel {
     font-size: 16pt;
+    font-weight: 600;
 }
 
 compacttimerview progressbar {

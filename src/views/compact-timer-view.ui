@@ -51,7 +51,7 @@
               </object>
             </child>
             <child>
-              <object class="PomodoroTimerLabel">
+              <object class="PomodoroTimerLabel" id="timer_label">
                 <property name="can-focus">False</property>
                 <property name="halign">end</property>
                 <property name="valign">center</property>

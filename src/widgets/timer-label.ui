@@ -2,110 +2,148 @@
 <interface>
   <template class="PomodoroTimerLabel" parent="GtkWidget">
     <child>
-      <object class="GtkStack" id="stack">
-        <property name="transition-type">crossfade</property>
-        <property name="transition-duration">250</property>
-        <property name="interpolate-size">False</property>
-        <property name="hhomogeneous">True</property>
-        <property name="vhomogeneous">True</property>
+      <object class="GtkBox" id="placeholder_box">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">0</property>
+        <property name="halign">end</property>
+        <property name="valign">fill</property>
         <child>
-          <object class="GtkStackPage">
-            <property name="name">stopped</property>
-            <property name="child">
-              <object class="GtkBox" id="placeholder_box">
-                <property name="orientation">horizontal</property>
-                <property name="spacing">0</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <child>
-                  <object class="PomodoroMonospaceLabel" id="placeholder_minutes_label">
-                    <property name="halign">fill</property>
-                    <property name="hexpand">1</property>
-                    <property name="valign">baseline</property>
-                    <property name="xalign">1.0</property>
-                    <property name="text">00</property>
-                    <style>
-                      <class name="minutes-label"/>
-                      <class name="placeholder"/>
-                    </style>
-                  </object>
-                </child>
-                <child>
-                  <object class="PomodoroMonospaceLabel" id="placeholder_separator_label">
-                    <property name="halign">fill</property>
-                    <property name="valign">baseline</property>
-                    <property name="xalign">0.5</property>
-                    <property name="text">:</property>
-                    <style>
-                      <class name="separator-label"/>
-                      <class name="placeholder"/>
-                    </style>
-                  </object>
-                </child>
-                <child>
-                  <object class="PomodoroMonospaceLabel" id="placeholder_seconds_label">
-                    <property name="halign">fill</property>
-                    <property name="valign">baseline</property>
-                    <property name="xalign">0.0</property>
-                    <property name="text">00</property>
-                    <style>
-                      <class name="seconds-label"/>
-                      <class name="placeholder"/>
-                    </style>
-                  </object>
-                </child>
-              </object><!-- placeholder_box -->
-            </property>
-          </object><!-- stack page -->
+          <object class="PomodoroMonospaceLabel" id="placeholder_hours_label">
+            <property name="halign">fill</property>
+            <property name="hexpand">1</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">1.0</property>
+            <property name="text">0</property>
+            <property name="visible">False</property>
+            <style>
+              <class name="hours-label"/>
+              <class name="placeholder"/>
+            </style>
+          </object>
         </child>
         <child>
-          <object class="GtkStackPage">
-            <property name="name">running</property>
-            <property name="child">
-              <object class="GtkBox" id="box">
-                <property name="orientation">horizontal</property>
-                <property name="spacing">0</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <child>
-                  <object class="PomodoroMonospaceLabel" id="minutes_label">
-                    <property name="halign">fill</property>
-                    <property name="hexpand">True</property>
-                    <property name="valign">baseline</property>
-                    <property name="xalign">1.0</property>
-                    <property name="text">0</property>
-                    <style>
-                      <class name="minutes-label"/>
-                    </style>
-                  </object>
-                </child>
-                <child>
-                  <object class="PomodoroMonospaceLabel" id="separator_label">
-                    <property name="halign">fill</property>
-                    <property name="valign">baseline</property>
-                    <property name="xalign">0.5</property>
-                    <property name="text">:</property>
-                    <style>
-                      <class name="separator-label"/>
-                    </style>
-                  </object>
-                </child>
-                <child>
-                  <object class="PomodoroMonospaceLabel" id="seconds_label">
-                    <property name="halign">fill</property>
-                    <property name="valign">baseline</property>
-                    <property name="xalign">0.0</property>
-                    <property name="text">00</property>
-                    <style>
-                      <class name="seconds-label"/>
-                    </style>
-                  </object>
-                </child>
-              </object><!-- box -->
-            </property>
-          </object><!-- stack page -->
+          <object class="PomodoroMonospaceLabel" id="placeholder_hours_separator_label">
+            <property name="halign">fill</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.5</property>
+            <property name="text">:</property>
+            <property name="visible">False</property>
+            <style>
+              <class name="separator-label"/>
+              <class name="placeholder"/>
+            </style>
+          </object>
         </child>
-      </object><!-- stack -->
+        <child>
+          <object class="PomodoroMonospaceLabel" id="placeholder_minutes_label">
+            <property name="halign">fill</property>
+            <property name="hexpand">1</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">1.0</property>
+            <property name="text">00</property>
+            <style>
+              <class name="minutes-label"/>
+              <class name="placeholder"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="placeholder_minutes_separator_label">
+            <property name="halign">fill</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.5</property>
+            <property name="text">:</property>
+            <style>
+              <class name="separator-label"/>
+              <class name="placeholder"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="placeholder_seconds_label">
+            <property name="halign">fill</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.0</property>
+            <property name="text">00</property>
+            <style>
+              <class name="seconds-label"/>
+              <class name="placeholder"/>
+            </style>
+          </object>
+        </child>
+      </object><!-- placeholder_box -->
+    </child>
+    <child>
+      <object class="GtkBox" id="box">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">0</property>
+        <property name="halign">end</property>
+        <property name="valign">fill</property>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="hours_label">
+            <property name="name">hours</property>
+            <property name="halign">fill</property>
+            <property name="hexpand">True</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">1.0</property>
+            <property name="text">0</property>
+            <property name="visible">False</property>
+            <style>
+              <class name="hours-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="hours_separator_label">
+            <property name="name">hours-separator</property>
+            <property name="halign">fill</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.5</property>
+            <property name="text">:</property>
+            <property name="visible">False</property>
+            <style>
+              <class name="separator-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="minutes_label">
+            <property name="name">minutes</property>
+            <property name="halign">fill</property>
+            <property name="hexpand">1</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.0</property>
+            <property name="text">00</property>
+            <style>
+              <class name="minutes-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="minutes_separator_label">
+            <property name="name">minutes-separator</property>
+            <property name="halign">fill</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.5</property>
+            <property name="text">:</property>
+            <style>
+              <class name="separator-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="PomodoroMonospaceLabel" id="seconds_label">
+            <property name="name">seconds</property>
+            <property name="halign">fill</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0.0</property>
+            <property name="text">00</property>
+            <style>
+              <class name="seconds-label"/>
+            </style>
+          </object>
+        </child>
+      </object><!-- active_box -->
     </child>
   </template>
 </interface>
