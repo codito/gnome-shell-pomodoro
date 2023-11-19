@@ -85,10 +85,10 @@ namespace Pomodoro
                                                 this.session_progressbar,
                                                 "session",
                                                 GLib.BindingFlags.SYNC_CREATE);
-            this.session_manager.bind_property ("has-uniform-breaks",
-                                                this.session_progressbar_revealer,
-                                                "reveal-child",
-                                                GLib.BindingFlags.SYNC_CREATE | GLib.BindingFlags.INVERT_BOOLEAN);
+            this.session_progressbar.bind_property ("reveal",
+                                                    this.session_progressbar_revealer,
+                                                    "reveal-child",
+                                                    GLib.BindingFlags.SYNC_CREATE);
 
             this.session_expired_id = this.session_manager.session_expired.connect (this.on_session_expired);
             this.notify_current_time_block_id = this.session_manager.notify["current-time-block"].connect (

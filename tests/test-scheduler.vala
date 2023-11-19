@@ -82,6 +82,7 @@ namespace Tests
             this.add_test ("reschedule_session__skip_long_break", this.test_reschedule_session__skip_long_break);
             this.add_test ("reschedule_session__resume_session_1", this.test_reschedule_session__resume_session_1);
             this.add_test ("reschedule_session__resume_session_2", this.test_reschedule_session__resume_session_2);
+            this.add_test ("reschedule_session__starting_with_long_break", this.test_reschedule_session__starting_with_long_break);
         }
 
         public void test_calculate_time_block_completion_time ()
@@ -854,7 +855,7 @@ namespace Tests
         }
 
         /**
-         * Skip a long-break while is still in progress.
+         * Skip a long-break while it's still in progress.
          */
         public void test_reschedule_session__skip_long_break ()
         {
@@ -974,6 +975,42 @@ namespace Tests
             assert_false (cycles.nth_data (0).is_visible ());
             assert_true (cycles.nth_data (1).contains (time_block_2));
             assert_true (cycles.nth_data (1).is_visible ());
+        }
+
+        public void test_reschedule_session__starting_with_long_break ()
+        {
+            var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
+            var session   = this.create_session (scheduler);
+
+            var time_block_1 = session.get_first_time_block ();
+            time_block_1.duration = Pomodoro.Interval.MINUTE;
+            time_block_1.set_status (Pomodoro.TimeBlockStatus.UNCOMPLETED);
+
+            var time_block_2 = new Pomodoro.TimeBlock (Pomodoro.State.LONG_BREAK);
+            time_block_2.set_time_range (time_block_1.end_time, time_block_1.end_time + time_block_2.duration);
+            time_block_2.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+            time_block_2.set_completion_time (time_block_2.end_time);
+            session.insert_after (time_block_2, time_block_1);
+
+            var now = time_block_2.start_time;
+            Pomodoro.Timestamp.freeze_to (now);
+            scheduler.reschedule_session (session, null, now);
+
+            var cycles = session.get_cycles ();
+            var visible_cycles_count = 0;
+
+            unowned GLib.List<unowned Pomodoro.Cycle> link = cycles.first ();
+
+            while (link != null)
+            {
+                if (link.data.is_visible ()) {
+                    visible_cycles_count++;
+                }
+
+                link = link.next;
+            }
+
+            assert_cmpuint (visible_cycles_count, GLib.CompareOperator.EQ, 0);
         }
     }
 }

@@ -465,13 +465,16 @@ namespace Pomodoro
                     return;
                 }
 
-                this.disconnect_signals ();
+                if (this.session_changed_id != 0) {
+                    this._session.disconnect (this.session_changed_id);
+                    this.session_changed_id = 0;
+                }
 
                 this._session = value;
+                this.update ();
 
-                if (this.get_mapped ()) {
-                    this.update ();
-                    this.connect_signals ();
+                if (this._session != null) {
+                    this.session_changed_id = this._session.changed.connect (this.on_session_changed);
                 }
 
                 this.notify_property ("session");
@@ -493,6 +496,14 @@ namespace Pomodoro
 
                 this.notify_property ("line-width");
                 this.queue_resize ();
+            }
+        }
+
+        [CCode (notify = false)]
+        public bool reveal
+        {
+            get {
+                return this._opacity > 0.0;
             }
         }
 
@@ -725,6 +736,7 @@ namespace Pomodoro
             var total_weight = 0.0;
             var previous_norm = this.norm;
             var previous_opacity = this._opacity;
+            var previous_reveal = this.reveal;
 
             // Associate blocks with cycle. Create more blocks if needed.
             unowned GLib.List<unowned Pomodoro.Cycle> link = cycles.first ();
@@ -776,7 +788,7 @@ namespace Pomodoro
 
             // Update blocks span and opacity.
             var norm = this.calculate_norm (total_weight, cycles_count);
-            var opacity = norm != 1.0 ? 1.0 : 0.0;
+            var opacity = norm > 0.0 && norm < 1.0 ? 1.0 : 0.0;
 
             if (this._opacity != opacity)
             {
@@ -799,6 +811,10 @@ namespace Pomodoro
 
             if (this.norm_animation == null) {
                 this.remove_invisible_blocks ();
+            }
+
+            if (this.reveal != previous_reveal) {
+                this.notify_property ("reveal");
             }
 
             // Animate value.
@@ -877,10 +893,8 @@ namespace Pomodoro
                 return;
             }
 
-            if (this.get_mapped ()) {
-                this.update_blocks ();
-                this.update_tooltip ();
-            }
+            this.update_blocks ();
+            this.update_tooltip ();
         }
 
         private void queue_update ()
@@ -951,10 +965,6 @@ namespace Pomodoro
 
         private void connect_signals ()
         {
-            if (this.session_changed_id == 0 && this._session != null) {
-                this.session_changed_id = this._session.changed.connect (this.on_session_changed);
-            }
-
             if (this.timer_tick_id == 0) {
                 this.timer_tick_id = this._timer.tick.connect (this.on_timer_tick);
             }
@@ -970,11 +980,6 @@ namespace Pomodoro
             if (this.timer_tick_id != 0) {
                 this._timer.disconnect (this.timer_tick_id);
                 this.timer_tick_id = 0;
-            }
-
-            if (this.session_changed_id != 0) {
-                this._session.disconnect (this.session_changed_id);
-                this.session_changed_id = 0;
             }
         }
 
@@ -1088,6 +1093,11 @@ namespace Pomodoro
 
         public override void dispose ()
         {
+            if (this.session_changed_id != 0) {
+                this._session.disconnect (this.session_changed_id);
+                this.session_changed_id = 0;
+            }
+
             this.disconnect_signals ();
             this.stop_backfill_animation ();
             this.stop_norm_animation ();
