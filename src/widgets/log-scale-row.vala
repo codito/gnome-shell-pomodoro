@@ -1,5 +1,6 @@
 namespace Pomodoro
 {
+    // TODO: rename to DurationRow
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/log-scale-row.ui")]
     public class LogScaleRow : Adw.ActionRow
     {

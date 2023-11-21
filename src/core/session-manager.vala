@@ -1180,6 +1180,9 @@ namespace Pomodoro
             {
                 case Pomodoro.AdvancementMode.CONTINUOUS:
                     this.advance (state.finished_time);
+                    // var next_time_block = this.initialize_next_time_block (state.finished_time);
+
+                    // this.continous_advancement (this._current_time_block, next_time_block);
                     break;
 
                 case Pomodoro.AdvancementMode.MANUAL:

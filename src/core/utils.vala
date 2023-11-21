@@ -29,6 +29,33 @@ namespace Pomodoro
         }
     }
 
+    /**
+     * Round seconds to 1s, 5s, 10s, 1m.
+     *
+     * Its intended for displaying rough estimation of duration.
+     */
+    public double round_seconds (double seconds)
+    {
+        if (seconds < 10.0) {
+            return Math.round (seconds);
+        }
+
+        if (seconds < 30.0) {
+            return 5.0 * Math.round (seconds / 5.0);
+        }
+
+        if (seconds < 60.0) {
+            return 10.0 * Math.round (seconds / 10.0);
+        }
+
+        return 60.0 * Math.round (seconds / 60.0);
+    }
+
+    /**
+     * Convert seconds to text.
+     *
+     * If hours are present, seconds are omitted.
+     */
     public string format_time (uint seconds)
     {
         var hours = seconds / 3600;

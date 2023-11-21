@@ -11,11 +11,7 @@
   </enum>
 
   <schema id="org.gnomepomodoro.Pomodoro" path="/org/gnomepomodoro/Pomodoro/">
-    <!--
-    <child name="preferences" schema="org.gnomepomodoro.Pomodoro.preferences"/>
-    <child name="state" schema="org.gnomepomodoro.Pomodoro.state"/>
-    -->
-
+    <!-- Timer -->
     <key name="pomodoro-duration" type="u">
       <default>1500</default>
       <range min="1" max="14400"/>
@@ -55,6 +51,29 @@
       <summary>Strategy of the scheduler</summary>
       <description>Strategy of the scheduler in case you deviate from target durations.</description>
     </key>
+
+    <!-- Notifications -->
+    <key name="announcement-duration" type="u">
+      <default>10</default>
+      <range min="0" max="30"/>
+      <summary>Announcement duration</summary>
+      <description>Time to show the notification before the end of the time-block.</description>
+    </key>
+    <key name="screen-overlay" type="b">
+      <default>true</default>
+      <summary>Show screen overlay</summary>
+      <description>Whether to open screen overlay during break.</description>
+    </key>
+    <key name="screen-overlay-dismiss-by-activity" type="b">
+      <default>true</default>
+      <summary>Dismiss screen overlay by activity</summary>
+      <description></description>
+    </key>
+    <key name="screen-overlay-idle-delay" type="u">
+      <default>30</default>
+      <summary>Time to reopen screen overlay</summary>
+      <description></description>
+    </key>
   </schema>
 
 <!--
@@ -63,11 +82,6 @@
       <default><![CDATA[["<Ctrl><Alt>p"]]]></default>
       <summary>Timer toggle key</summary>
       <description>Key to toggle the timer.</description>
-    </key>
-    <key name="show-screen-notifications" type="b">
-      <default>true</default>
-      <summary>Screen notifications</summary>
-      <description>Whether to show a notification dialog when pause starts.</description>
     </key>
     <key name="enabled-plugins" type="as">
       <default>["sounds"]</default>

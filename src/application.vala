@@ -368,6 +368,14 @@ namespace Pomodoro
             this.session_manager.advance_to_state (state);
         }
 
+        private void activate_extend (GLib.SimpleAction action,
+                                      GLib.Variant?     parameter)
+        {
+            var seconds = parameter != null ? parameter.get_uint32 () : 60;
+
+            this.timer.duration += seconds * Pomodoro.Interval.SECOND;
+        }
+
         // TODO: rename to swap_state?
         // private void activate_timer_switch_state (GLib.SimpleAction action,
         //                                           GLib.Variant?     parameter)
@@ -424,7 +432,9 @@ namespace Pomodoro
             action.activate.connect (this.activate_advance_to_state);
             this.add_action (action);
 
-            // TODO: timer-extend (by one minute)
+            action = new GLib.SimpleAction ("extend", GLib.VariantType.UINT32);
+            action.activate.connect (this.activate_extend);
+            this.add_action (action);
 
             // TODO: replace uses of `timer-skip` with actions:
             // - start-pomodoro
@@ -501,7 +511,7 @@ namespace Pomodoro
             // this.setup_desktop_extension ();
 
             // TODO: should be managed by capability manager
-            var notification_manager = Pomodoro.NotificationManager.get_default ();
+            var notification_manager = new Pomodoro.NotificationManager ();
 
             // this.setup_plugins.begin ((obj, res) => {
             //     this.setup_plugins.end (res);
@@ -611,7 +621,7 @@ namespace Pomodoro
             // }
 
             Pomodoro.close_repository ();
-            Pomodoro.NotificationManager.set_default (null);
+            // Pomodoro.NotificationManager.set_default (null);
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
             Pomodoro.SleepMonitor.set_default (null);

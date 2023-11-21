@@ -103,6 +103,21 @@ namespace Pomodoro
             return true;
         }
 
+        public inline bool is_started ()
+        {
+            return Pomodoro.Timestamp.is_defined (this.started_time);
+        }
+
+        public inline bool is_paused ()
+        {
+            return Pomodoro.Timestamp.is_defined (this.paused_time);
+        }
+
+        public inline bool is_finished ()
+        {
+            return Pomodoro.Timestamp.is_defined (this.finished_time);
+        }
+
         /**
          * Convert structure to Variant.
          *
@@ -603,8 +618,10 @@ namespace Pomodoro
 
         /**
          * Mark state as "finished".
+         *
+         * Do not use it. It's public only for unit-tests.
          */
-        private void finish (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void finish (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             if (this.is_finished ()) {
                 return;
@@ -1018,7 +1035,6 @@ namespace Pomodoro
         /**
          * Emitted on any state related changes. Default handler acknowledges the change.
          */
-        [Signal (run = "first")]
         public signal void state_changed (Pomodoro.TimerState current_state,
                                           Pomodoro.TimerState previous_state)
         {
@@ -1067,7 +1083,6 @@ namespace Pomodoro
          *
          * It's emitted even when the timer is not running.
          */
-        [Signal (run = "last")]
         public signal void suspended (int64 start_time,
                                       int64 end_time)
         {

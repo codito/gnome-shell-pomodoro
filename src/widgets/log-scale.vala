@@ -71,6 +71,11 @@ namespace Pomodoro
             );
         }
 
+        /**
+         * Round seconds to 30s, 1m, 5m, 10m.
+         *
+         * Its intended for settings only to have a rounded number.
+         */
         private double round_seconds (double seconds)
         {
             if (seconds < 60.0) {

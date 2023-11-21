@@ -850,9 +850,10 @@ namespace Pomodoro
             }
 
             if (long_break_timeout >= 0) {
-                var seconds = (int) Pomodoro.Timestamp.to_seconds_uint (long_break_timeout);
+                var seconds = Pomodoro.Timestamp.to_seconds (long_break_timeout);
+                var seconds_uint = (uint) Pomodoro.round_seconds (seconds);
 
-                this.set_tooltip_text (_("Long break due in %s").printf (Pomodoro.format_time (seconds)));
+                this.set_tooltip_text (_("Long break due in %s").printf (Pomodoro.format_time (seconds_uint)));
             }
             else {
                 this.set_tooltip_text (null);

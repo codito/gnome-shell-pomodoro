@@ -63,6 +63,14 @@
                         </child>
                         <child>
                           <object class="GtkStackPage">
+                            <property name="title" translatable="yes">Notifications</property>
+                            <property name="child">
+                              <object class="PomodoroPreferencesPageNotifications"/>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkStackPage">
                             <property name="title" translatable="yes">Appearance</property>
                             <property name="child">
                               <object class="GtkLabel">

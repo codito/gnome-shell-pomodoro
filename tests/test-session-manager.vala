@@ -1613,6 +1613,8 @@ namespace Tests
             this.add_test ("timer_rewind__paused_after_completion", this.test_timer_rewind__paused_after_completion);
             this.add_test ("timer_rewind__paused_multiple", this.test_timer_rewind__paused_multiple);
 
+            this.add_test ("timer_finish", this.test_timer_finish);
+
             // this.add_test ("timer_suspended", this.test_timer_suspended);
         }
 
@@ -2714,6 +2716,55 @@ namespace Tests
             assert_cmpfloat_with_epsilon (cycle.calculate_progress (now), 0.0, EPSILON);
             assert_cmpfloat_with_epsilon (cycle.get_weight (), 1.0, EPSILON);
             assert_true (cycle.is_visible ());
+        }
+
+        public void test_timer_finish ()
+        {
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+            timer.start ();
+
+            var state_changed_call_count = 0;
+            var finished_call_count = 0;
+            var state_1 = Pomodoro.TimerState ();
+            var state_2 = Pomodoro.TimerState ();
+
+            timer.finished.connect (() => {
+                finished_call_count++;
+            });
+
+            timer.state_changed.connect ((current_state, previous_state) => {
+                if (state_changed_call_count == 0) {
+                    state_1 = current_state;
+                }
+
+                if (state_changed_call_count == 1) {
+                    assert_true (previous_state.equals (state_1));
+                    state_2 = current_state;
+                }
+
+                state_changed_call_count++;
+            });
+
+            var now = session_manager.current_time_block.end_time;
+            Pomodoro.Timestamp.freeze_to (now);
+            timer.finish (now);
+
+            assert_cmpuint (state_changed_call_count, GLib.CompareOperator.EQ, 2);
+            assert_cmpuint (finished_call_count, GLib.CompareOperator.EQ, 1);
+
+            assert_true (state_1.is_finished ());
+            assert_false (state_2.is_finished ());
+
+            assert_cmpvariant (
+                new GLib.Variant.int64 (state_1.finished_time),
+                new GLib.Variant.int64 (now)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (state_2.started_time),
+                new GLib.Variant.int64 (now)
+            );
         }
     }
 }

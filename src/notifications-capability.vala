@@ -313,8 +313,6 @@ namespace Pomodoro
                 application.add_action (show_screen_notification_action);
 
                 this.session_manager = Pomodoro.SessionManager.get_default ();
-                this.session_manager.enter_time_block.connect_after (this.on_enter_time_block);
-                this.session_manager.leave_time_block.connect_after (this.on_leave_time_block);
 
                 // this.timer = Pomodoro.Timer.get_default ();
                 // this.timer.changed.connect (this.on_timer_changed);
