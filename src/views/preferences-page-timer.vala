@@ -39,6 +39,25 @@ namespace Pomodoro
             this.settings.bind ("long-break-duration", this.long_break_duration_adjustment, "value", GLib.SettingsBindFlags.DEFAULT);
             this.settings.bind ("cycles", this.cycles_adjustment, "value", GLib.SettingsBindFlags.DEFAULT);
 
+            this.settings.bind_with_mapping (
+                                "pomodoro-advancement-mode",
+                                 this.pomodoro_advancement_mode_comborow,
+                                 "selected",
+                                 GLib.SettingsBindFlags.DEFAULT,
+                                 PreferencesPageTimer.advancement_mode_get_mapping,
+                                 PreferencesPageTimer.advancement_mode_set_mapping,
+                                 null,
+                                 null);
+            this.settings.bind_with_mapping (
+                                "break-advancement-mode",
+                                 this.break_advancement_mode_comborow,
+                                 "selected",
+                                 GLib.SettingsBindFlags.DEFAULT,
+                                 PreferencesPageTimer.advancement_mode_get_mapping,
+                                 PreferencesPageTimer.advancement_mode_set_mapping,
+                                 null,
+                                 null);
+
             this.settings_changed_id = settings.changed.connect (this.on_settings_changed);
 
             this.timer = Pomodoro.Timer.get_default ();
@@ -49,7 +68,6 @@ namespace Pomodoro
 
             this.update_long_break_row_sensitivity ();
             this.update_stats_labels ();
-            this.update_advancement_modes ();
         }
 
         private void update_long_break_row_sensitivity ()
@@ -65,15 +83,6 @@ namespace Pomodoro
 
             this.session_stats_label.label = _("A single session will take <b>%s</b>.").printf (Pomodoro.format_time (total_duration));
             this.breaks_stats_label.label = _("<b>%u%%</b> of the time will be allocated for breaks.").printf (break_percentage);
-        }
-
-        private void update_advancement_modes ()
-        {
-            this.pomodoro_advancement_mode_comborow.selected = (uint) (
-                (Pomodoro.AdvancementMode) this.settings.get_enum ("pomodoro-advancement-mode"));
-
-            this.break_advancement_mode_comborow.selected = (uint) (
-                (Pomodoro.AdvancementMode) this.settings.get_enum ("break-advancement-mode"));
         }
 
         private void apply_changes ()
@@ -184,11 +193,6 @@ namespace Pomodoro
                     this.update_stats_labels ();
                     break;
 
-                case "pomodoro-advancement-mode":
-                case "break-advancement-mode":
-                    this.update_advancement_modes ();
-                    break;
-
                 default:
                     break;
             }
@@ -207,24 +211,30 @@ namespace Pomodoro
             }
         }
 
-        [GtkCallback]
-        private void on_pomodoro_advancement_mode_selected_notify (GLib.Object    object,
-                                                                   GLib.ParamSpec pspec)
+        /**
+         * Convert settings value to a choice.
+         */
+        private static bool advancement_mode_get_mapping (GLib.Value   value,
+                                                          GLib.Variant variant,
+                                                          void*        user_data)
         {
-            var combo_row = (Adw.ComboRow) object;
-            var pomodoro_advancement_mode = (Pomodoro.AdvancementMode) combo_row.selected;
+            var advancement_mode = Pomodoro.AdvancementMode.from_string (variant.get_string ());
 
-            this.settings.set_enum ("pomodoro-advancement-mode", (int) pomodoro_advancement_mode);
+            value.set_uint ((uint) advancement_mode);
+
+            return true;
         }
 
-        [GtkCallback]
-        private void on_break_advancement_mode_selected_notify (GLib.Object    object,
-                                                                GLib.ParamSpec pspec)
+        /**
+         * Convert choice to settings value.
+         */
+        private static GLib.Variant advancement_mode_set_mapping (GLib.Value       value,
+                                                                  GLib.VariantType expected_type,
+                                                                  void*            user_data)
         {
-            var combo_row = (Adw.ComboRow) object;
-            var break_advancement_mode = (Pomodoro.AdvancementMode) combo_row.selected;
+            var advancement_mode = (Pomodoro.AdvancementMode) value.get_uint ();
 
-            this.settings.set_enum ("break-advancement-mode", (int) break_advancement_mode);
+            return new GLib.Variant.string (advancement_mode.to_string ());
         }
 
         public override void dispose ()

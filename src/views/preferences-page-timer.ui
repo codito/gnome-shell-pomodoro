@@ -97,7 +97,6 @@
                 </items>
               </object>
             </property>
-            <signal name="notify::selected" handler="on_pomodoro_advancement_mode_selected_notify" swapped="no" />
          </object>
         </child>
         <child>
@@ -113,7 +112,6 @@
                 </items>
               </object>
             </property>
-            <signal name="notify::selected" handler="on_break_advancement_mode_selected_notify" swapped="no" />
           </object>
         </child>
       </object>
