@@ -64,13 +64,20 @@
       <summary>Show screen overlay</summary>
       <description>Whether to open screen overlay during break.</description>
     </key>
+    <!--
     <key name="screen-overlay-dismiss-by-activity" type="b">
       <default>true</default>
       <summary>Dismiss screen overlay by activity</summary>
       <description></description>
     </key>
-    <key name="screen-overlay-idle-delay" type="u">
-      <default>30</default>
+    -->
+    <key name="screen-overlay-lock-delay" type="u">
+      <default>15</default>
+      <summary>Time to lock the screen</summary>
+      <description></description>
+    </key>
+    <key name="screen-overlay-reopen-delay" type="u">
+      <default>60</default>
       <summary>Time to reopen screen overlay</summary>
       <description></description>
     </key>

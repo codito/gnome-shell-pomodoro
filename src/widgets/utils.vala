@@ -10,4 +10,21 @@ namespace Pomodoro
             alpha = base_color.alpha + (1.0f - base_color.alpha) * overlay_color.alpha,
         };
     }
+
+    internal void wake_up_screen ()
+    {
+        // org.freedesktop.ScreenSaver SimulateUserActivity (does not work?)
+    }
+
+    internal void lock_screen ()
+    {
+        // session bus:
+        // org.gnome.Shell.ScreenShield Lock
+        // /org/gnome/ScreenSaver
+        // org.freedesktop.ScreenSaver Lock (does not work)
+
+        // system:
+        // org.freedesktop.login1.Manager LockSession (requires permissions)
+        // org.freedesktop.login1.Manager LockSessions (requires permissions)
+    }
 }

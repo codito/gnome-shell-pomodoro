@@ -139,7 +139,9 @@ namespace Tests
 
         timer.run (cancellable);
 
-        GLib.Source.remove (timeout_id);
+        if (timeout_id != 0) {
+            GLib.Source.remove (timeout_id);
+        }
 
         return !cancellable.is_cancelled ();
     }

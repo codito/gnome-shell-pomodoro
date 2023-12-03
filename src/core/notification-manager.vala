@@ -33,9 +33,6 @@ namespace Pomodoro
         private const int64 TIME_BLOCK_ABOUT_TO_END_TIMEOUT = 10 * Pomodoro.Interval.SECOND;
         private const int64 TIME_BLOCK_ABOUT_TO_END_TOLERANCE = 5 * Pomodoro.Interval.SECOND;
 
-
-        // private static Pomodoro.NotificationManager? instance = null;
-
         public Pomodoro.Timer timer {
             get {
                 return this._timer;
@@ -46,7 +43,9 @@ namespace Pomodoro
                 this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
                 this.timer_tick_id = this._timer.tick.connect (this.on_timer_tick);
 
-                this.on_timer_state_changed (this._timer.state, this._timer.state);
+                // TODO: schedule open_screen_overlay
+                this.update (true);
+                this.initialized = true;
             }
         }
 
@@ -73,6 +72,7 @@ namespace Pomodoro
         private uint                      withdraw_timeout_id = 0;
         private bool                      screen_overlay_active = false;
         private int                       screen_overlay_inhibit_count = 0;
+        private bool                      initialized = false;
         private GLib.Notification?        notification = null;
         private Pomodoro.NotificationType notification_type = NotificationType.NULL;
         private weak Pomodoro.TimeBlock?  notification_time_block = null;
@@ -91,20 +91,6 @@ namespace Pomodoro
 
             this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
         }
-
-        // public static void set_default (Pomodoro.NotificationManager? notification_manager)
-        // {
-        //     Pomodoro.NotificationManager.instance = notification_manager;
-        // }
-
-        // public static unowned Pomodoro.NotificationManager get_default ()
-        // {
-        //     if (Pomodoro.NotificationManager.instance == null) {
-        //         Pomodoro.NotificationManager.set_default (new Pomodoro.NotificationManager ());
-        //     }
-        //
-        //     return Pomodoro.NotificationManager.instance;
-        // }
 
         private string format_remaining_time (Pomodoro.TimeBlock time_block)
         {
@@ -388,8 +374,10 @@ namespace Pomodoro
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
                                              Pomodoro.TimerState previous_state)
         {
+            // TODO: there is no notification when switching between Short / Long break
+
             var current_time_block = current_state.user_data as Pomodoro.TimeBlock;
-            var timestamp = this._timer.get_last_state_changed_time ();
+            var timestamp = this._timer.get_current_time ();
 
             if (this.notify_time_block_ended_idle_id != 0) {
                 GLib.Source.remove (this.notify_time_block_ended_idle_id);
@@ -444,10 +432,15 @@ namespace Pomodoro
                 if (current_time_block.state.is_break () &&
                     screen_overlay_inhibit_count == 0 &&
                     remaining >= about_to_end_threshold &&
-                    this.settings.get_boolean ("show-screen-overlay"))
+                    this.settings.get_boolean ("screen-overlay"))
                 {
-                    if (!this.screen_overlay_active) {
-                        this.open_screen_overlay ();
+                    if (!this.screen_overlay_active && this.initialized) {
+                        this.open_screen_overlay (timestamp);
+                    }
+
+                    if (!this.screen_overlay_active && !this.initialized) {
+                        // GLib.Idle.add  // TODO
+                        GLib.info ("TODO: schedule open_screen_overlay");
                     }
 
                     return;
@@ -476,7 +469,8 @@ namespace Pomodoro
         {
             var remaining = this._timer.calculate_remaining (timestamp);
 
-            if (remaining <= TIME_BLOCK_ABOUT_TO_END_TIMEOUT && !(
+            if (remaining <= TIME_BLOCK_ABOUT_TO_END_TIMEOUT &&
+                !this.screen_overlay_active && !(
                 this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ABOUT_TO_END ||
                 this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ENDED ||
                 this.notification_type == Pomodoro.NotificationType.CONFIRM_ADVANCEMENT))
@@ -498,19 +492,60 @@ namespace Pomodoro
 
             switch (key)
             {
-                case "show-screen-overlay":
+                case "screen-overlay":
                     if (this.screen_overlay_inhibit_count == 0) {
-                        this.on_timer_state_changed (this._timer.state, this._timer.state);
+                        this.update (true);
                     }
 
                     break;
             }
         }
 
-        public signal void open_screen_overlay ()
+        private void update (bool allow_screen_overlay)
         {
-            debug ("open_screen_overlay");
+            if (allow_screen_overlay) {
+                this.on_timer_state_changed (this._timer.state, this._timer.state);
+            }
+            else {
+                this.screen_overlay_inhibit_count++;
+                this.on_timer_state_changed (this._timer.state, this._timer.state);
+                this.screen_overlay_inhibit_count--;
+            }
+        }
 
+        // public bool can_open_screen_overlay (int64 timestamp)
+        // {
+            // TODO: check if we're not interrupting a drag-and-drop or a videocall
+
+        //     return this.settings.get_boolean ("screen-overlay");
+        // }
+
+        /**
+         * Notify manager that screen overlay has opened.
+         */
+        public void screen_overlay_opened ()
+        {
+            this.screen_overlay_active = true;
+
+            this.withdraw_notifications ();
+        }
+
+        /**
+         * Notify manager that screen overlay has closed.
+         */
+        public void screen_overlay_closed ()
+        {
+            this.screen_overlay_active = false;
+
+            this.screen_overlay_inhibit_count++;
+            this.on_timer_state_changed (this._timer.state, this._timer.state);
+            this.screen_overlay_inhibit_count--;
+
+            this.update (false);
+        }
+
+        public signal void open_screen_overlay (int64 timestamp)
+        {
             this.screen_overlay_active = true;
 
             this.withdraw_notifications ();
@@ -518,13 +553,9 @@ namespace Pomodoro
 
         public signal void close_screen_overlay ()
         {
-            debug ("close_screen_overlay");
-
             this.screen_overlay_active = false;
 
-            this.screen_overlay_inhibit_count++;
-            this.on_timer_state_changed (this._timer.state, this._timer.state);
-            this.screen_overlay_inhibit_count--;
+            this.update (false);
         }
 
         public override void dispose ()
@@ -567,13 +598,6 @@ namespace Pomodoro
             this.notification_time_block = null;
 
             base.dispose ();
-
-            debug ("### disposed");
-
-            // FIXME
-            // if (Pomodoro.NotificationManager.instance == this) {
-            //     Pomodoro.NotificationManager.instance = null;
-            // }
         }
     }
 }

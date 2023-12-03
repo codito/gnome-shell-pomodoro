@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroScreenOverlay" parent="PomodoroLightbox">
+    <property name="title" translatable="yes">Take a Break</property>
+    <property name="icon-name">gnome-pomodoro</property>
+    <property name="startup-id">gnome-pomodoro-screen-overlay</property>
+    <property name="can-focus">True</property>
+    <property name="child">
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="halign">fill</property>
+        <property name="valign">fill</property>
+        <property name="vexpand">True</property>
+        <property name="can-focus">False</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="halign">end</property>
+            <property name="spacing">10</property>
+            <child>
+              <object class="GtkButton" id="lock_button">
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon-name">lock-screen-symbolic</property>
+                    <property name="pixel-size">24</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="flat"/>
+                  <class name="circular"/>
+                </style>
+                <signal name="clicked" handler="on_lock_button_clicked" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="close_button">
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon-name">screen-overlay-close-symbolic</property>
+                    <property name="pixel-size">24</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="flat"/>
+                  <class name="circular"/>
+                </style>
+                <signal name="clicked" handler="on_close_button_clicked" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <property name="vexpand">True</property>
+            <property name="spacing">6</property>
+            <property name="margin-bottom">50</property>
+            <child>
+              <object class="PomodoroTimerLabel">
+                <property name="halign">center</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">It's time to take a break</property>
+                <property name="halign">center</property>
+                <style>
+                  <class name="message"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

@@ -44,35 +44,6 @@ row.pomodoro-log-scale {
     font-weight: bold;
 }
 
-.pomodoro-screen-notification.background {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.pomodoro-screen-notification {
-    color: white;
-    transition: opacity 180ms ease-out;
-    opacity: 1.0;
-}
-
-.pomodoro-screen-notification.hidden {
-    opacity: 0.0;
-}
-
-.pomodoro-screen-notification timerlabel,
-.pomodoro-screen-notification timerlabel:backdrop {
-    font-size: 55pt;
-    font-weight: normal;
-    text-shadow: 0px 5px 8px rgba(0, 0, 0, 0.10);
-    color: white;
-}
-
-.pomodoro-screen-notification label,
-.pomodoro-screen-notification label:backdrop {
-    font-size: 11pt;
-    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.35);
-    color: white;
-}
-
 
 /**
  * PomodoroTimerControlButtons widget
@@ -226,6 +197,39 @@ compacttimerview:dir(rtl) .pomodoro-state-menu arrow {
 compacttimerview:dir(rtl) progressbar {
     padding: 0;
     padding-right: 9px;
+}
+
+
+/*
+ * Screen Overlay
+ */
+lightbox {
+    background-color: rgba(0, 0, 0, 0.90);
+    color: white;
+    padding: 20px;
+}
+
+lightbox timerlabel {
+    font-size: 65pt;
+    font-weight: 400;
+    text-shadow: 0px 5px 8px rgba(0, 0, 0, 0.20);
+}
+
+lightbox .message {
+    font-size: 15pt;
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.20);
+}
+
+lightbox button {
+    padding: 10px;
+}
+
+lightbox button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+lightbox button:active {
+    background-color: rgba(255, 255, 255, 0.30);
 }
 
 

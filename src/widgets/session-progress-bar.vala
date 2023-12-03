@@ -886,7 +886,7 @@ namespace Pomodoro
         private void update ()
         {
             if (this.update_idle_id != 0) {
-                GLib.Source.remove (this.update_idle_id);
+                this.remove_tick_callback (this.update_idle_id);
                 this.update_idle_id = 0;
             }
 

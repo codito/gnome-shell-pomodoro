@@ -58,6 +58,7 @@ libgnome_pomodoro_dep = declare_dependency(
   link_with: libgnome_pomodoro,
   dependencies: [
     gio_dep,
+    gdk_x11_dep,
     gobject_dep,
     gom_dep,
     gtk_dep,
@@ -85,6 +86,7 @@ gnome_pomodoro_vala_sources = files(
   'views/preferences-page-timer.vala',
   'views/preferences-window.vala',
   'views/screen-notification.vala',
+  'views/screen-overlay.vala',
   'views/stats-day-page.vala',
   'views/stats-month-page.vala',
   'views/stats-page.vala',
@@ -94,6 +96,7 @@ gnome_pomodoro_vala_sources = files(
   'views/window.vala',
   'widgets/accelerator.vala',
   'widgets/gizmo.vala',
+  'widgets/lightbox.vala',
   'widgets/log-scale.vala',
   'widgets/log-scale-row.vala',
   'widgets/monospace-label.vala',

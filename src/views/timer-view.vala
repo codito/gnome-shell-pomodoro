@@ -41,6 +41,10 @@ namespace Pomodoro
         [GtkChild]
         private unowned Pomodoro.TimerProgressRing timer_progressring;
         [GtkChild]
+        private unowned Gtk.Box header_box;
+        [GtkChild]
+        private unowned Gtk.Button open_screen_overlay_button;
+        [GtkChild]
         private unowned Gtk.Box inner_box;
         [GtkChild]
         private unowned Pomodoro.TimerLabel timer_label;
@@ -53,6 +57,7 @@ namespace Pomodoro
 
         private Pomodoro.SessionManager session_manager;
         private Pomodoro.Timer          timer;
+        private GLib.Settings?          settings = null;
         private GLib.MenuModel?         state_menu;
         private GLib.MenuModel?         uniform_state_menu;
         private ulong                   timer_state_changed_id = 0;
@@ -60,6 +65,7 @@ namespace Pomodoro
         private ulong                   notify_current_time_block_id = 0;
         private ulong                   notify_has_uniform_breaks_id = 0;
         private ulong                   current_time_block_changed_id = 0;
+        private ulong                   settings_changed_id = 0;
         private Adw.Toast?              session_expired_toast;
         private Pomodoro.TimeBlock?     current_time_block;
 
@@ -72,6 +78,7 @@ namespace Pomodoro
         {
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.timer           = session_manager.timer;
+            this.settings = Pomodoro.get_settings ();
 
             var builder = new Gtk.Builder.from_resource ("/org/gnomepomodoro/Pomodoro/ui/menus.ui");
             this.state_menu = (GLib.MenuModel) builder.get_object ("state_menu");
@@ -89,6 +96,8 @@ namespace Pomodoro
                                                     this.session_progressbar_revealer,
                                                     "reveal-child",
                                                     GLib.BindingFlags.SYNC_CREATE);
+
+            this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
 
             this.session_expired_id = this.session_manager.session_expired.connect (this.on_session_expired);
             this.notify_current_time_block_id = this.session_manager.notify["current-time-block"].connect (
@@ -122,9 +131,16 @@ namespace Pomodoro
 
         private void update_buttons ()
         {
+            var current_state = this.current_time_block != null
+                ? this.current_time_block.state
+                : Pomodoro.State.UNDEFINED;
+
             this.state_menubutton.label = !this.timer.is_finished ()
                 ? this.get_state_label ()
                 : _("Finished!");
+
+            this.open_screen_overlay_button.visible = this.settings.get_boolean ("screen-overlay") &&
+                                                      current_state.is_break ();
         }
 
         private void update_timer_label_placeholder ()
@@ -264,6 +280,17 @@ namespace Pomodoro
                 : this.state_menu;
         }
 
+        private void on_settings_changed (GLib.Settings settings,
+                                          string        key)
+        {
+            switch (key)
+            {
+                case "screen-overlay":
+                    this.update_buttons ();
+                    break;
+            }
+        }
+
         private void connect_signals ()
         {
             if (this.timer_state_changed_id == 0) {
@@ -289,12 +316,12 @@ namespace Pomodoro
             minimum_height = 2 * MIN_SPACING;
             natural_height = 2 * NAT_SPACING;
 
-            this.state_menubutton.measure (Gtk.Orientation.VERTICAL,
-                                           avaliable_width,
-                                           out tmp_minimum_height,
-                                           out tmp_natural_height,
-                                           null,
-                                           null);
+            this.header_box.measure (Gtk.Orientation.VERTICAL,
+                                     avaliable_width,
+                                     out tmp_minimum_height,
+                                     out tmp_natural_height,
+                                     null,
+                                     null);
             minimum_height += tmp_minimum_height;
             natural_height += tmp_natural_height;
 
@@ -331,21 +358,21 @@ namespace Pomodoro
 
             avaliable_height -= 2 * NAT_SPACING;
 
-            this.state_menubutton.measure (Gtk.Orientation.HORIZONTAL,
-                                           -1,
-                                           out tmp_minimum_width,
-                                           out tmp_natural_width,
-                                           null,
-                                           null);
+            this.header_box.measure (Gtk.Orientation.HORIZONTAL,
+                                     -1,
+                                     out tmp_minimum_width,
+                                     out tmp_natural_width,
+                                     null,
+                                     null);
             minimum_width = int.max (minimum_width, tmp_minimum_width);
             natural_width = int.max (natural_width, tmp_natural_width);
 
-            this.state_menubutton.measure (Gtk.Orientation.VERTICAL,
-                                           natural_width,
-                                           null,
-                                           out tmp_natural_height,
-                                           null,
-                                           null);
+            this.header_box.measure (Gtk.Orientation.VERTICAL,
+                                     natural_width,
+                                     null,
+                                     out tmp_natural_height,
+                                     null,
+                                     null);
             avaliable_height -= tmp_natural_height;
 
             this.timer_control_buttons.measure (Gtk.Orientation.VERTICAL,
@@ -466,21 +493,16 @@ namespace Pomodoro
                 this.calculate_width_for_height (allocation.height, null, out allocation.width);
             }
 
-            // Determine state_menubutton size.
-            var state_menubutton_allocation = Gtk.Allocation ();
-            this.state_menubutton.measure (Gtk.Orientation.HORIZONTAL,
-                                           -1,
-                                           out tmp_minimum_width,
-                                           out tmp_natural_width,
-                                           null,
-                                           null);
-            state_menubutton_allocation.width = allocation.width.clamp (tmp_minimum_width, tmp_natural_width);
-            this.state_menubutton.measure (Gtk.Orientation.VERTICAL,
-                                           state_menubutton_allocation.width,
-                                           null,
-                                           out state_menubutton_allocation.height,
-                                           null,
-                                           null);
+            // Determine header_box size.
+            var header_box_allocation = Gtk.Allocation () {
+                width = allocation.width
+            };
+            this.header_box.measure (Gtk.Orientation.VERTICAL,
+                                     header_box_allocation.width,
+                                     null,
+                                     out header_box_allocation.height,
+                                     null,
+                                     null);
 
             // Determine timer_progressring size.
             var timer_progressring_allocation = Gtk.Allocation () {
@@ -520,25 +542,23 @@ namespace Pomodoro
 
             // Position children horizontally.
             allocation.x = (width - allocation.width) / 2;
-            state_menubutton_allocation.x = is_ltr
-                                            ? allocation.x
-                                            : allocation.x + allocation.width - state_menubutton_allocation.width;
+            header_box_allocation.x = allocation.x;
             timer_progressring_allocation.x = allocation.x;
             inner_box_allocation.x = (width - inner_box_allocation.width) / 2;
             timer_control_buttons_allocation.x = (width - timer_control_buttons_allocation.width) / 2;
 
             // Position children vertically.
-            tmp_natural_height = state_menubutton_allocation.height +
+            tmp_natural_height = header_box_allocation.height +
                                  timer_progressring_allocation.height +
                                  timer_control_buttons_allocation.height;
             var spacing = ((height - tmp_natural_height) / 4).clamp (MIN_SPACING, MAX_SPACING);
             allocation.y = (height - tmp_natural_height - 2 * spacing) / 2 - BOTTOM_PADDING;
-            state_menubutton_allocation.y = allocation.y;
-            timer_progressring_allocation.y = state_menubutton_allocation.y + state_menubutton_allocation.height + spacing;
+            header_box_allocation.y = allocation.y;
+            timer_progressring_allocation.y = header_box_allocation.y + header_box_allocation.height + spacing;
             inner_box_allocation.y = timer_progressring_allocation.y + (timer_progressring_allocation.height - inner_box_allocation.height) / 2;
             timer_control_buttons_allocation.y = timer_progressring_allocation.y + timer_progressring_allocation.height + spacing;
 
-            this.state_menubutton.allocate_size (state_menubutton_allocation, -1);
+            this.header_box.allocate_size (header_box_allocation, -1);
             this.timer_progressring.allocate_size (timer_progressring_allocation, -1);
             this.inner_box.allocate_size (inner_box_allocation, -1);
             this.timer_control_buttons.allocate_size (timer_control_buttons_allocation, -1);
@@ -586,11 +606,17 @@ namespace Pomodoro
                 this.notify_has_uniform_breaks_id = 0;
             }
 
+            if (this.settings_changed_id != 0) {
+                this.settings.disconnect (this.settings_changed_id);
+                this.settings_changed_id = 0;
+            }
+
             this.state_menu = null;
             this.uniform_state_menu = null;
             this.current_time_block = null;
             this.session_manager = null;
             this.timer = null;
+            this.settings = null;
 
             base.dispose ();
         }

@@ -12,6 +12,7 @@ gnome = import ('gnome')
 glib_dep = dependency('glib-2.0', version: '>=2.50')
 gobject_dep = dependency('gobject-2.0', version: '>=2.50')
 gio_dep = dependency('gio-2.0', version: '>=2.50')
+gdk_x11_dep = dependency('gdk-x11-4.0', required: false)
 gtk_dep = dependency('gtk4', version: '>=4.2')
 cairo_dep = dependency('cairo')
 graphene_dep = dependency('graphene-gobject-1.0')
@@ -139,6 +140,11 @@ configure_file(
 
 # Include the config.h we just generated
 config_h_dir = include_directories('.')
+
+if gdk_x11_dep.found()
+  add_project_arguments('-D', 'HAVE_GDK4_X11', language: 'vala')
+endif
+
 
 subdir('po')
 subdir('data')

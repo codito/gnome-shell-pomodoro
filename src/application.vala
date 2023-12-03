@@ -125,6 +125,7 @@ namespace Pomodoro
         public Pomodoro.Timer? timer;
         public Pomodoro.SessionManager? session_manager;
         public Pomodoro.CapabilityManager? capabilities;  // TODO: rename to capability_manager
+        public Pomodoro.NotificationManager? notification_manager;
 
         // private Gom.Repository repository;
         // private Gom.Adapter adapter;
@@ -134,6 +135,7 @@ namespace Pomodoro
         private Pomodoro.ApplicationService? service;
         private Pomodoro.TimerService? timer_service;
         private GLib.Settings settings;
+        private weak Pomodoro.ScreenOverlay? screen_overlay;
 
         public Application ()
         {
@@ -256,7 +258,7 @@ namespace Pomodoro
             }
         }
 
-        public void show_about_window (int64 timestamp = -1)
+        public void show_about_window (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
             var window = (Gtk.Window?) this.get_window_by_type (typeof (Pomodoro.Window));
             var about_window = (Gtk.Window?) this.get_window_by_type (typeof (Adw.AboutWindow));
@@ -280,11 +282,45 @@ namespace Pomodoro
             }
         }
 
+        private void show_screen_overlay (bool  pass_through = true,
+                                          int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        {
+            if (this.notification_manager == null) {
+                return;
+            }
+
+            if (this.screen_overlay != null && this.screen_overlay.get_mapped ()) {
+                return;
+            }
+
+            var screen_overlay = new Pomodoro.ScreenOverlay ();
+            screen_overlay.pass_through = pass_through;
+            screen_overlay.map.connect (() => {
+                if (this.screen_overlay != null) {
+                    this.notification_manager.screen_overlay_opened ();
+                }
+            });
+            screen_overlay.unmap.connect (() => {
+                if (this.screen_overlay != null) {
+                    this.screen_overlay = null;
+                    this.notification_manager.screen_overlay_closed ();
+                }
+            });
+
+            this.screen_overlay = screen_overlay;
+
+            if (timestamp >= 0) {
+                // TODO: Does passing timestamp even work here? Hardly ever its triggered by an user action.
+                this.screen_overlay.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
+            }
+            else {
+                this.screen_overlay.present ();
+            }
+        }
+
         private void activate_timer (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            debug ("### activate_timer");
-
             var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
 
             this.show_window ("timer", timestamp);
@@ -308,6 +344,22 @@ namespace Pomodoro
                                      GLib.Variant?     parameter)
         {
             this.show_about_window ();
+        }
+
+        private void activate_screen_overlay (GLib.SimpleAction action,
+                                              GLib.Variant?     parameter)
+        {
+            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
+
+            if (timestamp == Pomodoro.Timestamp.UNDEFINED) {
+                timestamp = this.timer.get_current_time ();
+            }
+
+            this.show_screen_overlay (false, timestamp);
+
+            if (this.timer.is_paused ()) {
+                this.timer.resume (timestamp);
+            }
         }
 
         private void activate_visit_website (GLib.SimpleAction action,
@@ -405,6 +457,10 @@ namespace Pomodoro
 
             action = new GLib.SimpleAction ("preferences", null);
             action.activate.connect (this.activate_preferences);
+            this.add_action (action);
+
+            action = new GLib.SimpleAction ("screen-overlay", GLib.VariantType.INT64);
+            action.activate.connect (this.activate_screen_overlay);
             this.add_action (action);
 
             action = new GLib.SimpleAction ("visit-website", null);
@@ -512,6 +568,16 @@ namespace Pomodoro
 
             // TODO: should be managed by capability manager
             var notification_manager = new Pomodoro.NotificationManager ();
+            notification_manager.open_screen_overlay.connect ((timestamp) => {
+                this.show_screen_overlay (true, timestamp);
+            });
+            notification_manager.close_screen_overlay.connect (() => {
+                if (this.screen_overlay != null) {
+                    this.screen_overlay.close ();
+                }
+            });
+
+            this.notification_manager = notification_manager;
 
             // this.setup_plugins.begin ((obj, res) => {
             //     this.setup_plugins.end (res);

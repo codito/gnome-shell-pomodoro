@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroLightbox" parent="GtkWindow">
+    <property name="width-request">360</property>
+    <property name="height-request">200</property>
+    <property name="icon-name">gnome-pomodoro</property>
+    <property name="decorated">False</property>
+    <property name="deletable">False</property>
+    <property name="resizable">True</property><!-- it's required for the fullscreen -->
+    <property name="handle-menubar-accel">False</property>
+    <property name="accessible-role">alert</property>
+    <child>
+      <object class="GtkEventControllerKey">
+        <signal name="key-pressed" handler="on_key_pressed" swapped="no"/>
+      </object>
+    </child>
+  </template>
+</interface>
