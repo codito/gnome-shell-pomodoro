@@ -143,7 +143,7 @@
             </style>
           </object>
         </child>
-      </object><!-- active_box -->
+      </object><!-- box -->
     </child>
   </template>
 </interface>

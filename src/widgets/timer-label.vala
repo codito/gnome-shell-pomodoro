@@ -665,10 +665,10 @@ namespace Pomodoro
 
         public override void dispose ()
         {
-            this.disconnect_signals ();
-            this.stop_blinking_animation ();
-            this.stop_crossfade_animation ();
-            this.stop_hours_animation ();
+            this.placeholder_box.unparent ();
+            this.box.unparent ();
+
+            this._timer = null;
 
             base.dispose ();
         }
