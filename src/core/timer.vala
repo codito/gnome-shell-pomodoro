@@ -258,6 +258,7 @@ namespace Pomodoro
         private int64                 last_tick_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                 suspend_time = Pomodoro.Timestamp.UNDEFINED;
         private bool                  resolving_state = false;
+        private int                   changing_state = 0;
         private Pomodoro.TimerState?  state_to_resolve = null;
         private int                   tick_freeze_count = 0;
         private int64                 monotonic_time_offset = 0;
@@ -345,6 +346,7 @@ namespace Pomodoro
 
             this.last_state_changed_time = timestamp;
             this._state = state;
+            this.changing_state++;
 
             // Reset internal ticking interval, so that it aligns to seconds after skipping or rewinding.
             if (state.started_time != previous_state.started_time ||
@@ -372,6 +374,8 @@ namespace Pomodoro
             }
 
             this.state_changed (this._state, previous_state);
+
+            this.changing_state--;
         }
 
         /**
@@ -642,16 +646,19 @@ namespace Pomodoro
          */
         public int64 get_current_time (int64 monotonic_time = Pomodoro.Timestamp.UNDEFINED)
         {
+            if (this.changing_state > 0 && Pomodoro.Timestamp.is_undefined (monotonic_time)) {
+                return this.last_state_changed_time;
+            }
+
             if (this.monotonic_time_offset == 0 || Pomodoro.Timestamp.is_frozen ()) {
                 return Pomodoro.Timestamp.from_now ();
             }
-            else {
-                if (Pomodoro.Timestamp.is_undefined (monotonic_time)) {
-                    monotonic_time = GLib.get_monotonic_time ();
-                }
 
-                return monotonic_time + this.monotonic_time_offset;
+            if (Pomodoro.Timestamp.is_undefined (monotonic_time)) {
+                monotonic_time = GLib.get_monotonic_time ();
             }
+
+            return monotonic_time + this.monotonic_time_offset;
         }
 
         private int64 round_seconds (int64 timestamp)
