@@ -20,39 +20,82 @@
 
 namespace Tests
 {
+    [Flags]
+    public enum Scenario
+    {
+        NONE,
+        UNAVAILABLE
+    }
+
+
+    public class AntiGravityCapability : Pomodoro.Capability
+    {
+        public uint initialize_count = 0;
+        public uint uninitialize_count = 0;
+        public uint enable_count = 0;
+        public uint disable_count = 0;
+        public uint activate_count = 0;
+
+        public AntiGravityCapability (string                      name,
+                                      Pomodoro.CapabilityPriority priority = Pomodoro.CapabilityPriority.DEFAULT)
+        {
+            base (name, priority);
+        }
+
+        public override void initialize ()
+        {
+            this.initialize_count++;
+
+            base.initialize ();
+        }
+
+        public override void uninitialize ()
+        {
+            this.uninitialize_count++;
+
+            base.uninitialize ();
+        }
+
+        public override void enable ()
+        {
+            this.enable_count++;
+
+            base.enable ();
+        }
+
+        public override void disable ()
+        {
+            this.disable_count++;
+
+            base.disable ();
+        }
+
+        public override void activate ()
+        {
+            this.activate_count++;
+        }
+    }
+
+
     public class CapabilityManagerTest : Tests.TestSuite
     {
         public CapabilityManagerTest ()
         {
-            this.add_test ("add_group",
-                           this.test_add_group);
+            this.add_test ("register", this.test_register);
+            // this.add_test ("register__enabled", this.test_register__enabled);
+            // this.add_test ("unregister", this.test_unregister);
 
-            this.add_test ("remove_group",
-                           this.test_remove_group);
+            // this.add_test ("register_group", this.test_register_group);
+            // this.add_test ("unregister_group", this.test_unregister_group);
 
-            this.add_test ("enable",
-                           this.test_enable);
-
-            this.add_test ("enable_2",
-                           this.test_enable_2);
-
-            this.add_test ("enable_3",
-                           this.test_enable_3);
-
-            this.add_test ("fallback_add_group",
-                           this.test_fallback_add_group);
-
-            this.add_test ("fallback_remove_group",
-                           this.test_fallback_remove_group);
-
-            this.add_test ("fallback_capability_added",
-                           this.test_fallback_capability_added);
-
-            this.add_test ("fallback_capability_removed",
-                           this.test_fallback_capability_removed);
-
-            this.add_test ("dispose",
-                           this.test_dispose);
+            // this.add_test ("enable", this.test_enable);
+            // this.add_test ("enable_2", this.test_enable_2);
+            // this.add_test ("enable_3", this.test_enable_3);
+            // this.add_test ("fallback_register_group", this.test_fallback_register_group);
+            // this.add_test ("fallback_unregister_group", this.test_fallback_unregister_group);
+            // this.add_test ("fallback_capability_added", this.test_fallback_capability_added);
+            // this.add_test ("fallback_capability_removed", this.test_fallback_capability_removed);
+            // this.add_test ("dispose", this.test_dispose);
         }
 
         public override void setup ()
@@ -63,225 +106,175 @@ namespace Tests
         {
         }
 
-        /**
-         * Unit test for Pomodoro.Capability.is_virtual() method.
-         */
-        public void test_add_group ()
+        public void test_register ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity");
-            var group      = new Pomodoro.CapabilityGroup ();
-            var manager    = new Pomodoro.CapabilityManager ();
+            var manager = new Pomodoro.CapabilityManager ();
 
-            group.add (capability);
-            manager.add_group (group, Pomodoro.Priority.DEFAULT);
+            var capability_1 = new AntiGravityCapability ("anti-gravity");
+            assert_true (capability_1.status == Pomodoro.CapabilityStatus.NULL);
+            assert_false (manager.is_enable_scheduled ("anti-gravity"));
 
-            assert (manager.has_group (group));
-            assert (manager.has_capability ("anti-gravity"));
-            assert (!capability.enabled);
+            manager.register (capability_1);
+            assert_false (manager.is_enable_scheduled ("anti-gravity"));
+            assert_true (capability_1.status == Pomodoro.CapabilityStatus.DISABLED);
         }
 
-        public void test_remove_group ()
+        // public void test_register ()
+        // {
+        //     var capability = new Pomodoro.AntiGravityCapability ("anti-gravity");
+        //     var manager    = new Pomodoro.CapabilityManager ();
+
+        //     capability.enable ();
+        //     assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
+
+        //     manager.register (capability);
+        //     assert_true (manager.is_enable_scheduled ("anti-gravity"));
+        //     assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
+        // }
+
+        public void test_enable__before_register ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity");
-            var group      = new Pomodoro.CapabilityGroup ();
+            var capability = new AntiGravityCapability ("anti-gravity");
             var manager    = new Pomodoro.CapabilityManager ();
 
-            group.add (capability);
             manager.enable ("anti-gravity");
+            assert_true (manager.is_enable_scheduled ("anti-gravity"));
 
-            manager.add_group (group, Pomodoro.Priority.DEFAULT);
-            assert (manager.has_capability ("anti-gravity"));
-            assert (capability.enabled);
-
-            manager.remove_group (group);
-            assert (!manager.has_capability ("anti-gravity"));
-            assert (!capability.enabled);
+            manager.register (capability);
+            assert_true (manager.is_enable_scheduled ("anti-gravity"));
+            assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
         }
 
-        /**
-         */
+        // public void test_inherit_priority ()
+        // {
+        // }
+
+    /*
         public void test_enable ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity");
-            var group      = new Pomodoro.CapabilityGroup ();
+            var capability = new AntiGravityCapability ("anti-gravity");
             var manager    = new Pomodoro.CapabilityManager ();
 
-            group.add (capability);
-            manager.add_group (group, Pomodoro.Priority.DEFAULT);
-
             manager.enable ("anti-gravity");
-            assert (capability.enabled);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
 
             manager.disable ("anti-gravity");
-            assert (!capability.enabled);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.DISABLED);
         }
 
-        /**
-         * Test if initial "enabled" value is handled by manager.
-         */
+         Test if initial "enabled" value is handled by manager.
         public void test_enable_2 ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity");
-            var group      = new Pomodoro.CapabilityGroup ();
+            var capability = new AntiGravityCapability ("anti-gravity");
             var manager    = new Pomodoro.CapabilityManager ();
 
             capability.enable ();
 
-            group.add (capability);
-            manager.add_group (group, Pomodoro.Priority.DEFAULT);
-
-            assert (!capability.enabled);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.DISABLED);
         }
 
-        /**
-         * Test if "enabled" value is saved independently from Capability.enabled.
-         */
+         Test if "enabled" value is saved independently from Capability.enabled.
         public void test_enable_3 ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity");
-            var group      = new Pomodoro.CapabilityGroup ();
+            var capability = new AntiGravityCapability ("anti-gravity");
             var manager    = new Pomodoro.CapabilityManager ();
 
             manager.enable ("anti-gravity");
 
-            group.add (capability);
-            manager.add_group (group, Pomodoro.Priority.DEFAULT);
-
-            assert (capability.enabled);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
         }
 
-        /**
-         * Test falling back during add_group()
-         */
         public void test_fallback_add_group ()
         {
             var manager = new Pomodoro.CapabilityManager ();
 
-            var capability1 = new Pomodoro.Capability ("anti-gravity");
-            var group1      = new Pomodoro.CapabilityGroup ();
+            var capability_1 = new AntiGravityCapability ("anti-gravity");
+            var capability_2 = new AntiGravityCapability ("anti-gravity");
 
-            var capability2 = new Pomodoro.Capability ("anti-gravity");
-            var group2      = new Pomodoro.CapabilityGroup ();
-
-            group1.add (capability1);
-            group2.add (capability2);
-
-            manager.add_group (group1, Pomodoro.Priority.DEFAULT);
-            manager.add_group (group2, Pomodoro.Priority.HIGH);
+            manager.register_group (group_1, Pomodoro.CapabilityPriority.DEFAULT);
+            manager.register_group (group_2, Pomodoro.CapabilityPriority.HIGH);
 
             manager.enable ("anti-gravity");
 
-            assert (manager.get_preferred_capability ("anti-gravity") == capability2);
-            assert (capability2.enabled);
-            assert (!capability1.enabled);
+            assert_true (manager.get_preferred_capability ("anti-gravity") == capability_2);
+            assert_true (capability_2 == Pomodoro.CapabilityStatus.ENABLED);
+            assert_true (capability_1 == Pomodoro.CapabilityStatus.DISABLED);
         }
 
-        /**
-         * Test falling back during remove_group()
-         */
         public void test_fallback_remove_group ()
         {
             var manager = new Pomodoro.CapabilityManager ();
 
-            var capability1 = new Pomodoro.Capability ("anti-gravity");
-            var group1      = new Pomodoro.CapabilityGroup ();
+            var capability_1 = new AntiGravityCapability ("anti-gravity");
+            var capability_2 = new AntiGravityCapability ("anti-gravity");
 
-            var capability2 = new Pomodoro.Capability ("anti-gravity");
-            var group2      = new Pomodoro.CapabilityGroup ();
-
-            group1.add (capability1);
-            group2.add (capability2);
-
-            manager.add_group (group1, Pomodoro.Priority.DEFAULT);
-            manager.add_group (group2, Pomodoro.Priority.HIGH);
+            manager.register_group (group_1, Pomodoro.CapabilityPriority.DEFAULT);
+            manager.register_group (group_2, Pomodoro.CapabilityPriority.HIGH);
 
             manager.enable ("anti-gravity");
 
-            assert (manager.get_preferred_capability ("anti-gravity") == capability2);
-            assert (capability2.enabled);
-            assert (!capability1.enabled);
+            assert_true (manager.get_preferred_capability ("anti-gravity") == capability_2);
+            assert_true (capability_2 == Pomodoro.CapabilityStatus.ENABLED);
+            assert_true (capability_1 == Pomodoro.CapabilityStatus.DISABLED);
 
-            manager.remove_group (group2);
-            assert (manager.get_preferred_capability ("anti-gravity") == capability1);
-            assert (!capability2.enabled);
-            assert (capability1.enabled);
+            manager.remove (group_2);
+            assert_true (manager.get_preferred_capability ("anti-gravity") == capability_1);
+            assert_true (capability_2 == Pomodoro.CapabilityStatus.DISABLED);
+            assert_true (capability_1 == Pomodoro.CapabilityStatus.ENABLED);
         }
 
-        /**
-         * Test falling back during "capability-added" signal.
-         */
         public void test_fallback_capability_added ()
         {
             var manager = new Pomodoro.CapabilityManager ();
 
-            var capability1 = new Pomodoro.Capability ("anti-gravity");
-            var group1      = new Pomodoro.CapabilityGroup ();
+            var capability_1 = new AntiGravityCapability ("anti-gravity");
 
-            var capability2 = new Pomodoro.Capability ("anti-gravity");
-            var group2      = new Pomodoro.CapabilityGroup ();
+            var capability_2 = new AntiGravityCapability ("anti-gravity");
 
-            manager.add_group (group1, Pomodoro.Priority.DEFAULT);
-            manager.add_group (group2, Pomodoro.Priority.HIGH);
-
-            group1.add (capability1);
-            group2.add (capability2);
+            manager.register_group (group_1, Pomodoro.CapabilityPriority.DEFAULT);
+            manager.register_group (group_2, Pomodoro.CapabilityPriority.HIGH);
 
             manager.enable ("anti-gravity");
 
-            assert (manager.get_preferred_capability ("anti-gravity") == capability2);
-            assert (capability2.enabled);
-            assert (!capability1.enabled);
+            assert_true (manager.get_preferred_capability ("anti-gravity") == capability_2);
+            assert_true (capability_2 == Pomodoro.CapabilityStatus.ENABLED);
+            assert_true (capability_1 == Pomodoro.CapabilityStatus.DISABLED);
         }
 
-        /**
-         * Test falling back during "capability-remove" signal.
-         */
         public void test_fallback_capability_removed ()
         {
             var manager = new Pomodoro.CapabilityManager ();
 
-            var capability1 = new Pomodoro.Capability ("anti-gravity");
-            var group1      = new Pomodoro.CapabilityGroup ();
+            var capability_1 = new AntiGravityCapability ("anti-gravity");
+            var capability2 = new AntiGravityCapability ("anti-gravity");
 
-            var capability2 = new Pomodoro.Capability ("anti-gravity");
-            var group2      = new Pomodoro.CapabilityGroup ();
-
-            group1.add (capability1);
-            group2.add (capability2);
-
-            manager.add_group (group1, Pomodoro.Priority.DEFAULT);
-            manager.add_group (group2, Pomodoro.Priority.HIGH);
+            manager.register_group (group_1, Pomodoro.CapabilityPriority.DEFAULT);
+            manager.register_group (group_2, Pomodoro.CapabilityPriority.HIGH);
 
             manager.enable ("anti-gravity");
 
-            assert (manager.get_preferred_capability ("anti-gravity") == capability2);
-            assert (capability2.enabled);
-            assert (!capability1.enabled);
+            assert_true (manager.get_preferred_capability ("anti-gravity") == capability2);
+            assert_true (capability_2 == Pomodoro.CapabilityStatus.ENABLED);
+            assert_true (capability_1 == Pomodoro.CapabilityStatus.DISABLED);
 
             group2.remove ("anti-gravity");
-            assert (manager.get_preferred_capability ("anti-gravity") == capability1);
-            assert (!capability2.enabled);
-            assert (capability1.enabled);
+            assert_true (manager.get_preferred_capability ("anti-gravity") == capability_1);
+            assert_true (capability_2 == Pomodoro.CapabilityStatus.DISABLED);
+            assert_true (capability_1 == Pomodoro.CapabilityStatus.ENABLED);
         }
 
-        /**
-         * Unit test for Pomodoro.CapabilityManager.dispose() method.
-         */
         public void test_dispose ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity");
-            var group      = new Pomodoro.CapabilityGroup ();
+            var capability = new AntiGravityCapability ("anti-gravity");
             var manager    = new Pomodoro.CapabilityManager ();
 
             manager.enable ("anti-gravity");
 
-            group.add (capability);
-            manager.add_group (group, Pomodoro.Priority.DEFAULT);
-
             manager.dispose ();
 
-            assert (!capability.enabled);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.DISABLED);
         }
+        */
     }
 }
 

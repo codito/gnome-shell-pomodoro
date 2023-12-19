@@ -16,9 +16,9 @@ libtests_common = static_library(
 # Define tests. Each test is a separate executable.
 test_names = [
   # 'application',
-  # 'capability',
-  # 'capability-group',
-  # 'capability-manager',
+  'capability',
+  'capability-set',
+  'capability-manager',
   'cycle',
   'time-block',
   'timer',

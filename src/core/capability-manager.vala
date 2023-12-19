@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 gnome-pomodoro contributors
+ * Copyright (c) 2016,2024 gnome-pomodoro contributors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,246 +23,213 @@ using GLib;
 
 namespace Pomodoro
 {
-    public enum Priority
+    public delegate void CapabilityStatusChangedFunc (Pomodoro.Capability capability);
+
+
+    internal struct CapabilityMeta
     {
-        LOW = 0,
-        DEFAULT = 1,
-        HIGH = 2
+        public string                      name;
+        public Pomodoro.CapabilityPriority priority;
+        public GLib.Type                   class_type;
     }
 
+
+    [SingleInstance]
     public class CapabilityManager : GLib.Object
     {
-        private GLib.HashTable<string,Pomodoro.Capability> capabilities;
-        private GLib.GenericSet<string>                    enabled_capabilities;
-        private GLib.SList<Pomodoro.CapabilityGroup>       groups;
+        private GLib.HashTable<string, Pomodoro.CapabilitySet> capabilities;
+        private bool                                           destroying = false;
+
+        private static Pomodoro.CapabilityMeta[] registry;
 
         construct
         {
-            /* all collected capabilities except overriden ones */
-            this.capabilities = new GLib.HashTable<string, Pomodoro.Capability> (str_hash, str_equal);
-
-            /* keep capability "enabled" status regardless of implementation or timing */
-            this.enabled_capabilities = new GLib.GenericSet<string> (str_hash, str_equal);
-
-            /* list of groups sorted by priority */
-            this.groups = new GLib.SList<Pomodoro.CapabilityGroup> ();
+            this.capabilities = new GLib.HashTable<string, Pomodoro.CapabilitySet> (str_hash, str_equal);
         }
 
-        public unowned Pomodoro.Capability get_preferred_capability (string capability_name)
+        public void populate ()
         {
-            return this.capabilities.lookup (capability_name);
-        }
-
-        public bool has_capability (string capability_name)
-        {
-            return this.capabilities.contains (capability_name);
-        }
-
-        public bool has_enabled (string capability_name)
-        {
-            var capability = this.capabilities.lookup (capability_name);
-
-            return capability != null ? capability.enabled : false;
-        }
-
-        public bool has_group (Pomodoro.CapabilityGroup group)
-        {
-            return this.groups.index (group) >= 0;
-        }
-
-        public void add_group (Pomodoro.CapabilityGroup group,
-                               Pomodoro.Priority        priority)
-        {
-            unowned GLib.SList<Pomodoro.CapabilityGroup> group_link = this.groups.find (group);
-
-            if (group_link == null) {
-                set_group_priority (group, priority);
-
-                this.groups.insert_sorted (group, group_priority_compare);
-
-                group.capability_added.connect (this.on_group_capability_added);
-                group.capability_removed.connect (this.on_group_capability_removed);
-
-                group.foreach ((capability_name, capability) => {
-                    this.add_capability_internal (capability);
-                });
-
-                this.group_added (group);
-            }
-            else {
-                // TODO: change group priority
-            }
-        }
-
-        public void remove_group (Pomodoro.CapabilityGroup group)
-        {
-            unowned GLib.SList<Pomodoro.CapabilityGroup> group_link = this.groups.find (group);
-
-            if (group_link != null)
+            for (var index = 0; index < registry.length; index++)
             {
-                this.groups.remove_link (group_link);
+                var capability_meta = registry[index];
 
-                group.capability_added.disconnect (this.on_group_capability_added);
-                group.capability_removed.disconnect (this.on_group_capability_removed);
+                var name_value = GLib.Value (typeof (string));
+                name_value.set_string (capability_meta.name);
 
-                group.foreach ((capability_name, capability) => {
-                    this.remove_capability_internal (capability);
-                });
+                var priority_value = GLib.Value (typeof (Pomodoro.CapabilityPriority));
+                priority_value.set_enum (capability_meta.priority);
 
-                this.group_removed (group);
+                this.register ((Pomodoro.Capability) GLib.Object.new_with_properties (capability_meta.class_type,
+                                                                                      {"name", "priority"},
+                                                                                      {name_value, priority_value}));
             }
         }
 
-        public void enable (string capability_name)
+        /**
+         * Return a preferred capability.
+         */
+        public unowned Pomodoro.Capability? lookup (string capability_name)
         {
-            var capability = capabilities.lookup (capability_name);
+            var capability_set = this.capabilities.lookup (capability_name);
 
-            this.enabled_capabilities.add (capability_name);
+            return capability_set != null
+                ? capability_set.preferred_capability
+                : null;
+        }
 
-            if (capability != null && !capability.enabled) {
-                capability.enable ();
+        /**
+         * Whether capability is marked to be enabled or actually is enabled.
+         */
+        public bool is_enable_scheduled (string capability_name)
+        {
+            var capability_set = this.capabilities.lookup (capability_name);
+
+            return capability_set != null ? capability_set.enable : false;
+        }
+
+        public static void register_class (string                      name,
+                                           Pomodoro.CapabilityPriority priority,
+                                           GLib.Type                   class_type)
+        {
+            registry += Pomodoro.CapabilityMeta () {
+                name = name,
+                priority = priority,
+                class_type = class_type
+            };
+        }
+
+        public void register (Pomodoro.Capability capability)
+                              requires (capability.name != null)
+        {
+            var capability_set = this.ensure_capability_set (capability.name);
+
+            if (!capability_set.contains (capability)) {
+                capability_set.add (capability);
             }
+        }
+
+        public void unregister (Pomodoro.Capability capability)
+        {
+            var capability_name = capability.name;
+            var capability_set = this.capabilities.lookup (capability_name);
+
+            if (capability_set != null) {
+                capability_set.remove (capability);
+            }
+        }
+
+        private unowned Pomodoro.CapabilitySet ensure_capability_set (string capability_name)
+        {
+            unowned Pomodoro.CapabilitySet existing_capability_set = this.capabilities.lookup (capability_name);
+
+            if (existing_capability_set == null)
+            {
+                var capability_set = new Pomodoro.CapabilitySet ();
+
+                this.capabilities.insert (capability_name, capability_set);
+
+                capability_set.status_changed.connect (
+                    (capability) => {
+                        this.status_changed (capability);
+                    });
+
+                existing_capability_set = capability_set;
+            }
+
+            return existing_capability_set;
+        }
+
+        /**
+         * Mark capability to be enabled.
+         */
+        public void enable (string capability_name)
+                            requires (!this.destroying)
+        {
+            var capability_set = this.ensure_capability_set (capability_name);
+
+            capability_set.enable = true;
         }
 
         public void disable (string capability_name)
+                             requires (!this.destroying)
         {
-            var capability = capabilities.lookup (capability_name);
+            var capability_set = this.capabilities.lookup (capability_name);
 
-            this.enabled_capabilities.remove (capability_name);
-
-            if (capability != null && capability.enabled) {
-                capability.disable ();
+            if (capability_set != null) {
+                capability_set.enable = false;
             }
         }
 
-        public void disable_all ()
-        {
-            this.enabled_capabilities.foreach ((capability_name) => {
-                var capability = capabilities.lookup (capability_name);
+        public void activate (string capability_name)
+                              requires (!this.destroying)
+       {
+            var capability = this.lookup (capability_name);
 
-                if (capability != null && capability.enabled) {
-                    capability.disable ();
-                }
-            });
-
-            this.enabled_capabilities.remove_all ();
-        }
-
-        private static Pomodoro.Priority get_group_priority (Pomodoro.CapabilityGroup group)
-        {
-            return group.get_data<Pomodoro.Priority> ("priority");
-        }
-
-        private static void set_group_priority (Pomodoro.CapabilityGroup group,
-                                                Pomodoro.Priority        priority)
-        {
-            group.set_data<Pomodoro.Priority> ("priority", priority);
-        }
-
-        [CCode (has_target = false)]
-        private static int group_priority_compare (Pomodoro.CapabilityGroup a,
-                                                   Pomodoro.CapabilityGroup b)
-        {
-            var a_priority = get_group_priority (a);
-            var b_priority = get_group_priority (b);
-
-            if (a_priority > b_priority) {
-                return -1;
+            if (capability == null) {
+                GLib.debug ("Can't activate capability %s: it doesn't exist.", capability_name);
+                return;
             }
 
-            if (a_priority < b_priority) {
-                return 1;
+            if (capability.status != Pomodoro.CapabilityStatus.ENABLED) {
+                GLib.debug ("Can't activate capability %s: its status is \"%s\"",
+                            capability.get_debug_name (),
+                            capability.status.to_string ());
+                return;
             }
 
-            return 0;
+            capability.activate ();
         }
 
-        private void add_capability_internal (Pomodoro.Capability capability)
+        public ulong add_watch (string                               capability_name,
+                                Pomodoro.CapabilityStatusChangedFunc status_changed_func)
         {
-            var preferred_capability = this.capabilities.lookup (capability.name);
+            var capability_set = this.ensure_capability_set (capability_name);
 
-            if (preferred_capability != null) {
-                preferred_capability.disable ();
-
-                if (get_group_priority (preferred_capability.group) <
-                    get_group_priority (capability.group))
-                {
-                    this.capabilities.replace (capability.name, capability);
-                }
-            }
-            else {
-                this.capabilities.insert (capability.name, capability);
-            }
-
-            if (this.enabled_capabilities.contains (capability.name)) {
-                if (!capability.enabled) {
-                    capability.enable ();
-                }
-
-                this.capability_enabled (capability.name);
-            }
-            else {
-                if (capability.enabled) {
-                    capability.disable ();
-                }
-            }
+            return capability_set.status_changed.connect (
+                (capability) => {
+                    status_changed_func (capability);
+                });
         }
 
-        private void remove_capability_internal (Pomodoro.Capability capability)
+        public void remove_watch (string capability_name,
+                                  ulong  handler_id)
         {
-            var preferred_capability = this.capabilities.lookup (capability.name);
+            var capability_set = this.capabilities.lookup (capability_name);
 
-            if (preferred_capability == capability)
-            {
-                this.capabilities.remove (capability.name);
-
-                capability.disable ();
-
-                /* select new preferred implementation */
-
-                unowned GLib.SList<Pomodoro.CapabilityGroup> iter = this.groups;
-
-                while (iter != null)
-                {
-                    preferred_capability = iter.data.lookup (capability.name);
-
-                    if (preferred_capability != null) {
-                        this.add_capability_internal (preferred_capability);
-                        break;
-                    }
-
-                    iter = iter.next;
-                }
-
-                this.capability_disabled (capability.name);
+            if (capability_set == null) {
+                return;
             }
+
+            capability_set.disconnect (handler_id);
         }
 
-        private void on_group_capability_added (Pomodoro.CapabilityGroup group,
-                                                Pomodoro.Capability      capability)
-        {
-            this.add_capability_internal (capability);
-        }
+        /**
+         * `status-changed` signal only track of a preferred capabilities, so that you don't get updated about
+         * capabilities that may be asynchronously disabled.
+         */
+        public signal void status_changed (Pomodoro.Capability capability);
 
-        private void on_group_capability_removed (Pomodoro.CapabilityGroup group,
-                                                  Pomodoro.Capability      capability)
+        public void destroy ()
         {
-            this.remove_capability_internal (capability);
+            this.destroying = true;
+
+            this.capabilities.foreach_remove (
+                (capability_name, capability_set) => {
+                    capability_set.enable = false;
+
+                    return true;
+                });
         }
 
         public override void dispose ()
         {
-            this.disable_all ();
+            if (!this.destroying) {
+                this.destroy ();
+            }
+
+            this.capabilities = null;
 
             base.dispose ();
         }
-
-        public signal void group_added (Pomodoro.CapabilityGroup group);
-
-        public signal void group_removed (Pomodoro.CapabilityGroup group);
-
-        public signal void capability_enabled (string capability_name);
-
-        public signal void capability_disabled (string capability_name);
     }
 }

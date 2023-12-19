@@ -758,7 +758,7 @@ namespace Pomodoro
          * It's meant to setup idle timeout that is aligned to full seconds.
          */
         private bool on_timeout_once ()
-                                 requires (this.timeout_id != 0)
+                                      requires (this.timeout_id != 0)
         {
             var timestamp         = this.get_current_time (GLib.MainContext.current_source ().get_time ());
             var timestamp_rounded = this.calculate_tick_time (timestamp);

@@ -11,14 +11,16 @@ resources = gnome.compile_resources(
 
 # Common library
 libgnome_pomodoro_sources = files(
+  'interfaces/freedesktop.vala',
+  'interfaces/gnome.vala',
   'core/aggregated-entry.vala',
   'core/animation.vala',
-  'core/capability-group.vala',
-  'core/capability-manager.vala',
   'core/capability.vala',
+  'core/capability-manager.vala',
+  'core/capability-set.vala',
   'core/cycle.vala',
   'core/database.vala',
-  'core/desktop-extension.vala',
+  # 'core/desktop-extension.vala',
   'core/entry.vala',
   'core/notification-manager.vala',
   'core/presence.vala',
@@ -37,7 +39,6 @@ libgnome_pomodoro_sources = files(
   'core/timer-action-group.vala',
   'core/timestamp.vala',
   'core/utils.vala',
-  'integrations/freedesktop.vala',
 )
 
 libgnome_pomodoro = static_library(
@@ -78,8 +79,9 @@ libgnome_pomodoro_dep = declare_dependency(
 gnome_pomodoro_vala_sources = files(
   'application.vala',
   'main.vala',
-  'notifications-capability.vala',
   'service.vala',
+  'capabilities/lock-screen.vala',
+  'capabilities/notifications.vala',
   'views/about-window.vala',
   'views/compact-timer-view.vala',
   'views/preferences-page-notifications.vala',

@@ -286,7 +286,7 @@ namespace Pomodoro
             // }
 
             var application = Pomodoro.Application.get_default ();
-            application.capabilities.disable ("accelerator");
+            application.capability_manager.disable ("accelerator");
         }
 
         public override void unmap ()
@@ -311,7 +311,7 @@ namespace Pomodoro
             // }
 
             var application = Pomodoro.Application.get_default ();
-            application.capabilities.enable ("accelerator");
+            application.capability_manager.enable ("accelerator");
         }
     }
 

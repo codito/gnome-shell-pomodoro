@@ -24,14 +24,9 @@ namespace Tests
     {
         public CapabilityGroupTest ()
         {
-            this.add_test ("add",
-                           this.test_add);
-
-            this.add_test ("remove",
-                           this.test_remove);
-
-            this.add_test ("dispose",
-                           this.test_dispose);
+            this.add_test ("add", this.test_add);
+            this.add_test ("remove", this.test_remove);
+            this.add_test ("dispose", this.test_dispose);
         }
 
         public override void setup ()
@@ -49,17 +44,18 @@ namespace Tests
         {
             var signal_emit_count = 0;
 
-            var group      = new Pomodoro.CapabilityGroup ();
-            var capability = new Pomodoro.Capability ("anti-gravity");
+            var group      = new Pomodoro.CapabilityGroup ("test");
+            var capability = new Pomodoro.SimpleCapability ("anti-gravity", null, null);
 
-            group.capability_added.connect (() => {
+            group.added.connect (() => {
                 signal_emit_count++;
             });
 
-            group.add (capability);
+            assert_true (group.add (capability));
+            assert_true (group.contains ("anti-gravity"));
+            assert_cmpuint (signal_emit_count, GLib.CompareOperator.EQ, 1);
 
-            assert (group.contains ("anti-gravity"));
-            assert (signal_emit_count == 1);
+            assert_false (group.add (capability));
         }
 
         /**
@@ -67,20 +63,22 @@ namespace Tests
          */
         public void test_remove ()
         {
+            var group      = new Pomodoro.CapabilityGroup ("test");
+            var capability = new Pomodoro.SimpleCapability ("anti-gravity", null, null);
+
             var signal_emit_count = 0;
 
-            var group      = new Pomodoro.CapabilityGroup ();
-            var capability = new Pomodoro.Capability ("anti-gravity");
-
-            group.capability_removed.connect (() => {
+            group.removed.connect (() => {
                 signal_emit_count++;
             });
 
             group.add (capability);
-            group.remove ("anti-gravity");
 
-            assert (!group.contains ("anti-gravity"));
-            assert (signal_emit_count == 1);
+            assert_true (group.remove (capability));
+            assert_false (group.contains ("anti-gravity"));
+            assert_cmpuint (signal_emit_count, GLib.CompareOperator.EQ, 1);
+
+            assert_false (group.remove (capability));
         }
 
         /**
@@ -88,28 +86,38 @@ namespace Tests
          */
         public void test_dispose ()
         {
-            var capability_removed_count = 0;
-            var capability_disabled_count = 0;
+            var group      = new Pomodoro.CapabilityGroup ("test");
+            var capability = new Pomodoro.SimpleCapability ("anti-gravity", null, null);
 
-            var group      = new Pomodoro.CapabilityGroup ();
-            var capability = new Pomodoro.Capability ("anti-gravity");
+            var removed_count = 0;
+            var disabled_count = 0;
 
-            group.capability_removed.connect (() => {
-                capability_removed_count++;
+            group.removed.connect (() => {
+                removed_count++;
             });
 
-            capability.disable.connect (() => {
-                capability_disabled_count++;
+            capability.notify["status"].connect (() => {
+                if (capability.status == Pomodoro.CapabilityStatus.DISABLED) {
+                    disabled_count++;
+                }
             });
 
             group.add (capability);
+
+            try {
+                capability.initialize ();
+            }
+            catch (GLib.Error error) {
+                assert_not_reached ();
+            }
+
             capability.enable ();
 
             capability = null;
             group = null;
 
-            assert (capability_disabled_count == 1);
-            assert (capability_removed_count == 0);
+            assert_cmpuint (disabled_count, GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (removed_count, GLib.CompareOperator.EQ, 0);
         }
     }
 }

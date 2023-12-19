@@ -20,91 +20,154 @@
 
 namespace Tests
 {
-    public class CapabilityTest : Tests.TestSuite
+    public class AntiGravityCapability : Pomodoro.Capability
     {
-        private int enable_count;
-        private int disable_count;
+        public uint initialize_count = 0;
+        public uint uninitialize_count = 0;
+        public uint enable_count = 0;
+        public uint disable_count = 0;
+        public uint activate_count = 0;
 
-        public CapabilityTest ()
+        public AntiGravityCapability (string                      name,
+                                      Pomodoro.CapabilityPriority priority = Pomodoro.CapabilityPriority.DEFAULT)
         {
-            this.add_test ("enable",
-                           this.test_enable);
+            base (name, priority);
+        }
 
-            this.add_test ("disable",
-                           this.test_disable);
+        public override void initialize ()
+        {
+            this.initialize_count++;
 
-            this.add_test ("dispose",
-                           this.test_dispose);
+            base.initialize ();
+        }
+
+        public override void uninitialize ()
+        {
+            this.uninitialize_count++;
+
+            base.uninitialize ();
+        }
+
+        public override void enable ()
+        {
+            this.enable_count++;
+
+            base.enable ();
+        }
+
+        public override void disable ()
+        {
+            this.disable_count++;
+
+            base.disable ();
+        }
+
+        public override void activate ()
+        {
+            this.activate_count++;
+        }
+    }
+
+
+    public class AntiGravityCapabilityTest : Tests.TestSuite
+    {
+        public AntiGravityCapabilityTest ()
+        {
+            this.add_test ("initialize", this.test_initialize);
+            this.add_test ("uninitialize", this.test_uninitialize);
+            this.add_test ("enable", this.test_enable);
+            this.add_test ("disable", this.test_disable);
+            this.add_test ("activate", this.test_activate);
+            this.add_test ("destroy", this.test_destroy);
         }
 
         public override void setup ()
         {
-            this.enable_count = 0;
-            this.disable_count = 0;
         }
 
         public override void teardown ()
         {
         }
 
-        private void handle_capability_enable (Pomodoro.Capability capability)
+        public void test_initialize ()
         {
-            this.enable_count++;
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.initialize ();
+
+            assert_true (capability.status == Pomodoro.CapabilityStatus.DISABLED);
+            assert_cmpuint (capability.initialize_count, GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (capability.uninitialize_count, GLib.CompareOperator.EQ, 0);
         }
 
-        private void handle_capability_disable (Pomodoro.Capability capability)
+        public void test_uninitialize ()
         {
-            this.disable_count++;
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.initialize ();
+            capability.uninitialize ();
+
+            assert_true (capability.status == Pomodoro.CapabilityStatus.NULL);
+            assert_cmpuint (capability.initialize_count, GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (capability.uninitialize_count, GLib.CompareOperator.EQ, 1);
         }
 
-        /**
-         * Unit test for Pomodoro.Capability.enable() method.
-         */
         public void test_enable ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity",
-                                                      this.handle_capability_enable,
-                                                      this.handle_capability_disable);
-
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.initialize ();
             capability.enable ();
 
-            assert (capability.enabled);
-            assert (this.enable_count == 1);
-            assert (this.disable_count == 0);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
+            assert_cmpuint (capability.enable_count, GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (capability.disable_count, GLib.CompareOperator.EQ, 0);
         }
 
-        /**
-         * Unit test for Pomodoro.Capability.disable() method.
-         */
         public void test_disable ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity",
-                                                      this.handle_capability_enable,
-                                                      this.handle_capability_disable);
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.initialize ();
             capability.enable ();
             capability.disable ();
 
-            assert (!capability.enabled);
-            assert (this.enable_count == 1);
-            assert (this.disable_count == 1);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.DISABLED);
+            assert_cmpuint (capability.enable_count, GLib.CompareOperator.EQ, 1);
+            assert_cmpuint (capability.disable_count, GLib.CompareOperator.EQ, 1);
+        }
+
+        public void test_activate ()
+        {
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.initialize ();
+            capability.enable ();
+            capability.activate ();
+
+            assert_cmpuint (capability.activate_count, GLib.CompareOperator.EQ, 1);
         }
 
         /**
-         * Unit test for Pomodoro.Capability.dispose() method.
+         * Expect capability to be disabled during destroy
          */
-        public void test_dispose ()
+        public void test_destroy ()
         {
-            var capability = new Pomodoro.Capability ("anti-gravity",
-                                                      this.handle_capability_enable,
-                                                      this.handle_capability_disable);
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.initialize ();
             capability.enable ();
 
-            capability = null;
+            string[] statuses = {};
+            capability.notify["status"].connect (() => { statuses += capability.status.to_string (); });
 
-            assert (this.enable_count == 1);
-            assert (this.disable_count == 1);
+            capability.destroy ();
+
+            assert_cmpstrv (statuses, {
+                "disabled",
+                "null",
+            });
         }
     }
+
+
+    // public class ExternalCapabilityTest : Tests.TestSuite
+    // {
+    // }
 }
 
 
@@ -113,6 +176,7 @@ public static int main (string[] args)
     Tests.init (args);
 
     return Tests.run (
-        new Tests.CapabilityTest ()
+        new Tests.AntiGravityCapabilityTest ()
+        // new Tests.ExternalCapabilityTest ()
     );
 }

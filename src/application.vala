@@ -124,8 +124,7 @@ namespace Pomodoro
 
         public Pomodoro.Timer? timer;
         public Pomodoro.SessionManager? session_manager;
-        public Pomodoro.CapabilityManager? capabilities;  // TODO: rename to capability_manager
-        public Pomodoro.NotificationManager? notification_manager;
+        public Pomodoro.CapabilityManager? capability_manager;
 
         // private Gom.Repository repository;
         // private Gom.Adapter adapter;
@@ -135,7 +134,6 @@ namespace Pomodoro
         private Pomodoro.ApplicationService? service;
         private Pomodoro.TimerService? timer_service;
         private GLib.Settings settings;
-        private weak Pomodoro.ScreenOverlay? screen_overlay;
 
         public Application ()
         {
@@ -192,12 +190,22 @@ namespace Pomodoro
 
         private void setup_capabilities ()
         {
-            var default_capabilities = new Pomodoro.CapabilityGroup ("default");
+            this.hold ();
 
-            default_capabilities.add (new Pomodoro.NotificationsCapability ("notifications"));
+            this.capability_manager = new Pomodoro.CapabilityManager ();
+            this.capability_manager.register (new Pomodoro.NotificationsCapability ());
+            this.capability_manager.register (new Pomodoro.LockScreenCapability ());
+            this.capability_manager.register (new Pomodoro.GnomeLockScreenCapability ());
 
-            this.capabilities = new Pomodoro.CapabilityManager ();
-            this.capabilities.add_group (default_capabilities, Pomodoro.Priority.LOW);
+            var idle_id = GLib.Idle.add (() => {
+                this.capability_manager.enable ("notifications");
+                this.capability_manager.enable ("lock-screen");
+
+                this.release ();
+
+                return GLib.Source.REMOVE;
+            });
+            GLib.Source.set_name_by_id (idle_id, "Pomodoro.Application.setup_capabilities");
         }
 
         private void setup_repository ()
@@ -282,42 +290,6 @@ namespace Pomodoro
             }
         }
 
-        private void show_screen_overlay (bool  pass_through = true,
-                                          int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
-        {
-            if (this.notification_manager == null) {
-                return;
-            }
-
-            if (this.screen_overlay != null && this.screen_overlay.get_mapped ()) {
-                return;
-            }
-
-            var screen_overlay = new Pomodoro.ScreenOverlay ();
-            screen_overlay.pass_through = pass_through;
-            screen_overlay.map.connect (() => {
-                if (this.screen_overlay != null) {
-                    this.notification_manager.screen_overlay_opened ();
-                }
-            });
-            screen_overlay.unmap.connect (() => {
-                if (this.screen_overlay != null) {
-                    this.screen_overlay = null;
-                    this.notification_manager.screen_overlay_closed ();
-                }
-            });
-
-            this.screen_overlay = screen_overlay;
-
-            if (timestamp >= 0) {
-                // TODO: Does passing timestamp even work here? Hardly ever its triggered by an user action.
-                this.screen_overlay.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
-            }
-            else {
-                this.screen_overlay.present ();
-            }
-        }
-
         private void activate_timer (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
@@ -355,7 +327,7 @@ namespace Pomodoro
                 timestamp = this.timer.get_current_time ();
             }
 
-            this.show_screen_overlay (false, timestamp);
+            this.capability_manager.activate ("notifications");
 
             if (this.timer.is_paused ()) {
                 this.timer.resume (timestamp);
@@ -563,37 +535,12 @@ namespace Pomodoro
             this.setup_resources ();
             this.setup_actions ();
             // this.setup_repository ();
-            // this.setup_capabilities ();
+            this.setup_capabilities ();
             // this.setup_desktop_extension ();
-
-            // TODO: should be managed by capability manager
-            var notification_manager = new Pomodoro.NotificationManager ();
-            notification_manager.open_screen_overlay.connect ((timestamp) => {
-                this.show_screen_overlay (true, timestamp);
-            });
-            notification_manager.close_screen_overlay.connect (() => {
-                if (this.screen_overlay != null) {
-                    this.screen_overlay.close ();
-                }
-            });
-
-            this.notification_manager = notification_manager;
 
             // this.setup_plugins.begin ((obj, res) => {
             //     this.setup_plugins.end (res);
             //
-            //     GLib.Idle.add (() => {
-            //         // TODO: shouldn't these be enabled by settings?!
-            //         this.capabilities.enable ("notifications");
-            //         this.capabilities.enable ("indicator");
-            //         this.capabilities.enable ("accelerator");
-            //         this.capabilities.enable ("hide-system-notifications");
-            //         this.capabilities.enable ("idle-monitor");
-            //
-            //         this.release ();
-            //
-            //         return GLib.Source.REMOVE;
-            //     });
             // });
             this.release ();
 
@@ -678,7 +625,7 @@ namespace Pomodoro
 
             this.session_manager.save_async.begin ();
 
-            // this.capabilities.disable_all ();  // FIXME
+            this.capability_manager.destroy ();
 
             // var engine = Peas.Engine.get_default ();
 
@@ -687,11 +634,11 @@ namespace Pomodoro
             // }
 
             Pomodoro.close_repository ();
-            // Pomodoro.NotificationManager.set_default (null);
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
             Pomodoro.SleepMonitor.set_default (null);
 
+            this.capability_manager = null;
             this.session_manager = null;
             this.timer = null;
 
@@ -984,3 +931,4 @@ namespace Pomodoro
 
     }
 }
+
