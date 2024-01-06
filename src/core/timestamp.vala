@@ -100,6 +100,11 @@ namespace Pomodoro.Timestamp
         return (int64) seconds * Pomodoro.Interval.SECOND;
     }
 
+    public int64 from_milliseconds_uint (uint milliseconds)
+    {
+        return (int64) milliseconds * Pomodoro.Interval.MILLISECOND;
+    }
+
     // TODO
     // public int64 from_iso8601 (string text)
     // {

@@ -518,16 +518,6 @@ namespace Pomodoro
             this.timer = this.session_manager.timer;
             // this.timer.changed.connect (this.on_timer_changed);
 
-            var sleep_monitor = Pomodoro.SleepMonitor.get_default ();
-            sleep_monitor.init_async.begin (GLib.Priority.DEFAULT, null, (obj, res) => {
-                try {
-                    var success = sleep_monitor.init_async.end (res);
-                }
-                catch (GLib.Error error) {
-                    GLib.warning ("Failed to initialize sleep monitor: %s", error.message);
-                }
-            });
-
             // TODO: Handle async
 
             // this.session_manager.restore_async.begin ();
@@ -636,7 +626,6 @@ namespace Pomodoro
             Pomodoro.close_repository ();
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
-            Pomodoro.SleepMonitor.set_default (null);
 
             this.capability_manager = null;
             this.session_manager = null;

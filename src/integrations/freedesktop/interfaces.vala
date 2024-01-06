@@ -10,6 +10,7 @@ namespace Freedesktop
     [DBus (name = "org.freedesktop.login1.Session")]
     public interface Session : GLib.Object
     {
+        [DBus (no_reply = true, timeout = 500)]
         public abstract async void @lock () throws GLib.DBusError, GLib.IOError;
     }
 

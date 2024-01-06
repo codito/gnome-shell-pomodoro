@@ -5,25 +5,13 @@ namespace Pomodoro
     }
 
 
+    [SingleInstance]
     public class SleepMonitor : GLib.Object, GLib.AsyncInitable
     {
-        private Freedesktop.LoginManager login_manager_proxy;
+        private Freedesktop.LoginManager? login_manager_proxy = null;
 
-        private static Pomodoro.SleepMonitor? instance = null;
-
-
-        public static void set_default (Pomodoro.SleepMonitor? sleep_monitor)
+        construct
         {
-            Pomodoro.SleepMonitor.instance = sleep_monitor;
-        }
-
-        public static unowned Pomodoro.SleepMonitor get_default ()
-        {
-            if (Pomodoro.SleepMonitor.instance == null) {
-                Pomodoro.SleepMonitor.set_default (new Pomodoro.SleepMonitor ());
-            }
-
-            return Pomodoro.SleepMonitor.instance;
         }
 
         public async new bool init_async (int               io_priority = GLib.Priority.DEFAULT,

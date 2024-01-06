@@ -284,7 +284,7 @@ namespace Pomodoro
 
         construct
         {
-            this.sleep_monitor = Pomodoro.SleepMonitor.get_default ();
+            this.sleep_monitor = new Pomodoro.SleepMonitor ();
             this.prepare_for_sleep_id = this.sleep_monitor.prepare_for_sleep.connect (
                 () => {
                     this.suspend_time = this.get_current_time ();

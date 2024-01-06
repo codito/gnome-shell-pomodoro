@@ -20,6 +20,7 @@ test_names = [
   'capability-set',
   'capability-manager',
   'cycle',
+  'provider-set',
   'time-block',
   'timer',
   # 'timer-view-action-group',
