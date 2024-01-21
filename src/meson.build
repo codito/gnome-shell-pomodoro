@@ -85,7 +85,6 @@ gnome_pomodoro_vala_sources = files(
   'views/preferences-page-notifications.vala',
   'views/preferences-page-timer.vala',
   'views/preferences-window.vala',
-  'views/screen-notification.vala',
   'views/screen-overlay.vala',
   'views/stats-day-page.vala',
   'views/stats-month-page.vala',

@@ -13,7 +13,6 @@
     <file alias="ui/preferences-page-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-notifications.ui</file>
     <file alias="ui/preferences-page-timer.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-timer.ui</file>
     <file alias="ui/preferences-window.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-window.ui</file>
-    <file alias="ui/screen-notification.ui" compressed="true" preprocess="xml-stripblanks">views/screen-notification.ui</file>
     <file alias="ui/screen-overlay.ui" compressed="true" preprocess="xml-stripblanks">views/screen-overlay.ui</file>
     <file alias="ui/stats-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-page.ui</file>
     <file alias="ui/stats-view.ui" compressed="true" preprocess="xml-stripblanks">views/stats-view.ui</file>
