@@ -37,18 +37,19 @@ namespace Pomodoro
                 return this._preferred_capability;
             }
             private set {
-                if (this._preferred_capability == value) {
-                    return;
-                }
-
-                if (this._preferred_capability != null && (
-                    this._preferred_capability.status == Pomodoro.CapabilityStatus.ENABLING ||
-                    this._preferred_capability.status == Pomodoro.CapabilityStatus.ENABLED))
+                if (this._preferred_capability != value)
                 {
-                    this._preferred_capability.disable ();
-                }
+                    if (this._preferred_capability != null && (
+                        this._preferred_capability.status == Pomodoro.CapabilityStatus.ENABLING ||
+                        this._preferred_capability.status == Pomodoro.CapabilityStatus.ENABLED))
+                    {
+                        this._preferred_capability.disable ();
+                    }
 
-                this._preferred_capability = value;
+                    this._preferred_capability = value;
+
+                    this.notify_property ("preferred-capability");
+                }
 
                 if (this._preferred_capability != null)
                 {
@@ -60,8 +61,6 @@ namespace Pomodoro
                         this._preferred_capability.enable ();
                     }
                 }
-
-                this.notify_property ("preferred-capability");
             }
         }
 

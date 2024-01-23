@@ -19,6 +19,8 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Label breaks_stats_label;
         [GtkChild]
+        private unowned Adw.SwitchRow pomodoro_pause_on_lockscreen_switchrow;
+        [GtkChild]
         private unowned Adw.ComboRow break_advancement_mode_comborow;
         [GtkChild]
         private unowned Adw.ComboRow pomodoro_advancement_mode_comborow;
@@ -39,6 +41,10 @@ namespace Pomodoro
             this.settings.bind ("long-break-duration", this.long_break_duration_adjustment, "value", GLib.SettingsBindFlags.DEFAULT);
             this.settings.bind ("cycles", this.cycles_adjustment, "value", GLib.SettingsBindFlags.DEFAULT);
 
+            this.settings.bind ("pause-on-lockscreen",
+                                 this.pomodoro_pause_on_lockscreen_switchrow,
+                                 "active",
+                                 GLib.SettingsBindFlags.DEFAULT);
             this.settings.bind_with_mapping (
                                 "pomodoro-advancement-mode",
                                  this.pomodoro_advancement_mode_comborow,

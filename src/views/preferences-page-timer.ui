@@ -85,6 +85,11 @@
       <object class="AdwPreferencesGroup">
         <property name="title" translatable="yes">Behavior</property>
         <child>
+          <object class="AdwSwitchRow" id="pomodoro_pause_on_lockscreen_switchrow">
+            <property name="title" translatable="yes">Pause By Locking The Screen</property>
+          </object>
+        </child>
+        <child>
           <object class="AdwComboRow" id="pomodoro_advancement_mode_comborow">
             <property name="title" translatable="yes">Automatically Start a Break</property>
             <property name="subtitle" translatable="yes">Whether to proceed to a break when Pomodoro ends.</property>

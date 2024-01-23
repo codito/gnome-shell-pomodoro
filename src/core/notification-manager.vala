@@ -618,8 +618,6 @@ namespace Pomodoro
         private void on_settings_changed (GLib.Settings settings,
                                           string        key)
         {
-            var current_time_block = this._session_manager.current_time_block;
-
             switch (key)
             {
                 case "screen-overlay":

@@ -184,6 +184,8 @@ namespace Pomodoro
         private Pomodoro.Session?                next_session = null;
         private Pomodoro.TimeBlock?              next_time_block = null;
         private Pomodoro.Gap?                    _current_gap = null;
+        private Pomodoro.LockScreen?             lockscreen = null;
+        private bool                             paused_on_lockscreen = false;
         private bool                             _has_uniform_breaks = false;
         private bool                             current_time_block_entered = false;
         private ulong                            current_time_block_changed_id = 0;
@@ -192,9 +194,8 @@ namespace Pomodoro
         private ulong                            current_session_notify_expiry_time_id = 0;
         private Pomodoro.Session?                previous_session = null;
         private Pomodoro.TimeBlock?              previous_time_block = null;
-        private GLib.Settings                    settings;
+        private GLib.Settings?                   settings = null;
         private int                              resolving_timer_state = 0;
-        private int                              timer_freeze_count = 0;
         private ulong                            timer_resolve_state_id = 0;
         private ulong                            timer_state_changed_id = 0;
         private ulong                            timer_finished_id = 0;
@@ -729,17 +730,6 @@ namespace Pomodoro
             // TODO
         }
 
-        private void freeze_timer ()
-        {
-            this.timer_freeze_count++;
-        }
-
-        private void thaw_timer ()
-                                 ensures (this.timer_freeze_count >= 0)
-        {
-            this.timer_freeze_count--;
-        }
-
         /**
          * Extend current time-block, as if it was started from scratch.
          */
@@ -1019,6 +1009,50 @@ namespace Pomodoro
             }
         }
 
+        private void destroy_lockscreen_integration ()
+        {
+            if (this.lockscreen != null) {
+                this.lockscreen.notify["active"].disconnect (this.on_lockscreen_notify_active);
+                this.lockscreen = null;
+            }
+        }
+
+        private void pause_on_lockscreen ()
+        {
+            var should_pause = this._current_time_block.state == Pomodoro.State.POMODORO && this._timer.is_running ()
+                ? this.lockscreen != null && this.lockscreen.available && this.lockscreen.active
+                : false;
+
+            if (this.paused_on_lockscreen != should_pause)
+            {
+                this.paused_on_lockscreen = should_pause;
+
+                if (should_pause) {
+                    this._timer.pause ();
+                }
+                else {
+                    this._timer.resume ();
+                }
+            }
+        }
+
+        private void update_lockscreen_integration ()
+        {
+            if (this._current_time_block == null || !this.settings.get_boolean ("pause-on-lockscreen")) {
+                this.destroy_lockscreen_integration ();
+                return;
+            }
+
+            if (this.lockscreen == null) {
+                this.lockscreen = new Pomodoro.LockScreen ();
+                this.lockscreen.notify["active"].connect (this.on_lockscreen_notify_active);
+            }
+
+            if (this._timer.is_running ()) {
+                this.pause_on_lockscreen ();
+            }
+        }
+
         private void update_time_block_meta (Pomodoro.TimeBlock time_block)
         {
             var completion_time = this._scheduler.calculate_time_block_completion_time (current_time_block);
@@ -1094,10 +1128,6 @@ namespace Pomodoro
                                           ensures (state.user_data == this._current_time_block)
                                           ensures (this.current_time_block_entered == (this._current_time_block != null))
         {
-            if (this.timer_freeze_count > 0) {
-                return;
-            }
-
             // Timer is paused or has finished. Nothing to resolve.
             // Advancing to a next time-block is handled after emitting `Timer.state_changed`.
             if (Pomodoro.Timestamp.is_defined (state.finished_time) ||
@@ -1164,6 +1194,8 @@ namespace Pomodoro
             this.reschedule_if_queued ();
             this.thaw_current_session_changed ();
             this.resolving_timer_state--;
+
+            this.update_lockscreen_integration ();
         }
 
         private void on_timer_finished (Pomodoro.TimerState state)
@@ -1261,6 +1293,12 @@ namespace Pomodoro
             this.queue_reschedule ();
         }
 
+        private void on_lockscreen_notify_active (GLib.Object    object,
+                                                   GLib.ParamSpec pspec)
+        {
+            this.pause_on_lockscreen ();
+        }
+
         /**
          * A wrapper for `Timeout.add_seconds`.
          *
@@ -1309,6 +1347,10 @@ namespace Pomodoro
                 case "long-break-duration":
                 case "cycles":
                     this.update_session_template ();
+                    break;
+
+                case "pause-on-lockscreen":
+                    this.update_lockscreen_integration ();
                     break;
 
                 case "pomodoro-advancement-mode":
@@ -1467,6 +1509,10 @@ namespace Pomodoro
                 }
             }
 
+            if (this.settings != null) {
+                this.settings.changed.disconnect (this.on_settings_changed);
+            }
+
             if (this.reschedule_idle_id != 0) {
                 GLib.Source.remove (this.reschedule_idle_id);
                 this.reschedule_idle_id = 0;
@@ -1476,6 +1522,8 @@ namespace Pomodoro
                 GLib.Source.remove (this.expiry_timeout_id);
                 this.expiry_timeout_id = 0;
             }
+
+            this.destroy_lockscreen_integration ();
 
             this.settings = null;
             this._current_gap = null;

@@ -62,6 +62,13 @@ namespace Tests
         {
             this.activate_count++;
         }
+
+        public void set_available (bool value)
+        {
+            this.status = value
+                ? Pomodoro.CapabilityStatus.DISABLED
+                : Pomodoro.CapabilityStatus.UNAVAILABLE;
+        }
     }
 
 
@@ -78,6 +85,7 @@ namespace Tests
             this.add_test ("add__pre_enabled", this.test_add__pre_enabled);
             this.add_test ("add__pre_enabled__unavailable", this.test_add__pre_enabled__unavailable);
             this.add_test ("remove", this.test_remove);
+            this.add_test ("capability_becomes_available", this.test_capability_becomes_available);
         }
 
         public override void setup ()
@@ -268,7 +276,7 @@ namespace Tests
         public void test_remove ()
         {
             var capability_set = new Pomodoro.CapabilitySet ();
-            var capability = new AntiGravityCapability ("anti-gravity", Pomodoro.CapabilityPriority.HIGH);
+            var capability = new AntiGravityCapability ("anti-gravity");
 
             capability_set.add (capability);
             assert_true (capability_set.contains (capability));
@@ -278,6 +286,26 @@ namespace Tests
 
             capability_set.remove (capability);
             assert_false (capability_set.contains (capability));
+        }
+
+        public void test_capability_becomes_available ()
+        {
+            var capability_set = new Pomodoro.CapabilitySet ();
+            capability_set.enable = true;
+
+            var capability = new AntiGravityCapability ("anti-gravity");
+            capability.scenario = Scenario.UNAVAILABLE;
+            capability_set.add (capability);
+            assert_true (capability_set.preferred_capability == capability);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.UNAVAILABLE);
+
+            capability.set_available (true);
+            assert_true (capability_set.preferred_capability == capability);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.ENABLED);
+
+            capability.set_available (false);
+            assert_true (capability_set.preferred_capability == capability);
+            assert_true (capability.status == Pomodoro.CapabilityStatus.UNAVAILABLE);
         }
     }
 }

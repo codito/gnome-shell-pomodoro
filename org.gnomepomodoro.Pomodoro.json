@@ -9,7 +9,6 @@
         "--share=ipc",
         "--socket=fallback-x11",
         "--socket=wayland",
-        "--socket=session-bus",
         "--device=dri",
         "--system-talk-name=org.freedesktop.login1",
         "--talk-name=org.freedesktop.Notifications"

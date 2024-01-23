@@ -46,6 +46,10 @@
       <summary>Advancement mode at the end of break</summary>
       <description>How the timer should behave at the end of a break.</description>
     </key>
+    <key name="pause-on-lockscreen" type="b">
+      <default>true</default>
+      <summary>Pause Pomodoro when screen is locked</summary>
+    </key>
     <key name="scheduler" enum="org.gnomepomodoro.Pomodoro.Scheduler">
       <default>"simple"</default>
       <summary>Strategy of the scheduler</summary>

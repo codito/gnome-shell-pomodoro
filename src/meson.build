@@ -12,8 +12,10 @@ resources = gnome.compile_resources(
 # Common library
 libgnome_pomodoro_sources = files(
   'integrations/freedesktop/interfaces.vala',
-  'integrations/gnome/interfaces.vala',
+  'integrations/freedesktop/lock-screen-provider.vala',
+  'integrations/freedesktop/notifications-provider.vala',
   'integrations/gnome/idle-monitor-provider.vala',
+  'integrations/gnome/interfaces.vala',
   'core/aggregated-entry.vala',
   'core/animation.vala',
   'core/capability.vala',
@@ -24,6 +26,7 @@ libgnome_pomodoro_sources = files(
   # 'core/desktop-extension.vala',
   'core/entry.vala',
   'core/idle-monitor.vala',
+  'core/lock-screen.vala',
   'core/notification-manager.vala',
   'core/presence.vala',
   'core/provider.vala',

@@ -14,6 +14,7 @@ namespace Pomodoro
         {
         }
 
+        // TODO: define a provider
         public async new bool init_async (int               io_priority = GLib.Priority.DEFAULT,
                                           GLib.Cancellable? cancellable = null)
                                           throws GLib.Error
