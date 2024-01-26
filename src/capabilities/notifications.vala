@@ -25,8 +25,9 @@ namespace Pomodoro
 {
     public class NotificationsCapability : Pomodoro.Capability
     {
-        private Pomodoro.NotificationManager?   notification_manager = null;
-        private Pomodoro.ScreenOverlay?         screen_overlay = null;
+        private Pomodoro.NotificationManager?                        notification_manager = null;
+        private Pomodoro.ScreenOverlay?                              screen_overlay = null;
+        private Pomodoro.ProviderSet<Pomodoro.NotificationsProvider> providers;
 
         public NotificationsCapability ()
         {
@@ -65,6 +66,34 @@ namespace Pomodoro
             }
         }
 
+        private void on_notify_enabled_provider (GLib.Object    object,
+                                                 GLib.ParamSpec pspec)
+        {
+            var provider = this.providers.enabled_provider;
+
+            this.remove_all_details ();
+
+            if (provider == null) {
+                return;
+            }
+
+            GLib.info ("Using notifications server: %s %s from %s", provider.name, provider.version, provider.vendor);
+
+            if (provider.has_actions) {
+                this.add_detail ("actions");
+            }
+        }
+
+        public override void initialize ()
+        {
+            this.providers = new Pomodoro.ProviderSet<NotificationsProvider> ();
+            this.providers.notify["enabled-provider"].connect (this.on_notify_enabled_provider);
+            this.providers.add (new Freedesktop.NotificationsProvider ());
+            this.providers.mark_initialized ();
+
+            base.initialize ();
+        }
+
         public override void enable ()
         {
             var notification_manager = new Pomodoro.NotificationManager ();
@@ -92,6 +121,13 @@ namespace Pomodoro
             this.screen_overlay = null;
 
             base.disable ();
+        }
+
+        public override void uninitialize ()
+        {
+            this.providers = null;
+
+            base.uninitialize ();
         }
 
         public override void activate ()

@@ -148,6 +148,7 @@ namespace Pomodoro
         }
 
         private Pomodoro.CapabilityStatus _status = Pomodoro.CapabilityStatus.NULL;
+        private GLib.GenericSet<string>?  details = null;
 
         protected Capability (string                      name,
                               Pomodoro.CapabilityPriority priority = Pomodoro.CapabilityPriority.DEFAULT)
@@ -207,6 +208,32 @@ namespace Pomodoro
             return 0;
         }
 
+        public void add_detail (string detail)
+        {
+            if (this.details == null) {
+                this.details = new GLib.GenericSet<string> (str_hash, str_equal);
+            }
+
+            this.details.add (detail);
+        }
+
+        public void remove_detail (string detail)
+        {
+            if (this.details != null) {
+                this.details.remove (detail);
+            }
+        }
+
+        public void remove_all_details ()
+        {
+            this.details = null;
+        }
+
+        public bool has_detail (string detail)
+        {
+            return this.details.contains (detail);
+        }
+
         /**
          * Check if capability is available / can be enabled.
          *
@@ -222,6 +249,8 @@ namespace Pomodoro
         public virtual void uninitialize ()
         {
             this.status = Pomodoro.CapabilityStatus.NULL;
+
+            this.remove_all_details ();
         }
 
         /**

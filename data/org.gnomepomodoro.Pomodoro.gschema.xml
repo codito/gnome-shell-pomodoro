@@ -57,11 +57,10 @@
     </key>
 
     <!-- Notifications -->
-    <key name="announcement-duration" type="u">
-      <default>10</default>
-      <range min="0" max="30"/>
-      <summary>Announcement duration</summary>
-      <description>Time to show the notification before the end of the time-block.</description>
+    <key name="announce-about-to-end" type="b">
+      <default>true</default>
+      <summary>Announce Time Running Out</summary>
+      <description>Notify when Pomodoro or break is about to end.</description>
     </key>
     <key name="screen-overlay" type="b">
       <default>true</default>

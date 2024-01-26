@@ -1,5 +1,14 @@
 namespace Pomodoro
 {
+    public interface NotificationsProvider : Pomodoro.Provider
+    {
+        public abstract string name { get; }
+        public abstract string vendor { get; }
+        public abstract string version { get; }
+        public abstract bool   has_actions { get; }
+    }
+
+
     private enum NotificationType
     {
         NULL,
@@ -30,7 +39,8 @@ namespace Pomodoro
          */
         private const int64 TIME_BLOCK_STARTED_TOLERANCE = Pomodoro.Interval.SECOND;
 
-        private const int64 TIME_BLOCK_ABOUT_TO_END_TIMEOUT = 10 * Pomodoro.Interval.SECOND;
+        private const int64 TIME_BLOCK_ABOUT_TO_END_MIN_DURATION = 10 * Pomodoro.Interval.SECOND;
+        private const int64 TIME_BLOCK_ABOUT_TO_END_MAX_DURATION = 15 * Pomodoro.Interval.SECOND;
         private const int64 TIME_BLOCK_ABOUT_TO_END_TOLERANCE = 5 * Pomodoro.Interval.SECOND;
 
         public Pomodoro.Timer timer {
@@ -41,7 +51,6 @@ namespace Pomodoro
                 this._timer = value;
 
                 this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
-                this.timer_tick_id = this._timer.tick.connect (this.on_timer_tick);
 
                 var idle_id = GLib.Idle.add (() => {
                     this.update (true);
@@ -64,23 +73,24 @@ namespace Pomodoro
             }
         }
 
-        private Pomodoro.Timer?           _timer = null;
-        private Pomodoro.SessionManager?  _session_manager = null;
-        private GLib.Settings?            settings = null;
-        private Pomodoro.IdleMonitor?     idle_monitor = null;
-        private ulong                     timer_state_changed_id = 0;
-        private ulong                     timer_tick_id = 0;
-        private ulong                     settings_changed_id = 0;
-        private ulong                     session_manager_confirm_advancement_id = 0;
-        private uint                      notify_time_block_ended_idle_id = 0;
-        private uint                      withdraw_timeout_id = 0;
-        private bool                      screen_overlay_active = false;
-        private int                       screen_overlay_inhibit_count = 0;
-        private uint                      lock_screen_idle_id = 0;
-        private uint                      reopen_screen_overlay_idle_id = 0;
-        private GLib.Notification?        notification = null;
-        private Pomodoro.NotificationType notification_type = NotificationType.NULL;
-        private weak Pomodoro.TimeBlock?  notification_time_block = null;
+        private Pomodoro.Timer?             _timer = null;
+        private Pomodoro.SessionManager?    _session_manager = null;
+        private GLib.Settings?              settings = null;
+        private Pomodoro.CapabilityManager? capability_manager = null;
+        private Pomodoro.IdleMonitor?       idle_monitor = null;
+        private ulong                       timer_state_changed_id = 0;
+        private ulong                       timer_tick_id = 0;
+        private ulong                       settings_changed_id = 0;
+        private ulong                       session_manager_confirm_advancement_id = 0;
+        private uint                        notify_time_block_ended_idle_id = 0;
+        private uint                        withdraw_timeout_id = 0;
+        private bool                        screen_overlay_active = false;
+        private int                         screen_overlay_inhibit_count = 0;
+        private uint                        lock_screen_idle_id = 0;
+        private uint                        reopen_screen_overlay_idle_id = 0;
+        private GLib.Notification?          notification = null;
+        private Pomodoro.NotificationType   notification_type = NotificationType.NULL;
+        private weak Pomodoro.TimeBlock?    notification_time_block = null;
 
         public NotificationManager ()
         {
@@ -94,6 +104,9 @@ namespace Pomodoro
         {
             this.settings = Pomodoro.get_settings ();
             this.idle_monitor = new Pomodoro.IdleMonitor ();
+            this.capability_manager = new Pomodoro.CapabilityManager ();
+
+            this.schedule_announcements ();
 
             this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
         }
@@ -149,17 +162,16 @@ namespace Pomodoro
             return true;
         }
 
-        private void lock_screen ()
+        private void on_lock_screen_idle ()
         {
             if (!this.screen_overlay_active) {
                 return;
             }
 
-            var capability_manager = new Pomodoro.CapabilityManager ();
-            capability_manager.activate ("lock-screen");
+            this.capability_manager.activate ("lock-screen");
         }
 
-        private void reopen_screen_overlay ()
+        private void on_reopen_screen_overlay_idle ()
         {
             if (!this.can_open_screen_overlay ()) {
                 return;
@@ -167,10 +179,8 @@ namespace Pomodoro
 
             // Don't reopen if close to announcement notification.
             var timestamp = this.timer.get_current_time ();
-            var about_to_end_threshold = TIME_BLOCK_ABOUT_TO_END_TIMEOUT +
-                                         TIME_BLOCK_ABOUT_TO_END_TOLERANCE;
+            var about_to_end_threshold = this.get_about_to_end_duration () + TIME_BLOCK_ABOUT_TO_END_TOLERANCE;
 
-            // TODO: check if announcements are enabled
             if (this.timer.calculate_remaining (timestamp) <= about_to_end_threshold) {
                 return;
             }
@@ -185,7 +195,7 @@ namespace Pomodoro
 
             if (this.lock_screen_idle_id == 0 && lock_delay > 0) {
                 this.lock_screen_idle_id = this.idle_monitor.add_watch (lock_delay,
-                                                                        this.lock_screen,
+                                                                        this.on_lock_screen_idle,
                                                                         GLib.get_monotonic_time ());
                 return this.lock_screen_idle_id != 0;
             }
@@ -211,7 +221,7 @@ namespace Pomodoro
 
             if (this.reopen_screen_overlay_idle_id == 0 && this.can_open_screen_overlay_later ()) {
                 this.reopen_screen_overlay_idle_id = this.idle_monitor.add_watch (reopen_delay,
-                                                                                  this.reopen_screen_overlay,
+                                                                                  this.on_reopen_screen_overlay_idle,
                                                                                   GLib.get_monotonic_time ());
                 return true;
             }
@@ -499,6 +509,28 @@ namespace Pomodoro
             this.remove_withdraw_timeout ();
         }
 
+        private int64 get_about_to_end_duration ()
+        {
+            if (!this.settings.get_boolean ("announce-about-to-end")) {
+                return 0;
+            }
+
+            if (this.capability_manager.is_enabled ("indicator")) {
+                return TIME_BLOCK_ABOUT_TO_END_MIN_DURATION;
+            }
+
+            var notifications_capability = this.capability_manager.lookup ("notifications");
+
+            if (notifications_capability != null &&
+                notifications_capability.is_enabled () &&
+                notifications_capability.has_detail ("actions"))
+            {
+                return TIME_BLOCK_ABOUT_TO_END_MIN_DURATION;
+            }
+
+            return TIME_BLOCK_ABOUT_TO_END_MAX_DURATION;
+        }
+
         private void on_timer_state_changed (Pomodoro.TimerState current_state,
                                              Pomodoro.TimerState previous_state)
         {
@@ -554,11 +586,10 @@ namespace Pomodoro
             else if (current_state.is_started ())
             {
                 var remaining = this._timer.calculate_remaining (timestamp);
-                var about_to_end_threshold = TIME_BLOCK_ABOUT_TO_END_TIMEOUT +
-                                             TIME_BLOCK_ABOUT_TO_END_TOLERANCE;
+                var about_to_end_duration = this.get_about_to_end_duration () + TIME_BLOCK_ABOUT_TO_END_TOLERANCE;
 
-                if (this.can_open_screen_overlay () &&
-                    remaining >= about_to_end_threshold)
+                if (remaining >= about_to_end_duration &&
+                    this.can_open_screen_overlay ())
                 {
                     // if (!this.can_open_screen_overlay ()) {
                     //     // TODO: wait if there is ongoing drag&drop / activity
@@ -575,7 +606,7 @@ namespace Pomodoro
                 if (current_state.started_time == timestamp) {
                     this.notify_time_block_started (current_time_block);
                 }
-                else if (remaining < about_to_end_threshold) {
+                else if (remaining < about_to_end_duration) {
                     this.notify_time_block_about_to_end (current_time_block);
                 }
                 else {
@@ -597,14 +628,20 @@ namespace Pomodoro
 
         private void on_timer_tick (int64 timestamp)
         {
+            if (this.screen_overlay_active) {
+                return;
+            }
+
+            if (this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ABOUT_TO_END ||
+                this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ENDED ||
+                this.notification_type == Pomodoro.NotificationType.CONFIRM_ADVANCEMENT)
+            {
+                return;
+            }
+
             var remaining = this._timer.calculate_remaining (timestamp);
 
-            if (remaining <= TIME_BLOCK_ABOUT_TO_END_TIMEOUT &&
-                !this.screen_overlay_active && !(
-                this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ABOUT_TO_END ||
-                this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ENDED ||
-                this.notification_type == Pomodoro.NotificationType.CONFIRM_ADVANCEMENT))
-            {
+            if (remaining <= this.get_about_to_end_duration ()) {
                 this.notify_time_block_about_to_end (this.session_manager.current_time_block);
             }
         }
@@ -620,6 +657,10 @@ namespace Pomodoro
         {
             switch (key)
             {
+                case "announce-about-to-end":
+                    this.schedule_announcements ();
+                    break;
+
                 case "screen-overlay":
                     if (this.screen_overlay_inhibit_count == 0) {
                         this.update (true);
@@ -638,6 +679,22 @@ namespace Pomodoro
                 this.screen_overlay_inhibit_count++;
                 this.on_timer_state_changed (this._timer.state, this._timer.state);
                 this.screen_overlay_inhibit_count--;
+            }
+        }
+
+        private void schedule_announcements ()
+        {
+            if (this.settings.get_boolean ("announce-about-to-end"))
+            {
+                if (this.timer_tick_id == 0) {
+                    this.timer_tick_id = this._timer.tick.connect (this.on_timer_tick);
+                }
+            }
+            else {
+                if (this.timer_tick_id != 0) {
+                    this._timer.disconnect (this.timer_tick_id);
+                    this.timer_tick_id = 0;
+                }
             }
         }
 
@@ -729,6 +786,7 @@ namespace Pomodoro
             this.notification = null;
             this.notification_time_block = null;
             this.idle_monitor = null;
+            this.capability_manager = null;
 
             base.dispose ();
         }

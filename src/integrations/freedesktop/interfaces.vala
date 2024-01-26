@@ -38,9 +38,14 @@ namespace Freedesktop
     // }
 
 
-    // [DBus (name = "org.freedesktop.Notifications")]
-    // public interface Notifications : GLib.Object
-    // {
-    //     public abstract async void get_capabilities (out string[] capabilities) throws GLib.DBusError, GLib.IOError;
-    // }
+    [DBus (name = "org.freedesktop.Notifications")]
+    public interface Notifications : GLib.Object
+    {
+        public abstract async void get_capabilities (out string[] capabilities) throws GLib.DBusError, GLib.IOError;
+
+        public abstract async void get_server_information (out string name,
+                                                           out string vendor,
+                                                           out string version,
+                                                           out string spec_version) throws GLib.DBusError, GLib.IOError;
+    }
 }

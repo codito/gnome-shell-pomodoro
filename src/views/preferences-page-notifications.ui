@@ -5,21 +5,11 @@
   <template class="PomodoroPreferencesPageNotifications" parent="AdwPreferencesPage">
     <child>
       <object class="AdwPreferencesGroup">
-        <property name="title" translatable="yes">Annoucements</property>
+        <property name="title" translatable="yes">Announcements</property>
         <child>
-          <object class="AdwComboRow" id="announcement_duration_comborow">
+          <object class="AdwSwitchRow" id="announce_about_to_end_switchrow">
             <property name="title" translatable="yes">Time Running Out</property>
             <property name="subtitle" translatable="yes">Notify when Pomodoro or break is about to end.</property>
-            <property name="model">
-              <object class="GtkStringList">
-                <items>
-                  <item translatable="yes">Disabled</item>
-                  <item translatable="yes">5 seconds</item>
-                  <item translatable="yes">10 seconds</item>
-                  <item translatable="yes">15 seconds</item>
-                </items>
-              </object>
-            </property>
           </object>
         </child>
       </object>
@@ -62,7 +52,7 @@
         </child>
         <child>
           <object class="AdwComboRow" id="screen_overlay_reopen_delay_comborow">
-            <property name="title" translatable="yes">Reopen</property>
+            <property name="title" translatable="yes">Reopen Delay</property>
             <property name="subtitle" translatable="yes">Period of inactivity to reopen the overlay after it gets dismissed.</property>
             <!-- <property name="sensitive" bind-source="screen_overlay_switchrow" bind-property="active" bind-flags="default"/> -->
             <property name="model">
