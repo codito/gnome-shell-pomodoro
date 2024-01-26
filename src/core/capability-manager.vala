@@ -77,14 +77,22 @@ namespace Pomodoro
                 : null;
         }
 
-        /**
-         * Whether capability is marked to be enabled or actually is enabled.
-         */
-        public bool is_enable_scheduled (string capability_name)
+        public bool is_available (string capability_name)
         {
-            var capability_set = this.capabilities.lookup (capability_name);
+            var capability = this.capabilities.lookup (capability_name)?.preferred_capability;
 
-            return capability_set != null ? capability_set.enable : false;
+            return capability != null
+                ? capability.is_available ()
+                : false;
+        }
+
+        public bool is_enabled (string capability_name)
+        {
+            var capability = this.capabilities.lookup (capability_name)?.preferred_capability;
+
+            return capability != null
+                ? capability.is_enabled ()
+                : false;
         }
 
         public static void register_class (string                      name,
