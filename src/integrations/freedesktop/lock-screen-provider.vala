@@ -9,9 +9,8 @@ namespace Freedesktop
         }
 
         private Freedesktop.LoginSession? session_proxy = null;
-        private GLib.Cancellable?         cancellable = null;
-        private uint                      watcher_id = 0;
         private bool                      _active = false;
+        private uint                      watcher_id = 0;
         private ulong                     properties_changed_id = 0;
 
         private void update_active ()
@@ -46,7 +45,7 @@ namespace Freedesktop
             this.update_active ();
         }
 
-        public override async void initialize () throws GLib.Error
+        public override async void initialize (GLib.Cancellable? cancellable) throws GLib.Error
         {
             this.watcher_id = GLib.Bus.watch_name (GLib.BusType.SYSTEM,
                                                    "org.freedesktop.login1",
@@ -55,10 +54,16 @@ namespace Freedesktop
                                                    this.on_name_vanished);
         }
 
-        public override async void enable () throws GLib.Error
+        public override async void uninitialize () throws GLib.Error
         {
-            this.cancellable = new GLib.Cancellable ();
+            if (this.watcher_id != 0) {
+                GLib.Bus.unwatch_name (this.watcher_id);
+                this.watcher_id = 0;
+            }
+        }
 
+        public override async void enable (GLib.Cancellable? cancellable) throws GLib.Error
+        {
             try {
                 // /org/freedesktop/login1/session/auto do not send notification when properties change,
                 // for that we need to connect to the exact session object.
@@ -67,13 +72,13 @@ namespace Freedesktop
                                      "org.freedesktop.login1",
                                      "/org/freedesktop/login1",
                                      GLib.DBusProxyFlags.DO_NOT_AUTO_START,
-                                     this.cancellable);
+                                     cancellable);
                 var session_auto_proxy = yield GLib.Bus.get_proxy<Freedesktop.LoginSession>
                                     (GLib.BusType.SYSTEM,
                                      "org.freedesktop.login1",
                                      "/org/freedesktop/login1/session/auto",
                                      GLib.DBusProxyFlags.DO_NOT_AUTO_START | GLib.DBusProxyFlags.DO_NOT_CONNECT_SIGNALS,
-                                     this.cancellable);
+                                     cancellable);
                 var login_sessions = yield manager_proxy.list_sessions ();
 
                 foreach (var login_session in login_sessions)
@@ -84,7 +89,7 @@ namespace Freedesktop
                                      "org.freedesktop.login1",
                                      login_session.object_path,
                                      GLib.DBusProxyFlags.DO_NOT_AUTO_START | GLib.DBusProxyFlags.DO_NOT_CONNECT_SIGNALS,
-                                     this.cancellable);
+                                     cancellable);
                         break;
                     }
                 }
@@ -109,10 +114,6 @@ namespace Freedesktop
 
         public override async void disable () throws GLib.Error
         {
-            if (this.cancellable != null) {
-                this.cancellable.cancel ();
-            }
-
             if (this.properties_changed_id != 0) {
                 this.session_proxy.disconnect (this.properties_changed_id);
                 this.properties_changed_id = 0;
@@ -121,14 +122,6 @@ namespace Freedesktop
             this.session_proxy = null;
 
             this.update_active ();
-        }
-
-        public override async void destroy () throws GLib.Error
-        {
-            if (this.watcher_id != 0) {
-                GLib.Bus.unwatch_name (this.watcher_id);
-                this.watcher_id = 0;
-            }
         }
 
         public void activate ()

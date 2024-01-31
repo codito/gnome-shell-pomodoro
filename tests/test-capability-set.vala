@@ -19,8 +19,8 @@ namespace Tests
         public uint activate_count = 0;
 
 
-        public AntiGravityCapability (string                      name,
-                                      Pomodoro.CapabilityPriority priority = Pomodoro.CapabilityPriority.DEFAULT)
+        public AntiGravityCapability (string            name,
+                                      Pomodoro.Priority priority = Pomodoro.Priority.DEFAULT)
         {
             base (name, priority);
         }
@@ -148,13 +148,13 @@ namespace Tests
         {
             var capability_set = new Pomodoro.CapabilitySet ();
 
-            var capability_unavailable = new AntiGravityCapability ("unavailable", Pomodoro.CapabilityPriority.HIGH);
+            var capability_unavailable = new AntiGravityCapability ("unavailable", Pomodoro.Priority.HIGH);
             capability_unavailable.scenario = Scenario.UNAVAILABLE;
             capability_set.add (capability_unavailable);
             assert_true (capability_set.preferred_capability == capability_unavailable);
             assert_true (capability_unavailable.status == Pomodoro.CapabilityStatus.UNAVAILABLE);
 
-            var capability_available = new AntiGravityCapability ("available", Pomodoro.CapabilityPriority.LOW);
+            var capability_available = new AntiGravityCapability ("available", Pomodoro.Priority.LOW);
             capability_set.add (capability_available);
             assert_true (capability_set.preferred_capability == capability_available);
             assert_true (capability_available.status == Pomodoro.CapabilityStatus.DISABLED);
@@ -164,12 +164,12 @@ namespace Tests
         {
             var capability_set = new Pomodoro.CapabilitySet ();
 
-            var capability_low = new AntiGravityCapability ("low", Pomodoro.CapabilityPriority.LOW);
+            var capability_low = new AntiGravityCapability ("low", Pomodoro.Priority.LOW);
             capability_set.add (capability_low);
             assert_true (capability_set.preferred_capability == capability_low);
             assert_true (capability_low.status == Pomodoro.CapabilityStatus.DISABLED);
 
-            var capability_high = new AntiGravityCapability ("high", Pomodoro.CapabilityPriority.HIGH);
+            var capability_high = new AntiGravityCapability ("high", Pomodoro.Priority.HIGH);
             capability_set.add (capability_high);
             assert_true (capability_set.preferred_capability == capability_high);
             assert_true (capability_low.status == Pomodoro.CapabilityStatus.DISABLED);
@@ -190,12 +190,12 @@ namespace Tests
         {
             var capability_set = new Pomodoro.CapabilitySet ();
 
-            var capability_high = new AntiGravityCapability ("high", Pomodoro.CapabilityPriority.HIGH);
+            var capability_high = new AntiGravityCapability ("high", Pomodoro.Priority.HIGH);
             capability_set.add (capability_high);
             assert_true (capability_set.preferred_capability == capability_high);
             assert_true (capability_high.status == Pomodoro.CapabilityStatus.DISABLED);
 
-            var capability_low = new AntiGravityCapability ("low", Pomodoro.CapabilityPriority.LOW);
+            var capability_low = new AntiGravityCapability ("low", Pomodoro.Priority.LOW);
             capability_set.add (capability_low);
             assert_true (capability_set.preferred_capability == capability_high);
             assert_true (capability_low.status == Pomodoro.CapabilityStatus.DISABLED);
@@ -220,12 +220,12 @@ namespace Tests
             var capability_set = new Pomodoro.CapabilitySet ();
             capability_set.enable = true;
 
-            var capability_low = new AntiGravityCapability ("low", Pomodoro.CapabilityPriority.LOW);
+            var capability_low = new AntiGravityCapability ("low", Pomodoro.Priority.LOW);
             capability_set.add (capability_low);
             assert_true (capability_set.preferred_capability == capability_low);
             assert_true (capability_low.status == Pomodoro.CapabilityStatus.ENABLED);
 
-            var capability_high = new AntiGravityCapability ("high", Pomodoro.CapabilityPriority.HIGH);
+            var capability_high = new AntiGravityCapability ("high", Pomodoro.Priority.HIGH);
             capability_set.add (capability_high);
             assert_true (capability_set.preferred_capability == capability_high);
             assert_true (capability_low.status == Pomodoro.CapabilityStatus.DISABLED);
@@ -250,13 +250,13 @@ namespace Tests
             var capability_set = new Pomodoro.CapabilitySet ();
             capability_set.enable = true;
 
-            var capability_unavailable = new AntiGravityCapability ("unavailable", Pomodoro.CapabilityPriority.HIGH);
+            var capability_unavailable = new AntiGravityCapability ("unavailable", Pomodoro.Priority.HIGH);
             capability_unavailable.scenario = Scenario.UNAVAILABLE;
             capability_set.add (capability_unavailable);
             assert_true (capability_set.preferred_capability == capability_unavailable);
             assert_true (capability_unavailable.status == Pomodoro.CapabilityStatus.UNAVAILABLE);
 
-            var capability_available = new AntiGravityCapability ("available", Pomodoro.CapabilityPriority.LOW);
+            var capability_available = new AntiGravityCapability ("available", Pomodoro.Priority.LOW);
             capability_set.add (capability_available);
             assert_true (capability_set.preferred_capability == capability_available);
             assert_true (capability_available.status == Pomodoro.CapabilityStatus.ENABLED);

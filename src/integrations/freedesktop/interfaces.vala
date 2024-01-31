@@ -26,16 +26,18 @@ namespace Freedesktop
         public abstract bool active { get; }
         public abstract bool locked_hint { get; }
 
-        [DBus (timeout = 1000)]
+        [DBus (no_reply = true)]
         public abstract async void @lock () throws GLib.DBusError, GLib.IOError;
     }
 
 
-    // [DBus (name = "org.freedesktop.ScreenSaver")]
-    // public interface ScreenSaver : GLib.Object
-    // {
-    //     public abstract async void @lock () throws GLib.DBusError, GLib.IOError;
-    // }
+    [DBus (name = "org.freedesktop.ScreenSaver")]
+    public interface ScreenSaver : GLib.Object
+    {
+        public abstract async bool get_active () throws GLib.DBusError, GLib.IOError;
+
+        public signal void active_changed (bool active);
+    }
 
 
     [DBus (name = "org.freedesktop.Notifications")]

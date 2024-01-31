@@ -137,7 +137,7 @@ namespace Gnome
             this.thaw_idle_time ();
         }
 
-        public override async void initialize () throws GLib.Error
+        public override async void initialize (GLib.Cancellable? cancellable) throws GLib.Error
         {
             if (this.dbus_watcher_id == 0) {
                 this.dbus_watcher_id = GLib.Bus.watch_name (GLib.BusType.SESSION,
@@ -148,7 +148,17 @@ namespace Gnome
             }
         }
 
-        public override async void enable () throws GLib.Error
+        public override async void uninitialize () throws GLib.Error
+        {
+            if (this.dbus_watcher_id != 0) {
+                GLib.Bus.unwatch_name (this.dbus_watcher_id);
+                this.dbus_watcher_id = 0;
+            }
+
+            this.cancellable = null;
+        }
+
+        public override async void enable (GLib.Cancellable? cancellable) throws GLib.Error
         {
             if (this.proxy != null) {
                 return;
@@ -196,17 +206,6 @@ namespace Gnome
             this.proxy = null;
         }
 
-        public override async void destroy () throws GLib.Error
-        {
-            if (this.dbus_watcher_id != 0) {
-                GLib.Bus.unwatch_name (this.dbus_watcher_id);
-                this.dbus_watcher_id = 0;
-            }
-
-            this.watches = null;
-            this.cancellable = null;
-        }
-
         public int64 get_idle_time () throws GLib.Error
         {
             if (this.idle_time_freeze_count > 0 && this.idle_time >= 0) {
@@ -235,9 +234,9 @@ namespace Gnome
             else {
                 idle_time = this.get_idle_time ();
 
-                absolute_timeout = Pomodoro.IdleMonitor.calculate_absolute_timeout (relative_timeout,
-                                                                                    idle_time,
-                                                                                    monotonic_time);
+                absolute_timeout = calculate_absolute_timeout (relative_timeout,
+                                                               idle_time,
+                                                               monotonic_time);
                 if ((absolute_timeout - relative_timeout).abs () < TIMEOUT_TOLERANCE) {
                     absolute_timeout = relative_timeout;
                 }

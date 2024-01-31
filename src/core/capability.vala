@@ -23,14 +23,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    public enum CapabilityPriority
-    {
-        LOW = 0,
-        DEFAULT = 1,
-        HIGH = 2
-    }
-
-
     public enum CapabilityStatus
     {
         NULL,
@@ -118,10 +110,10 @@ namespace Pomodoro
             construct;
         }
 
-        public Pomodoro.CapabilityPriority priority {
+        public Pomodoro.Priority priority {
             get;
             construct;
-            default = Pomodoro.CapabilityPriority.DEFAULT;
+            default = Pomodoro.Priority.DEFAULT;
         }
 
         [CCode (notify = false)]
@@ -150,8 +142,8 @@ namespace Pomodoro
         private Pomodoro.CapabilityStatus _status = Pomodoro.CapabilityStatus.NULL;
         private GLib.GenericSet<string>?  details = null;
 
-        protected Capability (string                      name,
-                              Pomodoro.CapabilityPriority priority = Pomodoro.CapabilityPriority.DEFAULT)
+        protected Capability (string            name,
+                              Pomodoro.Priority priority = Pomodoro.Priority.DEFAULT)
         {
             GLib.Object (
                 name: name,
@@ -182,32 +174,6 @@ namespace Pomodoro
             return this.status == Pomodoro.CapabilityStatus.ENABLED;
         }
 
-        public int compare (Pomodoro.Capability? other)
-        {
-            if (other == null) {
-                return -1;
-            }
-
-            var priority = this.priority;
-            var other_priority = other.priority;
-            var is_available = this.is_available ();
-            var other_is_available = other.is_available ();
-
-            if (is_available != other_is_available) {
-                return is_available ? -1 : 1;
-            }
-
-            if (priority > other_priority) {
-                return -1;
-            }
-
-            if (other_priority > priority) {
-                return 1;
-            }
-
-            return 0;
-        }
-
         public void add_detail (string detail)
         {
             if (this.details == null) {
@@ -231,7 +197,7 @@ namespace Pomodoro
 
         public bool has_detail (string detail)
         {
-            return this.details.contains (detail);
+            return this.details != null && this.details.contains (detail);
         }
 
         /**
@@ -316,11 +282,11 @@ namespace Pomodoro
         private GLib.Callback? disable_func = null;
         private GLib.Callback? activate_func = null;
 
-        public SimpleCapability (string                      name,
-                                 Pomodoro.CapabilityPriority priortity,
-                                 owned GLib.Callback?        enable_func,
-                                 owned GLib.Callback?        disable_func,
-                                 owned GLib.Callback?        activate_func = null)
+        public SimpleCapability (string               name,
+                                 Pomodoro.Priority    priortity,
+                                 owned GLib.Callback? enable_func,
+                                 owned GLib.Callback? disable_func,
+                                 owned GLib.Callback? activate_func = null)
                                  requires ((enable_func == null) == (disable_func == null))
         {
             base (name);
@@ -422,11 +388,11 @@ namespace Pomodoro
 
         private uint _id = 0;
 
-        public ExternalCapability (string                   name,
-                                   GLib.Capability_Priority priority,
-                                   owned GLib.Callback?     enable_func,
-                                   owned GLib.Callback?     disable_func,
-                                   owned GLib.Callback?     activate_func = null)
+        public ExternalCapability (string               name,
+                                   Pomodoro.Priority    priority,
+                                   owned GLib.Callback? enable_func,
+                                   owned GLib.Callback? disable_func,
+                                   owned GLib.Callback? activate_func = null)
         {
             base (name,
                   priority,

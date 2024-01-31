@@ -28,9 +28,9 @@ namespace Pomodoro
 
     internal struct CapabilityMeta
     {
-        public string                      name;
-        public Pomodoro.CapabilityPriority priority;
-        public GLib.Type                   class_type;
+        public string            name;
+        public Pomodoro.Priority priority;
+        public GLib.Type         class_type;
     }
 
 
@@ -56,7 +56,7 @@ namespace Pomodoro
                 var name_value = GLib.Value (typeof (string));
                 name_value.set_string (capability_meta.name);
 
-                var priority_value = GLib.Value (typeof (Pomodoro.CapabilityPriority));
+                var priority_value = GLib.Value (typeof (Pomodoro.Priority));
                 priority_value.set_enum (capability_meta.priority);
 
                 this.register ((Pomodoro.Capability) GLib.Object.new_with_properties (capability_meta.class_type,
@@ -95,9 +95,9 @@ namespace Pomodoro
                 : false;
         }
 
-        public static void register_class (string                      name,
-                                           Pomodoro.CapabilityPriority priority,
-                                           GLib.Type                   class_type)
+        public static void register_class (string            name,
+                                           Pomodoro.Priority priority,
+                                           GLib.Type         class_type)
         {
             registry += Pomodoro.CapabilityMeta () {
                 name = name,

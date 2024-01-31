@@ -12,11 +12,33 @@ namespace Pomodoro
 
         public abstract signal void became_idle (uint32 id);
         public abstract signal void became_active ();
+
+        /**
+         * Mutter.IdleMonitor schedules a callback relative to users last activity, not from the time we add a watch.
+         *
+         * Calculate timeout that is relative to users last activity.
+         */
+        public static int64 calculate_absolute_timeout (int64 relative_timeout,
+                                                        int64 idle_time,
+                                                        int64 reference_time)
+                                                        requires (Pomodoro.Timestamp.is_defined (reference_time))
+        {
+            if (idle_time == 0) {
+                return relative_timeout;
+            }
+
+            var last_activity_time = GLib.get_monotonic_time () - idle_time;
+            var absolute_timeout = relative_timeout + reference_time - last_activity_time;
+
+            return absolute_timeout > 0
+                ? absolute_timeout
+                : relative_timeout;
+        }
     }
 
 
     [SingleInstance]
-    public class IdleMonitor : GLib.Object
+    public class IdleMonitor : Pomodoro.ProvidedObject<Pomodoro.IdleMonitorProvider>
     {
         private static uint next_id = 1;
 
@@ -32,84 +54,11 @@ namespace Pomodoro
             public unowned Pomodoro.IdleMonitorProvider? provider = null;
         }
 
-        public bool available {
-            get {
-                return this.provider != null;
-            }
-        }
-
-        private Pomodoro.ProviderSet<Pomodoro.IdleMonitorProvider> providers = null;
-        private Pomodoro.IdleMonitorProvider?                      provider = null;
-        private GLib.HashTable<int64?, Watch>                      watches = null;
+        private GLib.HashTable<int64?, Watch> watches = null;
 
         construct
         {
             this.watches = new GLib.HashTable<int64?, Watch> (int64_hash, int64_equal);
-
-            this.providers = new Pomodoro.ProviderSet<Pomodoro.IdleMonitorProvider> ();
-            this.providers.notify["enabled-provider"].connect (this.on_notify_enabled_provider);
-
-            // TODO: Providers should register themselves in a static constructors, but can't make it work...
-            this.providers.add (new Gnome.IdleMonitorProvider (), Pomodoro.ProviderPriority.HIGH);
-
-            this.providers.mark_initialized ();
-
-            this.update_provider ();
-        }
-
-        private void set_provider (Pomodoro.IdleMonitorProvider? provider)
-        {
-            var previous_provider = this.provider;
-
-            if (this.provider != null)
-            {
-                this.provider.became_idle.disconnect (this.on_became_idle);
-                this.provider.became_active.disconnect (this.on_became_active);
-
-                this.watches.@foreach (
-                    (id, watch) => {
-                        try {
-                            this.provider.remove_watch (watch.external_id);
-                        }
-                        catch (GLib.Error error) {
-                            GLib.warning ("Error while removing idle watch: %s", error.message);
-                        }
-
-                        watch.external_id = 0;
-                    });
-            }
-
-            this.provider = provider;
-
-            if (provider != null)
-            {
-                provider.became_idle.connect (this.on_became_idle);
-                provider.became_active.connect (this.on_became_active);
-
-                // Recreate watches with the new provider.
-                this.watches.@foreach (
-                    (id, watch) => {
-                        try {
-                            watch.external_id = this.provider.add_watch (watch.timeout, watch.reference_time);
-                        }
-                        catch (GLib.Error error) {
-                            GLib.warning ("Error while adding idle watch: %s", error.message);
-                        }
-                    });
-            }
-
-            if ((previous_provider == null) != (provider == null)) {
-                this.notify_property ("available");
-            }
-        }
-
-        private void update_provider ()
-        {
-            if (this.provider == this.providers.enabled_provider) {
-                return;
-            }
-
-            this.set_provider (this.providers.enabled_provider);
         }
 
         private void on_became_idle (uint32 id)
@@ -141,32 +90,45 @@ namespace Pomodoro
                 });
         }
 
-        private void on_notify_enabled_provider (GLib.Object    object,
-                                                 GLib.ParamSpec pspec)
+        protected override void setup_providers ()
         {
-            this.update_provider ();
+            // TODO: Providers should register themselves in a static constructors, but can't make it work...
+            this.providers.add (new Gnome.IdleMonitorProvider (), Pomodoro.Priority.HIGH);
         }
 
-        /**
-         * Mutter.IdleMonitor schedules a callback relative to users last activity, not from the time we add a watch.
-         *
-         * Calculate timeout that is relative to users last activity.
-         */
-        internal static int64 calculate_absolute_timeout (int64 relative_timeout,
-                                                          int64 idle_time,
-                                                          int64 reference_time)
-                                                          requires (Pomodoro.Timestamp.is_defined (reference_time))
+        protected override void provider_enabled (Pomodoro.IdleMonitorProvider provider)
         {
-            if (idle_time == 0) {
-                return relative_timeout;
-            }
+            provider.became_idle.connect (this.on_became_idle);
+            provider.became_active.connect (this.on_became_active);
 
-            var last_activity_time = GLib.get_monotonic_time () - idle_time;
-            var absolute_timeout = relative_timeout + reference_time - last_activity_time;
+            // Recreate watches with the new provider.
+            this.watches.@foreach (
+                (id, watch) => {
+                    try {
+                        watch.external_id = provider.add_watch (watch.timeout, watch.reference_time);
+                    }
+                    catch (GLib.Error error) {
+                        GLib.warning ("Error while adding idle watch: %s", error.message);
+                    }
+                });
+        }
 
-            return absolute_timeout > 0
-                ? absolute_timeout
-                : relative_timeout;
+        protected override void provider_disabled (Pomodoro.IdleMonitorProvider provider)
+        {
+            provider.became_idle.disconnect (this.on_became_idle);
+            provider.became_active.disconnect (this.on_became_active);
+
+            this.watches.@foreach (
+                (id, watch) => {
+                    try {
+                        provider.remove_watch (watch.external_id);
+                    }
+                    catch (GLib.Error error) {
+                        GLib.warning ("Error while removing idle watch: %s", error.message);
+                    }
+
+                    watch.external_id = 0;
+                });
         }
 
         public int64 get_idle_time ()
@@ -248,21 +210,17 @@ namespace Pomodoro
                 this.watches.remove (id);
             }
             catch (GLib.Error error) {
-                GLib.debug ("Error while removing idle watch");
+                GLib.debug ("Error while removing idle watch: %s", error.message);
                 watch.invalid = true;
             }
         }
 
         public override void dispose ()
         {
-            this.providers.notify["enabled-provider"].disconnect (this.on_notify_enabled_provider);
-
-            this.set_provider (null);
-
-            this.providers = null;
-            this.watches = null;
-
             base.dispose ();
+
+            // Watches are needed for destroying providers during `base.dispose()`.
+            this.watches = null;
         }
     }
 }

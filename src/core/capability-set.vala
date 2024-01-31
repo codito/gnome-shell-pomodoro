@@ -73,6 +73,25 @@ namespace Pomodoro
             this.capabilities = new GLib.GenericSet<Pomodoro.Capability> (direct_hash, direct_equal);
         }
 
+        private static int compare (Pomodoro.Capability capability,
+                                    Pomodoro.Capability other)
+        {
+            var priority = capability.priority;
+            var other_priority = other.priority;
+            var is_available = capability.is_available ();
+            var other_is_available = other.is_available ();
+
+            if (is_available != other_is_available) {
+                return is_available ? -1 : 1;
+            }
+
+            if (priority != other_priority) {
+                return priority > other_priority ? -1 : 1;
+            }
+
+            return 0;
+        }
+
         private void update_preferred_capability ()
         {
             unowned Pomodoro.Capability? preferred_capability = null;
@@ -84,12 +103,12 @@ namespace Pomodoro
                         return;
                     }
 
-                    var result = preferred_capability.compare (capability);
+                    var comparison_result = compare (preferred_capability, capability);
 
-                    if (result > 0) {
+                    if (comparison_result > 0) {
                         preferred_capability = capability;
                     }
-                    else if (result == 0 && capability == this._preferred_capability) {
+                    else if (comparison_result == 0 && capability == this._preferred_capability) {
                         preferred_capability = capability;
                     }
                 });

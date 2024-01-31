@@ -32,12 +32,12 @@ namespace Freedesktop
             }
         }
 
-        private uint                       watcher_id = 0;
-        private string                     _name = null;
-        private string                     _vendor = null;
-        private string                     _version = null;
-        private string                     _spec_version = null;
-        private bool                       _has_actions = false;
+        private uint   watcher_id = 0;
+        private string _name = null;
+        private string _vendor = null;
+        private string _version = null;
+        private string _spec_version = null;
+        private bool   _has_actions = false;
 
         private void on_name_appeared (GLib.DBusConnection connection,
                                        string              name,
@@ -52,7 +52,7 @@ namespace Freedesktop
             this.available = false;
         }
 
-        public override async void initialize () throws GLib.Error
+        public override async void initialize (GLib.Cancellable? cancellable) throws GLib.Error
         {
             this.watcher_id = GLib.Bus.watch_name (GLib.BusType.SESSION,
                                                    "org.freedesktop.Notifications",
@@ -61,7 +61,15 @@ namespace Freedesktop
                                                    this.on_name_vanished);
         }
 
-        public override async void enable () throws GLib.Error
+        public override async void uninitialize () throws GLib.Error
+        {
+            if (this.watcher_id != 0) {
+                GLib.Bus.unwatch_name (this.watcher_id);
+                this.watcher_id = 0;
+            }
+        }
+
+        public override async void enable (GLib.Cancellable? cancellable) throws GLib.Error
         {
             string[] capabilities;
 
@@ -98,14 +106,6 @@ namespace Freedesktop
             this._version = null;
             this._spec_version = null;
             this._has_actions = false;
-        }
-
-        public override async void destroy () throws GLib.Error
-        {
-            if (this.watcher_id != 0) {
-                GLib.Bus.unwatch_name (this.watcher_id);
-                this.watcher_id = 0;
-            }
         }
     }
 }

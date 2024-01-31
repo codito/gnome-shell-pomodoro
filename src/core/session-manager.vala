@@ -184,8 +184,9 @@ namespace Pomodoro
         private Pomodoro.Session?                next_session = null;
         private Pomodoro.TimeBlock?              next_time_block = null;
         private Pomodoro.Gap?                    _current_gap = null;
+        private Pomodoro.ScreenSaver?            screensaver = null;
         private Pomodoro.LockScreen?             lockscreen = null;
-        private bool                             paused_on_lockscreen = false;
+        private bool                             auto_paused = false;
         private bool                             _has_uniform_breaks = false;
         private bool                             current_time_block_entered = false;
         private ulong                            current_time_block_changed_id = 0;
@@ -1009,47 +1010,82 @@ namespace Pomodoro
             }
         }
 
-        private void destroy_lockscreen_integration ()
+        private bool should_auto_pause ()
+        {
+            if (this._current_time_block == null ||
+                this._current_time_block.state != Pomodoro.State.POMODORO ||
+                !this._timer.is_running ())
+            {
+                return false;
+            }
+
+            if (this.lockscreen != null && this.lockscreen.available && this.lockscreen.active) {
+                return true;
+            }
+
+            if (this.screensaver != null && this.screensaver.available && this.screensaver.active) {
+                return true;
+            }
+
+            return false;
+        }
+
+        private void pause ()
+        {
+            if (!this.auto_paused) {
+                this.auto_paused = true;
+                this._timer.pause ();
+            }
+        }
+
+        private void resume ()
+        {
+            if (this.auto_paused) {
+                this.auto_paused = false;
+                this._timer.resume ();
+            }
+        }
+
+        private void disable_auto_pause ()
         {
             if (this.lockscreen != null) {
                 this.lockscreen.notify["active"].disconnect (this.on_lockscreen_notify_active);
                 this.lockscreen = null;
             }
-        }
 
-        private void pause_on_lockscreen ()
-        {
-            var should_pause = this._current_time_block.state == Pomodoro.State.POMODORO && this._timer.is_running ()
-                ? this.lockscreen != null && this.lockscreen.available && this.lockscreen.active
-                : false;
-
-            if (this.paused_on_lockscreen != should_pause)
-            {
-                this.paused_on_lockscreen = should_pause;
-
-                if (should_pause) {
-                    this._timer.pause ();
-                }
-                else {
-                    this._timer.resume ();
-                }
+            if (this.screensaver != null) {
+                this.screensaver.notify["active"].disconnect (this.on_screensaver_notify_active);
+                this.screensaver = null;
             }
         }
 
-        private void update_lockscreen_integration ()
+        private void enable_auto_pause ()
         {
-            if (this._current_time_block == null || !this.settings.get_boolean ("pause-on-lockscreen")) {
-                this.destroy_lockscreen_integration ();
-                return;
-            }
-
             if (this.lockscreen == null) {
                 this.lockscreen = new Pomodoro.LockScreen ();
                 this.lockscreen.notify["active"].connect (this.on_lockscreen_notify_active);
             }
 
-            if (this._timer.is_running ()) {
-                this.pause_on_lockscreen ();
+            if (this.screensaver == null) {
+                this.screensaver = new Pomodoro.ScreenSaver ();
+                this.screensaver.notify["active"].connect (this.on_screensaver_notify_active);
+            }
+
+            if (this.should_auto_pause ()) {
+                this.pause ();
+            }
+            else {
+                this.resume ();
+            }
+        }
+
+        private void update_auto_pause ()
+        {
+            if (this._current_time_block != null && this.settings.get_boolean ("pause-on-lockscreen")) {
+                this.enable_auto_pause ();
+            }
+            else {
+                this.disable_auto_pause ();
             }
         }
 
@@ -1195,7 +1231,7 @@ namespace Pomodoro
             this.thaw_current_session_changed ();
             this.resolving_timer_state--;
 
-            this.update_lockscreen_integration ();
+            this.update_auto_pause ();
         }
 
         private void on_timer_finished (Pomodoro.TimerState state)
@@ -1296,7 +1332,23 @@ namespace Pomodoro
         private void on_lockscreen_notify_active (GLib.Object    object,
                                                    GLib.ParamSpec pspec)
         {
-            this.pause_on_lockscreen ();
+            if (this.should_auto_pause ()) {
+                this.pause ();
+            }
+            else {
+                this.resume ();
+            }
+        }
+
+        private void on_screensaver_notify_active (GLib.Object    object,
+                                                   GLib.ParamSpec pspec)
+        {
+            if (this.should_auto_pause ()) {
+                this.pause ();
+            }
+            else {
+                this.resume ();
+            }
         }
 
         /**
@@ -1350,7 +1402,7 @@ namespace Pomodoro
                     break;
 
                 case "pause-on-lockscreen":
-                    this.update_lockscreen_integration ();
+                    this.update_auto_pause ();
                     break;
 
                 case "pomodoro-advancement-mode":
@@ -1523,7 +1575,7 @@ namespace Pomodoro
                 this.expiry_timeout_id = 0;
             }
 
-            this.destroy_lockscreen_integration ();
+            this.disable_auto_pause ();
 
             this.settings = null;
             this._current_gap = null;

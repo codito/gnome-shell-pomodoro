@@ -78,6 +78,7 @@ namespace Pomodoro
         private GLib.Settings?              settings = null;
         private Pomodoro.CapabilityManager? capability_manager = null;
         private Pomodoro.IdleMonitor?       idle_monitor = null;
+        private Pomodoro.LockScreen?        lock_screen = null;
         private ulong                       timer_state_changed_id = 0;
         private ulong                       timer_tick_id = 0;
         private ulong                       settings_changed_id = 0;
@@ -104,6 +105,7 @@ namespace Pomodoro
         {
             this.settings = Pomodoro.get_settings ();
             this.idle_monitor = new Pomodoro.IdleMonitor ();
+            this.lock_screen = new Pomodoro.LockScreen ();
             this.capability_manager = new Pomodoro.CapabilityManager ();
 
             this.schedule_announcements ();
@@ -168,7 +170,7 @@ namespace Pomodoro
                 return;
             }
 
-            this.capability_manager.activate ("lock-screen");
+            this.lock_screen.activate ();
         }
 
         private void on_reopen_screen_overlay_idle ()
@@ -786,6 +788,7 @@ namespace Pomodoro
             this.notification = null;
             this.notification_time_block = null;
             this.idle_monitor = null;
+            this.lock_screen = null;
             this.capability_manager = null;
 
             base.dispose ();

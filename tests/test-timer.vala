@@ -333,7 +333,7 @@ namespace Tests
             assert_false (timer.is_running ());
             assert_false (timer.is_finished ());
 
-            // Expect contructor to not fetch system time
+            // Expect constructor to not fetch system time
             assert_cmpvariant (
                 new GLib.Variant.int64 (timer.get_last_state_changed_time ()),
                 new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED)

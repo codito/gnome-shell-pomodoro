@@ -1,15 +1,13 @@
 namespace Pomodoro
 {
-    public interface LockScreenProvider : Pomodoro.Provider
+    public interface ScreenSaverProvider : Pomodoro.Provider
     {
         public abstract bool active { get; }
-
-        public abstract void activate ();
     }
 
 
     [SingleInstance]
-    public class LockScreen : Pomodoro.ProvidedObject<Pomodoro.LockScreenProvider>
+    public class ScreenSaver : Pomodoro.ProvidedObject<Pomodoro.ScreenSaverProvider>
     {
         public bool active {
             get {
@@ -39,31 +37,22 @@ namespace Pomodoro
 
         protected override void setup_providers ()
         {
-            this.providers.add (new Freedesktop.LockScreenProvider ());
+            this.providers.add (new Freedesktop.ScreenSaverProvider ());
+            this.providers.add (new Gnome.ScreenSaverProvider (), Pomodoro.Priority.HIGH);
         }
 
-        protected override void provider_enabled (Pomodoro.LockScreenProvider provider)
+        protected override void provider_enabled (Pomodoro.ScreenSaverProvider provider)
         {
             provider.notify["active"].connect (this.on_notify_active);
 
             this.update_active ();
         }
 
-        protected override void provider_disabled (Pomodoro.LockScreenProvider provider)
+        protected override void provider_disabled (Pomodoro.ScreenSaverProvider provider)
         {
             provider.notify["active"].disconnect (this.on_notify_active);
 
             this.update_active ();
-        }
-
-        public void activate ()
-        {
-            if (this.provider != null && this.provider.enabled) {
-                this.provider.activate ();
-            }
-            else {
-                GLib.debug ("Unable to activate lock-screen: no provider");
-            }
         }
     }
 }

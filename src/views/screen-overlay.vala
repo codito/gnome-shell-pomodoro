@@ -6,7 +6,7 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Button lock_screen_button;
 
-        private Pomodoro.CapabilityManager? capability_manager;
+        private Pomodoro.LockScreen?        lock_screen;
         private Gtk.WindowGroup?            window_group;
         private unowned GLib.ListModel?     monitors;
         private ulong                       monitors_changed_id = 0;
@@ -16,12 +16,12 @@ namespace Pomodoro
         construct
         {
             this.window_group = new Gtk.WindowGroup ();
-            this.capability_manager = new Pomodoro.CapabilityManager ();
+            this.lock_screen = new Pomodoro.LockScreen ();
 
-            this.lock_screen_notify_id = this.capability_manager.add_watch ("lock-screen",
-                                                                            this.on_lock_screen_status_changed);
-
-            this.update_buttons ();
+            this.lock_screen.bind_property ("enabled",
+                                            this.lock_screen_button,
+                                            "visible",
+                                            GLib.BindingFlags.SYNC_CREATE);
         }
 
         private void ensure_monitors ()
@@ -212,15 +212,6 @@ namespace Pomodoro
             });
         }
 
-        private void update_buttons ()
-        {
-            var lock_screen_capability = this.capability_manager.lookup ("lock-screen");
-
-            this.lock_screen_button.visible = lock_screen_capability != null
-                ? lock_screen_capability.status == Pomodoro.CapabilityStatus.ENABLED
-                : false;
-        }
-
         private void on_monitors_changed (GLib.ListModel model,
                                           uint           position,
                                           uint           removed,
@@ -237,15 +228,10 @@ namespace Pomodoro
             this.ensure_monitors ();
         }
 
-        private void on_lock_screen_status_changed (Pomodoro.Capability capability)
-        {
-            this.update_buttons ();
-        }
-
         [GtkCallback]
         private void on_lock_screen_button_clicked (Gtk.Button button)
         {
-            this.capability_manager.activate ("lock-screen");
+            this.lock_screen.activate ();
         }
 
         [GtkCallback]
@@ -284,15 +270,10 @@ namespace Pomodoro
                 this.update_windows_idle_id = 0;
             }
 
-            if (this.lock_screen_notify_id != 0) {
-                this.capability_manager.remove_watch ("lock-screen", this.lock_screen_notify_id);
-                this.lock_screen_notify_id = 0;
-            }
-
             this.destroy_monitors ();
 
             this.window_group = null;
-            this.capability_manager = null;
+            this.lock_screen = null;
 
             base.dispose ();
         }

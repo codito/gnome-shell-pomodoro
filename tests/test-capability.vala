@@ -28,8 +28,8 @@ namespace Tests
         public uint disable_count = 0;
         public uint activate_count = 0;
 
-        public AntiGravityCapability (string                      name,
-                                      Pomodoro.CapabilityPriority priority = Pomodoro.CapabilityPriority.DEFAULT)
+        public AntiGravityCapability (string            name,
+                                      Pomodoro.Priority priority = Pomodoro.Priority.DEFAULT)
         {
             base (name, priority);
         }

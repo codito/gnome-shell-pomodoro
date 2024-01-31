@@ -31,7 +31,7 @@ namespace Pomodoro
 
         public NotificationsCapability ()
         {
-            base ("notifications", Pomodoro.CapabilityPriority.DEFAULT);
+            base ("notifications", Pomodoro.Priority.DEFAULT);
         }
 
         private void show_screen_overlay (bool  pass_through = true,
@@ -66,16 +66,9 @@ namespace Pomodoro
             }
         }
 
-        private void on_notify_enabled_provider (GLib.Object    object,
-                                                 GLib.ParamSpec pspec)
+        private void on_provider_enabled (Pomodoro.NotificationsProvider provider)
         {
-            var provider = this.providers.enabled_provider;
-
             this.remove_all_details ();
-
-            if (provider == null) {
-                return;
-            }
 
             GLib.info ("Using notifications server: %s %s from %s", provider.name, provider.version, provider.vendor);
 
@@ -86,10 +79,10 @@ namespace Pomodoro
 
         public override void initialize ()
         {
-            this.providers = new Pomodoro.ProviderSet<NotificationsProvider> ();
-            this.providers.notify["enabled-provider"].connect (this.on_notify_enabled_provider);
+            this.providers = new Pomodoro.ProviderSet<Pomodoro.NotificationsProvider> ();
+            this.providers.provider_enabled.connect (this.on_provider_enabled);
             this.providers.add (new Freedesktop.NotificationsProvider ());
-            this.providers.mark_initialized ();
+            this.providers.enable_one ();
 
             base.initialize ();
         }

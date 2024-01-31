@@ -11,7 +11,10 @@
         "--socket=wayland",
         "--device=dri",
         "--system-talk-name=org.freedesktop.login1",
-        "--talk-name=org.freedesktop.Notifications"
+        "--talk-name=org.freedesktop.Notifications",
+        "--talk-name=org.freedesktop.ScreenSaver",
+        "--talk-name=org.gnome.Mutter.IdleMonitor",
+        "--talk-name=org.gnome.ScreenSaver"
     ],
     "build-options" : {
         "cflags" : "-O2 -g",
