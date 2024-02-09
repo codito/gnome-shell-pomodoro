@@ -15,6 +15,7 @@ libgnome_pomodoro_sources = files(
   'integrations/freedesktop/lock-screen-provider.vala',
   'integrations/freedesktop/notifications-provider.vala',
   'integrations/freedesktop/screen-saver-provider.vala',
+  'integrations/freedesktop/sleep-monitor-provider.vala',
   'integrations/gnome/idle-monitor-provider.vala',
   'integrations/gnome/interfaces.vala',
   'integrations/gnome/screen-saver-provider.vala',

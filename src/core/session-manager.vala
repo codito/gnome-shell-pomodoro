@@ -1019,11 +1019,11 @@ namespace Pomodoro
                 return false;
             }
 
-            if (this.lockscreen != null && this.lockscreen.available && this.lockscreen.active) {
+            if (this.lockscreen != null && this.lockscreen.enabled && this.lockscreen.active) {
                 return true;
             }
 
-            if (this.screensaver != null && this.screensaver.available && this.screensaver.active) {
+            if (this.screensaver != null && this.screensaver.enabled && this.screensaver.active) {
                 return true;
             }
 
@@ -1046,19 +1046,6 @@ namespace Pomodoro
             }
         }
 
-        private void disable_auto_pause ()
-        {
-            if (this.lockscreen != null) {
-                this.lockscreen.notify["active"].disconnect (this.on_lockscreen_notify_active);
-                this.lockscreen = null;
-            }
-
-            if (this.screensaver != null) {
-                this.screensaver.notify["active"].disconnect (this.on_screensaver_notify_active);
-                this.screensaver = null;
-            }
-        }
-
         private void enable_auto_pause ()
         {
             if (this.lockscreen == null) {
@@ -1074,9 +1061,21 @@ namespace Pomodoro
             if (this.should_auto_pause ()) {
                 this.pause ();
             }
-            else {
-                this.resume ();
+        }
+
+        private void disable_auto_pause ()
+        {
+            if (this.lockscreen != null) {
+                this.lockscreen.notify["active"].disconnect (this.on_lockscreen_notify_active);
+                this.lockscreen = null;
             }
+
+            if (this.screensaver != null) {
+                this.screensaver.notify["active"].disconnect (this.on_screensaver_notify_active);
+                this.screensaver = null;
+            }
+
+            this.resume ();
         }
 
         private void update_auto_pause ()

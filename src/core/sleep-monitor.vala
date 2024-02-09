@@ -1,47 +1,41 @@
 namespace Pomodoro
 {
-    errordomain SleepMonitorError {
-        NOT_INITIALIZED
+    public interface SleepMonitorProvider : Pomodoro.Provider
+    {
+        public signal void prepare_for_sleep ();
+        public signal void woke_up ();
     }
 
 
     [SingleInstance]
-    public class SleepMonitor : GLib.Object, GLib.AsyncInitable
+    public class SleepMonitor : Pomodoro.ProvidedObject<Pomodoro.SleepMonitorProvider>
     {
-        private Freedesktop.LoginManager? login_manager_proxy = null;
-
-        construct
+        private void on_prepare_for_sleep ()
         {
+            this.prepare_for_sleep ();
         }
 
-        // TODO: define a provider
-        public async new bool init_async (int               io_priority = GLib.Priority.DEFAULT,
-                                          GLib.Cancellable? cancellable = null)
-                                          throws GLib.Error
+        private void on_woke_up ()
         {
-            this.login_manager_proxy = yield GLib.Bus.get_proxy<Freedesktop.LoginManager>
-                                   (GLib.BusType.SYSTEM,
-                                    "org.freedesktop.login1",
-                                    "/org/freedesktop/login1");
-
-            if (this.login_manager_proxy == null) {
-                throw new SleepMonitorError.NOT_INITIALIZED ("Failed to connect to LoginManager D-Bus service");
-            }
-
-            this.login_manager_proxy.prepare_for_sleep.connect (this.on_prepare_for_sleep);
-
-            return true;
+            this.woke_up ();
         }
 
-        private void on_prepare_for_sleep (Freedesktop.LoginManager proxy,
-                                           bool                     about_to_suspend)
+        protected override void setup_providers ()
         {
-            if (about_to_suspend) {
-                this.prepare_for_sleep ();
-            }
-            else {
-                this.woke_up ();
-            }
+            // TODO: Providers should register themselves in a static constructors, but can't make it work...
+            this.providers.add (new Freedesktop.SleepMonitorProvider ());
+        }
+
+        protected override void provider_enabled (Pomodoro.SleepMonitorProvider provider)
+        {
+            provider.prepare_for_sleep.connect (this.on_prepare_for_sleep);
+            provider.woke_up.connect (this.on_woke_up);
+        }
+
+        protected override void provider_disabled (Pomodoro.SleepMonitorProvider provider)
+        {
+            provider.prepare_for_sleep.disconnect (this.on_prepare_for_sleep);
+            provider.woke_up.disconnect (this.on_woke_up);
         }
 
         public signal void prepare_for_sleep ();
