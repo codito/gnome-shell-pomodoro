@@ -728,6 +728,11 @@ namespace Pomodoro
             Gdk.RGBA color;
             style_context.lookup_color ("unfocused_borders", out color);
 
+            // Ensure that color is non-transparent. Rendering of arcs is glitchy.
+            Gdk.RGBA background_color;
+            style_context.lookup_color ("theme_bg_color", out background_color);
+            color = blend_colors (background_color, color);
+
             bounds.init (0.5f * width - radius,
                          0.5f * height - radius,
                          2.0f * radius,
