@@ -514,6 +514,20 @@ namespace Pomodoro
             }
         }
 
+        public void remove_all ()
+        {
+            if (this.update_selection_timeout_id != 0) {
+                GLib.Source.remove (this.update_selection_timeout_id);
+                this.update_selection_timeout_id = 0;
+            }
+
+            this.providers.@foreach (
+                (provider_info) => {
+                    this.destroy_info (provider_info);
+                });
+            this.providers.remove_all ();
+        }
+
         public void enable_one ()
         {
             if (this._selection_mode != Pomodoro.SelectionMode.ONE)
@@ -596,18 +610,10 @@ namespace Pomodoro
 
         public override void dispose ()
         {
-            if (this.update_selection_timeout_id != 0) {
-                GLib.Source.remove (this.update_selection_timeout_id);
-                this.update_selection_timeout_id = 0;
-            }
-
             if (this.providers != null)
             {
-                this.providers.@foreach (
-                    (provider_info) => {
-                        this.destroy_info (provider_info);
-                    });
-                this.providers.remove_all ();
+                this.remove_all ();
+
                 this.providers = null;
             }
 

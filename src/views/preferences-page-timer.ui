@@ -90,33 +90,13 @@
           </object>
         </child>
         <child>
-          <object class="AdwComboRow" id="pomodoro_advancement_mode_comborow">
-            <property name="title" translatable="yes">Automatically Start a Break</property>
-            <property name="subtitle" translatable="yes">Whether to proceed to a break when Pomodoro ends.</property>
-            <property name="model">
-              <object class="GtkStringList">
-                <items>
-                  <item translatable="yes">Yes</item>
-                  <item translatable="yes">No</item>
-                  <item translatable="yes">Wait for activity</item>
-                </items>
-              </object>
-            </property>
+          <object class="AdwSwitchRow" id="confirm_starting_break_switchrow">
+            <property name="title" translatable="yes">Confirm Starting a Break</property>
          </object>
         </child>
         <child>
-          <object class="AdwComboRow" id="break_advancement_mode_comborow">
-            <property name="title" translatable="yes">Automatically Start a Pomodoro</property>
-            <property name="subtitle" translatable="yes">Whether to proceed to a Pomodoro when break ends.</property>
-            <property name="model">
-              <object class="GtkStringList">
-                <items>
-                  <item translatable="yes">Yes</item>
-                  <item translatable="yes">No</item>
-                  <item translatable="yes">Wait for activity</item>
-                </items>
-              </object>
-            </property>
+          <object class="AdwSwitchRow" id="confirm_starting_pomodoro_switchrow">
+            <property name="title" translatable="yes">Confirm Starting a Pomodoro</property>
           </object>
         </child>
       </object>

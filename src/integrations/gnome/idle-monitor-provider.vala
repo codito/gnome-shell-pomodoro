@@ -24,8 +24,8 @@ namespace Gnome
         private GLib.Cancellable?             cancellable = null;
         private uint                          dbus_watcher_id = 0;
         private GLib.HashTable<int64?, Watch> watches = null;
-        private uint32                        became_active_watch_id = 0;
-        private uint                          became_active_use_count = 0;
+        private uint32                        active_watch_id = 0;
+        private uint                          active_watch_use_count = 0;
         private int                           idle_time_freeze_count = 0;
         private int64                         idle_time = -1;
 
@@ -55,30 +55,16 @@ namespace Gnome
             this.idle_time_freeze_count--;
         }
 
-        private void add_user_active_watch () throws GLib.Error
+        private void remove_active_watch_internal () throws GLib.Error
         {
-            if (this.became_active_watch_id == 0) {
-                this.became_active_watch_id = this.proxy.add_user_active_watch ();
-            }
-
-            this.became_active_use_count++;
-        }
-
-        private void remove_active_watch () throws GLib.Error
-        {
-            if (this.became_active_watch_id == 0) {
-                return;
-            }
-
-            if (this.became_active_use_count == 1)
+            if (this.active_watch_id != 0)
             {
-                this.proxy.remove_watch (this.became_active_watch_id);
+                var watch_id = this.active_watch_id;
 
-                this.became_active_watch_id = 0;
-                this.became_active_use_count = 0;
-            }
-            else {
-                this.became_active_use_count--;
+                this.active_watch_id = 0;
+                this.active_watch_use_count = 0;
+
+                this.proxy.remove_watch (watch_id);
             }
         }
 
@@ -97,6 +83,13 @@ namespace Gnome
 
         private void on_became_active ()
         {
+            try {
+                this.remove_active_watch_internal ();
+            }
+            catch (GLib.Error error) {
+                GLib.warning ("Error while removeing active-watch: %s", error.message);
+            }
+
             this.became_active ();
         }
 
@@ -120,7 +113,7 @@ namespace Gnome
 
             this.freeze_idle_time ();
 
-            if (id == this.became_active_watch_id)
+            if (id == this.active_watch_id)
             {
                 this.idle_time = 0;
                 this.on_became_active ();
@@ -196,12 +189,10 @@ namespace Gnome
                 });
 
             for (var index = 0; index < ids.length; index++) {
-                this.remove_watch (ids[index]);
+                this.remove_idle_watch (ids[index]);
             }
 
-            if (this.became_active_use_count > 0) {
-                GLib.debug ("Disabling gnome-idle-monitor, but user-active watch is still used.");
-            }
+            this.remove_active_watch_internal ();
 
             this.proxy = null;
         }
@@ -221,8 +212,8 @@ namespace Gnome
             return idle_time;
         }
 
-        public uint32 add_watch (int64 timeout,
-                                 int64 monotonic_time) throws GLib.Error
+        public uint32 add_idle_watch (int64 timeout,
+                                      int64 monotonic_time) throws GLib.Error
         {
             int64 relative_timeout = timeout;
             int64 absolute_timeout = timeout;
@@ -257,13 +248,13 @@ namespace Gnome
             if (!_watch.has_active_watch && _watch.absolute_timeout != _watch.relative_timeout)
             {
                 try {
-                    this.add_user_active_watch ();
+                    this.add_active_watch ();
                     _watch.has_active_watch = true;
                 }
                 catch (GLib.Error error) {
                     GLib.debug ("Unable to add active watch: %s", error.message);
 
-                    this.remove_watch (watch_id);
+                    this.remove_idle_watch (watch_id);
 
                     throw error;
                 }
@@ -272,7 +263,7 @@ namespace Gnome
             return watch_id;
         }
 
-        public void remove_watch (uint32 id)
+        public void remove_idle_watch (uint32 id)
         {
             unowned Watch? watch = this.watches.lookup (id);
 
@@ -304,8 +295,8 @@ namespace Gnome
             }
         }
 
-        public uint32 reset_watch (uint32 id,
-                                   int64  monotonic_time) throws GLib.Error
+        public uint32 reset_idle_watch (uint32 id,
+                                        int64  monotonic_time) throws GLib.Error
         {
             unowned Watch? watch = this.watches.lookup (id);
 
@@ -313,19 +304,40 @@ namespace Gnome
                 return id;
             }
 
-            var new_id = this.add_watch (watch.relative_timeout, monotonic_time);
+            var new_id = this.add_idle_watch (watch.relative_timeout, monotonic_time);
 
             try {
                 this.proxy.remove_watch (watch.id);
             }
             catch (GLib.Error error)
             {
-                this.remove_watch (new_id);
+                this.remove_idle_watch (new_id);
 
                 throw error;
             }
 
             return new_id;
+        }
+
+        public void add_active_watch () throws GLib.Error
+        {
+            if (this.active_watch_id == 0) {
+                this.active_watch_id = this.proxy.add_user_active_watch ();
+            }
+
+            this.active_watch_use_count++;
+        }
+
+        public void remove_active_watch () throws GLib.Error
+                                         requires (this.active_watch_use_count > 0)
+                                         ensures (this.active_watch_use_count >= 0)
+        {
+            if (this.active_watch_use_count > 1) {
+                this.active_watch_use_count--;
+            }
+            else if (this.active_watch_use_count == 1) {
+                this.remove_active_watch_internal ();
+            }
         }
 
         public override void dispose ()

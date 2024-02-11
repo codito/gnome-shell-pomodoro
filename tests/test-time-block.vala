@@ -71,7 +71,6 @@ namespace Tests
             // settings.set_uint ("short-break-duration", SHORT_BREAK_DURATION);
             // settings.set_uint ("long-break-duration", LONG_BREAK_DURATION);
             // settings.set_uint ("cycles", CYCLES);
-            // settings.set_boolean ("pause-when-idle", false);
         }
 
         public override void teardown ()

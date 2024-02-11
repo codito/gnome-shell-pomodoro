@@ -412,9 +412,9 @@ namespace Pomodoro
         {
             var timestamp = this._timer.get_last_tick_time ();
 
-            if (this._timer.is_started ())
+            if (this._timer.user_data != null)
             {
-                if (this._timer.is_paused () || this._timer.is_finished ()) {
+                if (this._timer.is_paused () || this._timer.is_finished () || !this._timer.is_started ()) {
                     this.start_blinking_animation ();
                 }
                 else {
@@ -641,7 +641,9 @@ namespace Pomodoro
 
             base.map ();
 
-            if (this._timer.is_paused () || this._timer.is_finished ()) {
+            if (this._timer.user_data != null && (
+                this._timer.is_paused () || this._timer.is_finished () || !this._timer.is_started ()))
+            {
                 this.start_blinking_animation ();
             }
         }

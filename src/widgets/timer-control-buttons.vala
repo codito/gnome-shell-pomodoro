@@ -217,7 +217,7 @@ namespace Pomodoro
             }
         }
 
-        private void update_buttons ()
+        private void update_buttons (bool animate = true)
         {
             var current_time_block = this.session_manager.current_time_block;
             var current_session = this.session_manager.current_session;
@@ -229,8 +229,9 @@ namespace Pomodoro
             var is_break = current_time_block != null
                 ? current_time_block.state.is_break ()
                 : true;
+            var is_waiting_for_activity = !is_started && this.timer.user_data != null;
             var can_reset = current_session != null
-                ? !current_session.is_scheduled ()
+                ? !current_session.is_scheduled () && !is_waiting_for_activity
                 : false;
 
             Gtk.StackPage? left_page = null;
@@ -247,12 +248,12 @@ namespace Pomodoro
                 assert (center_page != null);
 
                 if (can_reset) {
-                    this.fade_in (this.left_button);
-                    this.fade_out (this.right_button);
+                    this.fade_in (this.left_button, animate);
+                    this.fade_out (this.right_button, animate);
                 }
                 else {
-                    this.fade_out (this.left_button, this.right_button.opacity > 0.0);
-                    this.fade_out (this.right_button);
+                    this.fade_out (this.left_button, animate);
+                    this.fade_out (this.right_button, animate);
                 }
             }
             else {
@@ -276,8 +277,8 @@ namespace Pomodoro
                 assert (center_page != null);
                 assert (right_page != null);
 
-                this.fade_in (this.left_button);
-                this.fade_in (this.right_button);
+                this.fade_in (this.left_button, animate);
+                this.fade_in (this.right_button, animate);
             }
 
             if (left_page != null) {
@@ -324,15 +325,18 @@ namespace Pomodoro
             this.update_buttons ();
         }
 
+        /**
+         * Hide the reset button once the session has been reset, without animation.
+         */
         private void on_session_manager_notify_current_session ()
         {
-            this.update_buttons ();
+            this.update_buttons (this.timer.user_data != null);
         }
 
         private void connect_signals ()
         {
             if (this.timer_state_changed_id == 0) {
-                this.timer_state_changed_id = this.timer.state_changed.connect (this.on_timer_state_changed);
+                this.timer_state_changed_id = this.timer.state_changed.connect_after (this.on_timer_state_changed);
             }
 
             if (this.session_manager_notify_current_session_id == 0) {
@@ -355,7 +359,7 @@ namespace Pomodoro
 
         public override void map ()
         {
-            this.update_buttons ();
+            this.update_buttons (false);
 
             this.connect_signals ();
 

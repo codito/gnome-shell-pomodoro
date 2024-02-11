@@ -21,9 +21,9 @@ namespace Pomodoro
         [GtkChild]
         private unowned Adw.SwitchRow pomodoro_pause_on_lockscreen_switchrow;
         [GtkChild]
-        private unowned Adw.ComboRow break_advancement_mode_comborow;
+        private unowned Adw.SwitchRow confirm_starting_break_switchrow;
         [GtkChild]
-        private unowned Adw.ComboRow pomodoro_advancement_mode_comborow;
+        private unowned Adw.SwitchRow confirm_starting_pomodoro_switchrow;
         [GtkChild]
         private unowned Pomodoro.LogScaleRow long_break_row;
 
@@ -45,24 +45,14 @@ namespace Pomodoro
                                  this.pomodoro_pause_on_lockscreen_switchrow,
                                  "active",
                                  GLib.SettingsBindFlags.DEFAULT);
-            this.settings.bind_with_mapping (
-                                "pomodoro-advancement-mode",
-                                 this.pomodoro_advancement_mode_comborow,
-                                 "selected",
-                                 GLib.SettingsBindFlags.DEFAULT,
-                                 PreferencesPageTimer.advancement_mode_get_mapping,
-                                 PreferencesPageTimer.advancement_mode_set_mapping,
-                                 null,
-                                 null);
-            this.settings.bind_with_mapping (
-                                "break-advancement-mode",
-                                 this.break_advancement_mode_comborow,
-                                 "selected",
-                                 GLib.SettingsBindFlags.DEFAULT,
-                                 PreferencesPageTimer.advancement_mode_get_mapping,
-                                 PreferencesPageTimer.advancement_mode_set_mapping,
-                                 null,
-                                 null);
+            this.settings.bind ("confirm-starting-break",
+                                 this.confirm_starting_break_switchrow,
+                                 "active",
+                                 GLib.SettingsBindFlags.DEFAULT);
+            this.settings.bind ("confirm-starting-pomodoro",
+                                 this.confirm_starting_pomodoro_switchrow,
+                                 "active",
+                                 GLib.SettingsBindFlags.DEFAULT);
 
             this.settings_changed_id = settings.changed.connect (this.on_settings_changed);
 
@@ -215,32 +205,6 @@ namespace Pomodoro
                     this.hide_apply_changes_toast ();
                 }
             }
-        }
-
-        /**
-         * Convert settings value to a choice.
-         */
-        private static bool advancement_mode_get_mapping (GLib.Value   value,
-                                                          GLib.Variant variant,
-                                                          void*        user_data)
-        {
-            var advancement_mode = Pomodoro.AdvancementMode.from_string (variant.get_string ());
-
-            value.set_uint ((uint) advancement_mode);
-
-            return true;
-        }
-
-        /**
-         * Convert choice to settings value.
-         */
-        private static GLib.Variant advancement_mode_set_mapping (GLib.Value       value,
-                                                                  GLib.VariantType expected_type,
-                                                                  void*            user_data)
-        {
-            var advancement_mode = (Pomodoro.AdvancementMode) value.get_uint ();
-
-            return new GLib.Variant.string (advancement_mode.to_string ());
         }
 
         public override void dispose ()

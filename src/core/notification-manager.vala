@@ -125,7 +125,7 @@ namespace Pomodoro
 
         private bool can_open_screen_overlay_later ()
         {
-            if (!this.timer.is_running ()) {
+            if (this.timer.is_running ()) {
                 return false;
             }
 
@@ -196,9 +196,9 @@ namespace Pomodoro
                     this.settings.get_uint ("screen-overlay-lock-delay") * 1000);
 
             if (this.lock_screen_idle_id == 0 && lock_delay > 0) {
-                this.lock_screen_idle_id = this.idle_monitor.add_watch (lock_delay,
-                                                                        this.on_lock_screen_idle,
-                                                                        GLib.get_monotonic_time ());
+                this.lock_screen_idle_id = this.idle_monitor.add_idle_watch (lock_delay,
+                                                                             this.on_lock_screen_idle,
+                                                                             GLib.get_monotonic_time ());
                 return this.lock_screen_idle_id != 0;
             }
 
@@ -222,9 +222,10 @@ namespace Pomodoro
                     this.settings.get_uint ("screen-overlay-reopen-delay") * 1000);
 
             if (this.reopen_screen_overlay_idle_id == 0 && this.can_open_screen_overlay_later ()) {
-                this.reopen_screen_overlay_idle_id = this.idle_monitor.add_watch (reopen_delay,
-                                                                                  this.on_reopen_screen_overlay_idle,
-                                                                                  GLib.get_monotonic_time ());
+                this.reopen_screen_overlay_idle_id = this.idle_monitor.add_idle_watch (
+                                        reopen_delay,
+                                        this.on_reopen_screen_overlay_idle,
+                                        GLib.get_monotonic_time ());
                 return true;
             }
 
@@ -568,11 +569,9 @@ namespace Pomodoro
                     () => {
                         this.notify_time_block_ended_idle_id = 0;
 
-                        if (this.notification_type == Pomodoro.NotificationType.CONFIRM_ADVANCEMENT) {
-                            return GLib.Source.REMOVE;
+                        if (this.notification_type != Pomodoro.NotificationType.CONFIRM_ADVANCEMENT) {
+                            this.notify_time_block_ended (current_time_block);
                         }
-
-                        this.notify_time_block_ended (current_time_block);
 
                         return GLib.Source.REMOVE;
                     },
@@ -651,6 +650,11 @@ namespace Pomodoro
         private void on_session_manager_confirm_advancement (Pomodoro.TimeBlock current_time_block,
                                                              Pomodoro.TimeBlock next_time_block)
         {
+            if (this.notify_time_block_ended_idle_id != 0) {
+                GLib.Source.remove (this.notify_time_block_ended_idle_id);
+                this.notify_time_block_ended_idle_id = 0;
+            }
+
             this.notify_confirm_advancement (current_time_block, next_time_block);
         }
 

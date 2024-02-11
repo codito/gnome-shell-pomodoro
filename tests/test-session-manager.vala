@@ -66,6 +66,9 @@ namespace Tests
             // this.add_test ("advance_to_state__switch_breaks", this.test_advance_to_state__switch_breaks);
             this.add_test ("advance_to_state__completed_session", this.test_advance_to_state__completed_session);
 
+            this.add_test ("confirm_starting_break", this.test_confirm_starting_break);
+            this.add_test ("confirm_starting_pomodoro", this.test_confirm_starting_pomodoro);
+
             this.add_test ("reset", this.test_reset);
             this.add_test ("expire_session__after_timeout", this.test_expire_session__after_timeout);
             this.add_test ("expire_session__after_suspend", this.test_expire_session__after_suspend);
@@ -86,7 +89,8 @@ namespace Tests
             settings.set_uint ("short-break-duration", 300);
             settings.set_uint ("long-break-duration", 900);
             settings.set_uint ("cycles", 4);
-            // settings.set_boolean ("pause-when-idle", false);
+            settings.set_boolean ("confirm-starting-break", false);
+            settings.set_boolean ("confirm-starting-pomodoro", false);
         }
 
         public override void teardown ()
@@ -1399,6 +1403,97 @@ namespace Tests
             // TODO
         }
 
+        public void test_confirm_starting_break ()
+        {
+            var settings = Pomodoro.get_settings ();
+            settings.set_boolean ("confirm-starting-break", true);
+
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+            session_manager.advance_to_state (Pomodoro.State.POMODORO);
+
+            var time_block_1 = session_manager.current_time_block;
+
+            var finished_time = session_manager.current_time_block.end_time;
+            Pomodoro.Timestamp.freeze_to (finished_time);
+            timer.finish (finished_time);
+            assert_true (timer.user_data == time_block_1);
+            assert_true (timer.is_finished ());
+
+            // Confirm after 1 minute.
+            var activity_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            session_manager.advance (activity_time);
+
+            var time_block_2 = session_manager.current_time_block;
+            assert_true (timer.user_data == time_block_2);
+            assert_true (timer.is_started ());
+
+            // Expect previous time-block to be extended by the inactivity time.
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.offset),
+                new GLib.Variant.int64 (0)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.end_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_2.start_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+        }
+
+        public void test_confirm_starting_pomodoro ()
+        {
+            var settings = Pomodoro.get_settings ();
+            settings.set_boolean ("confirm-starting-pomodoro", true);
+
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+            session_manager.advance_to_state (Pomodoro.State.SHORT_BREAK);
+
+            var time_block_1 = session_manager.current_time_block;
+
+            var finished_time = session_manager.current_time_block.end_time;
+            Pomodoro.Timestamp.freeze_to (finished_time);
+            timer.finish (finished_time);
+            assert_true (timer.user_data == time_block_1);
+            assert_true (timer.is_finished ());
+
+            // Confirm after 1 minute.
+            var activity_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            session_manager.advance (activity_time);
+
+            var time_block_2 = session_manager.current_time_block;
+            assert_true (time_block_2.state == Pomodoro.State.POMODORO);
+            assert_true (timer.user_data == time_block_2);
+            assert_true (timer.is_started ());
+
+            // Expect previous time-block to be extended by the inactivity time.
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.offset),
+                new GLib.Variant.int64 (0)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.end_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_2.start_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+        }
+
 
         /*
          * Tests for handling session expiry
@@ -1613,7 +1708,9 @@ namespace Tests
             this.add_test ("timer_rewind__paused_after_completion", this.test_timer_rewind__paused_after_completion);
             this.add_test ("timer_rewind__paused_multiple", this.test_timer_rewind__paused_multiple);
 
-            this.add_test ("timer_finish", this.test_timer_finish);
+            this.add_test ("timer_finished__continuous", this.test_timer_finished__continuous);
+            this.add_test ("timer_finished__wait_for_activity", this.test_timer_finished__wait_for_activity);
+            this.add_test ("timer_finished__manual", this.test_timer_finished__manual);
 
             // this.add_test ("timer_suspended", this.test_timer_suspended);
         }
@@ -1631,7 +1728,8 @@ namespace Tests
             settings.set_uint ("short-break-duration", 300);
             settings.set_uint ("long-break-duration", 900);
             settings.set_uint ("cycles", 4);
-            // settings.set_boolean ("pause-when-idle", false);
+            settings.set_boolean ("confirm-starting-break", false);
+            settings.set_boolean ("confirm-starting-pomodoro", false);
         }
 
         public override void teardown ()
@@ -2718,7 +2816,7 @@ namespace Tests
             assert_true (cycle.is_visible ());
         }
 
-        public void test_timer_finish ()
+        public void test_timer_finished__continuous ()
         {
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
@@ -2747,9 +2845,9 @@ namespace Tests
                 state_changed_call_count++;
             });
 
-            var now = session_manager.current_time_block.end_time;
-            Pomodoro.Timestamp.freeze_to (now);
-            timer.finish (now);
+            var finished_time = session_manager.current_time_block.end_time;
+            Pomodoro.Timestamp.freeze_to (finished_time);
+            timer.finish (finished_time);
 
             assert_cmpuint (state_changed_call_count, GLib.CompareOperator.EQ, 2);
             assert_cmpuint (finished_call_count, GLib.CompareOperator.EQ, 1);
@@ -2759,12 +2857,116 @@ namespace Tests
 
             assert_cmpvariant (
                 new GLib.Variant.int64 (state_1.finished_time),
-                new GLib.Variant.int64 (now)
+                new GLib.Variant.int64 (finished_time)
             );
             assert_cmpvariant (
                 new GLib.Variant.int64 (state_2.started_time),
-                new GLib.Variant.int64 (now)
+                new GLib.Variant.int64 (finished_time)
             );
+        }
+
+        public void test_timer_finished__wait_for_activity ()
+        {
+            var idle_monitor    = new Pomodoro.IdleMonitor.dummy ();
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+            assert_true (idle_monitor.provider is Pomodoro.DummyIdleMonitorProvider);
+
+            session_manager.advance_to_state (Pomodoro.State.SHORT_BREAK);
+
+            var time_block_1 = session_manager.current_time_block;
+
+            var finished_time = session_manager.current_time_block.end_time;
+            Pomodoro.Timestamp.freeze_to (finished_time);
+            timer.finish (finished_time);
+
+            var time_block_2 = session_manager.current_time_block;
+            assert_true (time_block_2.state == Pomodoro.State.POMODORO);
+            assert_true (timer.user_data == time_block_2);
+            assert_false (timer.is_started ());
+
+            // Simulate inactivity of 1 minute.
+            var activity_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            idle_monitor.provider.became_active ();
+
+            assert_true (session_manager.current_time_block == time_block_2);
+            assert_true (timer.user_data == time_block_2);
+            assert_true (timer.is_started ());
+
+            // Expect previous time-block to be extended by the inactivity time.
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.offset),
+                new GLib.Variant.int64 (0)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.end_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_2.start_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+        }
+
+        public void test_timer_finished__manual ()
+        {
+            var settings = Pomodoro.get_settings ();
+            settings.set_boolean ("confirm-starting-break", true);
+            settings.set_boolean ("confirm-starting-pomodoro", true);
+
+            var timer           = new Pomodoro.Timer ();
+            var session_manager = new Pomodoro.SessionManager.with_timer (timer);
+
+            var confirm_advancement_call_count = 0;
+            session_manager.confirm_advancement.connect (() => {
+                confirm_advancement_call_count++;
+            });
+
+            timer.start ();
+
+            var time_block_1 = session_manager.current_time_block;
+
+            var finished_time = session_manager.current_time_block.end_time;
+            Pomodoro.Timestamp.freeze_to (finished_time);
+            timer.finish (finished_time);
+            assert_true (time_block_1.state == Pomodoro.State.POMODORO);
+            assert_true (timer.state.is_finished ());
+
+            // Confirm after 1 minute.
+            var activity_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+
+            // Note that timer.start() can't be used interchangeably with session_manager.advance(),
+            // as the timer has already started.
+            session_manager.advance (activity_time);
+
+            var time_block_2 = session_manager.current_time_block;
+            assert_true (time_block_2.state.is_break ());
+            assert_true (timer.user_data == time_block_2);
+            assert_true (timer.is_started ());
+
+            // Expect previous time-block to be extended by the inactivity time.
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.started_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (timer.state.offset),
+                new GLib.Variant.int64 (0)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_1.end_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (time_block_2.start_time),
+                new GLib.Variant.int64 (activity_time)
+            );
+            assert_cmpuint (confirm_advancement_call_count, GLib.CompareOperator.EQ, 1);
         }
     }
 }

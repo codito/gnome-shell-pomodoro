@@ -36,15 +36,14 @@
       <summary>Number of pomodoros before a long break</summary>
       <description>Number of pomodoros before a long break.</description>
     </key>
-    <key name="pomodoro-advancement-mode" enum="org.gnomepomodoro.Pomodoro.AdvancementMode">
-      <default>"continuous"</default>
-      <summary>Advancement mode at the end of Pomodoro</summary>
-      <description>How the timer should behave at the end of a pomodoro.</description>
+    <key name="confirm-starting-break" type="b">
+      <default>false</default>
+      <description>Don't start break unless manually confirmed</description>
     </key>
-    <key name="break-advancement-mode" enum="org.gnomepomodoro.Pomodoro.AdvancementMode">
-      <default>"wait-for-activity"</default>
-      <summary>Advancement mode at the end of break</summary>
-      <description>How the timer should behave at the end of a break.</description>
+    <key name="confirm-starting-pomodoro" type="b">
+      <default>false</default>
+      <summary>Confirm starting a Pomodoro</summary>
+      <description>Don't start pomodoro unless manually confirmed</description>
     </key>
     <key name="pause-on-lockscreen" type="b">
       <default>true</default>
