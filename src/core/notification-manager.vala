@@ -125,11 +125,11 @@ namespace Pomodoro
 
         private bool can_open_screen_overlay_later ()
         {
-            if (this.timer.is_running ()) {
+            if (!this.timer.is_running ()) {
                 return false;
             }
 
-            var current_time_block = this.session_manager.current_time_block;
+            var current_time_block = this._session_manager.current_time_block;
             if (current_time_block == null || !current_time_block.state.is_break ()) {
                 return false;
             }
@@ -154,8 +154,11 @@ namespace Pomodoro
                 return false;
             }
 
-            // Don't interrupt the current notification
-            if (this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ABOUT_TO_END) {
+            // Don't interrupt the current notification.
+            if (this.notification_type == Pomodoro.NotificationType.TIME_BLOCK_ABOUT_TO_END &&
+                this.notification_time_block != null &&
+                this.notification_time_block.state.is_break ())
+            {
                 return false;
             }
 
