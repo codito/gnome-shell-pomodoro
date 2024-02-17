@@ -108,7 +108,7 @@ namespace Pomodoro
         private double              value_animation_start_value;
 
         /* Animation for highlight`s color. */
-        private Adw.TimedAnimation? opacity_animation;
+        private Adw.TimedAnimation? opacity_animation = null;
 
         /* Preserved value in case we're fading out. */
         private double last_value = double.NAN;
@@ -493,6 +493,8 @@ namespace Pomodoro
 
         public override void map ()
         {
+            this.last_value = double.NAN;
+
             base.map ();
 
             this.connect_signals ();
@@ -505,8 +507,6 @@ namespace Pomodoro
             this.stop_opacity_animation ();
 
             base.unmap ();
-
-            this.last_value = double.NAN;
         }
 
         public override bool focus (Gtk.DirectionType direction)

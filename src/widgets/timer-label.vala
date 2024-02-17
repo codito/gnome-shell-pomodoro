@@ -239,6 +239,11 @@ namespace Pomodoro
                 this.crossfade_animation = null;
             }
 
+            if (this.blink_animation != null) {
+                this.blink_animation.pause ();
+                this.blink_animation = null;
+            }
+
             var animation_target = new Adw.CallbackAnimationTarget (this.queue_draw);
 
             this.crossfade_animation = new Adw.TimedAnimation (this,
@@ -385,7 +390,7 @@ namespace Pomodoro
             }
 
             if (this.timer_state_changed_id == 0) {
-                this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
+                this.timer_state_changed_id = this._timer.state_changed.connect_after (this.on_timer_state_changed);
             }
         }
 
@@ -427,8 +432,6 @@ namespace Pomodoro
                 this.fade_in ();
             }
             else {
-                this.stop_blinking_animation ();
-                this.update_css_classes ();
                 this.fade_out ();
             }
 
