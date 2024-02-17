@@ -5,6 +5,8 @@ namespace Pomodoro
     {
         [GtkChild]
         private unowned Adw.SwitchRow dark_theme_switchrow;
+        [GtkChild]
+        private unowned Adw.SwitchRow compact_view_switchrow;
 
         private GLib.Settings? settings = null;
 
@@ -14,6 +16,10 @@ namespace Pomodoro
 
             this.settings.bind ("dark-theme",
                                 this.dark_theme_switchrow,
+                                "active",
+                                GLib.SettingsBindFlags.DEFAULT);
+            this.settings.bind ("prefer-compact-size",
+                                this.compact_view_switchrow,
                                 "active",
                                 GLib.SettingsBindFlags.DEFAULT);
         }

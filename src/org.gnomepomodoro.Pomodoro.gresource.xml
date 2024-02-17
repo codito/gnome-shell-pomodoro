@@ -52,7 +52,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
-    <file preprocess="xml-stripblanks">icons/scalable/actions/window-expand-symbolic.svg</file>
-    <file preprocess="xml-stripblanks">icons/scalable/actions/window-shrink-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-normal-size-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-compact-size-symbolic.svg</file>
   </gresource>
 </gresources>

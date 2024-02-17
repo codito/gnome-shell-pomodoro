@@ -88,6 +88,11 @@
       <summary>Use dark theme variant</summary>
       <description></description>
     </key>
+    <key name="prefer-compact-size" type="b">
+      <default>false</default>
+      <summary>Open app in compact view</summary>
+      <description></description>
+    </key>
   </schema>
 
 <!--

@@ -11,6 +11,11 @@
             <property name="title" translatable="yes">Prefer Dark Theme</property>
           </object>
         </child>
+        <child>
+          <object class="AdwSwitchRow" id="compact_view_switchrow">
+            <property name="title" translatable="yes">Open App In Compact View</property>
+          </object>
+        </child>
       </object>
     </child>
   </template>

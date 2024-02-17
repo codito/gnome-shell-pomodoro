@@ -109,14 +109,14 @@
             <property name="receives-default">False</property>
             <property name="halign">center</property>
             <property name="valign">center</property>
-            <property name="action-name">win.expand</property>
+            <property name="action-name">win.normal-size</property>
             <style>
               <class name="circular"/>
               <class name="flat"/>
             </style>
             <child>
               <object class="GtkImage">
-                <property name="icon-name">window-expand-symbolic</property>
+                <property name="icon-name">window-normal-size-symbolic</property>
                 <style>
                   <class name="symbolic"/>
                 </style>

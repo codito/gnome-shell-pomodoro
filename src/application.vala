@@ -471,7 +471,7 @@ namespace Pomodoro
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
             this.set_accels_for_action ("app.preferences", {"<Primary>comma"});
             this.set_accels_for_action ("app.quit", {"<Primary>q"});
-            this.set_accels_for_action ("win.toggle-shrinked", {"F9"});  // TODO: rename to toggle-compact
+            this.set_accels_for_action ("win.toggle-compact-size", {"F9"});
         }
 
         private void update_color_scheme ()

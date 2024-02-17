@@ -158,6 +158,7 @@ namespace Pomodoro
         {
             // TODO: this.default_page should be set from application.vala
             // var application = Pomodoro.Application.get_default ();
+            var settings = Pomodoro.get_settings ();
 
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.timer           = session_manager.timer;
@@ -167,6 +168,10 @@ namespace Pomodoro
 
             this.insert_action_group ("session-manager", new Pomodoro.SessionManagerActionGroup ());
             this.insert_action_group ("timer", new Pomodoro.TimerActionGroup ());
+
+            if (settings.get_boolean ("prefer-compact-size")) {
+                this.size = Pomodoro.WindowSize.COMPACT;
+            }
 
             this.update_title ();
             this.update_timer_indicator ();
@@ -306,27 +311,27 @@ namespace Pomodoro
         }
         */
 
-        private void on_shrink_activate (GLib.SimpleAction action,
-                                         GLib.Variant?     parameter)
+        private void on_compact_size_activate (GLib.SimpleAction action,
+                                               GLib.Variant?     parameter)
         {
             this.size = Pomodoro.WindowSize.COMPACT;
         }
 
-        private void on_expand_activate (GLib.SimpleAction action,
-                                         GLib.Variant?     parameter)
+        private void on_normal_size_activate (GLib.SimpleAction action,
+                                              GLib.Variant?     parameter)
         {
             this.size = Pomodoro.WindowSize.NORMAL;
             this.view = Pomodoro.WindowView.TIMER;
         }
 
-        private void on_toggle_shrinked_activate (GLib.SimpleAction action,
-                                                  GLib.Variant?     parameter)
+        private void on_toggle_compact_size_activate (GLib.SimpleAction action,
+                                                      GLib.Variant?     parameter)
         {
             if (this.size == Pomodoro.WindowSize.NORMAL) {
-                this.lookup_action ("shrink").activate (null);
+                this.lookup_action ("compact-size").activate (null);
             }
             else {
-                this.lookup_action ("expand").activate (null);
+                this.lookup_action ("normal-size").activate (null);
             }
         }
 
@@ -336,20 +341,20 @@ namespace Pomodoro
 
             GLib.SimpleAction action;
 
-            action = new GLib.SimpleAction ("shrink", null);
-            action.activate.connect (this.on_shrink_activate);
+            action = new GLib.SimpleAction ("compact-size", null);
+            action.activate.connect (this.on_compact_size_activate);
             action_map.add_action (action);
 
-            action = new GLib.SimpleAction ("expand", null);
-            action.activate.connect (this.on_expand_activate);
+            action = new GLib.SimpleAction ("normal-size", null);
+            action.activate.connect (this.on_normal_size_activate);
             action_map.add_action (action);
 
-            action = new GLib.SimpleAction ("toggle-shrinked", null);
-            action.activate.connect (this.on_toggle_shrinked_activate);
+            action = new GLib.SimpleAction ("toggle-compact-size", null);
+            action.activate.connect (this.on_toggle_compact_size_activate);
             action_map.add_action (action);
         }
 
-        public void parser_finished (Gtk.Builder builder)
+        public override void parser_finished (Gtk.Builder builder)
         {
             this.setup_actions ();
 
