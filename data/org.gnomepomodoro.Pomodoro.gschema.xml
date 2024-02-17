@@ -74,12 +74,12 @@
     </key>
     -->
     <key name="screen-overlay-lock-delay" type="u">
-      <default>15</default>
+      <default>0</default>
       <summary>Time to lock the screen after opening screen overlay</summary>
       <description></description>
     </key>
     <key name="screen-overlay-reopen-delay" type="u">
-      <default>60</default>
+      <default>30</default>
       <summary>Time to reopen screen overlay</summary>
       <description></description>
     </key>

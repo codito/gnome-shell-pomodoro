@@ -676,6 +676,13 @@ namespace Pomodoro
                     }
 
                     break;
+
+                case "screen-overlay-reopen-delay":
+                    if (this.reopen_screen_overlay_idle_id != 0) {
+                        this.remove_reopen_screen_overlay_idle_watch ();
+                        this.add_reopen_screen_overlay_idle_watch ();
+                    }
+                    break;
             }
         }
 
