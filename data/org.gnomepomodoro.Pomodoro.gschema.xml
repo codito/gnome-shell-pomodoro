@@ -83,6 +83,11 @@
       <summary>Time to reopen screen overlay</summary>
       <description></description>
     </key>
+    <key name="dark-theme" type="b">
+      <default>false</default>
+      <summary>Use dark theme variant</summary>
+      <description></description>
+    </key>
   </schema>
 
 <!--

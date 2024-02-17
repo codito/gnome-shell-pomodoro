@@ -10,6 +10,7 @@
     <file alias="ui/preferences-keyboard-shortcut-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-keyboard-shortcut-page.ui</file>
     <file alias="ui/preferences-main-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-main-page.ui</file>
     <file alias="ui/preferences-plugins-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-plugins-page.ui</file>
+    <file alias="ui/preferences-page-appearance.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-appearance.ui</file>
     <file alias="ui/preferences-page-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-notifications.ui</file>
     <file alias="ui/preferences-page-timer.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-timer.ui</file>
     <file alias="ui/preferences-window.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-window.ui</file>

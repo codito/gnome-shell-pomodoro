@@ -96,6 +96,7 @@ gnome_pomodoro_vala_sources = files(
   'capabilities/notifications.vala',
   'views/about-window.vala',
   'views/compact-timer-view.vala',
+  'views/preferences-page-appearance.vala',
   'views/preferences-page-notifications.vala',
   'views/preferences-page-timer.vala',
   'views/preferences-window.vala',

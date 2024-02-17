@@ -474,6 +474,18 @@ namespace Pomodoro
             this.set_accels_for_action ("win.toggle-shrinked", {"F9"});  // TODO: rename to toggle-compact
         }
 
+        private void update_color_scheme ()
+        {
+            var style_manager = Adw.StyleManager.get_default ();
+
+            if (this.settings.get_boolean ("dark-theme")) {
+                style_manager.set_color_scheme (Adw.ColorScheme.FORCE_DARK);
+            }
+            else {
+                style_manager.set_color_scheme (Adw.ColorScheme.DEFAULT);
+            }
+        }
+
         /**
          * This is just for local things, like showing help
          */
@@ -509,6 +521,9 @@ namespace Pomodoro
 
             base.startup ();
 
+            this.settings = Pomodoro.get_settings ();
+            this.settings.changed.connect (this.on_settings_changed);
+
             this.session_manager = Pomodoro.SessionManager.get_default ();
             this.session_manager.enter_time_block.connect (this.on_enter_time_block);
 
@@ -529,6 +544,9 @@ namespace Pomodoro
             //     this.setup_plugins.end (res);
             //
             // });
+
+            this.update_color_scheme ();
+
             this.release ();
 
             debug ("startup: end");
@@ -708,11 +726,6 @@ namespace Pomodoro
             }
 
             /*
-            if (this.settings == null) {
-                this.settings = Pomodoro.get_settings ();
-                this.settings.changed.connect (this.on_settings_changed);
-            }
-
             if (this.service == null || this.timer_service == null) {
                 this.hold ();
                 this.service = new Pomodoro.ApplicationService (connection, this);
@@ -753,17 +766,12 @@ namespace Pomodoro
         private void on_settings_changed (GLib.Settings settings,
                                           string        key)
         {
-            // TODO: Consider removing this
-
-            // var current_time_block = this.session_manager.current_time_block;
-            // var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
-
-            // switch (key)
-            // {
-            //     case "enabled-plugins":  // TODO: remove
-            //         this.load_plugins ();
-            //         break;
-            // }
+            switch (key)
+            {
+                case "dark-theme":
+                    this.update_color_scheme ();
+                    break;
+            }
         }
 
         private void on_enter_time_block (Pomodoro.TimeBlock time_block)
