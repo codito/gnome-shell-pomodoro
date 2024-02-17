@@ -50,7 +50,7 @@ namespace Pomodoro
             construct {
                 this._timer = value;
 
-                this.timer_state_changed_id = this._timer.state_changed.connect (this.on_timer_state_changed);
+                this.timer_state_changed_id = this._timer.state_changed.connect_after (this.on_timer_state_changed);
 
                 var idle_id = GLib.Idle.add (() => {
                     this.update (true);
@@ -83,7 +83,6 @@ namespace Pomodoro
         private ulong                       timer_tick_id = 0;
         private ulong                       settings_changed_id = 0;
         private ulong                       session_manager_confirm_advancement_id = 0;
-        private uint                        notify_time_block_ended_idle_id = 0;
         private uint                        withdraw_timeout_id = 0;
         private bool                        screen_overlay_active = false;
         private int                         screen_overlay_inhibit_count = 0;
@@ -545,11 +544,6 @@ namespace Pomodoro
             var current_time_block = current_state.user_data as Pomodoro.TimeBlock;
             var timestamp = this._timer.get_current_time ();
 
-            if (this.notify_time_block_ended_idle_id != 0) {
-                GLib.Source.remove (this.notify_time_block_ended_idle_id);
-                this.notify_time_block_ended_idle_id = 0;
-            }
-
             if (current_state.is_paused ())
             {
                 var elapsed = Pomodoro.Timestamp.subtract (timestamp, current_state.started_time);
@@ -568,20 +562,9 @@ namespace Pomodoro
             }
             else if (current_state.is_finished () && !previous_state.is_finished ())
             {
-                this.notify_time_block_ended_idle_id = GLib.Idle.add (
-                    () => {
-                        this.notify_time_block_ended_idle_id = 0;
-
-                        if (this.notification_type != Pomodoro.NotificationType.CONFIRM_ADVANCEMENT) {
-                            this.notify_time_block_ended (current_time_block);
-                        }
-
-                        return GLib.Source.REMOVE;
-                    },
-                    GLib.Priority.HIGH_IDLE
-                );
-                GLib.Source.set_name_by_id (this.notify_time_block_ended_idle_id,
-                                            "Pomodoro.NotificationManager.notify_time_block_ended");
+                if (this.notification_type != Pomodoro.NotificationType.CONFIRM_ADVANCEMENT) {
+                    this.notify_time_block_ended (current_time_block);
+                }
 
                 if (this.screen_overlay_active) {
                     this.close_screen_overlay ();
@@ -653,11 +636,6 @@ namespace Pomodoro
         private void on_session_manager_confirm_advancement (Pomodoro.TimeBlock current_time_block,
                                                              Pomodoro.TimeBlock next_time_block)
         {
-            if (this.notify_time_block_ended_idle_id != 0) {
-                GLib.Source.remove (this.notify_time_block_ended_idle_id);
-                this.notify_time_block_ended_idle_id = 0;
-            }
-
             this.notify_confirm_advancement (current_time_block, next_time_block);
         }
 
@@ -766,11 +744,6 @@ namespace Pomodoro
 
             if (this.screen_overlay_active) {
                 this.close_screen_overlay ();
-            }
-
-            if (this.notify_time_block_ended_idle_id != 0) {
-                GLib.Source.remove (this.notify_time_block_ended_idle_id);
-                this.notify_time_block_ended_idle_id = 0;
             }
 
             if (this.timer_tick_id != 0) {
