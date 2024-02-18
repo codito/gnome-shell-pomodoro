@@ -148,8 +148,12 @@ namespace Pomodoro
         {
             var window = this.get_root () as Gtk.Window;
 
+            if (window == null) {
+                return;
+            }
+
             if (this.interpolate_window_size &&
-                window != null &&
+                this.transition_animation == null &&
                 this._visible_child != null)
             {
                 window.resizable = this._visible_child.page.resizable;
@@ -210,12 +214,15 @@ namespace Pomodoro
             if (this.interpolate_window_size && window != null) {
                 window.halign = Gtk.Align.START;
                 window.valign = Gtk.Align.START;
-                window.resizable = false;
             }
 
             if (this._visible_child == null || this.last_visible_child == null || transition_duration == 0) {
                 this.on_transition_animation_done ();
                 return;
+            }
+
+            if (this._visible_child.page.resizable) {
+                window.resizable = true;
             }
 
             var animation_target = new Adw.CallbackAnimationTarget ((value) => {

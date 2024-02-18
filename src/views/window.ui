@@ -92,7 +92,8 @@
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="AdwHeaderBar" id="header_bar">
-                    <property name="centering-policy">strict</property>
+                    <property name="centering-policy">loose</property>
+                    <property name="decoration-layout">menu:close</property>
                     <property name="title-widget">
                       <object class="AdwViewSwitcher">
                         <property name="stack">view_stack</property>
