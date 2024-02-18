@@ -9,6 +9,13 @@
     <property name="resizable">True</property><!-- it's required for the fullscreen -->
     <property name="handle-menubar-accel">False</property>
     <property name="accessible-role">alert</property>
+    <property name="child">
+      <object class="AdwBin" id="container">
+        <property name="layout-manager">
+          <object class="PomodoroMonitorConstrainedLayoutManager"/>
+        </property>
+      </object>
+    </property>
     <child>
       <object class="GtkEventControllerKey">
         <signal name="key-pressed" handler="on_key_pressed" swapped="no"/>

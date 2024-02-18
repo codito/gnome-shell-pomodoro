@@ -45,7 +45,7 @@ test_env.set('G_DEBUG', 'gc-friendly')  # ,fatal-criticals
 # test_env.set('G_MESSAGES_DEBUG', 'all')
 # test_env.set('G_MESSAGES_DEBUG', 'Pomodoro')
 # test_env.set('G_ENABLE_DIAGNOSTIC', '1')
-test_env.set('GSETTINGS_SCHEMA_DIR', meson.build_root() / 'data')
+test_env.set('GSETTINGS_SCHEMA_DIR', meson.project_build_root() / 'data')
 test_env.set('GSETTINGS_BACKEND', 'memory')
 test_env.set('MALLOC_CHECK_', '2')
 # test_env.set('GTK_A11Y', 'none')

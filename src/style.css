@@ -204,8 +204,12 @@ compacttimerview:dir(rtl) progressbar {
  * Screen Overlay
  */
 lightbox {
-    background-color: rgba(0, 0, 0, 0.90);
+    background-color: rgba(0, 0, 0, 1.0);
     color: white;
+    padding: 0;
+}
+
+lightbox .contents {
     padding: 20px;
 }
 

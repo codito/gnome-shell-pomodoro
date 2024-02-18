@@ -26,7 +26,7 @@ namespace Pomodoro
     public class NotificationsCapability : Pomodoro.Capability
     {
         private Pomodoro.NotificationManager?                        notification_manager = null;
-        private Pomodoro.ScreenOverlay?                              screen_overlay = null;
+        private GLib.Cancellable?                                    cancellable = null;
         private Pomodoro.ProviderSet<Pomodoro.NotificationsProvider> providers;
 
         public NotificationsCapability ()
@@ -37,26 +37,34 @@ namespace Pomodoro
         private void show_screen_overlay (bool pass_through)
                                           requires (this.notification_manager != null)
         {
-            if (this.screen_overlay != null && this.screen_overlay.get_mapped ()) {
+            if (this.cancellable != null && !this.cancellable.is_cancelled ()) {
                 return;
             }
 
-            var screen_overlay = new Pomodoro.ScreenOverlay ();
-            // screen_overlay.pass_through = pass_through;  // TODO
-            screen_overlay.map.connect (() => {
-                if (this.screen_overlay != null) {
-                    this.notification_manager.screen_overlay_opened ();
-                }
-            });
-            screen_overlay.unmap.connect (() => {
-                if (this.screen_overlay != null) {
-                    this.screen_overlay = null;
-                    this.notification_manager.screen_overlay_closed ();
-                }
-            });
+            var screen_overlay_group = new Pomodoro.LightboxGroup (typeof (Pomodoro.ScreenOverlay));
+            var cancellable = new GLib.Cancellable ();
 
-            this.screen_overlay = screen_overlay;
-            this.screen_overlay.present ();
+            screen_overlay_group.open.begin (
+                cancellable,
+                (obj, res) => {
+                    try {
+                        screen_overlay_group.open.end (res);
+
+                        this.cancellable = null;
+                        this.notification_manager.screen_overlay_closed ();
+                    }
+                    catch (GLib.Error error) {
+                        if (!cancellable.is_cancelled ()) {
+                            GLib.warning ("Failed to open overlay: %s", error.message);
+                            cancellable.cancel ();
+                        }
+                    }
+                });
+
+            if (!cancellable.is_cancelled ()) {
+                this.cancellable = cancellable;
+                this.notification_manager.screen_overlay_opened ();
+            }
         }
 
         private void on_provider_enabled (Pomodoro.NotificationsProvider provider)
@@ -67,6 +75,19 @@ namespace Pomodoro
 
             if (provider.has_actions) {
                 this.add_detail ("actions");
+            }
+        }
+
+        private void on_request_screen_overlay_open ()
+        {
+            this.show_screen_overlay (true);
+        }
+
+        private void on_request_screen_overlay_close ()
+        {
+            if (this.cancellable != null) {
+                this.cancellable.cancel ();
+                this.cancellable = null;
             }
         }
 
@@ -82,29 +103,30 @@ namespace Pomodoro
 
         public override void enable ()
         {
-            var notification_manager = new Pomodoro.NotificationManager ();
-            notification_manager.open_screen_overlay.connect ((timestamp) => {
-                this.show_screen_overlay (true);
-            });
-            notification_manager.close_screen_overlay.connect (() => {
-                if (this.screen_overlay != null) {
-                    this.screen_overlay.close ();
-                }
-            });
+            if (this.notification_manager == null)
+            {
+                var notification_manager = new Pomodoro.NotificationManager ();
+                notification_manager.request_screen_overlay_open.connect (this.on_request_screen_overlay_open);
+                notification_manager.request_screen_overlay_close.connect (this.on_request_screen_overlay_close);
 
-            this.notification_manager = notification_manager;
+                this.notification_manager = notification_manager;
+            }
 
             base.enable ();
         }
 
         public override void disable ()
         {
-            if (this.screen_overlay != null) {
-                this.screen_overlay.close ();
+            if (this.cancellable != null) {
+                this.cancellable.cancel ();
+                this.cancellable = null;
             }
 
-            this.notification_manager = null;
-            this.screen_overlay = null;
+            if (this.notification_manager != null) {
+                this.notification_manager.request_screen_overlay_open.disconnect (this.on_request_screen_overlay_open);
+                this.notification_manager.request_screen_overlay_close.disconnect (this.on_request_screen_overlay_close);
+                this.notification_manager = null;
+            }
 
             base.disable ();
         }

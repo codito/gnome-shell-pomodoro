@@ -177,6 +177,11 @@ namespace Pomodoro
 
         private void on_reopen_screen_overlay_idle ()
         {
+            if (this.screen_overlay_active) {
+                GLib.warning ("Screen overlay is already opened.");
+                return;
+            }
+
             if (!this.can_open_screen_overlay ()) {
                 return;
             }
@@ -189,7 +194,7 @@ namespace Pomodoro
                 return;
             }
 
-            this.open_screen_overlay (timestamp);
+            this.request_screen_overlay_open ();
         }
 
         private bool add_lock_screen_idle_watch ()
@@ -560,7 +565,7 @@ namespace Pomodoro
                 }
 
                 if (this.screen_overlay_active) {
-                    this.close_screen_overlay ();
+                    this.request_screen_overlay_close ();
                 }
             }
             else if (current_state.is_finished () && !previous_state.is_finished ())
@@ -570,7 +575,7 @@ namespace Pomodoro
                 }
 
                 if (this.screen_overlay_active) {
-                    this.close_screen_overlay ();
+                    this.request_screen_overlay_close ();
                 }
             }
             else if (current_state.is_started ())
@@ -590,7 +595,7 @@ namespace Pomodoro
                     // }
 
                     if (!this.screen_overlay_active) {
-                        this.open_screen_overlay (timestamp);
+                        this.request_screen_overlay_open ();
                     }
 
                     return;
@@ -610,7 +615,7 @@ namespace Pomodoro
                 this.withdraw_notifications ();
 
                 if (this.screen_overlay_active) {
-                    this.close_screen_overlay ();
+                    this.request_screen_overlay_close ();
                 }
             }
 
@@ -701,55 +706,39 @@ namespace Pomodoro
         /**
          * Notify manager that screen overlay has opened.
          */
+        [HasEmitter]
         public void screen_overlay_opened ()
         {
             this.screen_overlay_active = true;
 
             this.remove_reopen_screen_overlay_idle_watch ();
             this.add_lock_screen_idle_watch ();
-
             this.withdraw_notifications ();
         }
 
         /**
          * Notify manager that screen overlay has closed.
          */
+        [HasEmitter]
         public void screen_overlay_closed ()
         {
             this.screen_overlay_active = false;
 
-            this.screen_overlay_inhibit_count++;
-            this.on_timer_state_changed (this._timer.state, this._timer.state);
-            this.screen_overlay_inhibit_count--;
-
             this.remove_lock_screen_idle_watch ();
             this.add_reopen_screen_overlay_idle_watch ();
-
             this.update (false);
         }
 
-        public signal void open_screen_overlay (int64 timestamp)
-        {
-            this.screen_overlay_active = true;
+        public signal void request_screen_overlay_open ();
 
-            this.withdraw_notifications ();
-        }
-
-        public signal void close_screen_overlay ()
-        {
-            this.screen_overlay_active = false;
-
-            this.remove_lock_screen_idle_watch ();
-
-            this.update (false);
-        }
+        public signal void request_screen_overlay_close ();
 
         public override void dispose ()
         {
             this.withdraw_notifications ();
 
             if (this.screen_overlay_active) {
-                this.close_screen_overlay ();
+                this.request_screen_overlay_close ();
             }
 
             if (this.timer_tick_id != 0) {
@@ -788,3 +777,4 @@ namespace Pomodoro
         }
     }
 }
+
