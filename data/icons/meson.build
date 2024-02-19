@@ -17,6 +17,11 @@ foreach i:icon_dirs
 endforeach
 
 install_data(
+    'scalable' / 'org.gnomepomodoro.Pomodoro.svg',
+    install_dir: hicolor_icondir / 'scalable' / 'apps',
+)
+
+install_data(
     'symbolic' / 'org.gnomepomodoro.Pomodoro-symbolic.svg',
     install_dir: hicolor_icondir / 'symbolic' / 'apps',
 )
