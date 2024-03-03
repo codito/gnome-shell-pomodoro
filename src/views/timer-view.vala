@@ -350,7 +350,6 @@ namespace Pomodoro
         {
             var tmp_minimum_width = 0;
             var tmp_natural_width = 0;
-            var tmp_minimum_height = 0;
             var tmp_natural_height = 0;
 
             minimum_width = MIN_WIDTH;

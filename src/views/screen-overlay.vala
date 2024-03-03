@@ -11,7 +11,6 @@ namespace Pomodoro
         private unowned GLib.ListModel?     monitors;
         private ulong                       monitors_changed_id = 0;
         private uint                        update_windows_idle_id = 0;
-        private ulong                       lock_screen_notify_id = 0;
 
         construct
         {
@@ -63,12 +62,11 @@ namespace Pomodoro
          */
         private unowned Gdk.Monitor? get_primary_monitor ()
         {
-            var display = this.get_display ();
-
             this.ensure_monitors ();
 
             #if HAVE_GDK4_X11
                 var x11_display = display as Gdk.X11.Display;
+
                 if (x11_display != null) {
                     debug ("Use X11 primary-monitor");
                     return x11_display.get_primary_monitor ();

@@ -354,11 +354,9 @@ namespace Pomodoro
             action_map.add_action (action);
         }
 
-        public override void parser_finished (Gtk.Builder builder)
+        public void parser_finished (Gtk.Builder builder)
         {
             this.setup_actions ();
-
-            // base.parser_finished (builder);
         }
     }
 

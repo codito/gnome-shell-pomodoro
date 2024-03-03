@@ -72,7 +72,8 @@ namespace Tests
 
         for (var index = 0; index < length; index++)
         {
-            if (value[index] != expected[index]) {
+            if (value[index] != expected[index])
+            {
                 GLib.Test.message (
                     "Arrays are not equal: %s != %s",
                     strv_to_representation (value),
@@ -92,62 +93,6 @@ namespace Tests
         object = null;
 
         assert_null (weak_object);
-    }
-
-    // public struct SignalHandlerLogEntry
-    // {
-    //     public unowned GLib.Object instance;
-    //     public string              signal_name;
-    //     public int64               timestamp;
-    // }
-
-    public class SignalLogger
-    {
-        public class Entry
-        {
-            unowned GLib.Object instance;
-            string              detailed_signal;
-            int64               timestamp;
-        }
-
-        public Entry[] entries;
-
-        // private GLib.List<GLib.SignalGroup> signal_groups;
-
-        public SignalLogger ()
-        {
-            this.entries = new Entry[0];
-
-            // this.handlers = new GLib.HashTable<str, ulong> ();
-        }
-
-        public void clear ()
-        {
-            this.entries = new Entry[0];
-        }
-
-        public void watch (GLib.Object instance,
-                           string      signal_name)
-        {
-            // public unowned GLib.Object instance;
-            // this.handlers[signal_name] = this.object.connect (signal_name);
-
-            // instance.connect (@"signal::$signal_name", () => {
-            //     message (@"Emitted $signal_name");
-            // });
-        }
-
-        // public int count (GLib.Object instance,
-        //                   string      signal_name)
-        // {
-        //     var count = 0;
-
-        //     return count;
-        // }
-
-        // public string[] list (GLib.Object instance)
-        // {
-        // }
     }
 
 
@@ -236,7 +181,7 @@ namespace Tests
         Gtk.init ();
         GLib.Test.init (ref args);
 
-        // Undo changes made by Test.init(), don't make warnings fatal
+        // Undo changes made by Test.init(), don't make warnings fatal.
         GLib.Log.set_always_fatal (GLib.LogLevelFlags.LEVEL_ERROR | GLib.LogLevelFlags.LEVEL_CRITICAL);
     }
 
@@ -251,11 +196,14 @@ namespace Tests
         while (true)
         {
             Tests.TestSuite? extra_test_suite = arguments_list.arg ();
-            if (extra_test_suite == null) {
-                break;  // end of the list
-            }
 
-            root_suite.add_suite (extra_test_suite.get_g_test_suite ());
+            if (extra_test_suite != null) {
+                root_suite.add_suite (extra_test_suite.get_g_test_suite ());
+            }
+            else {
+                // End of the list.
+                break;
+            }
         }
 
         return GLib.Test.run ();

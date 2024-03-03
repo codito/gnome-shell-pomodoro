@@ -116,7 +116,6 @@ namespace Pomodoro
                                            out int      baseline)
         {
             var context = layout.get_context ();
-            var metrics = context.get_metrics (null, null);
             var text = layout.get_text ();
             var is_numeric = int.try_parse (text);
 
@@ -129,10 +128,6 @@ namespace Pomodoro
                 var reference_layout = layout.copy ();
                 reference_layout.set_text (reference_text, reference_text.length);
                 reference_layout.get_pixel_size (out width, null);
-
-                // The above method is slightly better.
-                // var glyph_width = scale * (double)(metrics.get_approximate_digit_width () / Pango.SCALE);
-                // width = (int) Math.floor (text.length * glyph_width);
             }
         }
 

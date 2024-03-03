@@ -108,9 +108,18 @@ namespace Pomodoro
             return Pomodoro.Timestamp.is_defined (this.started_time);
         }
 
+        public inline bool is_running ()
+        {
+            return Pomodoro.Timestamp.is_defined (this.started_time) &&
+                   Pomodoro.Timestamp.is_undefined (this.paused_time) &&
+                   Pomodoro.Timestamp.is_undefined (this.finished_time);
+        }
+
         public inline bool is_paused ()
         {
-            return Pomodoro.Timestamp.is_defined (this.paused_time);
+            return Pomodoro.Timestamp.is_defined (this.paused_time) &&
+                   Pomodoro.Timestamp.is_defined (this.started_time) &&
+                   Pomodoro.Timestamp.is_undefined (this.finished_time);
         }
 
         public inline bool is_finished ()
@@ -474,9 +483,7 @@ namespace Pomodoro
          */
         public bool is_running ()
         {
-            return Pomodoro.Timestamp.is_defined (this._state.started_time) &&
-                   Pomodoro.Timestamp.is_undefined (this._state.paused_time) &&
-                   Pomodoro.Timestamp.is_undefined (this._state.finished_time);
+            return this._state.is_running ();
         }
 
         /**
@@ -484,7 +491,7 @@ namespace Pomodoro
          */
         public bool is_started ()
         {
-            return Pomodoro.Timestamp.is_defined (this._state.started_time);
+            return this._state.is_started ();
         }
 
         /**
@@ -492,9 +499,7 @@ namespace Pomodoro
          */
         public bool is_paused ()
         {
-            return Pomodoro.Timestamp.is_defined (this._state.paused_time) &&
-                   Pomodoro.Timestamp.is_defined (this._state.started_time) &&
-                   Pomodoro.Timestamp.is_undefined (this._state.finished_time);
+            return this._state.is_paused ();
         }
 
         /**
@@ -504,7 +509,7 @@ namespace Pomodoro
          */
         public bool is_finished ()
         {
-            return Pomodoro.Timestamp.is_defined (this._state.finished_time);
+            return this._state.is_finished ();
         }
 
         /**
@@ -720,7 +725,7 @@ namespace Pomodoro
          * Unfortunately it can deviate from full seconds.
          */
         private bool on_timeout ()
-                                      requires (this.timeout_id != 0)
+                                 requires (this.timeout_id != 0)
         {
             var timestamp         = this.get_current_time (GLib.MainContext.current_source ().get_time ());
             var timestamp_rounded = this.calculate_tick_time (timestamp);

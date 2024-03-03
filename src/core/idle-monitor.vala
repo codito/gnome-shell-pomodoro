@@ -94,10 +94,10 @@ namespace Pomodoro
     [SingleInstance]
     public class IdleMonitor : Pomodoro.ProvidedObject<Pomodoro.IdleMonitorProvider>
     {
-        private static uint next_id = 1;
+        private static uint next_watch_id = 1;
 
         [Compact]
-        class Watch
+        private class Watch
         {
             public uint                                  id = 0;
             public uint32                                external_id = 0;
@@ -293,8 +293,8 @@ namespace Pomodoro
                 return 0;
             }
 
-            var watch_id = Pomodoro.IdleMonitor.next_id;
-            Pomodoro.IdleMonitor.next_id++;
+            var watch_id = Pomodoro.IdleMonitor.next_watch_id;
+            Pomodoro.IdleMonitor.next_watch_id++;
 
             var watch = new Watch ();
             watch.id = watch_id;
@@ -327,8 +327,8 @@ namespace Pomodoro
         public uint add_active_watch (owned Pomodoro.UserActiveFunc callback,
                                       int64                         monotonic_time = Pomodoro.Timestamp.UNDEFINED)
         {
-            var watch_id = Pomodoro.IdleMonitor.next_id;
-            Pomodoro.IdleMonitor.next_id++;
+            var watch_id = Pomodoro.IdleMonitor.next_watch_id;
+            Pomodoro.IdleMonitor.next_watch_id++;
 
             var watch = new Watch ();
             watch.id = watch_id;

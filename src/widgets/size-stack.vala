@@ -1,6 +1,6 @@
 namespace Pomodoro
 {
-    internal inline Gtk.Orientation get_opposite_orientation (Gtk.Orientation orientation)
+    private inline Gtk.Orientation get_opposite_orientation (Gtk.Orientation orientation)
     {
         return orientation == Gtk.Orientation.HORIZONTAL
             ? Gtk.Orientation.VERTICAL
@@ -55,8 +55,8 @@ namespace Pomodoro
             }
             set {
                 var child_info = this.find_child_info_for_widget (value);
-                if (child_info == null)
-                {
+
+                if (child_info == null) {
                     GLib.warning ("Given child of type '%s' not found in PomodoroSizeStack", value.get_type ().name ());
                     return;
                 }
@@ -75,8 +75,8 @@ namespace Pomodoro
             }
             set {
                 var child_info = this.find_child_info_for_name (value);
-                if (child_info == null)
-                {
+
+                if (child_info == null) {
                     GLib.warning ("Child with name '%s' not found in PomodoroSizeStack", value);
                     return;
                 }
@@ -107,6 +107,7 @@ namespace Pomodoro
             for (link = this.children; link != null; link = link.next)
             {
                 child_info = link.data;
+
                 if (child_info.page.child == child) {
                     return child_info;
                 }
@@ -123,6 +124,7 @@ namespace Pomodoro
             for (link = this.children; link != null; link = link.next)
             {
                 child_info = link.data;
+
                 if (child_info.page.name == name) {
                     return child_info;
                 }
@@ -178,7 +180,6 @@ namespace Pomodoro
         {
             var window = this.get_root () as Gtk.Window;
 
-            // Unset last_visible_child. It was kept for the purpose of transition.
             if (this.last_visible_child != null) {
                 this.last_visible_child.page.child.set_child_visible (false);
                 this.last_visible_child = null;
@@ -189,7 +190,7 @@ namespace Pomodoro
                 window.halign = Gtk.Align.FILL;
                 window.valign = Gtk.Align.FILL;
 
-                // HACK: Window is not resizable after the transition for some reason.
+                // HACK: Workaround not being able to resize window after the transition.
                 this.add_tick_callback (() => {
                     window.resizable = !this._visible_child.page.resizable;
                     window.resizable = this._visible_child.page.resizable;
@@ -499,12 +500,10 @@ namespace Pomodoro
             var transition_progress  = this.get_transition_progress ();
 
             var window = this.get_root () as Gtk.Window;
-            var interpolating_window_size = (
-                this.interpolate_window_size &&
-                window != null &&
-                window.default_width < 0 &&
-                window.default_height < 0
-            );
+            var interpolating_window_size = this.interpolate_window_size &&
+                                            window != null &&
+                                            window.default_width < 0 &&
+                                            window.default_height < 0;
 
             minimum = 0;
             natural = 0;
@@ -638,12 +637,8 @@ namespace Pomodoro
             var last_visible_child        = this.last_visible_child;
             var last_visible_child_widget = last_visible_child != null ? last_visible_child.page.child : null;
             var bounds                    = Graphene.Rect ();
-            bounds.init (
-                0,
-                0,
-                this.get_width (),
-                this.get_height ()
-            );
+
+            bounds.init (0, 0, this.get_width (), this.get_height ());
 
             if (last_visible_child_widget != null &&
                 last_visible_child_widget.visible)

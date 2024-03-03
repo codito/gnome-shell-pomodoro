@@ -7,25 +7,7 @@ namespace Pomodoro
     {
         CONTINUOUS,
         MANUAL,
-        WAIT_FOR_ACTIVITY;
-
-        public string to_string ()
-        {
-            switch (this)
-            {
-                case CONTINUOUS:
-                    return "continuous";
-
-                case MANUAL:
-                    return "manual";
-
-                case WAIT_FOR_ACTIVITY:
-                    return "wait-for-activity";
-
-                default:
-                    return "";
-            }
-        }
+        WAIT_FOR_ACTIVITY
     }
 
 
