@@ -90,6 +90,13 @@ namespace Pomodoro
         return str;
     }
 
+    public inline double lerp (double value_from,
+                               double value_to,
+                               double t)
+    {
+        return value_from + (value_to - value_from) * t;
+    }
+
 
     // ---------------------------------------------------------------------------
 

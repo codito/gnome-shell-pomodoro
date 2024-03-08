@@ -106,6 +106,32 @@
       <summary>Open app in compact view</summary>
       <description></description>
     </key>
+
+    <!-- Sounds -->
+    <key name="pomodoro-finished-sound" type="s">
+      <default>"bell.ogg"</default>
+      <summary>Pomodoro finished sound</summary>
+    </key>
+    <key name="pomodoro-finished-sound-volume" type="d">
+      <default>1.0</default>
+      <summary>Volume of Pomodoro finished sound</summary>
+    </key>
+    <key name="break-finished-sound" type="s">
+      <default>"loud-bell.ogg"</default>
+      <summary>Break finished sound</summary>
+    </key>
+    <key name="break-finished-sound-volume" type="d">
+      <default>1.0</default>
+      <summary>Volume of break finished sound</summary>
+    </key>
+    <key name="background-sound" type="s">
+      <default>""</default>
+      <summary>Background sound</summary>
+    </key>
+    <key name="background-sound-volume" type="d">
+      <default>0.5</default>
+      <summary>Volume of background sound</summary>
+    </key>
   </schema>
 
 <!--

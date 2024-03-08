@@ -13,7 +13,7 @@ namespace Pomodoro
     {
         private static uint next_watch_id = 1;
 
-        // [Compact]
+        [Compact]
         private class Watch
         {
             public Pomodoro.StateFlags                  condition = Pomodoro.StateFlags.NONE;

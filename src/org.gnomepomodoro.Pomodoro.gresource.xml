@@ -12,9 +12,11 @@
     <file alias="ui/preferences-plugins-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-plugins-page.ui</file>
     <file alias="ui/preferences-page-appearance.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-appearance.ui</file>
     <file alias="ui/preferences-page-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-notifications.ui</file>
+    <file alias="ui/preferences-page-sounds.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-sounds.ui</file>
     <file alias="ui/preferences-page-timer.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-timer.ui</file>
     <file alias="ui/preferences-window.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-window.ui</file>
     <file alias="ui/screen-overlay.ui" compressed="true" preprocess="xml-stripblanks">views/screen-overlay.ui</file>
+    <file alias="ui/sound-chooser-window.ui" compressed="true" preprocess="xml-stripblanks">views/sound-chooser-window.ui</file>
     <file alias="ui/stats-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-page.ui</file>
     <file alias="ui/stats-view.ui" compressed="true" preprocess="xml-stripblanks">views/stats-view.ui</file>
     <file alias="ui/timer-view.ui" compressed="true" preprocess="xml-stripblanks">views/timer-view.ui</file>
@@ -26,6 +28,7 @@
     <file alias="ui/log-scale-row.ui" compressed="true" preprocess="xml-stripblanks">widgets/log-scale-row.ui</file>
     <file alias="ui/timer-control-buttons.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-control-buttons.ui</file>
     <file alias="ui/timer-label.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-label.ui</file>
+    <file alias="ui/volume-slider.ui" compressed="true" preprocess="xml-stripblanks">widgets/volume-slider.ui</file>
 
     <!-- CSS -->
     <file>style.css</file>

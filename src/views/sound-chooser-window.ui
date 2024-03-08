@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroSoundChooserWindow" parent="AdwWindow">
+    <property name="default-width">400</property>
+    <property name="width-request">400</property>
+    <property name="height-request">420</property>
+    <property name="modal">True</property>
+    <property name="content">
+      <object class="AdwToastOverlay" id="toast_overlay">
+        <property name="child">
+          <object class="AdwToolbarView">
+            <child type="top">
+              <object class="AdwHeaderBar">
+                <property name="show-title">True</property>
+              </object>
+            </child>
+            <property name="content">
+              <object class="AdwPreferencesPage">
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <child>
+                      <object class="AdwActionRow" id="none_row">
+                        <property name="title" translatable="yes">None</property>
+                        <property name="activatable">True</property>
+                        <property name="activatable-widget">radio_group</property>
+                        <child type="suffix">
+                          <object class="GtkCheckButton" id="radio_group">
+                            <property name="valign">center</property>
+                            <property name="active">True</property>
+                            <signal name="toggled" handler="on_radio_toggled"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwPreferencesRow" id="add_row">
+                        <property name="activatable">true</property>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">list-add-symbolic</property>
+                            <property name="margin-top">12</property>
+                            <property name="margin-bottom">12</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object><!-- preferences-group -->
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <child>
+                      <object class="AdwClamp">
+                        <property name="maximum-size">400</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">12</property>
+                            <property name="margin-start">12</property>
+                            <property name="margin-end">12</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label" translatable="yes">Volume:</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="PomodoroVolumeSlider" id="volume_slider"/>
+                            </child>
+                          </object>
+                        </child>
+                      </object><!-- clamp -->
+                    </child>
+                  </object><!-- preferences-group -->
+                </child>
+              </object><!-- preferences-page -->
+            </property>
+          </object><!-- toolbar-view -->
+        </property>
+      </object><!-- toast_overlay -->
+    </property>
+    <child>
+      <object class="GtkEventControllerKey">
+        <signal name="key-pressed" handler="on_key_pressed" swapped="no"/>
+      </object>
+    </child>
+  </template>
+</interface>

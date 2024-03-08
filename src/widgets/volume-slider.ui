@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroVolumeSlider" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="spacing">10</property>
+    <child>
+      <object class="GtkButton" id="mute_button">
+        <property name="valign">center</property>
+        <property name="child">
+          <object class="GtkImage" id="volume_image">
+            <property name="icon-name">audio-volume-medium-symbolic</property>
+            <style>
+              <class name="symbolic"/>
+            </style>
+          </object>
+        </property>
+        <style>
+          <class name="flat"/>
+          <class name="image-button"/>
+        </style>
+        <signal name="clicked" handler="on_mute_button_clicked" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkScale">
+        <property name="valign">center</property>
+        <property name="adjustment">
+          <object class="GtkAdjustment" id="adjustment">
+            <property name="lower">0.0</property>
+            <property name="upper">1.0</property>
+            <property name="page-increment">0.1</property>
+            <signal name="value-changed" handler="on_adjustment_value_changed" swapped="no"/>
+          </object>
+        </property>
+        <property name="hexpand">True</property>
+      </object>
+    </child>
+  </template>
+</interface>

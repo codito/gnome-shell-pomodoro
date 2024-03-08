@@ -194,9 +194,11 @@ namespace Pomodoro
 
             this.capability_manager = new Pomodoro.CapabilityManager ();
             this.capability_manager.register (new Pomodoro.NotificationsCapability ());
+            this.capability_manager.register (new Pomodoro.SoundsCapability ());
 
             var idle_id = GLib.Idle.add (() => {
                 this.capability_manager.enable ("notifications");
+                this.capability_manager.enable ("sounds");
 
                 this.release ();
 
@@ -925,4 +927,3 @@ namespace Pomodoro
 
     }
 }
-
