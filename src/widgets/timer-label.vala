@@ -218,6 +218,7 @@ namespace Pomodoro
 
             this.placeholder_box.set_child_visible (true);
             this.box.set_child_visible (true);
+            this.box.opacity = 1.0;
 
             if (this.has_hours != this._placeholder_has_hours && this.hours_animation == null) {
                 this.start_hours_animation ();
