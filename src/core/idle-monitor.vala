@@ -303,7 +303,7 @@ namespace Pomodoro
             watch.reference_time = monotonic_time;
             watch.provider = this.provider;
 
-            if (this.provider != null)
+            if (this.provider != null && this.provider.enabled)
             {
                 try {
                     watch.external_id = this.provider.add_idle_watch (timeout, monotonic_time);
@@ -336,7 +336,7 @@ namespace Pomodoro
             watch.reference_time = monotonic_time;
             watch.provider = this.provider;
 
-            if (this.provider != null)
+            if (this.provider != null && this.provider.enabled)
             {
                 try {
                     this.provider.add_active_watch ();

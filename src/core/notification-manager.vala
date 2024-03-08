@@ -197,7 +197,7 @@ namespace Pomodoro
             var lock_delay = Pomodoro.Timestamp.from_milliseconds_uint (
                     this.settings.get_uint ("screen-overlay-lock-delay") * 1000);
 
-            if (this.lock_screen_idle_id == 0 && lock_delay > 0) {
+            if (this.lock_screen_idle_id == 0 && lock_delay > 0 && this.idle_monitor.enabled) {
                 this.lock_screen_idle_id = this.idle_monitor.add_idle_watch (lock_delay,
                                                                              this.on_lock_screen_idle,
                                                                              GLib.get_monotonic_time ());
@@ -223,7 +223,10 @@ namespace Pomodoro
             var reopen_delay = Pomodoro.Timestamp.from_milliseconds_uint (
                     this.settings.get_uint ("screen-overlay-reopen-delay") * 1000);
 
-            if (this.reopen_screen_overlay_idle_id == 0 && this.can_open_screen_overlay_later ()) {
+            if (this.reopen_screen_overlay_idle_id == 0 &&
+                this.idle_monitor.enabled &&
+                this.can_open_screen_overlay_later ())
+            {
                 this.reopen_screen_overlay_idle_id = this.idle_monitor.add_idle_watch (
                                         reopen_delay,
                                         this.on_reopen_screen_overlay_idle,
@@ -574,8 +577,11 @@ namespace Pomodoro
             {
                 var remaining = this._timer.calculate_remaining (timestamp);
                 var about_to_end_duration = this.get_about_to_end_duration () + TIME_BLOCK_ABOUT_TO_END_TOLERANCE;
+                var is_rewinding = current_state.user_data == previous_state.user_data &&
+                                   current_state.offset != previous_state.offset;
 
                 if (remaining >= about_to_end_duration &&
+                    !is_rewinding &&
                     this.can_open_screen_overlay ())
                 {
                     // if (!this.can_open_screen_overlay ()) {

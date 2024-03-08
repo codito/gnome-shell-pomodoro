@@ -203,6 +203,10 @@ namespace Gnome
                 return this.idle_time;
             }
 
+            if (this.proxy == null) {
+                return 0;
+            }
+
             var idle_time = this.from_milliseconds (this.proxy.get_idletime ());
 
             if (this.idle_time_freeze_count > 0) {
@@ -214,6 +218,7 @@ namespace Gnome
 
         public uint32 add_idle_watch (int64 timeout,
                                       int64 monotonic_time) throws GLib.Error
+                                      requires (this.proxy != null)
         {
             int64 relative_timeout = timeout;
             int64 absolute_timeout = timeout;
@@ -264,6 +269,7 @@ namespace Gnome
         }
 
         public void remove_idle_watch (uint32 id)
+                                       requires (this.proxy != null)
         {
             unowned Watch? watch = this.watches.lookup (id);
 
@@ -297,6 +303,7 @@ namespace Gnome
 
         public uint32 reset_idle_watch (uint32 id,
                                         int64  monotonic_time) throws GLib.Error
+                                        requires (this.proxy != null)
         {
             unowned Watch? watch = this.watches.lookup (id);
 
@@ -320,6 +327,7 @@ namespace Gnome
         }
 
         public void add_active_watch () throws GLib.Error
+                                      requires (this.proxy != null)
         {
             if (this.active_watch_id == 0) {
                 this.active_watch_id = this.proxy.add_user_active_watch ();
