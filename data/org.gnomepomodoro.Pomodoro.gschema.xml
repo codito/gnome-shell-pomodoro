@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
-  <enum id="org.gnomepomodoro.Pomodoro.AdvancementMode">
-    <value nick="continuous" value="0"/>
-    <value nick="manual" value="1"/>
-    <value nick="wait-for-activity" value="2"/>
-  </enum>
+  <!--
   <enum id="org.gnomepomodoro.Pomodoro.Scheduler">
     <value nick="simple" value="0"/>
     <value nick="adaptive" value="1"/>
   </enum>
+  -->
+  <flags id="org.gnomepomodoro.Pomodoro.StateFlags">
+    <value nick="none" value="0"/>
+    <value nick="disabled" value="1"/>
+    <value nick="enabled" value="2"/>
+    <value nick="started" value="4"/>
+    <value nick="running" value="8"/>
+    <value nick="paused" value="16"/>
+    <value nick="finished" value="32"/>
+    <value nick="unfinished" value="64"/>
+    <value nick="pomodoro" value="128"/>
+    <value nick="break" value="256"/>
+  </flags>
 
   <schema id="org.gnomepomodoro.Pomodoro" path="/org/gnomepomodoro/Pomodoro/">
     <!-- Timer -->
@@ -49,11 +58,13 @@
       <default>true</default>
       <summary>Pause Pomodoro when screen is locked</summary>
     </key>
+    <!--
     <key name="scheduler" enum="org.gnomepomodoro.Pomodoro.Scheduler">
       <default>"simple"</default>
       <summary>Strategy of the scheduler</summary>
       <description>Strategy of the scheduler in case you deviate from target durations.</description>
     </key>
+    -->
 
     <!-- Notifications -->
     <key name="announce-about-to-end" type="b">
@@ -83,6 +94,8 @@
       <summary>Time to reopen screen overlay</summary>
       <description></description>
     </key>
+
+    <!-- Appearance -->
     <key name="dark-theme" type="b">
       <default>false</default>
       <summary>Use dark theme variant</summary>

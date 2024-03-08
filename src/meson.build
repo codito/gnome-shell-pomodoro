@@ -46,6 +46,7 @@ libgnome_pomodoro_sources = files(
   'core/sleep-monitor.vala',
   'core/source.vala',
   'core/state.vala',
+  'core/state-monitor.vala',
   'core/time-block.vala',
   'core/time-block-entry.vala',
   'core/timer.vala',
