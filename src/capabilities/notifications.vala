@@ -34,8 +34,7 @@ namespace Pomodoro
             base ("notifications", Pomodoro.Priority.DEFAULT);
         }
 
-        private void show_screen_overlay (bool  pass_through = true,
-                                          int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        private void show_screen_overlay (bool pass_through)
                                           requires (this.notification_manager != null)
         {
             if (this.screen_overlay != null && this.screen_overlay.get_mapped ()) {
@@ -57,13 +56,7 @@ namespace Pomodoro
             });
 
             this.screen_overlay = screen_overlay;
-
-            if (Pomodoro.Timestamp.is_defined (timestamp)) {
-                this.screen_overlay.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
-            }
-            else {
-                this.screen_overlay.present ();
-            }
+            this.screen_overlay.present ();
         }
 
         private void on_provider_enabled (Pomodoro.NotificationsProvider provider)
@@ -91,7 +84,7 @@ namespace Pomodoro
         {
             var notification_manager = new Pomodoro.NotificationManager ();
             notification_manager.open_screen_overlay.connect ((timestamp) => {
-                this.show_screen_overlay (true, timestamp);
+                this.show_screen_overlay (true);
             });
             notification_manager.close_screen_overlay.connect (() => {
                 if (this.screen_overlay != null) {

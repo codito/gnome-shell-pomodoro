@@ -263,15 +263,14 @@ namespace Pomodoro
             this.application = application;
         }
 
-        public void show_main_window (string mode,
-                                      uint32 timestamp) throws Error
+        public void show_main_window (string view) throws Error
         {
-            this.application.show_window (mode, timestamp);
+            this.application.show_window (Pomodoro.WindowView.from_string (view));
         }
 
-        public void show_preferences (uint32 timestamp) throws Error
+        public void show_preferences () throws Error
         {
-            this.application.show_preferences (timestamp);
+            this.application.show_preferences ();
         }
 
         public void quit () throws Error

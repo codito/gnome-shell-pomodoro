@@ -43,7 +43,8 @@
     <section>
       <item>
         <attribute name="label" translatable="yes">_Timer</attribute>
-        <attribute name="action">app.timer</attribute>
+        <attribute name="action">app.window</attribute>
+        <attribute name="target">timer</attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>

@@ -292,7 +292,7 @@ namespace Pomodoro
         {
             var notification = new GLib.Notification (title);
             notification.set_priority (GLib.NotificationPriority.HIGH);
-            notification.set_default_action_and_target_value ("app.timer", new GLib.Variant.int64 (Pomodoro.Timestamp.UNDEFINED));
+            notification.set_default_action_and_target_value ("app.window", new GLib.Variant.string ("timer"));
 
             if (body != "") {
                 notification.set_body (body);

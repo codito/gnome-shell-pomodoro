@@ -128,9 +128,6 @@ namespace Pomodoro
 
         // private Gom.Repository repository;
         // private Gom.Adapter adapter;
-        private weak Pomodoro.PreferencesWindow? preferences_window;
-        private weak Pomodoro.Window? window;
-        private weak Adw.AboutWindow? about_window;
         private Pomodoro.ApplicationService? service;
         private Pomodoro.TimerService? timer_service;
         private GLib.Settings settings;
@@ -158,15 +155,19 @@ namespace Pomodoro
                 : null;
         }
 
-        public unowned Gtk.Window? get_window_by_type (GLib.Type type)
+        public unowned T? get_window<T> ()
         {
             unowned GLib.List<Gtk.Window> link = this.get_windows ();
 
-            for (; link != null; link = link.next)
+            var window_type = typeof (T);
+
+            while (link != null)
             {
-                if (link.data.get_type () == type) {
+                if (link.data.get_type () == window_type) {
                     return link.data;
                 }
+
+                link = link.next;
             }
 
             return null;
@@ -223,33 +224,36 @@ namespace Pomodoro
             this.release ();
         }
 
-        public void show_window (string view_name,
-                                 int64  timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void show_window (Pomodoro.WindowView view = Pomodoro.WindowView.DEFAULT)
         {
-            var window = (Pomodoro.Window?) this.get_window_by_type (typeof (Pomodoro.Window));
+            var window = this.get_window<Pomodoro.Window> ();
 
-            if (window == null) {
+            if (window == null)
+            {
                 window = new Pomodoro.Window ();
-
                 this.add_window (window);
             }
 
-            window.view = Pomodoro.WindowView.from_string (view_name);
-
-            if (timestamp > 0) {
-                window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
+            if (view != Pomodoro.WindowView.DEFAULT) {
+                window.view = view;
             }
-            else {
+
+            // TODO: test under GNOME 46, stealing focus does not work under wayland
+            // if (window.visible && !window.is_active)
+            // {
+            //     var timestamp = (uint32) (Pomodoro.Timestamp.from_now () / Pomodoro.Interval.MILLISECOND);
+            //
+            //     var toplevel = window.get_surface () as Gdk.Toplevel;
+            //     toplevel.focus (timestamp);
+            // }
+            // else {
                 window.present ();
-            }
-
-            // Note: In GNOME Shell window will not get focus.
+            // }
         }
 
-        public void show_preferences (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void show_preferences ()
         {
-            var preferences_window = this.get_window_by_type (typeof (Pomodoro.PreferencesWindow))
-                                     as Pomodoro.PreferencesWindow;
+            var preferences_window = this.get_window<Pomodoro.PreferencesWindow> ();
 
             if (preferences_window == null)
             {
@@ -257,18 +261,13 @@ namespace Pomodoro
                 this.add_window (preferences_window);
             }
 
-            if (Pomodoro.Timestamp.is_defined (timestamp)) {
-                preferences_window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
-            }
-            else {
-                preferences_window.present ();
-            }
+            preferences_window.present ();
         }
 
-        public void show_about_window (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        public void show_about_window ()
         {
-            var window = (Gtk.Window?) this.get_window_by_type (typeof (Pomodoro.Window));
-            var about_window = (Gtk.Window?) this.get_window_by_type (typeof (Adw.AboutWindow));
+            var window = this.get_window<Pomodoro.Window> ();
+            var about_window = this.get_window<Adw.AboutWindow> ();
 
             if (about_window == null)
             {
@@ -281,28 +280,27 @@ namespace Pomodoro
                 this.add_window (about_window);
             }
 
-            if (timestamp >= 0) {
-                about_window.present_with_time (Pomodoro.Timestamp.to_seconds_uint32 (timestamp));
-            }
-            else {
-                about_window.present ();
-            }
+            about_window.present ();
+        }
+
+        private void activate_window (GLib.SimpleAction action,
+                                      GLib.Variant?     parameter)
+        {
+            var view = Pomodoro.WindowView.from_string (parameter.get_string ());
+
+            this.show_window (view);
         }
 
         private void activate_timer (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
-
-            this.show_window ("timer", timestamp);
+            this.show_window (Pomodoro.WindowView.TIMER);
         }
 
         private void activate_stats (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
-
-            this.show_window ("stats", timestamp);
+            this.show_window (Pomodoro.WindowView.STATS);
         }
 
         private void activate_preferences (GLib.SimpleAction action,
@@ -320,16 +318,10 @@ namespace Pomodoro
         private void activate_screen_overlay (GLib.SimpleAction action,
                                               GLib.Variant?     parameter)
         {
-            var timestamp = parameter != null ? parameter.get_int64 () : Pomodoro.Timestamp.UNDEFINED;
-
-            if (timestamp == Pomodoro.Timestamp.UNDEFINED) {
-                timestamp = this.timer.get_current_time ();
-            }
-
             this.capability_manager.activate ("notifications");
 
             if (this.timer.is_paused ()) {
-                this.timer.resume (timestamp);
+                this.timer.resume ();
             }
         }
 
@@ -418,19 +410,15 @@ namespace Pomodoro
 
             GLib.SimpleAction action;
 
-            action = new GLib.SimpleAction ("timer", GLib.VariantType.INT64);
-            action.activate.connect (this.activate_timer);
-            this.add_action (action);
-
-            action = new GLib.SimpleAction ("stats", GLib.VariantType.INT64);
-            action.activate.connect (this.activate_stats);
+            action = new GLib.SimpleAction ("window", GLib.VariantType.STRING);
+            action.activate.connect (this.activate_window);
             this.add_action (action);
 
             action = new GLib.SimpleAction ("preferences", null);
             action.activate.connect (this.activate_preferences);
             this.add_action (action);
 
-            action = new GLib.SimpleAction ("screen-overlay", GLib.VariantType.INT64);
+            action = new GLib.SimpleAction ("screen-overlay", null);
             action.activate.connect (this.activate_screen_overlay);
             this.add_action (action);
 
@@ -450,7 +438,7 @@ namespace Pomodoro
             action.activate.connect (this.activate_quit);
             this.add_action (action);
 
-            // Proxy timer / session-manager actions under the "app" namespace.
+            // Include timer and session-manager actions under the "app" namespace for use in notifications.
             action = new GLib.SimpleAction ("advance", null);
             action.activate.connect (this.activate_advance);
             this.add_action (action);
@@ -462,12 +450,6 @@ namespace Pomodoro
             action = new GLib.SimpleAction ("extend", GLib.VariantType.UINT32);
             action.activate.connect (this.activate_extend);
             this.add_action (action);
-
-            // TODO: replace uses of `timer-skip` with actions:
-            // - start-pomodoro
-            // - take-break
-            // - take-short-break
-            // - take-long-break
 
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
@@ -709,13 +691,15 @@ namespace Pomodoro
                     this.show_preferences ();
                 }
                 else if (!Options.no_default_window) {
-                    this.show_window ("default");
+                    this.show_window ();
                 }
 
                 Options.set_defaults ();
             }
 
             this.release ();
+
+            base.activate ();
         }
 
         public override bool dbus_register (GLib.DBusConnection connection,

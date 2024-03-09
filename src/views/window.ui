@@ -44,7 +44,7 @@
           <object class="GtkModelButton">
             <property name="can-focus">True</property>
             <property name="receives-default">False</property>
-            <property name="action-name">app.timer-set-state</property>
+            <property name="action-name">app.advance-to-state</property>
             <property name="action-target">'pomodoro'</property>
             <property name="text" translatable="yes">Pomodoro</property>
             <property name="centered">True</property>
@@ -54,7 +54,7 @@
           <object class="GtkModelButton">
             <property name="can-focus">True</property>
             <property name="receives-default">False</property>
-            <property name="action-name">app.timer-set-state</property>
+            <property name="action-name">app.advance-to-state</property>
             <property name="action-target">'short-break'</property>
             <property name="text" translatable="yes">Short Break</property>
             <property name="centered">True</property>
@@ -64,7 +64,7 @@
           <object class="GtkModelButton">
             <property name="can-focus">True</property>
             <property name="receives-default">False</property>
-            <property name="action-name">app.timer-set-state</property>
+            <property name="action-name">app.advance-to-state</property>
             <property name="action-target">'long-break'</property>
             <property name="text" translatable="yes">Long Break</property>
             <property name="centered">True</property>

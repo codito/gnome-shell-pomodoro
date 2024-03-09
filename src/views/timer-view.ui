@@ -25,7 +25,6 @@
         <child>
           <object class="GtkButton" id="open_screen_overlay_button">
             <property name="action-name">app.screen-overlay</property>
-            <property name="action-target">int64 -1</property>
             <property name="tooltip-text" translatable="yes">Open screen overlay</property>
             <style>
               <class name="flat"/>
