@@ -19,10 +19,17 @@ namespace Pomodoro
 
                 if (this._preferred_capability != null && this._preferred_capability.is_available ())
                 {
-                    if (this._enable) {
+                    if (this._enable &&
+                        this._preferred_capability.status != Pomodoro.CapabilityStatus.ENABLING &&
+                        this._preferred_capability.status != Pomodoro.CapabilityStatus.ENABLED)
+                    {
                         this._preferred_capability.enable ();
                     }
-                    else {
+
+                    if (!this._enable && (
+                        this._preferred_capability.status == Pomodoro.CapabilityStatus.ENABLING ||
+                        this._preferred_capability.status == Pomodoro.CapabilityStatus.ENABLED))
+                    {
                         this._preferred_capability.disable ();
                     }
                 }
@@ -57,7 +64,11 @@ namespace Pomodoro
                         this._preferred_capability.initialize ();
                     }
 
-                    if (this._enable && this._preferred_capability.is_available ()) {
+                    if (this._enable &&
+                        this._preferred_capability.is_available () &&
+                        this._preferred_capability.status != Pomodoro.CapabilityStatus.ENABLING &&
+                        this._preferred_capability.status != Pomodoro.CapabilityStatus.ENABLED)
+                    {
                         this._preferred_capability.enable ();
                     }
                 }
