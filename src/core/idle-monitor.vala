@@ -13,8 +13,8 @@ namespace Pomodoro
         public abstract void add_active_watch () throws GLib.Error;
         public abstract void remove_active_watch () throws GLib.Error;
 
-        public abstract signal void became_idle (uint32 id);
-        public abstract signal void became_active ();
+        public signal void became_idle (uint32 id);
+        public signal void became_active ();
 
         /**
          * Mutter.IdleMonitor schedules a callback relative to users last activity, not from the time we add a watch.
