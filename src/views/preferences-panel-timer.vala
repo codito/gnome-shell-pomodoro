@@ -1,7 +1,7 @@
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-page-timer.ui")]
-    public class PreferencesPageTimer : Adw.PreferencesPage
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-panel-timer.ui")]
+    public class PreferencesPanelTimer : Pomodoro.PreferencesPanel
     {
         private const uint MIN_TOAST_TIMEOUT = 3;
         private const uint MAX_TOAST_TIMEOUT = 30;

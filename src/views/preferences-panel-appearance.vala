@@ -1,7 +1,7 @@
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-page-appearance.ui")]
-    public class PreferencesPageAppearance : Adw.PreferencesPage
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-panel-appearance.ui")]
+    public class PreferencesPanelAppearance : Pomodoro.PreferencesPanel
     {
         [GtkChild]
         private unowned Adw.SwitchRow dark_theme_switchrow;

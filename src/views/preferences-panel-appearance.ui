@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroPreferencesPanelAppearance" parent="PomodoroPreferencesPanel">
+    <property name="child">
+      <object class="AdwToolbarView">
+        <child type="top">
+          <object class="AdwHeaderBar" id="content_headerbar">
+            <property name="show-title">true</property>
+          </object>
+        </child>
+        <property name="content">
+          <object class="AdwPreferencesPage">
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Main Window</property>
+                <child>
+                  <object class="AdwSwitchRow" id="dark_theme_switchrow">
+                    <property name="title" translatable="yes">Prefer Dark Theme</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwSwitchRow" id="compact_view_switchrow">
+                    <property name="title" translatable="yes">Prefer Compact View</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+      </object>
+    </property>
+  </template>
+</interface>

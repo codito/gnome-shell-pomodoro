@@ -10,10 +10,10 @@
     <file alias="ui/preferences-keyboard-shortcut-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-keyboard-shortcut-page.ui</file>
     <file alias="ui/preferences-main-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-main-page.ui</file>
     <file alias="ui/preferences-plugins-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-plugins-page.ui</file>
-    <file alias="ui/preferences-page-appearance.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-appearance.ui</file>
-    <file alias="ui/preferences-page-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-notifications.ui</file>
-    <file alias="ui/preferences-page-sounds.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-sounds.ui</file>
-    <file alias="ui/preferences-page-timer.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-page-timer.ui</file>
+    <file alias="ui/preferences-panel-appearance.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-appearance.ui</file>
+    <file alias="ui/preferences-panel-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-notifications.ui</file>
+    <file alias="ui/preferences-panel-sounds.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-sounds.ui</file>
+    <file alias="ui/preferences-panel-timer.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-timer.ui</file>
     <file alias="ui/preferences-window.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-window.ui</file>
     <file alias="ui/screen-overlay.ui" compressed="true" preprocess="xml-stripblanks">views/screen-overlay.ui</file>
     <file alias="ui/sound-chooser-window.ui" compressed="true" preprocess="xml-stripblanks">views/sound-chooser-window.ui</file>
@@ -45,6 +45,9 @@
     <file preprocess="xml-stripblanks">icons/24x24/actions/timer-stop-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/dark-theme-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/lock-screen-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/preferences-appearance-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/preferences-notifications-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/preferences-sounds-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/screen-overlay-close-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/screen-overlay-open-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/stats-symbolic.svg</file>
@@ -55,7 +58,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
-    <file preprocess="xml-stripblanks">icons/scalable/actions/window-normal-size-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-compact-size-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/window-normal-size-symbolic.svg</file>
   </gresource>
 </gresources>

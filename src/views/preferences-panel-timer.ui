@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroPreferencesPanelTimer" parent="PomodoroPreferencesPanel">
+    <property name="child">
+      <object class="AdwToolbarView">
+        <child type="top">
+          <object class="AdwHeaderBar" id="content_headerbar">
+            <property name="show-title">true</property>
+          </object>
+        </child>
+        <property name="content">
+          <object class="AdwPreferencesPage">
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Session</property>
+                <child>
+                  <object class="PomodoroLogScaleRow">
+                    <property name="title" translatable="yes">Pomodoro Duration</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="pomodoro_duration_adjustment">
+                        <property name="lower">30</property>
+                        <property name="upper">7200</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <object class="PomodoroLogScaleRow">
+                    <property name="title" translatable="yes">Short Break Duration</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="short_break_duration_adjustment">
+                        <property name="lower">30</property>
+                        <property name="upper">7200</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <object class="PomodoroLogScaleRow" id="long_break_row">
+                    <property name="title" translatable="yes">Long Break Duration</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="long_break_duration_adjustment">
+                        <property name="lower">30</property>
+                        <property name="upper">7200</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwSpinRow">
+                    <property name="title" translatable="yes">Number of Cycles</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="cycles_adjustment">
+                        <property name="lower">1.0</property>
+                        <property name="upper">6.0</property>
+                        <property name="step_increment">1.0</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">12</property>
+                    <property name="margin-top">18</property>
+                    <property name="margin-bottom">6</property>
+                    <child>
+                      <object class="GtkLabel" id="session_stats_label">
+                        <property name="halign">start</property>
+                        <property name="label"></property>
+                        <property name="use-markup">True</property>
+                        <property name="single-line-mode">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="breaks_stats_label">
+                        <property name="halign">start</property>
+                        <property name="label"></property>
+                        <property name="use-markup">True</property>
+                        <property name="single-line-mode">True</property>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="dim-label"/>
+                      <class name="body"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Behavior</property>
+                <child>
+                  <object class="AdwSwitchRow" id="pomodoro_pause_on_lockscreen_switchrow">
+                    <property name="title" translatable="yes">Pause By Locking The Screen</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwSwitchRow" id="confirm_starting_break_switchrow">
+                    <property name="title" translatable="yes">Confirm Starting a Break</property>
+                 </object>
+                </child>
+                <child>
+                  <object class="AdwSwitchRow" id="confirm_starting_pomodoro_switchrow">
+                    <property name="title" translatable="yes">Confirm Starting a Pomodoro</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+      </object>
+    </property>
+  </template>
+</interface>

@@ -7,8 +7,8 @@ namespace Pomodoro
     }
 
 
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-page-sounds.ui")]
-    public class PreferencesPageSounds : Adw.PreferencesPage
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-panel-sounds.ui")]
+    public class PreferencesPanelSounds : Pomodoro.PreferencesPanel
     {
         private const Preset[] ALERT_PRESETS = {
             { "bell.ogg", N_("Bell") },

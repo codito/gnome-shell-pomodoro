@@ -1,7 +1,7 @@
 namespace Pomodoro
 {
-    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-page-notifications.ui")]
-    public class PreferencesPageNotifications : Adw.PreferencesPage
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/preferences-panel-notifications.ui")]
+    public class PreferencesPanelNotifications : Pomodoro.PreferencesPanel
     {
         private const uint[] IDLE_DELAY_CHOICES = { 15U, 30U, 60U, 120U, 180U, 300U, 0U };
 
@@ -38,8 +38,8 @@ namespace Pomodoro
                                 this.screen_overlay_lock_delay_comborow,
                                 "selected",
                                 GLib.SettingsBindFlags.DEFAULT,
-                                PreferencesPageNotifications.idle_delay_get_mapping,
-                                PreferencesPageNotifications.idle_delay_set_mapping,
+                                idle_delay_get_mapping,
+                                idle_delay_set_mapping,
                                 null,
                                 null);
             this.settings.bind_with_mapping (
@@ -47,8 +47,8 @@ namespace Pomodoro
                                 this.screen_overlay_reopen_delay_comborow,
                                 "selected",
                                 GLib.SettingsBindFlags.DEFAULT,
-                                PreferencesPageNotifications.idle_delay_get_mapping,
-                                PreferencesPageNotifications.idle_delay_set_mapping,
+                                idle_delay_get_mapping,
+                                idle_delay_set_mapping,
                                 null,
                                 null);
             this.screen_overlay_switchrow.bind_property (
