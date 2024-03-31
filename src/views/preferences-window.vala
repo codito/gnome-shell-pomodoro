@@ -482,6 +482,8 @@ namespace Pomodoro
     {
         private static unowned Pomodoro.PreferencesWindow? instance;
 
+        private GLib.Settings       settings;
+
         [GtkChild]
         private unowned Adw.ToastOverlay toast_overlay;
         [GtkChild]
@@ -521,7 +523,47 @@ namespace Pomodoro
         {
             PreferencesWindow.instance = this;
 
+            this.settings = Pomodoro.get_settings ();
+
+            this.load_window_state ();
+
             this.update_title ();
+        }
+
+        private void load_window_state ()
+        {
+            var current_width = -1;
+            var current_height = -1;
+            var maximized = false;
+
+            this.settings.@get ("preferences-window-state",
+                                "(iib)",
+                                out current_width,
+                                out current_height,
+                                out maximized);
+
+            if (current_width != -1 && current_height != -1) {
+                this.set_default_size (current_width, current_height);
+            }
+
+            if (maximized) {
+                this.maximize ();
+            }
+        }
+
+        private void save_window_state ()
+        {
+            var current_width = -1;
+            var current_height = -1;
+            var maximized = this.is_maximized ();
+
+            this.get_default_size (out current_width, out current_height);
+
+            this.settings.@set ("preferences-window-state",
+                                "(iib)",
+                                current_width,
+                                current_height,
+                                maximized);
         }
 
         private void update_title ()
@@ -552,6 +594,13 @@ namespace Pomodoro
 
             this.notify_property ("visible-page");
             this.notify_property ("visible-page-name");
+        }
+
+        public override void unmap ()
+        {
+            this.save_window_state ();
+
+            base.unmap ();
         }
 
         public override void dispose ()

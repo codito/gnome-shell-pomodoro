@@ -132,6 +132,12 @@
       <default>0.5</default>
       <summary>Volume of background sound</summary>
     </key>
+
+    <!-- Other -->
+    <key name="preferences-window-state" type="(iib)">
+      <default>(-1, -1, false)</default>
+      <summary>State of preferences window</summary>
+    </key>
   </schema>
 
 <!--
