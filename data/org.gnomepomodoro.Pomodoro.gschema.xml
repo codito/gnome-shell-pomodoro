@@ -108,6 +108,10 @@
     </key>
 
     <!-- Sounds -->
+    <key name="sounds" type="b">
+      <default>true</default>
+      <summary>Toggle all sounds</summary>
+    </key>
     <key name="pomodoro-finished-sound" type="s">
       <default>"bell.ogg"</default>
       <summary>Pomodoro finished sound</summary>

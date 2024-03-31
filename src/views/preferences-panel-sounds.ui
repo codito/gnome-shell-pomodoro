@@ -8,10 +8,14 @@
         <child type="top">
           <object class="AdwHeaderBar" id="content_headerbar">
             <property name="show-title">true</property>
+            <child type="end">
+              <object class="GtkSwitch" id="enable_switch"/>
+            </child>
           </object>
         </child>
         <property name="content">
           <object class="AdwPreferencesPage">
+            <property name="sensitive" bind-source="enable_switch" bind-property="active" bind-flags="sync-create" />
             <child>
               <object class="AdwPreferencesGroup">
                 <property name="title" translatable="yes">Alert Sounds</property>

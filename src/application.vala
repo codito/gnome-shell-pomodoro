@@ -199,7 +199,10 @@ namespace Pomodoro
 
             var idle_id = GLib.Idle.add (() => {
                 this.capability_manager.enable ("notifications");
-                this.capability_manager.enable ("sounds");
+
+                if (this.settings.get_boolean ("sounds")) {
+                    this.capability_manager.enable ("sounds");
+                }
 
                 this.release ();
 
@@ -756,6 +759,15 @@ namespace Pomodoro
             {
                 case "dark-theme":
                     this.update_color_scheme ();
+                    break;
+
+                case "sounds":
+                    if (settings.get_boolean (key)) {
+                        this.capability_manager.enable ("sounds");
+                    }
+                    else {
+                        this.capability_manager.disable ("sounds");
+                    }
                     break;
             }
         }
