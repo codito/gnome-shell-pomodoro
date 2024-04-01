@@ -13,7 +13,28 @@ namespace Pomodoro
         SCHEDULED = 0,
         IN_PROGRESS = 1,
         COMPLETED = 2,
-        UNCOMPLETED = 3
+        UNCOMPLETED = 3;
+
+        public string to_string ()
+        {
+            switch (this)
+            {
+                case SCHEDULED:
+                    return "scheduled";
+
+                case IN_PROGRESS:
+                    return "in-progress";
+
+                case COMPLETED:
+                    return "completed";
+
+                case UNCOMPLETED:
+                    return "uncompleted";
+
+                default:
+                    assert_not_reached ();
+            }
+        }
     }
 
 

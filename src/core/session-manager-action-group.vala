@@ -33,6 +33,8 @@ namespace Pomodoro
 
                 this.notify_current_time_block_id = this._session_manager.notify["current-time-block"].connect (
                     this.on_notify_current_time_block);
+
+                this.session_expired_id = this._session_manager.session_expired.connect (this.on_session_expired);
             }
         }
 
@@ -42,6 +44,7 @@ namespace Pomodoro
         private GLib.SimpleAction       start_long_break_action;
         private GLib.SimpleAction       start_break_action;
         private ulong                   notify_current_time_block_id = 0;
+        private ulong                   session_expired_id = 0;
 
 
         public SessionManagerActionGroup ()
@@ -104,6 +107,7 @@ namespace Pomodoro
         private void activate_advance (GLib.SimpleAction action,
                                        GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("session-manager.advance");
             this.session_manager.advance ();
         }
 
@@ -122,6 +126,7 @@ namespace Pomodoro
         private void activate_reset (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("session-manager.reset");
             this.session_manager.reset ();
         }
 
@@ -132,30 +137,35 @@ namespace Pomodoro
                 return;
             }
 
+            Pomodoro.Context.set_event_source (@"session-manager.state:$(parameter.get_string())");
             this.session_manager.advance_to_state (Pomodoro.State.from_string (parameter.get_string ()));
         }
 
         private void activate_start_pomodoro (GLib.SimpleAction action,
                                               GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("session-manager.start-pomodoro");
             this.session_manager.advance_to_state (Pomodoro.State.POMODORO);
         }
 
         private void activate_start_short_break (GLib.SimpleAction action,
                                                  GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("session-manager.start-short-break");
             this.session_manager.advance_to_state (Pomodoro.State.SHORT_BREAK);
         }
 
         private void activate_start_long_break (GLib.SimpleAction action,
                                                 GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("session-manager.start-long-break");
             this.session_manager.advance_to_state (Pomodoro.State.LONG_BREAK);
         }
 
         private void activate_start_break (GLib.SimpleAction action,
                                            GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("session-manager.start-break");
             this.session_manager.advance_to_state (Pomodoro.State.BREAK);
         }
 
@@ -164,17 +174,29 @@ namespace Pomodoro
             this.state_action.set_state (new Variant.string (this.get_current_state ()));
         }
 
+        private void on_session_expired (Pomodoro.Session session,
+                                         int64            timestamp)
+        {
+            Pomodoro.Context.set_event_source ("session-manager.session-expired", timestamp);
+        }
+
         public override void dispose ()
         {
             if (this.notify_current_time_block_id != 0) {
-                this.session_manager.disconnect (this.notify_current_time_block_id);
+                this._session_manager.disconnect (this.notify_current_time_block_id);
                 this.notify_current_time_block_id = 0;
+            }
+
+            if (this.session_expired_id != 0) {
+                this._session_manager.disconnect (this.session_expired_id);
+                this.session_expired_id = 0;
             }
 
             this.state_action = null;
             this.start_short_break_action = null;
             this.start_long_break_action = null;
             this.start_break_action = null;
+            this._session_manager = null;
 
             base.dispose ();
         }

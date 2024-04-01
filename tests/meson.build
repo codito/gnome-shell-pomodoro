@@ -19,6 +19,10 @@ test_names = [
   'capability',
   'capability-set',
   'capability-manager',
+  'event-bus',
+  'event-producer',
+  'expression',
+  'expression-parser',
   'provider-set',
   'provided-object',
   'cycle',
@@ -29,6 +33,8 @@ test_names = [
   'scheduler',
   'session',
   'session-manager',
+  'command',
+  'action-manager',
   # 'utils',
 ]
 

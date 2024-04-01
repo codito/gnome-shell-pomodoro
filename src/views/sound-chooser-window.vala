@@ -211,7 +211,6 @@ namespace Pomodoro
                 var remove_button = new Gtk.Button ();
                 remove_button.icon_name = "window-close-symbolic";
                 remove_button.valign = Gtk.Align.CENTER;
-                remove_button.add_css_class ("image-button");
                 remove_button.add_css_class ("flat");
                 remove_button.clicked.connect (this.on_remove_button_clicked);
                 row.add_suffix (remove_button);

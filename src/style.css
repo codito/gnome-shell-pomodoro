@@ -200,6 +200,31 @@ compacttimerview:dir(rtl) progressbar {
 }
 
 
+/**
+ * PomodoroCondition widget
+ */
+condition.card {
+    padding: 6px;
+}
+
+
+/**
+ * PomodoroConditionGroup widget
+ */
+button.small.pill {
+    font-size: 90%;
+    padding: 6px 12px;
+}
+
+menubutton.small.pill {
+    padding: 0;
+}
+
+menubutton.small.pill button {
+    font-size: 90%;
+    padding: 6px 12px;
+}
+
 /*
  * Screen Overlay
  */
@@ -216,12 +241,12 @@ lightbox .contents {
 lightbox timerlabel {
     font-size: 65pt;
     font-weight: 400;
-    text-shadow: 0px 5px 8px rgba(0, 0, 0, 0.20);
+    /* text-shadow: 0px 5px 8px rgba(0, 0, 0, 0.20); */
 }
 
 lightbox .message {
     font-size: 15pt;
-    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.20);
+    /* text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.20); */
 }
 
 lightbox button {
@@ -245,10 +270,42 @@ lightbox button:active {
     border: none;
 }
 
+popover.menu .title.no-padding {
+    padding-left: 10px;
+}
+
+
+/*
+ * Action edit window
+ */
+
+.events-list list.boxed-list > row:nth-last-child(2) {
+    border-bottom: none;  /* hide separator between last row and hidden placeholder */
+}
+
+
+/*
+ * Log window
+ */
+
+.navigation-sidebar header {
+    padding-left: 10px;
+}
+
+/*
+.navigation-sidebar row > box {
+    margin: 3px 0;
+}
+*/
+
 
 /*
  * Common
  */
+
+.no-padding {
+    padding: 0;
+}
 
 .numeric {
     font-feature-settings: "tnum";

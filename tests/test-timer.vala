@@ -1050,12 +1050,14 @@ namespace Tests
 
         public void test_reset ()
         {
-            var expected_state = create_initial_state ();
+            var expected_state = Pomodoro.TimerState ();
+            expected_state.duration = Pomodoro.Interval.SECOND;
+
             var signals = new string[0];
 
             var timer = new Pomodoro.Timer.with_state (
                 Pomodoro.TimerState () {
-                    duration = expected_state.duration,
+                    duration = Pomodoro.Interval.MINUTE,
                     offset = 1,
                     started_time = 2,
                     paused_time = 3,
@@ -1095,7 +1097,9 @@ namespace Tests
             expected_state.paused_time = Pomodoro.Timestamp.UNDEFINED;
 
             var timer = new Pomodoro.Timer.with_state (initial_state);
-            timer.resolve_state.connect (() => { signals += "resolve-state"; });
+            timer.resolve_state.connect (() => {
+                signals += "resolve-state";
+            });
             timer.state_changed.connect (() => {
                 signals += "state-changed";
                 state_changed_time = timer.get_last_state_changed_time ();

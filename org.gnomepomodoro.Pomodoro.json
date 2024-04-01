@@ -12,10 +12,13 @@
         "--socket=pulseaudio",
         "--device=dri",
         "--system-talk-name=org.freedesktop.login1",
+        "--talk-name=org.freedesktop.Flatpak",
         "--talk-name=org.freedesktop.Notifications",
         "--talk-name=org.freedesktop.ScreenSaver",
         "--talk-name=org.gnome.Mutter.IdleMonitor",
-        "--talk-name=org.gnome.ScreenSaver"
+        "--talk-name=org.gnome.ScreenSaver",
+        "--talk-name=org.gtk.vfs.*",
+        "--filesystem=xdg-run/gvfsd"
     ],
     "build-options" : {
         "cflags" : "-O2 -g",

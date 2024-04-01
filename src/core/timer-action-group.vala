@@ -59,24 +59,28 @@ namespace Pomodoro
         private void activate_start (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("timer.start");
             this.timer.start ();
         }
 
         private void activate_reset (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("timer.reset");
             this.timer.reset ();
         }
 
         private void activate_pause (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("timer.pause");
             this.timer.pause ();
         }
 
         private void activate_resume (GLib.SimpleAction action,
                                       GLib.Variant?     parameter)
         {
+            Pomodoro.Context.set_event_source ("timer.resume");
             this.timer.resume ();
         }
 
@@ -85,6 +89,7 @@ namespace Pomodoro
         {
             // TODO: take microseconds from param
 
+            Pomodoro.Context.set_event_source ("timer.rewind");
             this.timer.rewind (Pomodoro.Interval.MINUTE);
         }
     }

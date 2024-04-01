@@ -6,18 +6,10 @@
     <value nick="adaptive" value="1"/>
   </enum>
   -->
-  <flags id="org.gnomepomodoro.Pomodoro.StateFlags">
-    <value nick="none" value="0"/>
-    <value nick="disabled" value="1"/>
-    <value nick="enabled" value="2"/>
-    <value nick="started" value="4"/>
-    <value nick="running" value="8"/>
-    <value nick="paused" value="16"/>
-    <value nick="finished" value="32"/>
-    <value nick="unfinished" value="64"/>
-    <value nick="pomodoro" value="128"/>
-    <value nick="break" value="256"/>
-  </flags>
+  <enum id="org.gnomepomodoro.Pomodoro.ActionTrigger">
+    <value nick="event" value="0"/>
+    <value nick="condition" value="1"/>
+  </enum>
 
   <schema id="org.gnomepomodoro.Pomodoro" path="/org/gnomepomodoro/Pomodoro/">
     <!-- Timer -->
@@ -141,6 +133,63 @@
     <key name="preferences-window-state" type="(iib)">
       <default>(-1, -1, false)</default>
       <summary>State of preferences window</summary>
+    </key>
+
+    <!-- <child name="actions" schema="org.gnomepomodoro.Pomodoro.actions"/> -->
+  </schema>
+
+  <!-- Actions -->
+  <schema id="org.gnomepomodoro.Pomodoro.actions.action">
+    <key name="trigger" enum="org.gnomepomodoro.Pomodoro.ActionTrigger">
+      <default>"event"</default>
+      <summary>Trigger</summary>
+    </key>
+    <key name="enabled" type="b">
+      <default>true</default>
+      <summary>Enabled</summary>
+    </key>
+    <key name="display-name" type="s">
+      <default>""</default>
+      <summary>Name</summary>
+    </key>
+    <key name="events" type="as">
+      <default>[]</default>
+      <summary>List of events</summary>
+    </key>
+    <key name="condition" type="s">
+      <default>""</default>
+      <summary>Condition</summary>
+    </key>
+    <key name="command" type="s">
+      <default>""</default>
+      <summary>Shell command</summary>
+    </key>
+    <key name="exit-command" type="s">
+      <default>""</default>
+      <summary>Shell command</summary>
+    </key>
+    <key name="working-directory" type="s">
+      <default>""</default>
+      <summary>Working directory</summary>
+    </key>
+    <key name="use-subshell" type="b">
+      <default>false</default>
+      <summary>Use Sub-shell</summary>
+    </key>
+    <key name="pass-input" type="b">
+      <default>false</default>
+      <summary>Pass JSON input to the command</summary>
+    </key>
+    <key name="wait-for-completion" type="b">
+      <default>true</default>
+      <summary>Wait for completion</summary>
+    </key>
+  </schema>
+  <schema id="org.gnomepomodoro.Pomodoro.actions" path="/org/gnomepomodoro/Pomodoro/actions/">
+    <key name="actions" type="as">
+      <default>[]</default>
+      <summary>Actions</summary>
+      <description>A list of action uuids to load.</description>
     </key>
   </schema>
 

@@ -35,6 +35,9 @@ namespace Tests
                            this.test_subtract);
             this.add_test ("subtract_interval",
                            this.test_subtract_interval);
+
+            this.add_test ("to_iso8601",
+                           this.test_to_iso8601);
         }
 
         public override void setup ()
@@ -174,6 +177,41 @@ namespace Tests
             assert_cmpvariant (
                 new GLib.Variant.int64 (Pomodoro.Timestamp.subtract_interval (Pomodoro.Timestamp.MAX, -interval)),
                 new GLib.Variant.int64 (Pomodoro.Timestamp.MAX)
+            );
+        }
+
+        public void test_to_iso8601 ()
+        {
+            var timestamp_1 = (int64) 0;
+            var timestamp_2 = timestamp_1 + Pomodoro.Interval.MICROSECOND;
+            var timestamp_3 = timestamp_1 + Pomodoro.Interval.MILLISECOND;
+            var timestamp_4 = timestamp_1 + Pomodoro.Interval.SECOND - Pomodoro.Interval.MICROSECOND;
+            var timestamp_5 = Pomodoro.Timestamp.from_seconds_uint (1014304205);
+
+            assert_cmpstr (
+                Pomodoro.Timestamp.to_iso8601 (timestamp_1),
+                GLib.CompareOperator.EQ,
+                "1970-01-01T00:00:00Z"
+            );
+            assert_cmpstr (
+                Pomodoro.Timestamp.to_iso8601 (timestamp_2),
+                GLib.CompareOperator.EQ,
+                "1970-01-01T00:00:00.000001Z"
+            );
+            assert_cmpstr (
+                Pomodoro.Timestamp.to_iso8601 (timestamp_3),
+                GLib.CompareOperator.EQ,
+                "1970-01-01T00:00:00.001000Z"
+            );
+            assert_cmpstr (
+                Pomodoro.Timestamp.to_iso8601 (timestamp_4),
+                GLib.CompareOperator.EQ,
+                "1970-01-01T00:00:00.999999Z"
+            );
+            assert_cmpstr (
+                Pomodoro.Timestamp.to_iso8601 (timestamp_5),
+                GLib.CompareOperator.EQ,
+                "2002-02-21T15:10:05Z"
             );
         }
     }

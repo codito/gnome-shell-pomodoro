@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroCommandEntryRow" parent="AdwEntryRow">
+    <property name="input-hints">no-spellcheck | no-emoji</property>
+    <child type="suffix">
+      <object class="GtkMenuButton">
+        <property name="icon-name">variable-symbolic</property>
+        <property name="valign">center</property>
+        <property name="popover">
+          <object class="PomodoroVariablePopover" id="insert_variable_popover">
+            <signal name="selected" handler="on_insert_variable_popover_selected"/>
+          </object>
+        </property>
+        <style>
+          <class name="flat"/>
+        </style>
+      </object>
+    </child>
+  </template>
+</interface>

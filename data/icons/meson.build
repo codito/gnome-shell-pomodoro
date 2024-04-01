@@ -25,4 +25,3 @@ install_data(
     'symbolic' / 'org.gnomepomodoro.Pomodoro-symbolic.svg',
     install_dir: hicolor_icondir / 'symbolic' / 'apps',
 )
-

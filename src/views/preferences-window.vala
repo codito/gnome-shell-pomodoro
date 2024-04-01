@@ -67,6 +67,13 @@ namespace Pomodoro
         panel_info.content_class = typeof (Pomodoro.PreferencesPanelAppearance);
         model.append (panel_info);
 
+        panel_info = new PreferencesPanelInfo ();
+        panel_info.name = "actions";
+        panel_info.title = _("Custom Actions");
+        panel_info.icon_name = "custom-action-symbolic";
+        panel_info.content_class = typeof (Pomodoro.PreferencesPanelActions);
+        model.append (panel_info);
+
         return new Gtk.SingleSelection ((owned) model);
     }
 

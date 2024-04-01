@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroConditionGroupWidget" parent="GtkWidget">
+    <child>
+      <object class="GtkButton" id="operator_button">
+        <style>
+          <class name="pill"/>
+          <class name="small"/>
+          <class name="flat"/>
+        </style>
+        <signal name="clicked" handler="on_operator_button_clicked"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="arguments_box">
+        <property name="orientation">vertical</property>
+        <property name="hexpand">true</property>
+        <property name="spacing">12</property>
+        <child>
+          <object class="GtkBox" id="buttons_box">
+            <property name="orientation">horizontal</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkButton">
+                <child>
+                  <object class="AdwButtonContent">
+                    <property name="label" translatable="yes">Add Condition</property>
+                    <property name="icon-name">list-add-symbolic</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="pill"/>
+                  <class name="small"/>
+                  <class name="flat"/>
+                </style>
+                <signal name="clicked" handler="on_add_condition_button_clicked"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="visible" bind-source="PomodoroConditionGroupWidget" bind-property="is-nested" bind-flags="invert-boolean | sync-create"/>
+                <child>
+                  <object class="AdwButtonContent">
+                    <property name="label" translatable="yes">Add Group</property>
+                    <property name="icon-name">list-add-symbolic</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="pill"/>
+                  <class name="small"/>
+                  <class name="flat"/>
+                </style>
+                <signal name="clicked" handler="on_add_condition_group_button_clicked"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

@@ -103,7 +103,7 @@ namespace Pomodoro
             return true;
         }
 
-        public inline bool is_enabled ()
+        public inline bool is_enabled ()  // TODO: remove?
         {
             return this.user_data != null;
         }
@@ -130,6 +130,47 @@ namespace Pomodoro
         public inline bool is_finished ()
         {
             return Pomodoro.Timestamp.is_defined (this.finished_time);
+        }
+
+        // public inline bool is_stopped ()
+        // {
+        //     return Pomodoro.Timestamp.is_undefined (this.started_time);
+        // }
+
+        /**
+         * Calculate elapsed time.
+         *
+         * It's only accurate when passing a current time. If you pass a historic time
+         * the result will be just an estimate.
+         */
+        public int64 calculate_elapsed (int64 timestamp)
+        {
+            if (Pomodoro.Timestamp.is_undefined (this.started_time)) {
+                return 0;
+            }
+
+            if (Pomodoro.Timestamp.is_defined (this.paused_time)) {
+                timestamp = int64.min (this.paused_time, timestamp);
+            }
+
+            if (Pomodoro.Timestamp.is_defined (this.finished_time)) {
+                timestamp = int64.min (this.finished_time, timestamp);
+            }
+
+            return (
+                timestamp - this.started_time - this.offset
+            ).clamp (0, this.duration);
+        }
+
+        /**
+         * Calculate remaining time.
+         *
+         * It's only accurate when passing a current time. If you pass a historic time
+         * the result will be just an estimate.
+         */
+        public int64 calculate_remaining (int64 timestamp)
+        {
+            return this.duration - this.calculate_elapsed (timestamp);
         }
 
         /**
@@ -521,7 +562,8 @@ namespace Pomodoro
          * Reset timer to initial state.
          */
         public void reset (int64 duration = 0,
-                           void* user_data = null)
+                           void* user_data = null,
+                           int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
                            requires (duration >= 0)
         {
             this.set_state_full (
@@ -532,7 +574,8 @@ namespace Pomodoro
                     paused_time = Pomodoro.Timestamp.UNDEFINED,
                     finished_time = Pomodoro.Timestamp.UNDEFINED,
                     user_data = user_data
-                }
+                },
+                timestamp
             );
         }
 
@@ -925,17 +968,7 @@ namespace Pomodoro
 
             this.ensure_timestamp (ref timestamp);
 
-            if (Pomodoro.Timestamp.is_defined (this._state.paused_time)) {
-                timestamp = int64.min (this._state.paused_time, timestamp);
-            }
-
-            if (Pomodoro.Timestamp.is_defined (this._state.finished_time)) {
-                timestamp = int64.min (this._state.finished_time, timestamp);
-            }
-
-            return (
-                timestamp - this._state.started_time - this._state.offset
-            ).clamp (0, this._state.duration);
+            return this._state.calculate_elapsed (timestamp);
         }
 
         /**
@@ -1045,6 +1078,7 @@ namespace Pomodoro
         /**
          * Emitted on any state related changes. Default handler acknowledges the change.
          */
+        // [Signal (run = "first")]  TODO: consider this
         public signal void state_changed (Pomodoro.TimerState current_state,
                                           Pomodoro.TimerState previous_state)
         {

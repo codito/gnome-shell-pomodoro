@@ -122,15 +122,19 @@ namespace Pomodoro
             }
         }
 
-        public Pomodoro.Timer? timer;
-        public Pomodoro.SessionManager? session_manager;
-        public Pomodoro.CapabilityManager? capability_manager;
+        public Pomodoro.Timer?               timer;
+        public Pomodoro.SessionManager?      session_manager;
+        public Pomodoro.CapabilityManager?   capability_manager;
 
         // private Gom.Repository repository;
         // private Gom.Adapter adapter;
+        private Pomodoro.EventProducer?      event_producer;
+        private Pomodoro.EventBus?           event_bus;
+        private Pomodoro.ActionManager?      action_manager;
         private Pomodoro.ApplicationService? service;
-        private Pomodoro.TimerService? timer_service;
-        private GLib.Settings settings;
+        private Pomodoro.TimerService?       timer_service;
+        private Pomodoro.Logger?             logger;
+        private GLib.Settings?               settings;
 
         public Application ()
         {
@@ -312,6 +316,25 @@ namespace Pomodoro
             this.show_preferences ();
         }
 
+        private void activate_log (GLib.SimpleAction action,
+                                   GLib.Variant?     parameter)
+        {
+            var entry_id = (ulong) 0;
+
+            var log_window = this.get_window<Pomodoro.LogWindow> ();
+
+            if (log_window == null) {
+                log_window = new Pomodoro.LogWindow ();
+                this.add_window (log_window);
+            }
+
+            if (parameter != null) {
+                log_window.select ((ulong) parameter.get_uint64 ());
+            }
+
+            log_window.present ();
+        }
+
         private void activate_about (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
@@ -421,6 +444,10 @@ namespace Pomodoro
             action.activate.connect (this.activate_preferences);
             this.add_action (action);
 
+            action = new GLib.SimpleAction ("log", GLib.VariantType.UINT64);
+            action.activate.connect (this.activate_log);
+            this.add_action (action);
+
             action = new GLib.SimpleAction ("screen-overlay", null);
             action.activate.connect (this.activate_screen_overlay);
             this.add_action (action);
@@ -457,6 +484,7 @@ namespace Pomodoro
             this.set_accels_for_action ("stats.previous", {"<Alt>Left", "Back"});
             this.set_accels_for_action ("stats.next", {"<Alt>Right", "Forward"});
             this.set_accels_for_action ("app.preferences", {"<Primary>comma"});
+            this.set_accels_for_action ("app.log", {"<Primary>l"});
             this.set_accels_for_action ("app.quit", {"<Primary>q"});
             this.set_accels_for_action ("win.toggle-compact-size", {"F9"});
         }
@@ -516,6 +544,16 @@ namespace Pomodoro
 
             this.timer = this.session_manager.timer;
             // this.timer.changed.connect (this.on_timer_changed);
+
+            this.event_producer = new Pomodoro.EventProducer ();
+            this.event_bus = this.event_producer.bus;
+            this.action_manager = new Pomodoro.ActionManager ();
+
+            this.logger = new Pomodoro.Logger ();
+            this.event_bus.event.connect (
+                (event) => {
+                    this.logger.log_event (event);
+                });
 
             // TODO: Handle async
 
@@ -615,9 +653,13 @@ namespace Pomodoro
 
             // TODO: handle async
 
+            var queue = new Pomodoro.JobQueue ();
+            queue.wait ();
+
             this.session_manager.save_async.begin ();
 
             this.capability_manager.destroy ();
+            this.event_bus.destroy ();
 
             // var engine = Peas.Engine.get_default ();
 
@@ -629,6 +671,8 @@ namespace Pomodoro
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
 
+            this.event_producer = null;
+            this.event_bus = null;
             this.capability_manager = null;
             this.session_manager = null;
             this.timer = null;

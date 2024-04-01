@@ -5,9 +5,13 @@
     <file compressed="true">migrations/version-1.sql</file>
 
     <!-- Views -->
+    <file alias="ui/action-edit-window.ui" compressed="true" preprocess="xml-stripblanks">views/action-edit-window.ui</file>
+    <file alias="ui/action-listboxrow.ui" compressed="true" preprocess="xml-stripblanks">views/action-listboxrow.ui</file>
     <file alias="ui/compact-timer-view.ui" compressed="true" preprocess="xml-stripblanks">views/compact-timer-view.ui</file>
     <file alias="ui/install-extension-dialog.ui" compressed="true" preprocess="xml-stripblanks">views/install-extension-dialog.ui</file>
+    <file alias="ui/log-window.ui" compressed="true" preprocess="xml-stripblanks">views/log-window.ui</file>
     <file alias="ui/preferences-keyboard-shortcut-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-keyboard-shortcut-page.ui</file>
+    <file alias="ui/preferences-panel-actions.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-actions.ui</file>
     <file alias="ui/preferences-panel-appearance.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-appearance.ui</file>
     <file alias="ui/preferences-panel-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-notifications.ui</file>
     <file alias="ui/preferences-panel-sounds.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-sounds.ui</file>
@@ -22,10 +26,15 @@
     <file alias="ui/menus.ui" compressed="true" preprocess="xml-stripblanks">views/menus.ui</file>
 
     <!-- Widgets -->
+    <file alias="ui/command-entryrow.ui" compressed="true" preprocess="xml-stripblanks">widgets/command-entryrow.ui</file>
+    <file alias="ui/condition-group-widget.ui" compressed="true" preprocess="xml-stripblanks">widgets/condition-group-widget.ui</file>
+    <file alias="ui/condition-widget.ui" compressed="true" preprocess="xml-stripblanks">widgets/condition-widget.ui</file>
     <file alias="ui/lightbox.ui" compressed="true" preprocess="xml-stripblanks">widgets/lightbox.ui</file>
     <file alias="ui/log-scale-row.ui" compressed="true" preprocess="xml-stripblanks">widgets/log-scale-row.ui</file>
+    <file alias="ui/sidebar-row.ui" compressed="true" preprocess="xml-stripblanks">widgets/sidebar-row.ui</file>
     <file alias="ui/timer-control-buttons.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-control-buttons.ui</file>
     <file alias="ui/timer-label.ui" compressed="true" preprocess="xml-stripblanks">widgets/timer-label.ui</file>
+    <file alias="ui/variable-popover.ui" compressed="true" preprocess="xml-stripblanks">widgets/variable-popover.ui</file>
     <file alias="ui/volume-slider.ui" compressed="true" preprocess="xml-stripblanks">widgets/volume-slider.ui</file>
 
     <!-- CSS -->
@@ -41,7 +50,14 @@
     <file preprocess="xml-stripblanks">icons/24x24/actions/timer-skip-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/24x24/actions/timer-start-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/24x24/actions/timer-stop-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/condition-enter-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/condition-exit-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/custom-action-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/dark-theme-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/document-edit-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/event-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/filter-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/list-drag-handle-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/lock-screen-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/preferences-appearance-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/preferences-notifications-symbolic.svg</file>
@@ -56,6 +72,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-start-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-stop-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/timer-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/variable-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-compact-size-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/window-normal-size-symbolic.svg</file>
   </gresource>

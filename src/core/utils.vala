@@ -22,12 +22,22 @@ using GLib;
 
 namespace Pomodoro
 {
-    private inline void ensure_timestamp (ref int64 timestamp)
+    private static int _is_flatpak = -1;
+
+
+    public inline void ensure_timestamp (ref int64 timestamp)
     {
-        if (timestamp < 0) {
+        if (Pomodoro.Timestamp.is_undefined (timestamp)) {
             timestamp = Pomodoro.Timestamp.from_now ();
         }
     }
+
+
+    public inline string ensure_string (string? str)
+    {
+        return str != null ? str : "";
+    }
+
 
     /**
      * Round seconds to 1s, 5s, 10s, 1m.
@@ -96,6 +106,124 @@ namespace Pomodoro
     {
         return value_from + (value_to - value_from) * t;
     }
+
+    public bool is_flatpak ()
+    {
+        if (_is_flatpak < 0) {
+            var value = GLib.Environment.get_variable ("container") == "flatpak" &&
+                        GLib.Environment.get_variable ("G_TEST_ROOT_PROCESS") == null;
+            _is_flatpak = value ? 1 : 0;
+        }
+
+        return _is_flatpak > 0;
+    }
+
+
+    public string to_camel_case (string name)
+    {
+        var     result = new GLib.StringBuilder ();
+        var     was_hyphen = false;
+        unichar chr;
+        int     chr_span_end = 0;
+
+        while (name.get_next_char (ref chr_span_end, out chr))
+        {
+            if (chr == '-') {
+                was_hyphen = true;
+                continue;
+            }
+
+            if (was_hyphen) {
+                was_hyphen = false;
+                result.append_unichar (chr.toupper ());
+            }
+            else {
+                result.append_unichar (chr);
+            }
+        }
+
+        return result.str;
+    }
+
+
+    public string from_camel_case (string name)
+    {
+        var     result = new GLib.StringBuilder ();
+        var     was_lowercase = false;
+        unichar chr;
+        int     chr_span_end = 0;
+
+        while (name.get_next_char (ref chr_span_end, out chr))
+        {
+            if (chr.isupper () && was_lowercase) {
+                was_lowercase = false;
+                result.append_c ('-');
+                result.append_unichar (chr.tolower ());
+            }
+            else {
+                was_lowercase = chr.islower ();
+                result.append_unichar (was_lowercase ? chr : chr.tolower ());
+            }
+        }
+
+        return result.str;
+    }
+
+
+    /* TODO: remove
+    internal T? array_pop<T> (ref T[] array)
+    {
+        if (array.length == 0) {
+            return null;
+        }
+
+        T last_element = array[array.length - 1];
+        T[] new_array = new T[array.length - 1];
+
+        for (var index = 0; index < new_array.length; index++) {
+            new_array[index] = array[index];
+        }
+
+        array = new_array;
+
+        return last_element;
+    }
+    */
+
+
+    /**
+     * Helper class for building for constructing arrays more efficiently.
+     *
+     * TODO: go through GLib.Array source code for confirmation
+     */
+    /*
+    [Compact]
+    internal class Array<T>
+    {
+        public T[] data;
+        public int length;
+        public int size;
+
+        public Array ()
+        {
+            this.data = new T[8];
+            this.length = 0;
+            this.size = 8;
+        }
+
+        public void append<T> (owned T value)
+        {
+            if (this.size == this.length)
+            {
+                this.size = this.size > 0 ? this.size * 2 : 8;
+                this.data.resize (this.size);
+            }
+
+            this.data[this.length] = value;
+            this.length++;
+        }
+    }
+    */
 
 
     // ---------------------------------------------------------------------------

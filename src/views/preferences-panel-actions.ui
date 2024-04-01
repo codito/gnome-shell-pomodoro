@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroPreferencesPanelActions" parent="PomodoroPreferencesPanel">
+    <property name="child">
+      <object class="AdwToolbarView">
+        <child type="top">
+          <object class="AdwHeaderBar">
+            <property name="show-title">true</property>
+            <child type="end">
+              <object class="GtkButton">
+                <property name="label" translatable="yes">_Log</property>
+                <property name="use-underline">true</property>
+                <property name="tooltip-text" translatable="yes">Show execution log</property>
+                <property name="action-name">app.log</property>
+                <property name="action-target">uint64 0</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <property name="content">
+          <object class="AdwPreferencesPage">
+            <property name="description" translatable="yes"><![CDATA[Set up custom actions for automating things and integrating with other services. <a href="">Learn more.</a>]]></property>
+            <child>
+              <object class="AdwPreferencesGroup">
+                <child>
+                  <object class="AdwPreferencesRow" id="add_row">
+                    <property name="activatable">true</property>
+                    <property name="selectable">false</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="icon-name">list-add-symbolic</property>
+                        <property name="height-request">50</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+      </object>
+    </property>
+  </template>
+</interface>

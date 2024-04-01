@@ -41,7 +41,6 @@ namespace Pomodoro
 
         public override void disable ()
         {
-            // TODO: force stop playback?
             this.sound_manager = null;
 
             base.disable ();

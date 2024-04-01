@@ -14,6 +14,11 @@ namespace Pomodoro.Interval
     public const int64 MIN         = int64.MIN;
     public const int64 MAX         = int64.MAX;
 
+    public int64 from_value (int   value,
+                             int64 unit)
+    {
+        return unit * value;
+    }
 
     public int64 add (int64 interval,
                       int64 other)
@@ -105,10 +110,14 @@ namespace Pomodoro.Timestamp
         return (int64) milliseconds * Pomodoro.Interval.MILLISECOND;
     }
 
-    // TODO
-    // public int64 from_iso8601 (string text)
-    // {
-    // }
+    public int64 from_iso8601 (string text)
+    {
+        var datetime = new GLib.DateTime.from_iso8601 (text, null);
+
+        return datetime != null
+            ? datetime.to_unix () * Pomodoro.Interval.SECOND + datetime.get_microsecond ()
+            : Pomodoro.Timestamp.UNDEFINED;
+    }
 
     public double to_seconds (int64 timestamp)
     {
@@ -140,10 +149,22 @@ namespace Pomodoro.Timestamp
     // {
     // }
 
-    // TODO
-    // public string to_iso8601 (int64 timestamp)
-    // {
-    // }
+    public string to_iso8601 (int64 timestamp)
+    {
+        if (timestamp < 0) {
+            return "";
+        }
+
+        var seconds = timestamp / Pomodoro.Interval.SECOND;
+        var microseconds = timestamp % Pomodoro.Interval.SECOND;
+        var datetime_string = (new GLib.DateTime.from_unix_utc (seconds)).format_iso8601 ();  // TODO: do we really need UTC, local may be prefferable?
+
+        if (microseconds > 0) {
+            datetime_string = datetime_string.splice (-1, -1, microseconds.to_string (".%06lld"));
+        }
+
+        return datetime_string;
+    }
 
     public inline bool is_defined (int64 timestamp)
     {

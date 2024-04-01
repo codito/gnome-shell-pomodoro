@@ -1333,10 +1333,22 @@ namespace Tests
          */
         public void test_advance_to_state__switch_breaks ()
         {
+            // TODO
+
             var timer           = new Pomodoro.Timer ();
             var session_manager = new Pomodoro.SessionManager.with_timer (timer);
 
             var now = Pomodoro.Timestamp.peek ();
+            var signals = new string[0];
+
+            timer.resolve_state.connect (() => { signals += "resolve-state"; });
+            timer.state_changed.connect (() => { signals += "state-changed"; });
+            session_manager.scheduler.populated_session.connect (() => { signals += "populated-session"; });
+            session_manager.scheduler.rescheduled_session.connect (() => { signals += "rescheduled-session"; });
+            session_manager.enter_session.connect (() => { signals += "enter-session"; });
+            session_manager.enter_time_block.connect (() => { signals += "enter-time-block"; });
+            session_manager.leave_session.connect (() => { signals += "leave-session"; });
+            session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
             // Start a short break.
             session_manager.advance_to_state (Pomodoro.State.SHORT_BREAK, now);
@@ -1374,6 +1386,9 @@ namespace Tests
                 new GLib.Variant.int64 (timer.offset),
                 new GLib.Variant.int64 (0)
             );
+            assert_cmpstrv (signals, {  // TODO
+                "xxx",
+            });
 
             // Switch back to a short break.
             now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
@@ -1393,6 +1408,9 @@ namespace Tests
                 new GLib.Variant.int64 (timer.offset),
                 new GLib.Variant.int64 (0)
             );
+            assert_cmpstrv (signals, {  // TODO
+                "xxx",
+            });
         }
 
         /**

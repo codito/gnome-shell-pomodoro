@@ -904,6 +904,8 @@ namespace Pomodoro
         public bool repeat { get; set; default = false; }
 
         private Pomodoro.VolumeAnimation? volume_animation = null;
+        private int64                     pending_fade_out_duration = 0;
+        private int64                     pending_fade_out_easing = Pomodoro.Easing.IN_OUT;
 
         construct
         {
@@ -913,6 +915,16 @@ namespace Pomodoro
 
         private void on_volume_animation_done (Pomodoro.VolumeAnimation volume_animation)
         {
+            var fade_out_duration = this.pending_fade_out_duration;
+            var fade_out_easing = this.pending_fade_out_easing;
+
+            if (fade_out_duration > 0)
+            {
+                GLib.debug ("Fade-out volume after a fade-in...");
+                this.fade_out (fade_out_duration, fade_out_easing);
+                return;
+            }
+
             if (GLib.double_equal (volume_animation.value, 0.0)) {
                 this.stop ();
             }
@@ -941,27 +953,58 @@ namespace Pomodoro
         public void fade_in (int64           duration,
                              Pomodoro.Easing easing = Pomodoro.Easing.OUT)
         {
-            if (this.volume_animation.value_to == 1.0 && this.is_playing ()) {
-                return;
-            }
-
             if (!this.is_playing ()) {
-                this.volume_animation.value = 0.0;
                 this.play ();
             }
 
-            this.volume_animation.animate_to (1.0, duration, easing);
+            this.pending_fade_out_duration = 0;
+
+            if (this.volume_animation.value_to != 1.0) {
+                this.volume_animation.animate_to (1.0, duration, easing);
+            }
+            else {
+                GLib.debug ("Ignore volume fade-in. Already in progress.");
+            }
         }
 
         public void fade_out (int64           duration,
                               Pomodoro.Easing easing = Pomodoro.Easing.IN)
         {
             if (this.volume_animation.value_to == 0.0) {
+                GLib.debug ("Ignore volume fade-out. Already in progress.");
                 return;
             }
 
+            this.pending_fade_out_duration = 0;
+
             if (this.is_playing ()) {
                 this.volume_animation.animate_to (0.0, duration, easing);
+            }
+            else {
+                this.volume_animation.value = 0.0;
+            }
+        }
+
+        /**
+         * Fade-in to a specified `volume` and fade-out.
+         */
+        public void fade_in_out (int64  duration,
+                                 double volume = 1.0)
+                                 requires (duration > 0)
+        {
+            if (!this.is_playing ()) {
+                this.play ();
+            }
+
+            if (this.volume_animation.value_to != volume)
+            {
+                this.pending_fade_out_duration = 2 * (duration / 3);
+                this.pending_fade_out_easing = Pomodoro.Easing.IN_OUT;
+
+                this.volume_animation.animate_to (volume, duration / 3, Pomodoro.Easing.OUT);
+            }
+            else {
+                this.fade_out (duration, Pomodoro.Easing.IN_OUT);
             }
         }
 

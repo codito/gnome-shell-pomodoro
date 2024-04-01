@@ -21,8 +21,8 @@ namespace Freedesktop
             this.available = true;
         }
 
-        private void on_name_vanished (GLib.DBusConnection connection,
-                                       string              name)
+        private void on_name_vanished (GLib.DBusConnection? connection,
+                                       string               name)
         {
             this.available = false;
         }

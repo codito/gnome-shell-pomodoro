@@ -280,6 +280,11 @@ namespace Pomodoro
                 : session.time_blocks.length () == 1 && session.time_blocks.first ().data == next_time_block;
             var n = 1;
 
+            // Treat external changes to a long-break as schedule changes.
+            var initial_version = context.state == Pomodoro.State.LONG_BREAK
+                ? session.get_data<ulong> ("rescheduled-version")
+                : session.version;
+
             session.freeze_changed ();
 
             // Remove scheduled time-blocks until next_time_block and shift the time-block to the timestamp.
@@ -348,11 +353,12 @@ namespace Pomodoro
             session.remove_link (link);
 
             session.thaw_changed ();
+            session.set_data<ulong> ("rescheduled-version", session.version);
 
             if (is_populating) {
                 this.populated_session (session);
             }
-            else {
+            else if (initial_version != session.version) {
                 this.rescheduled_session (session);
             }
         }

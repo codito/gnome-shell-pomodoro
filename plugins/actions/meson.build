@@ -1,5 +1,4 @@
 libaction_vala_sources = [
-  'action-listboxrow.vala',
   'action-page.vala',
   'actions.vala',
   'action.vala',

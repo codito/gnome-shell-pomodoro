@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroSidebarRow" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="spacing">10</property>
+
+    <child>
+      <object class="GtkImage" id="icon">
+        <property name="icon-name" bind-source="PomodoroSidebarRow" bind-property="icon-name" bind-flags="sync-create"/>
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkLabel">
+        <property name="label" bind-source="PomodoroSidebarRow" bind-property="title" bind-flags="sync-create"/>
+        <property name="single-line-mode">true</property>
+        <property name="wrap">false</property>
+        <property name="xalign">0.0</property>
+        <style>
+          <class name="sidebar-label"/>
+        </style>
+      </object>
+    </child>
+
+    <!--
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="hexpand">true</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="single-line-mode">true</property>
+            <property name="wrap">false</property>
+            <property name="xalign">0.0</property>
+            <property name="label">Title</property>
+            <style>
+              <class name="title"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="single-line-mode">true</property>
+            <property name="wrap">false</property>
+            <property name="xalign">0.0</property>
+            <property name="label">Subtitle</property>
+            <style>
+              <class name="subtitle"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    -->
+
+  </template>
+</interface>

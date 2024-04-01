@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <menu id="add_variable_menu">
+    <section>
+      <item>
+        <attribute name="label">$state</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Started</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Paused</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Finished</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+    </section>
+  </menu>
+  <template class="PomodoroActionEditWindow" parent="AdwWindow">
+    <property name="title" translatable="yes">Edit Custom Action</property>
+    <property name="default-width">650</property>
+    <property name="modal">true</property>
+    <property name="deletable">false</property>
+    <property name="content">
+      <object class="AdwToastOverlay" id="toast_overlay">
+        <property name="child">
+          <object class="AdwToolbarView">
+            <child type="top">
+              <object class="AdwHeaderBar">
+                <property name="show-title">true</property>
+                <child type="start">
+                  <object class="GtkButton">
+                    <property name="label" translatable="yes">_Cancel</property>
+                    <property name="use-underline">true</property>
+                    <signal name="clicked" handler="on_cancel_button_clicked" swapped="no"/>
+                  </object>
+                </child>
+                <child type="end">
+                  <object class="GtkButton" id="save_button">
+                    <property name="label" translatable="yes">_Save</property>
+                    <property name="use-underline">true</property>
+                    <style>
+                      <class name="suggested-action"/>
+                    </style>
+                    <signal name="clicked" handler="on_save_button_clicked" swapped="no"/>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <property name="content">
+              <object class="AdwPreferencesPage">
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <child>
+                      <object class="AdwEntryRow" id="display_name_entryrow">
+                        <property name="title" translatable="yes">Name</property>
+                        <property name="input-hints">word-completion | spellcheck</property>
+                        <property name="input-purpose">name</property>
+                        <child type="suffix">
+                          <object class="GtkSwitch" id="enabled_switch">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Trigger</property>
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Event</property>
+                        <property name="subtitle" translatable="yes">Execute command after an event.</property>
+                        <property name="activatable">true</property>
+                        <property name="activatable-widget">event_radio</property>
+                        <child type="prefix">
+                          <object class="GtkCheckButton" id="event_radio">
+                            <property name="valign">center</property>
+                            <property name="can-focus">false</property>
+                            <property name="active">true</property>
+                            <signal name="toggled" handler="on_trigger_radio_toggled"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Condition</property>
+                        <property name="subtitle" translatable="yes">Ensure execution of a second command once condition is no longer met.</property>
+                        <property name="activatable">true</property>
+                        <property name="activatable-widget">condition_radio</property>
+                        <child type="prefix">
+                          <object class="GtkCheckButton" id="condition_radio">
+                            <property name="valign">center</property>
+                            <property name="can-focus">false</property>
+                            <property name="group">event_radio</property>
+                            <signal name="toggled" handler="on_trigger_radio_toggled"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup" id="events_group">
+                    <property name="title" translatable="yes">Events</property>
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <property name="visible" bind-source="event_radio" bind-property="active" bind-flags="sync-create"/>
+                    <property name="header-suffix">
+                      <object class="GtkBox">
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">3</property>
+                        <child>
+                          <object class="GtkMenuButton" id="add_event_button">
+                            <property name="child">
+                              <object class="AdwButtonContent">
+                                <property name="icon-name">list-add-symbolic</property>
+                                <property name="label" translatable="yes">Add _Event</property>
+                                <property name="use-underline">true</property>
+                              </object>
+                            </property>
+                            <style>
+                              <class name="flat"/>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkToggleButton" id="event_condition_button">
+                            <property name="child">
+                              <object class="AdwButtonContent">
+                                <property name="icon-name">filter-symbolic</property>
+                                <!-- translators: Filter (verb) -->
+                                <property name="label" translatable="yes">_Filter</property>
+                                <property name="use-underline">true</property>
+                              </object>
+                            </property>
+                            <style>
+                              <class name="flat"/>
+                            </style>
+                            <signal name="toggled" handler="on_event_condition_button_toggled"/>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                    <style>
+                      <class name="events-list"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup" id="event_condition_group">
+                    <!-- translators: Filter (noun) -->
+                    <property name="title" translatable="yes">Filter</property>
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <property name="visible">false</property>
+                    <child>
+                      <object class="PomodoroConditionGroupWidget" id="event_condition_group_widget">
+                        <property name="halign">fill</property>
+                        <property name="removable">true</property>
+                        <signal name="request-remove" handler="on_event_condition_request_remove"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Condition</property>
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <property name="visible" bind-source="condition_radio" bind-property="active" bind-flags="sync-create"/>
+                    <child>
+                      <object class="PomodoroConditionGroupWidget" id="condition_group_widget">
+                        <property name="halign">fill</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Command</property>
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <property name="visible" bind-source="event_radio" bind-property="active" bind-flags="sync-create"/>
+                    <child>
+                      <object class="PomodoroCommandEntryRow" id="command_entryrow">
+                        <property name="title" translatable="yes">Shell Command</property>
+                        <property name="use-subshell" bind-source="use_subshell_switchrow" bind-property="active" bind-flags="sync-create"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Commands</property>
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <property name="visible" bind-source="condition_radio" bind-property="active" bind-flags="sync-create"/>
+                    <child>
+                      <object class="PomodoroCommandEntryRow" id="enter_command_entryrow">
+                        <property name="title" translatable="yes">Condition Met Command</property>
+                        <property name="use-subshell" bind-source="use_subshell_switchrow" bind-property="active" bind-flags="sync-create"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="PomodoroCommandEntryRow" id="exit_command_entryrow">
+                        <property name="title" translatable="yes">Condition Not Met Command</property>
+                        <property name="use-subshell" bind-source="use_subshell_switchrow" bind-property="active" bind-flags="sync-create"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="sensitive" bind-source="enabled_switch" bind-property="active" bind-flags="sync-create"/>
+                    <child>
+                      <object class="AdwEntryRow" id="working_directory_entryrow">
+                        <property name="title" translatable="yes">Working Directory</property>
+                        <child type="suffix">
+                          <object class="GtkButton">
+                            <property name="icon-name">folder-symbolic</property>
+                            <property name="valign">center</property>
+                            <style>
+                              <class name="flat"/>
+                            </style>
+                            <signal name="clicked" handler="on_working_directory_button_clicked" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwSwitchRow" id="use_subshell_switchrow">
+                        <property name="title" translatable="yes">Use Subshell</property>
+                        <property name="subtitle" translatable="yes">Run the program from a subshell such as sh -c ''</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwSwitchRow" id="pass_input_switchrow">
+                        <property name="title" translatable="yes">Pass Input Data</property>
+                        <property name="subtitle" translatable="yes">Instead of passing variables you can process a JSON object.</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwSwitchRow" id="wait_for_completion_switchrow">
+                        <property name="title" translatable="yes">Wait For Completion</property>
+                        <property name="subtitle" translatable="yes">Block execution of other commands until the command completes.</property>
+                        <property name="visible" bind-source="event_radio" bind-property="active" bind-flags="sync-create"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup" id="buttons_group">
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">_Delete Action</property>
+                        <property name="use-underline">true</property>
+                        <property name="halign">end</property>
+                        <style>
+                          <class name="destructive-action"/>
+                        </style>
+                        <signal name="clicked" handler="on_delete_button_clicked" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </property>
+      </object>
+    </property>
+    <child>
+      <object class="GtkEventControllerKey">
+        <signal name="key-pressed" handler="on_key_pressed" swapped="no"/>
+      </object>
+    </child>
+  </template>
+</interface>

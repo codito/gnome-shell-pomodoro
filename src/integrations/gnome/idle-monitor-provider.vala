@@ -87,7 +87,7 @@ namespace Gnome
                 this.remove_active_watch_internal ();
             }
             catch (GLib.Error error) {
-                GLib.warning ("Error while removeing active-watch: %s", error.message);
+                GLib.warning ("Error while removing active-watch: %s", error.message);
             }
 
             this.became_active ();

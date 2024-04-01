@@ -9,7 +9,7 @@ namespace Pomodoro
      */
     public enum State
     {
-        UNDEFINED,
+        UNDEFINED,  // TODO: rename to STOPPED
         POMODORO,
         BREAK,
         SHORT_BREAK,
@@ -82,7 +82,7 @@ namespace Pomodoro
            }
         }
 
-        public bool compare (Pomodoro.State other)
+        public bool compare (Pomodoro.State other)  // TODO: rename to equals
         {
             if (this == BREAK) {
                 return other.is_break ();
@@ -128,32 +128,6 @@ namespace Pomodoro
             }
 
             return (int64) seconds * Pomodoro.Interval.SECOND;
-        }
-    }
-
-
-    /**
-     * Pomodoro.StateFlags
-     *
-     * A detailed state representation of the timer and of current time-block.
-     */
-    [Flags]
-    public enum StateFlags
-    {
-        NONE = 0,
-        DISABLED = 1,
-        ENABLED = 2,
-        STARTED = 4,
-        RUNNING = 8,
-        PAUSED = 16,
-        FINISHED = 32,
-        UNFINISHED = 64,
-        POMODORO = 128,
-        BREAK = 256;
-
-        public bool contains (Pomodoro.StateFlags flags)
-        {
-            return (this & flags) == flags;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Pomodoro
         public const int64 SESSION_EXPIRY_TIMEOUT = Pomodoro.Interval.HOUR;
 
         /**
-         * Time limit to include in a time-block after the timer has finished.
+         * Time limit to include in a time-block after the timer has finished.  TODO: reword the comment
          */
         private const int64 OVERDUE_TIMEOUT = Pomodoro.Interval.HOUR;
 
@@ -342,7 +342,7 @@ namespace Pomodoro
                 }
             }
             else {
-                state.user_data = null;
+                state = Pomodoro.TimerState ();
             }
         }
 
@@ -365,7 +365,7 @@ namespace Pomodoro
                 this._timer.set_state_full (state, timestamp);
             }
             else {
-                this._timer.reset ();
+                this._timer.reset (0, null, timestamp);
             }
         }
 
@@ -592,6 +592,11 @@ namespace Pomodoro
                 this.update_timer_state (timestamp);
             }
 
+            this.reschedule_if_queued ();
+
+            this.advanced (session, time_block,
+                           previous_session, previous_time_block);
+
             if (this._current_time_block != null) {
                 this.enable_idle_monitor ();
             }
@@ -599,7 +604,6 @@ namespace Pomodoro
                 this.disable_idle_monitor ();
             }
 
-            this.reschedule_if_queued ();
             this.thaw_current_session_changed ();
         }
 
@@ -1000,7 +1004,7 @@ namespace Pomodoro
 
             var previous_session = this._current_session;
 
-            this.session_expired (this._current_session);
+            this.session_expired (this._current_session, timestamp);
 
             if (this._current_session != previous_session) {
                 GLib.debug ("The session was changed during `session-expired` emission.");
@@ -1551,8 +1555,11 @@ namespace Pomodoro
 
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            if (this._current_session == null || this._current_session.is_expired (timestamp)) {
-                this.set_current_time_block_full (this.initialize_next_session (timestamp), null, timestamp);
+            if (this._current_session == null || this._current_session.is_expired (timestamp))
+            {
+                var next_time_block = this.initialize_next_session (timestamp);
+
+                this.set_current_time_block_full (next_time_block, null, timestamp);
             }
         }
 
@@ -1561,14 +1568,26 @@ namespace Pomodoro
          */
         public void reset (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
-            var now = Pomodoro.Timestamp.from_now ();
+            var now = Pomodoro.Timestamp.from_now ();  // TODO: just use timestamp
 
             if (Pomodoro.Timestamp.is_undefined (timestamp)) {
                 timestamp = now;
             }
 
-            if (this._current_session != null && !this._current_session.is_scheduled ()) {
-                this.set_current_time_block_full (this.initialize_next_session (now), null, timestamp);
+            if (this._current_session != null && !this._current_session.is_scheduled ())
+            {
+                var next_time_block = this.initialize_next_session (now);
+
+                this.set_current_time_block_full (next_time_block, null, timestamp);
+            }
+        }
+
+        public void check_current_session_expired ()
+        {
+            var timestamp = Pomodoro.Timestamp.from_now ();
+
+            if (this._current_session != null && this._current_session.is_expired (timestamp)) {
+                this.expire_current_session (timestamp);
             }
         }
 
@@ -1637,7 +1656,8 @@ namespace Pomodoro
             }
         }
 
-        public signal void session_expired (Pomodoro.Session session)
+        public signal void session_expired (Pomodoro.Session session,
+                                            int64            timestamp)
         {
             GLib.debug ("Session expired");
         }
@@ -1649,6 +1669,16 @@ namespace Pomodoro
          */
         public signal void confirm_advancement (Pomodoro.TimeBlock current_time_block,
                                                 Pomodoro.TimeBlock next_time_block);
+
+        /**
+         * A convenience signal to handle transition between time-blocks.
+         *
+         * It's emitted after entering the current_time_block.
+         */
+        public signal void advanced (Pomodoro.Session?   current_session,
+                                     Pomodoro.TimeBlock? current_time_block,
+                                     Pomodoro.Session?   previous_session,
+                                     Pomodoro.TimeBlock? previous_time_block);
 
         public override void dispose ()
         {

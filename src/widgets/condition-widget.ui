@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="PomodoroConditionWidget" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="spacing">6</property>
+    <property name="halign">fill</property>
+    <style>
+      <class name="card"/>
+    </style>
+    <child>
+      <object class="GtkFlowBox" id="fields">
+        <property name="halign">fill</property>
+        <property name="hexpand">true</property>
+        <property name="row-spacing">3</property>
+        <property name="column-spacing">3</property>
+        <property name="homogeneous">true</property>
+        <property name="selection-mode">none</property>
+        <child>
+          <object class="GtkDropDown" id="field_dropdown">
+            <property name="enable-search">false</property>
+            <signal name="notify::selected-item" handler="on_field_notify_selected_item"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="enum_operator_dropdown">
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Is</item>
+                  <item translatable="yes">Is Not</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected-item" handler="on_enum_operator_notify_selected_item"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="numerical_operator_dropdown">
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Equals</item>
+                  <item translatable="yes">Greater Than</item>
+                  <item translatable="yes">Less Than</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected-item" handler="on_numerical_operator_notify_selected_item"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="state_dropdown">
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Pomodoro</item>
+                  <item translatable="yes">Break</item>
+                  <item translatable="yes">Stopped</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected-item" handler="on_state_notify_selected_item"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="boolean_dropdown">
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Yes</item>
+                  <item translatable="yes">No</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected-item" handler="on_boolean_notify_selected_item"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSpinButton" id="interval_spinbutton">
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="value">5.0</property>
+                <property name="lower">0.0</property>
+                <property name="upper">100.0</property>
+                <property name="step-increment">1.0</property>
+                <property name="page-increment">5.0</property>
+                <signal name="value-changed" handler="on_interval_adjustment_value_changed"/>
+              </object>
+            </property>
+            <property name="digits">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="interval_unit_dropdown">
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item translatable="yes">Minutes</item>
+                  <item translatable="yes">Seconds</item>
+                  <item translatable="yes">Hours</item>
+                </items>
+              </object>
+            </property>
+            <signal name="notify::selected-item" handler="on_interval_unit_notify_selected_item"/>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparator">
+        <property name="orientation">vertical</property>
+        <property name="margin-top">3</property>
+        <property name="margin-bottom">3</property>
+        <property name="visible" bind-source="PomodoroConditionWidget" bind-property="removable" bind-flags="sync-create"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton">
+        <property name="icon-name">window-close-symbolic</property>
+        <property name="valign">center</property>
+        <property name="margin-start">3</property>
+        <property name="margin-end">3</property>
+        <property name="visible" bind-source="PomodoroConditionWidget" bind-property="removable" bind-flags="sync-create"/>
+        <style>
+          <class name="flat"/>
+        </style>
+        <signal name="clicked" handler="on_remove_button_clicked"/>
+      </object>
+    </child>
+  </template>
+</interface>

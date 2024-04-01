@@ -3,23 +3,19 @@ namespace Pomodoro
     [SingleInstance]
     public class SoundManager : GLib.Object
     {
-        private const Pomodoro.StateFlags BACKGROUND_SOUND_CONDITION = Pomodoro.StateFlags.POMODORO |
-                                                                       Pomodoro.StateFlags.RUNNING;
-
-        private const int64 FADE_IN_SHORT_DURATION = 5 * Pomodoro.Interval.SECOND;
-        private const int64 FADE_IN_LONG_DURATION = 20 * Pomodoro.Interval.SECOND;
-        private const int64 FADE_OUT_SHORT_DURATION = 2 * Pomodoro.Interval.SECOND;
-        private const int64 FADE_OUT_LONG_DURATION = 20 * Pomodoro.Interval.SECOND;
+        private const int64 SHORT_FADE_IN_DURATION  =  5 * Pomodoro.Interval.SECOND;
+        private const int64 LONG_FADE_IN_DURATION   = 20 * Pomodoro.Interval.SECOND;
+        private const int64 SHORT_FADE_OUT_DURATION =  2 * Pomodoro.Interval.SECOND;
+        private const int64 LONG_FADE_OUT_DURATION  = 20 * Pomodoro.Interval.SECOND;
+        private const int64 MIN_FADE_OUT_DURATION   =  1 * Pomodoro.Interval.SECOND;
 
         private Pomodoro.AlertSound?      pomodoro_finished_sound = null;
         private Pomodoro.AlertSound?      break_finished_sound = null;
         private Pomodoro.BackgroundSound? background_sound = null;
         private uint                      background_sound_inhibit_count = 0;
-        private uint                      background_sound_condition_watch_id = 0;
         private GLib.Settings?            settings = null;
         private Pomodoro.Timer?           timer = null;
         private ulong                     timer_state_changed_id = 0;
-        private Pomodoro.StateMonitor?    state_monitor = null;
         private uint                      fade_out_timeout_id = 0;
 
         construct
@@ -27,12 +23,11 @@ namespace Pomodoro
             this.timer = Pomodoro.Timer.get_default ();
             this.timer_state_changed_id = this.timer.state_changed.connect_after (this.on_timer_state_changed);
 
-            this.state_monitor = new Pomodoro.StateMonitor ();
-
             this.pomodoro_finished_sound = new Pomodoro.AlertSound ("pomodoro-finished");
             this.break_finished_sound = new Pomodoro.AlertSound ("break-finished");
             this.background_sound = new Pomodoro.BackgroundSound ();
             this.background_sound.repeat = true;
+            this.background_sound.fade_out (0);
 
             this.settings = Pomodoro.get_settings ();
             this.settings.bind ("pomodoro-finished-sound",
@@ -60,13 +55,7 @@ namespace Pomodoro
                                 "volume",
                                 GLib.SettingsBindFlags.DEFAULT);
 
-            this.background_sound_condition_watch_id = this.state_monitor.add_watch (
-                                BACKGROUND_SOUND_CONDITION,
-                                Pomodoro.StateFlags.NONE,
-                                this.on_background_sound_condition_enter,
-                                this.on_background_sound_condition_leave);
-
-            this.update_background_sound ();
+            this.update_background_sound (true);
         }
 
         private void unschedule_fade_out ()
@@ -77,40 +66,20 @@ namespace Pomodoro
             }
         }
 
-        private void schedule_fade_out ()
+        private void schedule_fade_out (int64 timeout)
+                                        requires (this.fade_out_timeout_id == 0)
         {
-            unschedule_fade_out ();
-
-            // TODO: StateMonitor should estimate end tome of the condition
-            if (!this.timer.is_running ()) {
-                return;
-            }
-
-            var remaining = this.timer.calculate_remaining ();
-            var fade_out_timeout = remaining - FADE_OUT_LONG_DURATION;
-
-            if (fade_out_timeout > 0)
-            {
-                this.fade_out_timeout_id = GLib.Timeout.add (Pomodoro.Timestamp.to_milliseconds_uint (fade_out_timeout),
-                                                             this.on_fade_out_timeout);
-                GLib.Source.set_name_by_id (this.fade_out_timeout_id, "Pomodoro.SoundManager.on_fade_out_timeout");
-            }
-            else {
-                // No timeout can be determined.
-            }
+            this.fade_out_timeout_id = GLib.Timeout.add (Pomodoro.Timestamp.to_milliseconds_uint (timeout),
+                                                         this.on_fade_out_timeout);
+            GLib.Source.set_name_by_id (this.fade_out_timeout_id, "Pomodoro.SoundManager.on_fade_out_timeout");
         }
 
-        private bool check_background_sound_condition ()
-        {
-            return BACKGROUND_SOUND_CONDITION in this.state_monitor.current_state_flags;
-        }
-
-        private void update_background_sound (bool was_inhibited = false)
+        private void update_background_sound (bool shorter_fade_in = false)
         {
             this.unschedule_fade_out ();
 
             if (this.background_sound_inhibit_count != 0) {
-                this.background_sound.fade_out (FADE_OUT_SHORT_DURATION, Pomodoro.Easing.OUT);
+                this.background_sound.fade_out (SHORT_FADE_OUT_DURATION, Pomodoro.Easing.OUT);
                 return;
             }
 
@@ -119,11 +88,24 @@ namespace Pomodoro
                 return;
             }
 
-            if (this.check_background_sound_condition ())
+            var current_time_block = this.timer.user_data as Pomodoro.TimeBlock;
+            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+
+            if (current_state == Pomodoro.State.POMODORO && this.timer.is_running ())
             {
-                this.background_sound.fade_in (this.timer.state.offset == 0 && !was_inhibited
-                                               ? FADE_IN_LONG_DURATION : FADE_IN_SHORT_DURATION);
-                this.schedule_fade_out ();
+                var remaining        = this.timer.calculate_remaining ();
+                var fade_in_duration = shorter_fade_in ? SHORT_FADE_IN_DURATION : LONG_FADE_IN_DURATION;
+                var fade_out_timeout = remaining - LONG_FADE_OUT_DURATION;
+
+                if (fade_out_timeout > fade_in_duration) {
+                    this.background_sound.fade_in (fade_in_duration);
+                    this.schedule_fade_out (fade_out_timeout);
+                }
+                else if (remaining > MIN_FADE_OUT_DURATION) {
+                    var volume = ((double) remaining / (double) LONG_FADE_OUT_DURATION).clamp (0.0, 1.0);
+
+                    this.background_sound.fade_in_out (remaining, volume);
+                }
             }
             else {
                 this.background_sound.stop ();
@@ -164,28 +146,21 @@ namespace Pomodoro
                     this.break_finished_sound.play ();
                 }
             }
+
+            this.update_background_sound ();
         }
 
         private bool on_fade_out_timeout ()
                                           requires (this.timer.is_running ())
         {
+            this.fade_out_timeout_id = 0;
+
             var current_time = this.timer.get_current_time (GLib.MainContext.current_source ().get_time ());
             var remaining = this.timer.calculate_remaining (current_time);
 
             this.background_sound.fade_out (remaining, Pomodoro.Easing.IN_OUT);
-            this.fade_out_timeout_id = 0;
 
             return GLib.Source.REMOVE;
-        }
-
-        private void on_background_sound_condition_enter ()
-        {
-            this.update_background_sound ();
-        }
-
-        private void on_background_sound_condition_leave ()
-        {
-            this.update_background_sound ();
         }
 
         public override void dispose ()
@@ -207,11 +182,6 @@ namespace Pomodoro
                 this.break_finished_sound = null;
             }
 
-            if (this.background_sound_condition_watch_id != 0) {
-                this.state_monitor.remove_watch (this.background_sound_condition_watch_id);
-                this.background_sound_condition_watch_id = 0;
-            }
-
             if (this.background_sound != null) {
                 this.background_sound.stop ();
                 this.background_sound = null;
@@ -219,7 +189,6 @@ namespace Pomodoro
 
             this.timer = null;
             this.settings = null;
-            this.state_monitor = null;
 
             base.dispose ();
         }

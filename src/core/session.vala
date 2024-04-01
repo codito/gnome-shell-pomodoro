@@ -160,6 +160,7 @@ namespace Pomodoro
          * Time-blocks can me modified by scheduler.
          */
         internal GLib.List<Pomodoro.TimeBlock> time_blocks;
+        internal ulong                         version = 0;
 
         private int64                          _start_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                          _end_time = Pomodoro.Timestamp.UNDEFINED;
@@ -296,6 +297,8 @@ namespace Pomodoro
 
         private void emit_changed ()
         {
+            this.version++;
+
             if (this.changed_freeze_count > 0) {
                 this.changed_is_pending = true;
             }

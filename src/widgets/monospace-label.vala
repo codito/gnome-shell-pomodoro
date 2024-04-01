@@ -115,7 +115,6 @@ namespace Pomodoro
                                            out int      height,
                                            out int      baseline)
         {
-            var context = layout.get_context ();
             var text = layout.get_text ();
             var is_numeric = int.try_parse (text);
 

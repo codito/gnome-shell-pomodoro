@@ -671,8 +671,13 @@ namespace Pomodoro
 
         public override void dispose ()
         {
-            this.placeholder_box.unparent ();
-            this.box.unparent ();
+            if (this.placeholder_box != null) {
+                this.placeholder_box.unparent ();
+            }
+
+            if (this.box != null) {
+                this.box.unparent ();
+            }
 
             this._timer = null;
 
