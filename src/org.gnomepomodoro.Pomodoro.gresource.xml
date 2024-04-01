@@ -8,8 +8,6 @@
     <file alias="ui/compact-timer-view.ui" compressed="true" preprocess="xml-stripblanks">views/compact-timer-view.ui</file>
     <file alias="ui/install-extension-dialog.ui" compressed="true" preprocess="xml-stripblanks">views/install-extension-dialog.ui</file>
     <file alias="ui/preferences-keyboard-shortcut-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-keyboard-shortcut-page.ui</file>
-    <file alias="ui/preferences-main-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-main-page.ui</file>
-    <file alias="ui/preferences-plugins-page.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-plugins-page.ui</file>
     <file alias="ui/preferences-panel-appearance.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-appearance.ui</file>
     <file alias="ui/preferences-panel-notifications.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-notifications.ui</file>
     <file alias="ui/preferences-panel-sounds.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-panel-sounds.ui</file>
