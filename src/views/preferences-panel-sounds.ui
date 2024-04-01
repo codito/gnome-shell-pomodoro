@@ -14,95 +14,114 @@
           </object>
         </child>
         <property name="content">
-          <object class="AdwPreferencesPage">
-            <property name="sensitive" bind-source="enable_switch" bind-property="active" bind-flags="sync-create" />
+          <object class="GtkStack" id="stack">
             <child>
-              <object class="AdwPreferencesGroup">
-                <property name="title" translatable="yes">Alert Sounds</property>
-                <child>
-                  <object class="AdwActionRow">
-                    <property name="title" translatable="yes">Pomodoro Finished Sound</property>
-                    <property name="activatable">True</property>
-                    <child type="suffix">
-                      <object class="GtkLabel" id="pomodoro_finished_sound_label">
-                        <property name="ellipsize">end</property>
-                        <property name="max-width-chars">25</property>
-                        <property name="can-focus">False</property>
-                        <property name="halign">end</property>
-                        <property name="valign">center</property>
-                        <property name="hexpand">True</property>
-                      </object>
-                    </child>
-                    <child type="suffix">
-                      <object class="GtkImage">
-                        <property name="icon-name">go-next-symbolic</property>
-                        <style>
-                          <class name="symbolic"/>
-                        </style>
-                      </object>
-                    </child>
-                    <signal name="activated" handler="on_pomodoro_finished_sound_activated"/>
+              <object class="GtkStackPage">
+                <property name="name">disabled</property>
+                <property name="child">
+                  <object class="AdwStatusPage" id="disabled_page">
+                    <property name="icon-name">audio-volume-muted-symbolic</property>
+                    <property name="title" translatable="yes">Sounds Are Disabled</property>
                   </object>
-                </child>
-                <child>
-                  <object class="AdwActionRow">
-                    <property name="title" translatable="yes">Break Finished Sound</property>
-                    <property name="activatable">True</property>
-                    <child type="suffix">
-                      <object class="GtkLabel" id="break_finished_sound_label">
-                        <property name="ellipsize">end</property>
-                        <property name="max-width-chars">25</property>
-                        <property name="can-focus">False</property>
-                        <property name="halign">end</property>
-                        <property name="valign">center</property>
-                        <property name="hexpand">True</property>
-                      </object>
-                    </child>
-                    <child type="suffix">
-                      <object class="GtkImage">
-                        <property name="icon-name">go-next-symbolic</property>
-                        <style>
-                          <class name="symbolic"/>
-                        </style>
-                      </object>
-                    </child>
-                    <signal name="activated" handler="on_break_finished_sound_activated"/>
-                  </object>
-                </child>
+                </property>
               </object>
             </child>
             <child>
-              <object class="AdwPreferencesGroup">
-                <property name="title" translatable="yes">Background Sound</property>
-                <child>
-                  <object class="AdwActionRow">
-                    <property name="title" translatable="yes">Background Sound</property>
-                    <property name="activatable">True</property>
-                    <child type="suffix">
-                      <object class="GtkLabel" id="background_sound_label">
-                        <property name="ellipsize">end</property>
-                        <property name="max-width-chars">25</property>
-                        <property name="can-focus">False</property>
-                        <property name="halign">end</property>
-                        <property name="valign">center</property>
-                        <property name="hexpand">True</property>
+              <object class="GtkStackPage">
+                <property name="name">enabled</property>
+                <property name="child">
+                  <object class="AdwPreferencesPage">
+                    <child>
+                      <object class="AdwPreferencesGroup">
+                        <property name="title" translatable="yes">Alert Sounds</property>
+                        <child>
+                          <object class="AdwActionRow">
+                            <property name="title" translatable="yes">Pomodoro Finished Sound</property>
+                            <property name="activatable">True</property>
+                            <child type="suffix">
+                              <object class="GtkLabel" id="pomodoro_finished_sound_label">
+                                <property name="ellipsize">end</property>
+                                <property name="max-width-chars">25</property>
+                                <property name="can-focus">False</property>
+                                <property name="halign">end</property>
+                                <property name="valign">center</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                            </child>
+                            <child type="suffix">
+                              <object class="GtkImage">
+                                <property name="icon-name">go-next-symbolic</property>
+                                <style>
+                                  <class name="symbolic"/>
+                                </style>
+                              </object>
+                            </child>
+                            <signal name="activated" handler="on_pomodoro_finished_sound_activated"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwActionRow">
+                            <property name="title" translatable="yes">Break Finished Sound</property>
+                            <property name="activatable">True</property>
+                            <child type="suffix">
+                              <object class="GtkLabel" id="break_finished_sound_label">
+                                <property name="ellipsize">end</property>
+                                <property name="max-width-chars">25</property>
+                                <property name="can-focus">False</property>
+                                <property name="halign">end</property>
+                                <property name="valign">center</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                            </child>
+                            <child type="suffix">
+                              <object class="GtkImage">
+                                <property name="icon-name">go-next-symbolic</property>
+                                <style>
+                                  <class name="symbolic"/>
+                                </style>
+                              </object>
+                            </child>
+                            <signal name="activated" handler="on_break_finished_sound_activated"/>
+                          </object>
+                        </child>
                       </object>
                     </child>
-                    <child type="suffix">
-                      <object class="GtkImage">
-                        <property name="icon-name">go-next-symbolic</property>
-                        <style>
-                          <class name="symbolic"/>
-                        </style>
+                    <child>
+                      <object class="AdwPreferencesGroup">
+                        <property name="title" translatable="yes">Background Sound</property>
+                        <child>
+                          <object class="AdwActionRow">
+                            <property name="title" translatable="yes">Background Sound</property>
+                            <property name="activatable">True</property>
+                            <child type="suffix">
+                              <object class="GtkLabel" id="background_sound_label">
+                                <property name="ellipsize">end</property>
+                                <property name="max-width-chars">25</property>
+                                <property name="can-focus">False</property>
+                                <property name="halign">end</property>
+                                <property name="valign">center</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                            </child>
+                            <child type="suffix">
+                              <object class="GtkImage">
+                                <property name="icon-name">go-next-symbolic</property>
+                                <style>
+                                  <class name="symbolic"/>
+                                </style>
+                              </object>
+                            </child>
+                            <signal name="activated" handler="on_background_sound_activated"/>
+                          </object>
+                        </child>
                       </object>
                     </child>
-                    <signal name="activated" handler="on_background_sound_activated"/>
                   </object>
-                </child>
-              </object>
+                </property>
+              </object><!-- stack-page -->
             </child>
-          </object>
-        </property>
+          </object><!-- stack -->
+       </property>
       </object>
     </property>
   </template>

@@ -23,6 +23,8 @@ namespace Pomodoro
         [GtkChild]
         private unowned Gtk.Switch enable_switch;
         [GtkChild]
+        private unowned Gtk.Stack stack;
+        [GtkChild]
         private unowned Gtk.Label pomodoro_finished_sound_label;
         [GtkChild]
         private unowned Gtk.Label break_finished_sound_label;
@@ -38,7 +40,22 @@ namespace Pomodoro
             this.settings.bind ("sounds", this.enable_switch, "active", GLib.SettingsBindFlags.DEFAULT);
             this.settings_changed_id = this.settings.changed.connect (this.on_settings_changed);
 
+            this.enable_switch.bind_property ("active",
+                                              this.stack,
+                                              "visible-child-name",
+                                              GLib.BindingFlags.SYNC_CREATE,
+                                              transform_active_to_visible_child_name);
+
             this.update_sound_labels ();
+        }
+
+        private static bool transform_active_to_visible_child_name (GLib.Binding   binding,
+                                                                   GLib.Value     source_value,
+                                                                   ref GLib.Value target_value)
+        {
+            target_value.set_string (source_value.get_boolean () ? "enabled" : "disabled");
+
+            return true;
         }
 
         private Pomodoro.SoundChooserWindow create_sound_chooser (string   title,
