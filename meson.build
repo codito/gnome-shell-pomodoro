@@ -144,6 +144,8 @@ if gdk_x11_dep.found()
   add_project_arguments('-D', 'HAVE_GDK4_X11', language: 'vala')
 endif
 
+add_global_arguments(['-Wno-all', '-Wno-error'], language: 'c')
+
 
 subdir('po')
 subdir('data')
