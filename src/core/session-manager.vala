@@ -122,6 +122,19 @@ namespace Pomodoro
         }
 
         /**
+         * Convenience property to track current state.
+         */
+        [CCode(notify = false)]
+        public Pomodoro.State current_state {
+            get {
+                return this._current_state;
+            }
+            set {
+                this.advance_to_state (value);
+            }
+        }
+
+        /**
          * Convenience property to track whether there are several cycles per session.
          *
          * It equivalent to whether a session has short breaks.
@@ -137,6 +150,7 @@ namespace Pomodoro
         private Pomodoro.Scheduler               _scheduler;
         private Pomodoro.Session?                _current_session = null;
         private Pomodoro.TimeBlock?              _current_time_block = null;
+        private Pomodoro.State                   _current_state = Pomodoro.State.UNDEFINED;
         private Pomodoro.Session?                next_session = null;
         private Pomodoro.TimeBlock?              next_time_block = null;
         private Pomodoro.Gap?                    _current_gap = null;
@@ -552,11 +566,19 @@ namespace Pomodoro
             // Enter time-block. It will start or stop the timer depending whether time-block is null.
             if (time_block != previous_time_block)
             {
+                var previous_state = this._current_state;
+                var state          = time_block != null ? time_block.state : Pomodoro.State.UNDEFINED;
+
                 this.previous_session    = previous_session;
                 this.previous_time_block = previous_time_block;
                 this._current_gap        = null;
                 this._current_time_block = time_block;
+                this._current_state      = state;
                 this.notify_property ("current-time-block");
+
+                if (state != previous_state) {
+                    this.notify_property ("current-state");
+                }
 
                 if (time_block != null) {
                     this.enter_time_block (time_block);
@@ -1375,6 +1397,11 @@ namespace Pomodoro
             }
             else {
                 this.queue_reschedule ();
+            }
+
+            if (this._current_state != time_block.state) {
+                this._current_state = time_block.state;
+                this.notify_property ("current-state");
             }
         }
 
