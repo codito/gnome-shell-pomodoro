@@ -103,6 +103,11 @@ namespace Pomodoro
             return true;
         }
 
+        public inline bool is_enabled ()
+        {
+            return this.user_data != null;
+        }
+
         public inline bool is_started ()
         {
             return Pomodoro.Timestamp.is_defined (this.started_time);
