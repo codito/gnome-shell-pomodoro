@@ -44,6 +44,10 @@
         {
             "name" : "gsound",
             "buildsystem" : "meson",
+            "builddir" : true,
+            "config-opts" : [
+                "--libdir=/app/lib"
+            ],
             "sources" : [
                 {
                     "type" : "git",
@@ -53,17 +57,17 @@
             "modules" : [
                 {
                     "name" : "libcanberra",
+                    "config-opts" : [
+                        "--disable-alsa",
+                        "--disable-null",
+                        "--disable-oss"
+                    ],
                     "sources" : [
                         {
                             "type" : "archive",
                             "url" : "http://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
                             "sha256" : "c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72"
                         }
-                    ],
-                    "config-opts" : [
-                        "--disable-alsa",
-                        "--disable-null",
-                        "--disable-oss"
                     ]
                 }
             ]
@@ -71,11 +75,13 @@
         {
             "name" : "libpeas",
             "buildsystem" : "meson",
+            "builddir" : true,
             "config-opts" : [
                 "-Dlua51=false",
                 "-Dpython3=false",
                 "-Dintrospection=true",
-                "-Dvapi=true"
+                "-Dvapi=true",
+                "--libdir=/app/lib"
             ],
             "sources" : [
                 {
@@ -88,9 +94,11 @@
         {
             "name" : "libadwaita",
             "buildsystem" : "meson",
+            "builddir" : true,
             "config-opts" : [
                 "-Dexamples=false",
-                "-Dtests=false"
+                "-Dtests=false",
+                "--libdir=/app/lib"
             ],
             "sources" : [
                 {
@@ -103,8 +111,9 @@
                 {
                     "name" : "libsass",
                     "buildsystem" : "meson",
-                    "cleanup" : [
-                        "*"
+                    "builddir" : true,
+                    "config-opts" : [
+                        "--libdir=/app/lib"
                     ],
                     "sources" : [
                         {
@@ -117,8 +126,9 @@
                 {
                     "name" : "sassc",
                     "buildsystem" : "meson",
-                    "cleanup" : [
-                        "*"
+                    "builddir" : true,
+                    "config-opts" : [
+                        "--libdir=/app/lib"
                     ],
                     "sources" : [
                         {
@@ -133,8 +143,9 @@
         {
             "name" : "gom",
             "buildsystem" : "meson",
+            "builddir" : true,
             "config-opts" : [
-                "--prefix=/app"
+                "--libdir=/app/lib"
             ],
             "sources" : [
                 {
