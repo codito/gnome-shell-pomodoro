@@ -239,6 +239,10 @@ namespace Pomodoro
             {
                 window = new Pomodoro.Window ();
                 this.add_window (window);
+
+                if (this.application_id.has_suffix ("Devel")) {
+                    window.get_style_context ().add_class ("devel");
+                }
             }
 
             if (view != Pomodoro.WindowView.DEFAULT) {
@@ -688,6 +692,8 @@ namespace Pomodoro
             this.hold ();
 
             Options.no_default_window |= Options.has_timer_option ();
+
+            Gtk.Window.set_default_icon_name (this.application_id);
 
             if (Options.quit) {
                 this.quit ();

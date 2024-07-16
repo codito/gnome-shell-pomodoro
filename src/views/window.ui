@@ -76,7 +76,6 @@
   -->
 
   <template class="PomodoroWindow" parent="AdwApplicationWindow">
-    <property name="icon-name">org.gnomepomodoro.Pomodoro</property>
     <property name="default-width">400</property>
     <property name="default-height">600</property>
     <property name="content">
