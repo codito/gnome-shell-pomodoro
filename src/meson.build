@@ -162,7 +162,6 @@ executable(
   gnome_pomodoro_sources,
   dependencies: [
     libgnome_pomodoro_dep,
-    gdk_x11_dep,
     gtk_dep,
     cairo_dep,
     graphene_dep,
