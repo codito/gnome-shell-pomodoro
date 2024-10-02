@@ -303,12 +303,12 @@ namespace Pomodoro
                 notification.set_body (body);
             }
 
-            try {
-                notification.set_icon (GLib.Icon.new_for_string (Config.PACKAGE_NAME));
-            }
-            catch (GLib.Error error) {
-                GLib.warning (error.message);
-            }
+            // try {
+            //     notification.set_icon (GLib.Icon.new_for_string (Config.PACKAGE_NAME));
+            // }
+            // catch (GLib.Error error) {
+            //     GLib.warning (error.message);
+            // }
 
             return notification;
         }
