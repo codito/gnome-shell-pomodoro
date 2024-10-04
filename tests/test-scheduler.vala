@@ -339,7 +339,7 @@ namespace Tests
             var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             Pomodoro.State[] states = {
-                Pomodoro.State.UNDEFINED,
+                Pomodoro.State.STOPPED,
                 Pomodoro.State.POMODORO,
                 Pomodoro.State.SHORT_BREAK,
                 Pomodoro.State.LONG_BREAK
@@ -393,7 +393,7 @@ namespace Tests
             time_block.set_intended_duration (5 * Pomodoro.Interval.MINUTE);
             time_block.set_time_range (now, now + 9 * Pomodoro.Interval.MINUTE);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 score = 0.0,
             };
 
@@ -415,7 +415,7 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.SHORT_BREAK);
             time_block.set_status (Pomodoro.TimeBlockStatus.COMPLETED);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 score = 1.0,
             };
 
@@ -440,7 +440,7 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.LONG_BREAK);
             time_block.set_status (Pomodoro.TimeBlockStatus.COMPLETED);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 is_session_completed = false,
                 needs_long_break = true,
                 score = cycles,
@@ -469,7 +469,7 @@ namespace Tests
             time_block.set_completion_time (now + 4 * Pomodoro.Interval.MINUTE);
             time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 score = 0.0,
             };
 
@@ -495,7 +495,7 @@ namespace Tests
             time_block.set_completion_time (now + 4 * Pomodoro.Interval.MINUTE);
             time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 score = 1.0,
             };
 
@@ -522,7 +522,7 @@ namespace Tests
             time_block.set_completion_time (now + 12 * Pomodoro.Interval.MINUTE);
             time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 is_session_completed = false,
                 needs_long_break = true,
                 score = cycles,
@@ -551,7 +551,7 @@ namespace Tests
             time_block.set_intended_duration (5 * Pomodoro.Interval.MINUTE);
             time_block.set_time_range (now, now + 3 * Pomodoro.Interval.MINUTE);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 score = 0.0,
             };
 
@@ -571,7 +571,7 @@ namespace Tests
         {
             var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 score = 1.0,
             };
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.SHORT_BREAK);
@@ -595,7 +595,7 @@ namespace Tests
             var time_block = new Pomodoro.TimeBlock (Pomodoro.State.LONG_BREAK);
             time_block.set_status (Pomodoro.TimeBlockStatus.UNCOMPLETED);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 is_session_completed = false,
                 needs_long_break = true,
                 score = 4.0,
@@ -624,7 +624,7 @@ namespace Tests
             time_block.set_intended_duration (5 * Pomodoro.Interval.MINUTE);
             time_block.set_time_range (now, now + 4 * Pomodoro.Interval.MINUTE);
             var context = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
                 needs_long_break = false,
                 score = cycles - 1.0,
             };
@@ -648,7 +648,7 @@ namespace Tests
             var scheduler = new Pomodoro.SimpleScheduler.with_template (this.session_template);
 
             var context_1 = Pomodoro.SchedulerContext () {
-                state = Pomodoro.State.UNDEFINED,
+                state = Pomodoro.State.STOPPED,
             };
             var time_block_1 = scheduler.resolve_time_block (context_1);
             assert_true (time_block_1.state == Pomodoro.State.POMODORO);

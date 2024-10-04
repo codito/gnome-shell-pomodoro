@@ -99,7 +99,7 @@ namespace Pomodoro
         private string get_current_state ()
         {
             var current_time_block = this.session_manager.current_time_block;
-            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.STOPPED;
 
             return current_state.to_string ();
         }
@@ -115,7 +115,7 @@ namespace Pomodoro
         //                                   GLib.Variant?     parameter)
         // {
         //     var current_time_block = this.session_manager.current_time_block;
-        //     var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+        //     var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.STOPPED;
 
         //     if (current_state.is_break () || this.session_manager.timer.is_finished ())
         //     {

@@ -162,7 +162,7 @@ namespace Pomodoro
         private void on_settings_changed (GLib.Settings settings,
                                           string        key)
         {
-            var changed_state = Pomodoro.State.UNDEFINED;
+            var changed_state = Pomodoro.State.STOPPED;
             var session_manager = Pomodoro.SessionManager.get_default ();
 
             switch (key)

@@ -44,7 +44,8 @@ namespace Pomodoro
         private Pomodoro.StateValue get_state (Pomodoro.Context context)
         {
             return new Pomodoro.StateValue (context.time_block != null
-                                            ? context.time_block.state : Pomodoro.State.UNDEFINED);
+                                            ? context.time_block.state
+                                            : Pomodoro.State.STOPPED);
         }
 
         private Pomodoro.StatusValue get_status (Pomodoro.Context context)

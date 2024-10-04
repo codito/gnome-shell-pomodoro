@@ -930,7 +930,7 @@ namespace Tests
 
             // Treat undefined states same as breaks.
             var session_5 = new Pomodoro.Session ();
-            session_5.append (new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED));
+            session_5.append (new Pomodoro.TimeBlock (Pomodoro.State.STOPPED));
             assert_cmpuint (session_5.get_cycles ().length (), GLib.CompareOperator.EQ, 1);
             session_5.append (new Pomodoro.TimeBlock (Pomodoro.State.POMODORO));
             assert_cmpuint (session_5.get_cycles ().length (), GLib.CompareOperator.EQ, 2);

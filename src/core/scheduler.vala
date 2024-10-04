@@ -16,7 +16,7 @@ namespace Pomodoro
         public SchedulerContext ()
         {
             this.timestamp = Pomodoro.Timestamp.UNDEFINED;
-            this.state = Pomodoro.State.UNDEFINED;
+            this.state = Pomodoro.State.STOPPED;
             this.is_session_completed = false;
             this.needs_long_break = false;
             this.score = 0.0;
@@ -243,7 +243,7 @@ namespace Pomodoro
          */
         public void reschedule_time_block (Pomodoro.TimeBlock time_block,
                                            int64              timestamp = Pomodoro.Timestamp.UNDEFINED)
-                                           requires (time_block.state != Pomodoro.State.UNDEFINED)
+                                           requires (time_block.state != Pomodoro.State.STOPPED)
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 

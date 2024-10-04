@@ -586,7 +586,7 @@ namespace Pomodoro
 
         public override bool to_boolean ()
         {
-            return this.data != Pomodoro.State.UNDEFINED;
+            return this.data != Pomodoro.State.STOPPED;
         }
 
         public override string to_representation ()
@@ -627,18 +627,18 @@ namespace Pomodoro
 
             var other_state = other as Pomodoro.StateValue;
             if (other_state != null) {
-                return new Pomodoro.BooleanValue (this.data.compare (other_state.data));
+                return new Pomodoro.BooleanValue (this.data.is_a (other_state.data));
             }
 
             var other_string = other as Pomodoro.StringValue;
             if (other_string != null) {
                 var other_data = Pomodoro.State.from_string (other_string.data);
 
-                if (other_data == Pomodoro.State.UNDEFINED && other_string.data != "undefined") {  // TODO: rename "undefined" to "stopped"
+                if (other_data == Pomodoro.State.STOPPED && other_string.data != "stopped") {
                     return new Pomodoro.BooleanValue (false);
                 }
 
-                return new Pomodoro.BooleanValue (this.data.compare (other_data));
+                return new Pomodoro.BooleanValue (this.data.is_a (other_data));
             }
 
             return base.apply_eq (other);

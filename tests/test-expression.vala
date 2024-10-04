@@ -420,7 +420,7 @@ namespace Tests
 
         public void test_and__state ()
         {
-            var value_1 = new Pomodoro.StateValue (Pomodoro.State.UNDEFINED);
+            var value_1 = new Pomodoro.StateValue (Pomodoro.State.STOPPED);
             var value_2 = new Pomodoro.StateValue (Pomodoro.State.POMODORO);
             var value_3 = new Pomodoro.BooleanValue (true);
 
@@ -575,7 +575,7 @@ namespace Tests
         public void test_not_eq__state ()
         {
             var comparison = new Pomodoro.Comparison (
-                new Pomodoro.Constant (new Pomodoro.StateValue (Pomodoro.State.UNDEFINED)),
+                new Pomodoro.Constant (new Pomodoro.StateValue (Pomodoro.State.STOPPED)),
                 Pomodoro.Operator.NOT_EQ,
                 new Pomodoro.Constant (new Pomodoro.StateValue (Pomodoro.State.POMODORO)));
 

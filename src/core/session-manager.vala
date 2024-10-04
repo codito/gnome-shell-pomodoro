@@ -150,7 +150,7 @@ namespace Pomodoro
         private Pomodoro.Scheduler               _scheduler;
         private Pomodoro.Session?                _current_session = null;
         private Pomodoro.TimeBlock?              _current_time_block = null;
-        private Pomodoro.State                   _current_state = Pomodoro.State.UNDEFINED;
+        private Pomodoro.State                   _current_state = Pomodoro.State.STOPPED;
         private Pomodoro.Session?                next_session = null;
         private Pomodoro.TimeBlock?              next_time_block = null;
         private Pomodoro.Gap?                    _current_gap = null;
@@ -567,7 +567,7 @@ namespace Pomodoro
             if (time_block != previous_time_block)
             {
                 var previous_state = this._current_state;
-                var state          = time_block != null ? time_block.state : Pomodoro.State.UNDEFINED;
+                var state          = time_block != null ? time_block.state : Pomodoro.State.STOPPED;
 
                 this.previous_session    = previous_session;
                 this.previous_time_block = previous_time_block;
@@ -665,7 +665,7 @@ namespace Pomodoro
             // Pick appropriate advancement mode according to current state.
             var current_state = this._current_time_block != null
                       ? this._current_time_block.state
-                      : Pomodoro.State.UNDEFINED;
+                      : Pomodoro.State.STOPPED;
             var advancement_mode = Pomodoro.AdvancementMode.CONTINUOUS;
 
             if (current_state == Pomodoro.State.POMODORO) {
@@ -888,7 +888,7 @@ namespace Pomodoro
         {
             Pomodoro.ensure_timestamp (ref timestamp);
 
-            if (state == Pomodoro.State.UNDEFINED) {
+            if (state == Pomodoro.State.STOPPED) {
                 this.advance_to_time_block (null, timestamp);
                 return;
             }

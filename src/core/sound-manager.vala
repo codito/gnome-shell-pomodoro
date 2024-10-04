@@ -89,7 +89,9 @@ namespace Pomodoro
             }
 
             var current_time_block = this.timer.user_data as Pomodoro.TimeBlock;
-            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+            var current_state = current_time_block != null
+                    ? current_time_block.state
+                    : Pomodoro.State.STOPPED;
 
             if (current_state == Pomodoro.State.POMODORO && this.timer.is_running ())
             {

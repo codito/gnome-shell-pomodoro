@@ -88,7 +88,7 @@ namespace Tests
 
         public void test_new__undefined ()
         {
-            var state = Pomodoro.State.UNDEFINED;
+            var state = Pomodoro.State.STOPPED;
             var time_block = new Pomodoro.TimeBlock (state);
 
             assert_true (time_block.state == state);
@@ -163,8 +163,8 @@ namespace Tests
             var time_block_2 = new Pomodoro.TimeBlock (Pomodoro.State.BREAK);
             assert_true (time_block_2.state == Pomodoro.State.BREAK);
 
-            var time_block_3 = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
-            assert_true (time_block_3.state == Pomodoro.State.UNDEFINED);
+            var time_block_3 = new Pomodoro.TimeBlock (Pomodoro.State.STOPPED);
+            assert_true (time_block_3.state == Pomodoro.State.STOPPED);
         }
 
         // public void test_start_time ()
@@ -462,7 +462,7 @@ namespace Tests
 
         public void test_calculate_remaining__with_gaps ()
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.STOPPED);
             time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
             var gap_1 = new Pomodoro.Gap ();
@@ -568,7 +568,7 @@ namespace Tests
 
         public void test_calculate_progress__with_gaps ()
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.STOPPED);
             time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
             var gap_1 = new Pomodoro.Gap ();
@@ -612,7 +612,7 @@ namespace Tests
 
         public void test_calculate_progress__with_ongoing_gap ()
         {
-            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.STOPPED);
             time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
             time_block.set_completion_time (25 * Pomodoro.Interval.MINUTE);
 
@@ -655,7 +655,7 @@ namespace Tests
 
         // public void test_calculate_progress_inv__with_gaps ()
         // {
-        //     var time_block = new Pomodoro.TimeBlock (Pomodoro.State.UNDEFINED);
+        //     var time_block = new Pomodoro.TimeBlock (Pomodoro.State.STOPPED);
         //     time_block.set_time_range (5 * Pomodoro.Interval.MINUTE, 30 * Pomodoro.Interval.MINUTE);
 
         //     var gap_1 = new Pomodoro.Gap ();

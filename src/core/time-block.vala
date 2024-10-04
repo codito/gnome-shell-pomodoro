@@ -129,7 +129,7 @@ namespace Pomodoro
         protected GLib.List<Pomodoro.Gap>  gaps = null;
         protected int64                    _start_time = Pomodoro.Timestamp.UNDEFINED;
         protected int64                    _end_time = Pomodoro.Timestamp.UNDEFINED;
-        private   Pomodoro.State           _state = Pomodoro.State.UNDEFINED;
+        private   Pomodoro.State           _state = Pomodoro.State.STOPPED;
         private   int                      changed_freeze_count = 0;
         private   bool                     changed_is_pending = false;
         private   Pomodoro.TimeBlockMeta   meta;
@@ -145,7 +145,7 @@ namespace Pomodoro
             };
         }
 
-        public TimeBlock (Pomodoro.State  state = Pomodoro.State.UNDEFINED,
+        public TimeBlock (Pomodoro.State  state = Pomodoro.State.STOPPED,
                           Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
         {
             GLib.Object (
@@ -155,7 +155,7 @@ namespace Pomodoro
         }
 
         public TimeBlock.with_start_time (int64           start_time,
-                                          Pomodoro.State  state = Pomodoro.State.UNDEFINED,
+                                          Pomodoro.State  state = Pomodoro.State.STOPPED,
                                           Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
         {
             GLib.Object (
@@ -639,7 +639,7 @@ namespace Pomodoro
     {
         public new Pomodoro.State state {
             get {
-                return this.time_block != null ? this.time_block.state : Pomodoro.State.UNDEFINED;
+                return this.time_block != null ? this.time_block.state : Pomodoro.State.STOPPED;
             }
             set {
                 assert_not_reached ();

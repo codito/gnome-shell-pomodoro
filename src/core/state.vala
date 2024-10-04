@@ -3,13 +3,13 @@ namespace Pomodoro
     /**
      * Pomodoro.State
      *
-     * In general, there are main states UNDEFINED, POMODORO and BREAK.
+     * In general, there are main states STOPPED, POMODORO and BREAK.
      * BREAK may be resolved to either SHORT_BREAK or LONG_BREAK by the session-manager / scheduler,
      * but can function on its own if session has no cycles.
      */
     public enum State
     {
-        UNDEFINED,  // TODO: rename to STOPPED
+        STOPPED,
         POMODORO,
         BREAK,
         SHORT_BREAK,
@@ -20,6 +20,9 @@ namespace Pomodoro
         {
             switch (this)
             {
+                case STOPPED:
+                    return "stopped";
+
                 case POMODORO:
                     return "pomodoro";
 
@@ -33,7 +36,7 @@ namespace Pomodoro
                     return "long-break";
 
                 default:
-                    return "";
+                    assert_not_reached ();
             }
         }
 
@@ -54,7 +57,7 @@ namespace Pomodoro
                     return LONG_BREAK;
 
                 default:
-                    return UNDEFINED;
+                    return STOPPED;
             }
         }
 
@@ -62,7 +65,7 @@ namespace Pomodoro
         {
             switch (this)
             {
-                case UNDEFINED:
+                case STOPPED:
                     return _("Stopped");
 
                 case POMODORO:
@@ -82,7 +85,7 @@ namespace Pomodoro
            }
         }
 
-        public bool compare (Pomodoro.State other)  // TODO: rename to equals
+        public bool is_a (Pomodoro.State other)
         {
             if (this == BREAK) {
                 return other.is_break ();

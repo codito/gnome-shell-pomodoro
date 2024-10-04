@@ -1177,7 +1177,7 @@ namespace Tests
             session_manager.leave_time_block.connect (() => { signals += "leave-time-block"; });
 
             var now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
-            session_manager.advance_to_state (Pomodoro.State.UNDEFINED, now);
+            session_manager.advance_to_state (Pomodoro.State.STOPPED, now);
 
             assert_true (session_manager.current_session == session);
             assert_null (session_manager.current_time_block);

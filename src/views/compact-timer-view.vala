@@ -46,7 +46,8 @@ namespace Pomodoro
         private string get_state_label ()
         {
             var current_time_block = this.session_manager.current_time_block;
-            var current_state = current_time_block != null ? current_time_block.state : Pomodoro.State.UNDEFINED;
+            var current_state = current_time_block != null
+                    ? current_time_block.state : Pomodoro.State.STOPPED;
 
             return current_state.get_label ();
         }

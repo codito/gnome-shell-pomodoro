@@ -636,8 +636,8 @@ namespace Pomodoro
         {
             switch (text)
             {
-                case "undefined":
-                    return new Pomodoro.StateValue (Pomodoro.State.UNDEFINED);
+                case "stopped":
+                    return new Pomodoro.StateValue (Pomodoro.State.STOPPED);
 
                 case "pomodoro":
                     return new Pomodoro.StateValue (Pomodoro.State.POMODORO);

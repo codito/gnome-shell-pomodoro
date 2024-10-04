@@ -16,7 +16,7 @@ namespace Pomodoro
         private const Pomodoro.State[] STATE_CHOICES = {
             Pomodoro.State.POMODORO,
             Pomodoro.State.BREAK,
-            Pomodoro.State.UNDEFINED
+            Pomodoro.State.STOPPED
         };
         private const bool[] BOOLEAN_CHOICES = {
             true,

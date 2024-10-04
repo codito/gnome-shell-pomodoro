@@ -144,9 +144,9 @@ namespace Tests
                 assert_value_equals (expression_4?.value,
                                      new Pomodoro.StateValue (Pomodoro.State.LONG_BREAK));
 
-                var expression_5 = Pomodoro.Expression.parse ("\"undefined\"") as Pomodoro.Constant;
+                var expression_5 = Pomodoro.Expression.parse ("\"stopped\"") as Pomodoro.Constant;
                 assert_value_equals (expression_5?.value,
-                                     new Pomodoro.StateValue (Pomodoro.State.UNDEFINED));
+                                     new Pomodoro.StateValue (Pomodoro.State.STOPPED));
             }
             catch (Pomodoro.ExpressionParserError error) {
                 assert_no_error (error);
