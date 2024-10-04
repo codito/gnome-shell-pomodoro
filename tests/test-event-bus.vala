@@ -53,8 +53,6 @@ namespace Tests
 
         public override void teardown ()
         {
-            // this.session_manager_action_group = null;
-            // this.timer_action_group = null;
             this.producer = null;
             this.bus = null;
             this.session_manager = null;

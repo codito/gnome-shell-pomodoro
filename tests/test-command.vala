@@ -257,13 +257,21 @@ namespace Tests
             Pomodoro.CommandError? error = null;
 
             var execution = command.prepare (context);
-            assert_cmpstrv (execution.args, expected_args);
 
-            if (expected_error_code < 0) {
-                assert_no_error (execution.error);
+            if (expected_error_code == Pomodoro.CommandError.EMPTY_LINE) {
+                assert_null (execution);
             }
             else {
-                assert_command_error (execution.error, expected_error_code);
+                assert_nonnull (execution);
+
+                if (expected_error_code < 0) {
+                    assert_no_error (execution.error);
+                    assert_cmpstrv (execution.args, expected_args);
+                }
+                else {
+                    assert_command_error (execution.error, expected_error_code);
+                    assert_cmpstrv (execution.args, { line });
+                }
             }
         }
 
@@ -375,9 +383,7 @@ namespace Tests
 
             try {
                 var execution = this.execute_sync (command, context);
-                assert_cmpint (execution.exit_code, GLib.CompareOperator.EQ, -1);
-                assert_cmpstr (execution.output, GLib.CompareOperator.EQ, "");
-                assert_command_error (execution.error, Pomodoro.CommandError.EMPTY_LINE);
+                assert_null (execution);
             }
             catch (GLib.Error error) {
                 assert_no_error (error);

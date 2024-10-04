@@ -41,8 +41,8 @@ namespace Pomodoro
     /**
      * Pomodoro.TimeBlockMeta struct.
      *
-     * Some properties of the `TimeBlock` are purely external and should not trigger `TimeBlock.changed` signal.
-     * `TimeBlockMeta` is a convenience structure for read-only.
+     * Some properties of the `TimeBlock` are purely external and should not trigger
+     * `TimeBlock.changed` signal. `TimeBlockMeta` is a convenience structure for read-only.
      */
     public struct TimeBlockMeta
     {
@@ -64,7 +64,6 @@ namespace Pomodoro
                 this._state = value;
             }
         }
-        public Pomodoro.Source source { get; construct; default = Pomodoro.Source.UNDEFINED; }
         public weak Pomodoro.Session session { get; set; }
 
         [CCode(notify = false)]
@@ -145,22 +144,18 @@ namespace Pomodoro
             };
         }
 
-        public TimeBlock (Pomodoro.State  state = Pomodoro.State.STOPPED,
-                          Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        public TimeBlock (Pomodoro.State  state = Pomodoro.State.STOPPED)
         {
             GLib.Object (
-                state: state,
-                source: source
+                state: state
             );
         }
 
         public TimeBlock.with_start_time (int64           start_time,
-                                          Pomodoro.State  state = Pomodoro.State.STOPPED,
-                                          Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+                                          Pomodoro.State  state = Pomodoro.State.STOPPED)
         {
             GLib.Object (
-                state: state,
-                source: source
+                state: state
             );
 
             this.set_time_range (
@@ -655,22 +650,16 @@ namespace Pomodoro
             }
         }
 
-        public weak Pomodoro.TimeBlock time_block { get; set; }
+        public weak Pomodoro.TimeBlock time_block { get; set; }  // parent
 
-
-        public Gap (Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        public Gap ()
         {
-            GLib.Object (
-                source: source
-            );
+            GLib.Object ();
         }
 
-        public Gap.with_start_time (int64           start_time,
-                                    Pomodoro.Source source = Pomodoro.Source.UNDEFINED)
+        public Gap.with_start_time (int64 start_time)
         {
-            GLib.Object (
-                source: source
-            );
+            GLib.Object ();
 
             this.set_time_range (start_time, this._end_time);
         }

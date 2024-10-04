@@ -437,13 +437,12 @@ namespace Pomodoro
             var minimum_padding = MIN_PADDING;
             var natural_padding = MIN_PADDING;
 
+            minimum = MIN_WIDTH;
+            natural = NAT_WIDTH;
+
             if (orientation == Gtk.Orientation.HORIZONTAL)
             {
-                if (for_size == -1) {
-                    minimum = MIN_WIDTH;
-                    natural = NAT_WIDTH;
-                }
-                else {
+                if (for_size != -1) {
                     this.calculate_width_for_height (for_size, out minimum, out natural);
                 }
 

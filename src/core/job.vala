@@ -12,8 +12,6 @@ namespace Pomodoro
     /**
      * Run scheduled jobs sequentially. Currently we only run one type of jobs - actions / commands.
      * If there were more types, likely we would need to manage several queues / workers.
-     *
-     * TODO show a notification if job fails
      */
     [SingleInstance]
     public class JobQueue : GLib.Object

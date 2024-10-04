@@ -173,7 +173,6 @@ namespace Tests
         public void test_update_action ()
         {
             var session_manager = Pomodoro.SessionManager.get_default ();
-            var timer           = session_manager.timer;
 
             var action_1 = new Pomodoro.EventAction ("00000000-0000-0000-0000-000000000000");
             action_1.display_name = "Sample Action";

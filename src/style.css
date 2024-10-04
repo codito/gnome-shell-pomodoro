@@ -225,6 +225,7 @@ menubutton.small.pill button {
     padding: 6px 12px;
 }
 
+
 /*
  * Screen Overlay
  */
@@ -241,12 +242,10 @@ lightbox .contents {
 lightbox timerlabel {
     font-size: 65pt;
     font-weight: 400;
-    /* text-shadow: 0px 5px 8px rgba(0, 0, 0, 0.20); */
 }
 
 lightbox .message {
     font-size: 15pt;
-    /* text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.20); */
 }
 
 lightbox button {
@@ -292,12 +291,6 @@ popover.menu .title.no-padding {
     padding-left: 10px;
 }
 
-/*
-.navigation-sidebar row > box {
-    margin: 3px 0;
-}
-*/
-
 
 /*
  * Common
@@ -310,14 +303,3 @@ popover.menu .title.no-padding {
 .numeric {
     font-feature-settings: "tnum";
 }
-
-
-/* classes backported from Gtk4 */
-/*
-.dialog.message .title {
-    padding-left: 12px;
-    padding-right: 12px;
-    font-size: 15pt;
-    font-weight: bold;
-}
-*/

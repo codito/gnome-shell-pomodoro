@@ -222,7 +222,7 @@ namespace Pomodoro
                                                  GLib.IOCondition   condition,
                                                  GLib.StringBuilder output)
         {
-        	if (condition == GLib.IOCondition.HUP) {
+            if (condition == GLib.IOCondition.HUP) {
 		        return false;
 	        }
 
@@ -319,15 +319,15 @@ namespace Pomodoro
                 output_channel.add_watch (
                     GLib.IOCondition.IN | GLib.IOCondition.HUP,
                     (channel, condition) => {
-    		            return process_output_line (channel, condition, output_builder);
+                        return process_output_line (channel, condition, output_builder);
 	                });
 
                 var error_channel = new GLib.IOChannel.unix_new (standard_error);
                 error_channel.add_watch (
                     GLib.IOCondition.IN | GLib.IOCondition.HUP,
                     (channel, condition) => {
-    			        return process_output_line (channel, condition, output_builder);
-	    	        });
+                        return process_output_line (channel, condition, output_builder);
+                    });
 
 	            GLib.ChildWatch.add (
 	                child_pid,
@@ -356,7 +356,7 @@ namespace Pomodoro
                         }
 
                         if (callback != null) {
-        		            callback ();
+                            callback ();
                         }
 	                });
 
@@ -391,7 +391,7 @@ namespace Pomodoro
 
                 GLib.Process.close_pid (child_pid);
 
-                // TODO: are file descriptors closed properly
+                // TODO: are file descriptors closed properly?
             }
             catch (GLib.SpawnError error) {
                 var command_line = string.joinv (" ", this.args);
@@ -671,7 +671,7 @@ namespace Pomodoro
         {
             var execution = this.prepare (context);
 
-            if (execution.error == null)
+            if (execution != null && execution.error == null)
             {
                 try {
                     yield execution.run ();

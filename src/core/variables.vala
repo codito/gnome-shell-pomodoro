@@ -75,11 +75,6 @@ namespace Pomodoro
             return new Pomodoro.BooleanValue (context.timer_state.is_running ());
         }
 
-        // private Pomodoro.BooleanValue get_is_enabled (Pomodoro.Context context)
-        // {
-        //     return new Pomodoro.BooleanValue (context.timer_state.is_enabled ());
-        // }
-
         private Pomodoro.IntervalValue get_duration (Pomodoro.Context context)
         {
             return new Pomodoro.IntervalValue (context.timer_state.duration);
@@ -145,11 +140,6 @@ namespace Pomodoro
                                            _("A flag indicating whether the timer is actively counting down."),
                                            typeof (Pomodoro.BooleanValue),
                                            get_is_running));
-            // Pomodoro.install_variable (
-            //     new Pomodoro.VariableSpec ("is-enabled",
-            //                                _("A flag indicating whether the timer is enabled."),
-            //                                typeof (Pomodoro.BooleanValue),
-            //                                get_is_enabled));
             Pomodoro.install_variable (
                 new Pomodoro.VariableSpec ("duration",
                                            _("Duration of the current countdown."),

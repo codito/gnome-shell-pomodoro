@@ -323,8 +323,6 @@ namespace Pomodoro
         private void activate_log (GLib.SimpleAction action,
                                    GLib.Variant?     parameter)
         {
-            var entry_id = (ulong) 0;
-
             var log_window = this.get_window<Pomodoro.LogWindow> ();
 
             if (log_window == null) {
@@ -973,3 +971,4 @@ namespace Pomodoro
 
     }
 }
+

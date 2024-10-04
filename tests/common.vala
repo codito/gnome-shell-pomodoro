@@ -178,7 +178,6 @@ namespace Tests
 
     public static void init (string[] args)
     {
-        // Gtk.init ();
         GLib.Test.init (ref args);
 
         // Undo changes made by Test.init(), don't make warnings fatal.

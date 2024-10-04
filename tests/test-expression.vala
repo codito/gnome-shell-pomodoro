@@ -516,8 +516,6 @@ namespace Tests
                            GLib.CompareOperator.EQ,
                            "state == \"pomodoro\" && (isStarted || isPaused)");
         }
-
-        // TODO
     }
 
 
@@ -624,8 +622,6 @@ namespace Tests
                            GLib.CompareOperator.EQ,
                            "isStarted");
         }
-
-        // TODO
     }
 }
 
@@ -640,5 +636,4 @@ public static int main (string[] args)
         new Tests.OperationTest (),
         new Tests.ComparisonTest ()
     );
-    // TODO: test available value formats
 }

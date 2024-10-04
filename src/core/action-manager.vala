@@ -132,7 +132,7 @@ namespace Pomodoro
             //     GLib.warning (error.message);
             // }
 
-            GLib.Application.get_default ()
+            GLib.Application.get_default ()?
                 .send_notification (@"action:$(action.uuid)", notification);
         }
 
@@ -213,7 +213,7 @@ namespace Pomodoro
 
             // TODO: log action removed
 
-            GLib.Application.get_default ()
+            GLib.Application.get_default ()?
                             .withdraw_notification (@"action:$(action.uuid)");
         }
 
@@ -223,7 +223,7 @@ namespace Pomodoro
             this.unbind_action (previous_action);
             this.bind_action (action);
 
-            GLib.Application.get_default ()
+            GLib.Application.get_default ()?
                             .withdraw_notification (@"action:$(previous_action.uuid)");
         }
 

@@ -279,7 +279,7 @@ namespace Pomodoro
                 target_value.set_string (GLib.Filename.from_uri (uri));
             }
             catch (GLib.ConvertError error) {
-                GLib.debug ("Error converting '%s' to filename: %s", uri, error.message);
+                GLib.warning ("Error converting '%s' to filename: %s", uri, error.message);
                 return false;
             }
         }
@@ -588,7 +588,7 @@ namespace Pomodoro
                                             GSound.Attribute.MEDIA_FILENAME, this._path);
                     }
                     catch (GLib.Error error) {
-                        GLib.debug ("Error while caching '%s': %s", this._path, error.message);
+                        GLib.warning ("Error while caching '%s': %s", this._path, error.message);
                     };
                 }
             }
@@ -918,9 +918,7 @@ namespace Pomodoro
             var fade_out_duration = this.pending_fade_out_duration;
             var fade_out_easing = this.pending_fade_out_easing;
 
-            if (fade_out_duration > 0)
-            {
-                GLib.debug ("Fade-out volume after a fade-in...");
+            if (fade_out_duration > 0) {
                 this.fade_out (fade_out_duration, fade_out_easing);
                 return;
             }
@@ -962,16 +960,12 @@ namespace Pomodoro
             if (this.volume_animation.value_to != 1.0) {
                 this.volume_animation.animate_to (1.0, duration, easing);
             }
-            else {
-                GLib.debug ("Ignore volume fade-in. Already in progress.");
-            }
         }
 
         public void fade_out (int64           duration,
                               Pomodoro.Easing easing = Pomodoro.Easing.IN)
         {
             if (this.volume_animation.value_to == 0.0) {
-                GLib.debug ("Ignore volume fade-out. Already in progress.");
                 return;
             }
 

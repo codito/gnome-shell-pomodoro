@@ -1,6 +1,5 @@
 namespace Pomodoro
 {
-    // FIXME: using inspector causes warning: GLib-GObject-CRITICAL **: 14:27:43.337: value "inf" of type 'gdouble' is invalid or out of range for property 'page-increment' of type 'gdouble'
     public abstract class TimerProgress : Gtk.Widget
     {
         protected const uint   MIN_TIMEOUT_INTERVAL = 50;

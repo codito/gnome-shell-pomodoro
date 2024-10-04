@@ -103,11 +103,6 @@ namespace Pomodoro
             return true;
         }
 
-        public inline bool is_enabled ()  // TODO: remove?
-        {
-            return this.user_data != null;
-        }
-
         public inline bool is_started ()
         {
             return Pomodoro.Timestamp.is_defined (this.started_time);
@@ -131,11 +126,6 @@ namespace Pomodoro
         {
             return Pomodoro.Timestamp.is_defined (this.finished_time);
         }
-
-        // public inline bool is_stopped ()
-        // {
-        //     return Pomodoro.Timestamp.is_undefined (this.started_time);
-        // }
 
         /**
          * Calculate elapsed time.
@@ -808,7 +798,7 @@ namespace Pomodoro
         /**
          * Precise timeout.
          *
-         * It's meant to setup idle timeout that is aligned to full seconds.
+         * It's meant to set up idle timeout that is aligned to full seconds.
          */
         private bool on_timeout_once ()
                                       requires (this.timeout_id != 0)

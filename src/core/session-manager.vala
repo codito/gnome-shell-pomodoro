@@ -22,7 +22,7 @@ namespace Pomodoro
         public const int64 SESSION_EXPIRY_TIMEOUT = Pomodoro.Interval.HOUR;
 
         /**
-         * Time limit to include in a time-block after the timer has finished.  TODO: reword the comment
+         * Time limit when waiting for activity or confirmation.
          */
         private const int64 OVERDUE_TIMEOUT = Pomodoro.Interval.HOUR;
 
@@ -1568,7 +1568,7 @@ namespace Pomodoro
          */
         public void reset (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
-            var now = Pomodoro.Timestamp.from_now ();  // TODO: just use timestamp
+            var now = Pomodoro.Timestamp.from_now ();
 
             if (Pomodoro.Timestamp.is_undefined (timestamp)) {
                 timestamp = now;

@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-pomodoro">
-  <!--
-  <enum id="org.gnomepomodoro.Pomodoro.Scheduler">
-    <value nick="simple" value="0"/>
-    <value nick="adaptive" value="1"/>
-  </enum>
-  -->
   <enum id="org.gnomepomodoro.Pomodoro.ActionTrigger">
     <value nick="event" value="0"/>
     <value nick="condition" value="1"/>
@@ -50,13 +44,6 @@
       <default>true</default>
       <summary>Pause Pomodoro when screen is locked</summary>
     </key>
-    <!--
-    <key name="scheduler" enum="org.gnomepomodoro.Pomodoro.Scheduler">
-      <default>"simple"</default>
-      <summary>Strategy of the scheduler</summary>
-      <description>Strategy of the scheduler in case you deviate from target durations.</description>
-    </key>
-    -->
 
     <!-- Notifications -->
     <key name="announce-about-to-end" type="b">
@@ -69,13 +56,6 @@
       <summary>Show screen overlay</summary>
       <description>Whether to open screen overlay during break.</description>
     </key>
-    <!--
-    <key name="screen-overlay-dismiss-by-activity" type="b">
-      <default>true</default>
-      <summary>Dismiss screen overlay by activity</summary>
-      <description></description>
-    </key>
-    -->
     <key name="screen-overlay-lock-delay" type="u">
       <default>0</default>
       <summary>Time to lock the screen after opening screen overlay</summary>
@@ -134,8 +114,6 @@
       <default>(-1, -1, false)</default>
       <summary>State of preferences window</summary>
     </key>
-
-    <!-- <child name="actions" schema="org.gnomepomodoro.Pomodoro.actions"/> -->
   </schema>
 
   <!-- Actions -->
@@ -192,69 +170,4 @@
       <description>A list of action uuids to load.</description>
     </key>
   </schema>
-
-<!--
-  <schema id="org.gnomepomodoro.Pomodoro.preferences" path="/org/gnomepomodoro/Pomodoro/preferences/">
-    <key name="toggle-timer-key" type="as">
-      <default><![CDATA[["<Ctrl><Alt>p"]]]></default>
-      <summary>Timer toggle key</summary>
-      <description>Key to toggle the timer.</description>
-    </key>
-    <key name="enabled-plugins" type="as">
-      <default>["sounds"]</default>
-      <summary>Enabled plugins</summary>
-      <description>List of enabled plugins.</description>
-    </key>
-  </schema>
-
-  <schema id="org.gnomepomodoro.Pomodoro.state" path="/org/gnomepomodoro/Pomodoro/state/">
-    <key name="timer-state" type="s">
-      <choices>
-        <choice value="null"/>
-        <choice value="pomodoro"/>
-        <choice value="short-break"/>
-        <choice value="long-break"/>
-      </choices>
-      <default>"null"</default>
-      <summary>Timer state</summary>
-      <description>Last used timer state.</description>
-    </key>
-    <key name="timer-state-duration" type="d">
-      <default>0</default>
-      <summary>State time limit</summary>
-      <description>Time limit in seconds of a last state.</description>
-    </key>
-    <key name="timer-state-date" type="s">
-      <default>""</default>
-      <summary>Timer state timestamp</summary>
-      <description>Date of the last state change.</description>
-    </key>
-    <key name="timer-elapsed" type="d">
-      <default>0</default>
-      <summary>Timer elapsed</summary>
-      <description>Timer elapsed time.</description>
-    </key>
-    <key name="timer-paused" type="b">
-      <default>false</default>
-      <summary>Timer paused</summary>
-      <description>Whether timer is paused.</description>
-    </key>
-    <key name="timer-date" type="s">
-      <default>""</default>
-      <summary>Timer timestamp</summary>
-      <description>Date that timer was saved.</description>
-    </key>
-    <key name="timer-score" type="d">
-      <default>0</default>
-      <summary>Timer score</summary>
-      <description>Achieved score.</description>
-    </key>
-    <key name="open-uri" type="s">
-      <default>""</default>
-      <summary>Default location for the "Open…" dialogues</summary>
-      <description>Default location for the "Open…" dialogues.</description>
-    </key>
-  </schema>
--->
-
 </schemalist>
