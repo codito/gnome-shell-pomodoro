@@ -42,7 +42,9 @@ namespace Pomodoro
         // TODO: Calculate Murmur3 hash or serialize this as string
         public uint calculate_checksum ()
         {
-            return GLib.str_hash (@"$(this.event_source) $(this.timestamp)");
+            return GLib.str_hash (this.event_source != null
+                ? @"$(this.event_source) $(this.timestamp)"
+                : this.timestamp.to_string ());
         }
 
         /*
