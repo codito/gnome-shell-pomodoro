@@ -260,7 +260,7 @@ namespace Pomodoro
 
         event_spec = new Pomodoro.EventSpec ("stop",
                                              _("Stop"),
-                                             _("Stopped the timer, either manually, when closing the app or because session has expired."),
+                                             _("Stopped the timer manually."),
                                              Pomodoro.EventCategory.ACTIONS);
         event_spec.add_trigger (Pomodoro.TriggerHook.TIMER_STATE_CHANGED,
                                 (Pomodoro.TriggerFunc) trigger_stop_event);
@@ -268,7 +268,7 @@ namespace Pomodoro
 
         event_spec = new Pomodoro.EventSpec ("pause",
                                              _("Pause"),
-                                             _("The countdown has been paused, either manually, by locking the screen or due to system suspension."),
+                                             _("The countdown has been manually paused. Not triggered when locking the screen or when suspending the system."),
                                              Pomodoro.EventCategory.ACTIONS);
         event_spec.add_trigger (Pomodoro.TriggerHook.TIMER_STATE_CHANGED,
                                 (Pomodoro.TriggerFunc) trigger_pause_event);
@@ -276,7 +276,7 @@ namespace Pomodoro
 
         event_spec = new Pomodoro.EventSpec ("resume",
                                              _("Resume"),
-                                             _("The countdown has been resumed. Starting a new time-block will not trigger this event."),
+                                             _("The countdown has been manually resumed."),
                                              Pomodoro.EventCategory.ACTIONS);
         event_spec.add_trigger (Pomodoro.TriggerHook.TIMER_STATE_CHANGED,
                                 (Pomodoro.TriggerFunc) trigger_resume_event);
@@ -292,7 +292,7 @@ namespace Pomodoro
 
         event_spec = new Pomodoro.EventSpec ("rewind",
                                              _("Rewind"),
-                                             _("Rewind acts like a pause but in the past."),
+                                             _("Rewind action has been used. It adds a pause in the past."),
                                              Pomodoro.EventCategory.ACTIONS);
         event_spec.add_trigger (Pomodoro.TriggerHook.TIMER_STATE_CHANGED,
                                 (Pomodoro.TriggerFunc) trigger_rewind_event);
@@ -300,7 +300,7 @@ namespace Pomodoro
 
         event_spec = new Pomodoro.EventSpec ("reset",
                                              _("Reset"),
-                                             _("Start new session."),
+                                             _("Manually cleared the session."),
                                              Pomodoro.EventCategory.ACTIONS);
         event_spec.add_trigger (Pomodoro.TriggerHook.SESSION_MANAGER_ADVANCED,
                                 (Pomodoro.TriggerFunc) trigger_reset_event);
@@ -309,7 +309,7 @@ namespace Pomodoro
         // Countdown
         event_spec = new Pomodoro.EventSpec ("finish",
                                              _("Finished"),
-                                             _("Countdown has finished and notifications will proceed. It may not indicate the end of a time-block just yet."),
+                                             _("The countdown has finished. If waiting for confirmation, the duration of the time-block still may be altered."),
                                              Pomodoro.EventCategory.COUNTDOWN);
         event_spec.add_trigger (Pomodoro.TriggerHook.TIMER_STATE_CHANGED,
                                 (Pomodoro.TriggerFunc) trigger_finish_event);
