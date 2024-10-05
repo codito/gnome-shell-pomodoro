@@ -1,2 +1,1 @@
-subdir('actions')
 subdir('gnome')
