@@ -12,6 +12,7 @@
         "--socket=pulseaudio",
         "--device=dri",
         "--system-talk-name=org.freedesktop.login1",
+        "--system-talk-name=org.freedesktop.timedate1",
         "--talk-name=org.freedesktop.Flatpak",
         "--talk-name=org.freedesktop.Notifications",
         "--talk-name=org.freedesktop.ScreenSaver",

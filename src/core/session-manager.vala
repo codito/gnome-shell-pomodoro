@@ -155,6 +155,7 @@ namespace Pomodoro
         private Pomodoro.TimeBlock?              next_time_block = null;
         private Pomodoro.Gap?                    _current_gap = null;
         private Pomodoro.IdleMonitor?            idle_monitor = null;
+        private Pomodoro.TimeZoneMonitor?        timezone_monitor = null;
         private Pomodoro.ScreenSaver?            screensaver = null;
         private Pomodoro.LockScreen?             lockscreen = null;
         private bool                             auto_paused = false;
@@ -196,10 +197,13 @@ namespace Pomodoro
         {
             this.settings = Pomodoro.get_settings ();
             this.scheduler = new Pomodoro.SimpleScheduler ();
+            this.timezone_monitor = new Pomodoro.TimeZoneMonitor ();
 
             this.settings.changed.connect (this.on_settings_changed);
+            this.timezone_monitor.changed.connect (this.on_timezone_changed);
 
             this.update_session_template ();
+            this.mark_timezone ();
         }
 
         /**
@@ -839,6 +843,13 @@ namespace Pomodoro
             session.thaw_changed ();
         }
 
+        private void mark_timezone ()
+        {
+            debug ("SessionManager.mark_timezone %s", this.timezone_monitor.timezone.get_identifier ());
+
+            // TODO: save to database
+        }
+
         private bool is_long_break_needed (int64 timestamp)
         {
             Pomodoro.SchedulerContext context;
@@ -1467,6 +1478,11 @@ namespace Pomodoro
             this.handle_became_active ();
         }
 
+        private void on_timezone_changed ()
+        {
+            this.mark_timezone ();
+        }
+
         /**
          * A wrapper for `Timeout.add_seconds`.
          *
@@ -1748,6 +1764,7 @@ namespace Pomodoro
             this._timer = null;
             this._scheduler = null;
             this.idle_monitor = null;
+            this.timezone_monitor = null;
             this.lockscreen = null;
             this.screensaver = null;
 

@@ -16,6 +16,7 @@ libgnome_pomodoro_sources = files(
   'integrations/freedesktop/notifications-provider.vala',
   'integrations/freedesktop/screen-saver-provider.vala',
   'integrations/freedesktop/sleep-monitor-provider.vala',
+  'integrations/freedesktop/timezone-monitor-provider.vala',
   'integrations/gnome/idle-monitor-provider.vala',
   'integrations/gnome/interfaces.vala',
   'integrations/gnome/screen-saver-provider.vala',
@@ -63,6 +64,7 @@ libgnome_pomodoro_sources = files(
   'core/timer.vala',
   'core/timer-action-group.vala',
   'core/timestamp.vala',
+  'core/timezone-monitor.vala',
   'core/utils.vala',
   'core/variables.vala',
 )

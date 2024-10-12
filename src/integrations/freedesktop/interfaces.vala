@@ -40,6 +40,13 @@ namespace Freedesktop
     }
 
 
+    [DBus (name = "org.freedesktop.timedate1")]
+    public interface TimeDate : GLib.Object
+    {
+        public abstract string timezone { owned get; }
+    }
+
+
     [DBus (name = "org.freedesktop.Notifications")]
     public interface Notifications : GLib.Object
     {
