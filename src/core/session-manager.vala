@@ -156,6 +156,7 @@ namespace Pomodoro
         private Pomodoro.Gap?                    _current_gap = null;
         private Pomodoro.IdleMonitor?            idle_monitor = null;
         private Pomodoro.TimeZoneMonitor?        timezone_monitor = null;
+        private Pomodoro.TimezoneHistory?        timezone_history = null;
         private Pomodoro.ScreenSaver?            screensaver = null;
         private Pomodoro.LockScreen?             lockscreen = null;
         private bool                             auto_paused = false;
@@ -198,6 +199,7 @@ namespace Pomodoro
             this.settings = Pomodoro.get_settings ();
             this.scheduler = new Pomodoro.SimpleScheduler ();
             this.timezone_monitor = new Pomodoro.TimeZoneMonitor ();
+            this.timezone_history = new Pomodoro.TimezoneHistory ();
 
             this.settings.changed.connect (this.on_settings_changed);
             this.timezone_monitor.changed.connect (this.on_timezone_changed);
@@ -766,7 +768,7 @@ namespace Pomodoro
         {
             // XXX: We're trying to write a timezone entry at first opportunity after the
             //      database is ready. Not the best place to do that.
-            this.mark_timezone ();
+            this.mark_timezone (this.timezone_monitor.timezone);
 
             // TODO
         }
@@ -844,11 +846,12 @@ namespace Pomodoro
             session.thaw_changed ();
         }
 
-        private void mark_timezone ()
+        private void mark_timezone (GLib.TimeZone timezone,
+                                    int64         timestamp = Pomodoro.Timestamp.UNDEFINED)
         {
-            debug ("SessionManager.mark_timezone %s", this.timezone_monitor.timezone.get_identifier ());
+            Pomodoro.ensure_timestamp (ref timestamp);
 
-            // TODO: save to database
+            this.timezone_history.insert (timestamp, timezone);
         }
 
         private bool is_long_break_needed (int64 timestamp)
@@ -1481,7 +1484,7 @@ namespace Pomodoro
 
         private void on_timezone_changed ()
         {
-            this.mark_timezone ();
+            this.mark_timezone (this.timezone_monitor.timezone);
         }
 
         /**
@@ -1766,6 +1769,7 @@ namespace Pomodoro
             this._scheduler = null;
             this.idle_monitor = null;
             this.timezone_monitor = null;
+            this.timezone_history = null;
             this.lockscreen = null;
             this.screensaver = null;
 

@@ -30,6 +30,7 @@ test_names = [
   'timer',
   # 'timer-view-action-group',
   'timestamp',
+  'timezone-history',
   'scheduler',
   'session',
   'session-manager',
@@ -59,12 +60,15 @@ test_env.set('MALLOC_CHECK_', '2')
 
 # if get_option('unit_tests').enabled()
 foreach test_name : test_names
-  test_sources = ['test-@0@.vala'.format(test_name), compiled_schemas]
-  executable_name = 'test-@0@'.format(test_name)
+  test_sources = [
+    f'test-@test_name@.vala',
+    compiled_schemas,
+    resources,
+  ]
   test(
     test_name,
     executable(
-      executable_name,
+      f'test-@test_name@',
       test_sources,
       dependencies: libgnome_pomodoro_dep,
       link_with: libtests_common,

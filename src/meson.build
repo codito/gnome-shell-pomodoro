@@ -64,6 +64,8 @@ libgnome_pomodoro_sources = files(
   'core/timer.vala',
   'core/timer-action-group.vala',
   'core/timestamp.vala',
+  'core/timezone-entry.vala',
+  'core/timezone-history.vala',
   'core/timezone-monitor.vala',
   'core/utils.vala',
   'core/variables.vala',
