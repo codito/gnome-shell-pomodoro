@@ -203,7 +203,6 @@ namespace Pomodoro
             this.timezone_monitor.changed.connect (this.on_timezone_changed);
 
             this.update_session_template ();
-            this.mark_timezone ();
         }
 
         /**
@@ -718,7 +717,7 @@ namespace Pomodoro
          *
          * TODO: should be async
          */
-        public void save (int64 timestamp = -1)
+        public async void save () throws GLib.Error
         {
             // TODO
 
@@ -759,14 +758,14 @@ namespace Pomodoro
         }
 
         /**
-         * Restores session state from db.
-         *
-         * When restoring, lost time is considered as pause.
-         *
-         * TODO: should be async
+         * Restore session from database.
          */
-        public void restore ()
+        public async void restore () throws GLib.Error
         {
+            // XXX: We're trying to write a timezone entry at first opportunity after the
+            //      database is ready. Not the best place to do that.
+            this.mark_timezone ();
+
             // TODO
         }
 

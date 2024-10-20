@@ -1,6 +1,6 @@
 CREATE TABLE "entries" (
     "id"                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    "datetime-string"       TEXT NOT NULL,  -- in utc
+    "datetime-string"       TEXT NOT NULL,  -- in UTC
     "datetime-local-string" TEXT NOT NULL,  -- local
     "state-name"            TEXT NOT NULL,
     "state-duration"        INTEGER DEFAULT 0,
@@ -9,10 +9,10 @@ CREATE TABLE "entries" (
 
 CREATE TABLE "aggregated-entries" (
     "id"                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    "date-string"           TEXT  NOT NULL,  -- local
-    "state-name"            TEXT  NOT NULL,
-    "state-duration"        INTEGER  DEFAULT 0,
-    "elapsed"               INTEGER  DEFAULT 0
+    "date-string"           TEXT NOT NULL,  -- local
+    "state-name"            TEXT NOT NULL,
+    "state-duration"        INTEGER DEFAULT 0,
+    "elapsed"               INTEGER DEFAULT 0
 );
 
 CREATE INDEX "entries-datetime-local-string" ON "entries" (

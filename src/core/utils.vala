@@ -118,6 +118,10 @@ namespace Pomodoro
         return _is_flatpak > 0;
     }
 
+    internal bool is_test ()
+    {
+        return GLib.Environment.get_variable ("G_TEST_ROOT_PROCESS") != null;
+    }
 
     public string to_camel_case (string name)
     {

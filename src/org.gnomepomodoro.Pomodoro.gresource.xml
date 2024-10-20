@@ -3,6 +3,7 @@
   <gresource prefix="/org/gnomepomodoro/Pomodoro">
     <!-- Migrations -->
     <file compressed="true">migrations/version-1.sql</file>
+    <file compressed="true">migrations/version-2.sql</file>
 
     <!-- Views -->
     <file alias="ui/action-edit-window.ui" compressed="true" preprocess="xml-stripblanks">views/action-edit-window.ui</file>

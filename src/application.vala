@@ -126,8 +126,6 @@ namespace Pomodoro
         public Pomodoro.SessionManager?      session_manager;
         public Pomodoro.CapabilityManager?   capability_manager;
 
-        // private Gom.Repository repository;
-        // private Gom.Adapter adapter;
         private Pomodoro.EventProducer?      event_producer;
         private Pomodoro.EventBus?           event_bus;
         private Pomodoro.ActionManager?      action_manager;
@@ -177,11 +175,6 @@ namespace Pomodoro
             return null;
         }
 
-        // public GLib.Object get_repository ()
-        // {
-        //     return (GLib.Object) this.repository;
-        // }
-
         private void setup_resources ()
         {
             debug ("setup_resources: begin");
@@ -215,19 +208,12 @@ namespace Pomodoro
             GLib.Source.set_name_by_id (idle_id, "Pomodoro.Application.setup_capabilities");
         }
 
-        private void setup_repository ()
+        private void setup_database ()
         {
             this.hold ();
-            this.mark_busy ();
 
-            var path = GLib.Path.build_filename (GLib.Environment.get_user_data_dir (),
-                                                 Config.PACKAGE_NAME,
-                                                 "database.sqlite");
-            var file = GLib.File.new_for_path (path);
+            Pomodoro.Database.open ();
 
-            Pomodoro.open_repository (file);
-
-            this.unmark_busy ();
             this.release ();
         }
 
@@ -532,51 +518,43 @@ namespace Pomodoro
          */
         public override void startup ()
         {
-            debug ("startup: begin");
-
             this.hold ();
 
             base.startup ();
 
-            this.settings = Pomodoro.get_settings ();
-            this.settings.changed.connect (this.on_settings_changed);
-
+            this.settings        = Pomodoro.get_settings ();
             this.session_manager = Pomodoro.SessionManager.get_default ();
-            this.session_manager.enter_time_block.connect (this.on_enter_time_block);
-
-            this.timer = this.session_manager.timer;
-            // this.timer.changed.connect (this.on_timer_changed);
-
-            this.event_producer = new Pomodoro.EventProducer ();
-            this.event_bus = this.event_producer.bus;
-            this.action_manager = new Pomodoro.ActionManager ();
-
-            this.logger = new Pomodoro.Logger ();
-            this.event_bus.event.connect (
-                (event) => {
-                    this.logger.log_event (event);
-                });
-
-            // TODO: Handle async
-
-            // this.session_manager.restore_async.begin ();
+            this.timer           = this.session_manager.timer;
+            this.event_producer  = new Pomodoro.EventProducer ();
+            this.event_bus       = this.event_producer.bus;
+            this.action_manager  = new Pomodoro.ActionManager ();
+            this.logger          = new Pomodoro.Logger ();
 
             this.setup_resources ();
-            this.setup_actions ();
-            // this.setup_repository ();
+            this.setup_database ();
             this.setup_capabilities ();
-            // this.setup_desktop_extension ();
+            this.setup_actions ();
 
-            // this.setup_plugins.begin ((obj, res) => {
-            //     this.setup_plugins.end (res);
-            //
-            // });
+            this.settings.changed.connect (this.on_settings_changed);
+            this.session_manager.advanced.connect (this.on_advanced);
+            this.event_bus.event.connect (this.on_event);
 
             this.update_color_scheme ();
 
-            this.release ();
+            this.mark_busy ();
 
-            debug ("startup: end");
+            this.session_manager.restore.begin (
+                (obj, res) => {
+                    try {
+                        this.session_manager.restore.end (res);
+                    }
+                    catch (GLib.Error error) {
+                        GLib.warning ("Failed to restore session: %s", error.message);
+                    }
+
+                    this.unmark_busy ();
+                    this.release ();
+                });
         }
 
         protected override bool local_command_line ([CCode (array_length = false, array_null_terminated = true)]
@@ -658,7 +636,7 @@ namespace Pomodoro
             var queue = new Pomodoro.JobQueue ();
             queue.wait ();
 
-            this.session_manager.save_async.begin ();
+            // this.session_manager.save_async.begin ();  // TODO revert & ensure we increase hold & release & close database only after we're done saving
 
             this.capability_manager.destroy ();
             this.event_bus.destroy ();
@@ -669,7 +647,7 @@ namespace Pomodoro
             //     engine.try_unload_plugin (plugin_info);
             // }
 
-            Pomodoro.close_repository ();
+            Pomodoro.Database.close ();
             Pomodoro.SessionManager.set_default (null);
             Pomodoro.Timer.set_default (null);
 
@@ -820,56 +798,33 @@ namespace Pomodoro
             }
         }
 
-        private void on_enter_time_block (Pomodoro.TimeBlock time_block)
+        /**
+         * Invoke `SessionManager.save`.
+         */
+        private void on_advanced (Pomodoro.Session?   current_session,
+                                  Pomodoro.TimeBlock? current_time_block,
+                                  Pomodoro.Session?   previous_session,
+                                  Pomodoro.TimeBlock? previous_time_block)
         {
-            // this.hold ();
+            this.hold ();
 
-            // TODO: deduplicate calls
-            // TODO: only save if time blocks have changed
-            // TODO: schedule task with GLib.Priority.LOW
-            // this.session_manager.save_async.begin ((obj, res) => {
-            //     try {
-            //         this.session_manager.save_async.end (res);
-            //     }
-            //     catch (GLib.Error error) {
-            //         GLib.warning ("Error while saving session: %s", error.message);
-            //     }
-            //
-            //     this.release ();
-            // });
+            this.session_manager.save.begin ((obj, res) => {
+                try {
+                    this.session_manager.save.end (res);
+                }
+                catch (GLib.Error error) {
+                    GLib.warning ("Error while saving session: %s", error.message);
+                }
+
+                this.release ();
+            });
         }
 
-        // /**
-        //  * Save timer state, assume user is idle when break is completed.
-        //  */
-        // private void on_timer_state_changed (Pomodoro.Timer      timer,
-        //                                      Pomodoro.TimerState state,
-        //                                      Pomodoro.TimerState previous_state)
-        // {
-        //     this.hold ();
-        //     this.session_manager.save ();
+        private void on_event (Pomodoro.Event event)
+        {
+            this.logger.log_event (event);
+        }
 
-        //     if (this.timer.is_paused)
-        //     {
-        //         this.timer.resume ();
-        //     }
-
-        //     if (!(previous_state is Pomodoro.DisabledState))
-        //     {
-        //         var entry = new Pomodoro.Entry.from_state (previous_state);
-        //         entry.repository = this.repository;
-        //         entry.save_async.begin ((obj, res) => {
-        //             try {
-        //                 entry.save_async.end (res);
-        //             }
-        //             catch (GLib.Error error) {
-        //                 GLib.warning ("Error while saving entry: %s", error.message);
-        //             }
-
-        //             this.release ();
-        //         });
-        //     }
-        // }
 
         // -----------------------------------------------------------------------------------------------------
 
