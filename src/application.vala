@@ -629,14 +629,13 @@ namespace Pomodoro
         {
             this.hold ();
 
-            base.shutdown ();
+            Pomodoro.Context.set_event_source ("app.quit");
+            this.timer.pause ();
 
-            // TODO: handle async
+            base.shutdown ();
 
             var queue = new Pomodoro.JobQueue ();
             queue.wait ();
-
-            // this.session_manager.save_async.begin ();  // TODO revert & ensure we increase hold & release & close database only after we're done saving
 
             this.capability_manager.destroy ();
             this.event_bus.destroy ();
