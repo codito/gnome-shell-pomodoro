@@ -38,6 +38,8 @@ libgnome_pomodoro_sources = files(
   'core/event-bus.vala',
   'core/expression.vala',
   'core/expression-parser.vala',
+  'core/gap.vala',
+  'core/gap-entry.vala',
   'core/idle-monitor.vala',
   'core/job.vala',
   'core/lock-screen.vala',

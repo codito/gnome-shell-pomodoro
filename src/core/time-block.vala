@@ -54,7 +54,54 @@ namespace Pomodoro
     }
 
 
-    public class TimeBlock : GLib.InitiallyUnowned
+    public interface Schedulable : GLib.Object
+    {
+        public abstract int64 start_time { get; set; }
+        public abstract int64 end_time { get; set; }
+        public abstract int64 duration { get; set; }
+
+        public bool has_started (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        {
+            var start_time = this.start_time;
+
+            if (Pomodoro.Timestamp.is_undefined (start_time)) {
+                return true;
+            }
+
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            return timestamp >= start_time;
+        }
+
+        public bool has_ended (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
+        {
+            var end_time = this.end_time;
+
+            if (Pomodoro.Timestamp.is_undefined (end_time)) {
+                return false;
+            }
+
+            Pomodoro.ensure_timestamp (ref timestamp);
+
+            return timestamp > end_time;
+        }
+
+        public static int compare (Pomodoro.Schedulable a,
+                                   Pomodoro.Schedulable b)
+        {
+            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
+        }
+
+        public abstract void set_time_range (int64 start_time,
+                                             int64 end_time);
+
+        public abstract void move_by (int64 offset);
+
+        public abstract void move_to (int64 start_time);
+    }
+
+
+    public class TimeBlock : GLib.InitiallyUnowned, Pomodoro.Schedulable
     {
         public Pomodoro.State state {
             get {
@@ -125,13 +172,16 @@ namespace Pomodoro
             }
         }
 
-        protected GLib.List<Pomodoro.Gap>  gaps = null;
-        protected int64                    _start_time = Pomodoro.Timestamp.UNDEFINED;
-        protected int64                    _end_time = Pomodoro.Timestamp.UNDEFINED;
-        private   Pomodoro.State           _state = Pomodoro.State.STOPPED;
-        private   int                      changed_freeze_count = 0;
-        private   bool                     changed_is_pending = false;
-        private   Pomodoro.TimeBlockMeta   meta;
+        internal ulong                    version = 0;
+        internal Pomodoro.TimeBlockEntry? entry = null;
+
+        private GLib.List<Pomodoro.Gap>   gaps = null;
+        private int64                     _start_time = Pomodoro.Timestamp.UNDEFINED;
+        private int64                     _end_time = Pomodoro.Timestamp.UNDEFINED;
+        private Pomodoro.State            _state = Pomodoro.State.STOPPED;
+        private int                       changed_freeze_count = 0;
+        private bool                      changed_is_pending = false;
+        private Pomodoro.TimeBlockMeta    meta;
 
         construct
         {
@@ -166,6 +216,8 @@ namespace Pomodoro
 
         private void emit_changed ()
         {
+            this.version++;
+
             if (this.changed_freeze_count > 0) {
                 this.changed_is_pending = true;
             }
@@ -407,22 +459,41 @@ namespace Pomodoro
             return duration > 0 ? (double) elapsed / (double) duration : 0.0;
         }
 
+        private void on_gap_changed (Pomodoro.Gap gap)
+        {
+            this.emit_changed ();
+        }
+
         public void add_gap (Pomodoro.Gap gap)
         {
+            if (gap.time_block == this) {
+                return;
+            }
+
+            if (gap.time_block != null) {
+                gap.time_block.remove_gap (gap);
+            }
+
             gap.time_block = this;
+            gap.changed.connect (this.on_gap_changed);
 
-            this.gaps.insert_sorted (gap, Pomodoro.TimeBlock.compare);
+            this.gaps.insert_sorted (gap, Pomodoro.Schedulable.compare);
 
-            this.changed ();
+            this.emit_changed ();
         }
 
         public void remove_gap (Pomodoro.Gap gap)
         {
+            if (gap.time_block != this) {
+                return;
+            }
+
+            gap.changed.disconnect (this.on_gap_changed);
             gap.time_block = null;
 
             this.gaps.remove (gap);
 
-            this.changed ();
+            this.emit_changed ();
         }
 
         public Pomodoro.Gap? get_last_gap ()
@@ -499,49 +570,10 @@ namespace Pomodoro
             }
 
             if (changed) {
-                this.changed ();
+                this.emit_changed ();
             }
 
             this.thaw_changed ();
-        }
-
-        public bool has_started (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
-        {
-            if (this._start_time < 0) {
-                return true;
-            }
-
-            ensure_timestamp (ref timestamp);
-
-            return timestamp >= this._start_time;
-        }
-
-        public bool has_ended (int64 timestamp = Pomodoro.Timestamp.UNDEFINED)
-        {
-            if (this._end_time < 0) {
-                return false;
-            }
-
-            ensure_timestamp (ref timestamp);
-
-            return timestamp > this._end_time;
-        }
-
-        public static int compare (Pomodoro.TimeBlock a,
-                                   Pomodoro.TimeBlock b)
-        {
-            return (int) (a.start_time > b.start_time) - (int) (a.start_time < b.start_time);
-        }
-
-        // TODO: Vala causes issues with overriding default handler for "changed" signal when generating vapi.
-        //       Remove `handle_changed()` once we can override "changed" handler in Gap.changed.
-        protected virtual void handle_changed ()
-        {
-        }
-
-        public virtual signal void changed ()
-        {
-            this.handle_changed ();
         }
 
         /**
@@ -553,14 +585,13 @@ namespace Pomodoro
             this._state = state;
 
             this.notify_property ("state");
-            this.changed ();
+            this.emit_changed ();
         }
 
 
         /*
-         * Functions for metadata
+         * Metadata
          */
-
 
         public Pomodoro.TimeBlockMeta get_meta ()
         {
@@ -627,56 +658,72 @@ namespace Pomodoro
         {
             this.meta.is_extra = is_extra;
         }
-    }
 
 
-    public class Gap : Pomodoro.TimeBlock
-    {
-        public new Pomodoro.State state {
-            get {
-                return this.time_block != null ? this.time_block.state : Pomodoro.State.STOPPED;
-            }
-            set {
-                assert_not_reached ();
-            }
-        }
+        /*
+         * Database
+         */
 
-        public new weak Pomodoro.Session session {
-            get {
-                return this.time_block != null ? this.time_block.session : null;
-            }
-            set {
-                assert_not_reached ();
-            }
-        }
-
-        public weak Pomodoro.TimeBlock time_block { get; set; }  // parent
-
-        public Gap ()
+        internal bool should_create_entry ()
         {
-            GLib.Object ();
+            // XXX: we may want to save SCHEDULED time-blocks in future, e.g. when setting up
+            //      a custom session / warm-up.
+            return this.meta.status != Pomodoro.TimeBlockStatus.SCHEDULED &&
+                   Pomodoro.Timestamp.is_defined (this.start_time);
         }
 
-        public Gap.with_start_time (int64 start_time)
+        internal bool should_update_entry ()
         {
-            GLib.Object ();
-
-            this.set_time_range (start_time, this._end_time);
-        }
-
-        public override void handle_changed ()
-        {
-            if (this.time_block != null) {
-                this.time_block.changed ();
+            if (this.entry == null || this.entry.id == 0) {
+                return true;
             }
+
+            return this.entry.version != this.version ||
+                   this.entry.status != this.meta.status.to_string ();
         }
 
-        // TODO: causes error "no suitable method found to override" when generating vapi
-        // public override void changed ()
-        // {
-        //     if (this.time_block != null) {
-        //         this.time_block.changed ();
-        //     }
-        // }
+        internal Pomodoro.TimeBlockEntry create_or_update_entry ()
+                                                                 requires (this.session != null)
+        {
+            if (this.entry == null)
+            {
+                this.entry = new Pomodoro.TimeBlockEntry ();
+                this.entry.repository = Pomodoro.Database.get_repository ();
+
+                this.session.entry.bind_property ("id",
+                                                  this.entry,
+                                                  "session-id",
+                                                  GLib.BindingFlags.SYNC_CREATE);
+            }
+
+            this.entry.start_time = this.start_time;
+            this.entry.end_time = this.end_time;
+            this.entry.state = this.state.to_string ();
+            this.entry.status = this.meta.status.to_string ();
+            this.entry.intended_duration = this.meta.intended_duration;
+            this.entry.version = this.version;
+
+            return this.entry;
+        }
+
+        internal void unset_entry ()
+        {
+            unowned GLib.List<Pomodoro.Gap> link = this.gaps.first ();
+
+            while (link != null)
+            {
+                link.data.unset_entry ();
+                link = link.next;
+            }
+
+            this.entry = null;
+        }
+
+
+        /*
+         * Signals
+         */
+
+        public signal void changed ();
     }
 }

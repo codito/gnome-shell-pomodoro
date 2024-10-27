@@ -3000,6 +3000,775 @@ namespace Tests
             assert_cmpuint (confirm_advancement_call_count, GLib.CompareOperator.EQ, 1);
         }
     }
+
+
+    public class SessionManagerDatabaseTest : Tests.TestSuite
+    {
+        private Pomodoro.Timer?           timer;
+        private Pomodoro.SessionManager?  session_manager;
+        private Pomodoro.TimezoneHistory? timezone_history;
+        private GLib.TimeZone?            new_york_timezone;
+        private GLib.TimeZone?            london_timezone;
+        private GLib.MainLoop?            main_loop;
+        private uint                      timeout_id = 0;
+
+        public SessionManagerDatabaseTest ()
+        {
+            this.add_test ("save__ensure_session", this.test_save__ensure_session);
+            this.add_test ("save__update_status", this.test_save__update_status);
+            this.add_test ("save__update_time_range", this.test_save__update_time_range);
+            this.add_test ("save__delete_extra_time_blocks", this.test_save__delete_extra_time_blocks);
+            this.add_test ("save__delete_extra_gaps", this.test_save__delete_extra_gaps);
+            this.add_test ("save__delete_empty_session", this.test_save__delete_empty_session);
+            this.add_test ("save__advance_session", this.test_save__advance_session);
+            this.add_test ("save__timer_start", this.test_save__timer_start);
+            this.add_test ("save__timer_pause", this.test_save__timer_pause);
+            this.add_test ("save__timer_rewind", this.test_save__timer_rewind);
+        }
+
+        public override void setup ()
+        {
+            Pomodoro.Timestamp.freeze_to (2000000000 * Pomodoro.Interval.SECOND);
+            Pomodoro.Timestamp.set_auto_advance (Pomodoro.Interval.MICROSECOND);
+
+            var settings = Pomodoro.get_settings ();
+            settings.set_uint ("pomodoro-duration", 1500);
+            settings.set_uint ("short-break-duration", 300);
+            settings.set_uint ("long-break-duration", 900);
+            settings.set_uint ("cycles", 4);
+            settings.set_boolean ("confirm-starting-break", false);
+            settings.set_boolean ("confirm-starting-pomodoro", false);
+
+            Pomodoro.Database.open ();
+
+            try {
+                this.new_york_timezone = new GLib.TimeZone.identifier ("America/New_York");
+                this.london_timezone = new GLib.TimeZone.identifier ("Europe/London");
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            this.main_loop = new GLib.MainLoop ();
+
+            this.timezone_history = new Pomodoro.TimezoneHistory ();
+            this.timezone_history.insert (Pomodoro.Timestamp.peek (), this.new_york_timezone);
+
+            this.timer = new Pomodoro.Timer ();
+            Pomodoro.Timer.set_default (this.timer);
+
+            this.session_manager = new Pomodoro.SessionManager.with_timer (this.timer);
+        }
+
+        public override void teardown ()
+        {
+            var settings = Pomodoro.get_settings ();
+            settings.revert ();
+
+            this.timer.reset ();
+            Pomodoro.Timer.set_default (null);
+
+            this.session_manager = null;
+            this.timer = null;
+            this.timezone_history = null;
+            this.main_loop = null;
+
+            Pomodoro.Database.close ();
+        }
+
+        private bool run_main_loop (uint timeout = 1000)
+        {
+            var success = true;
+
+            if (this.timeout_id != 0) {
+                GLib.Source.remove (this.timeout_id);
+                this.timeout_id = 0;
+            }
+
+            this.timeout_id = GLib.Timeout.add (timeout, () => {
+                this.timeout_id = 0;
+                this.main_loop.quit ();
+
+                success = false;
+
+                return GLib.Source.REMOVE;
+            });
+
+            this.main_loop.run ();
+
+            return success;
+        }
+
+        private void quit_main_loop ()
+        {
+            if (this.timeout_id != 0) {
+                GLib.Source.remove (this.timeout_id);
+                this.timeout_id = 0;
+            }
+
+            this.main_loop.quit ();
+        }
+
+        private void run_save ()
+        {
+            this.session_manager.save.begin (
+                (obj, res) => {
+                    assert_true (this.session_manager.save.end (res));
+
+                    this.quit_main_loop ();
+                });
+
+            assert_true (this.run_main_loop ());
+        }
+
+        /**
+         * After `ensure_session()` no time-block is in-progress, so expect nothing to be saved.
+         */
+        public void test_save__ensure_session ()
+        {
+            this.session_manager.ensure_session ();
+            this.run_save ();
+
+            var repository = Pomodoro.Database.get_repository ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 0);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 0);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        public void test_save__update_status ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            var session = new Pomodoro.Session ();
+            session.append (time_block);
+
+            this.session_manager.current_session = session;
+            this.run_save ();
+
+            Pomodoro.SessionEntry? initial_session_entry = null;
+            Pomodoro.TimeBlockEntry? initial_time_block_entry = null;
+
+            try {
+                initial_session_entry = (Pomodoro.SessionEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_nonnull (initial_session_entry);
+
+                initial_time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_nonnull (initial_time_block_entry);
+
+                // Modify just the time-block status, expect its entry to be updated.
+                time_block.set_status (Pomodoro.TimeBlockStatus.COMPLETED);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            this.run_save ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var session_entry = (Pomodoro.SessionEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (session_entry.id),
+                    new GLib.Variant.int64 (initial_session_entry.id)
+                );
+
+                var time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.id),
+                    new GLib.Variant.int64 (initial_time_block_entry.id)
+                );
+                assert_cmpstr (time_block_entry.status,
+                               GLib.CompareOperator.EQ,
+                               "completed");
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        public void test_save__update_time_range ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            var session = new Pomodoro.Session ();
+            session.append (time_block);
+
+            this.session_manager.current_session = session;
+            this.run_save ();
+
+            Pomodoro.SessionEntry? initial_session_entry = null;
+            Pomodoro.TimeBlockEntry? initial_time_block_entry = null;
+
+            try {
+                initial_session_entry = (Pomodoro.SessionEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_nonnull (initial_session_entry);
+
+                initial_time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_nonnull (initial_time_block_entry);
+
+                // Modify just the time-block range, expect its entries to be updated.
+                time_block.move_by (Pomodoro.Interval.MINUTE);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            this.run_save ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var session_entry = (Pomodoro.SessionEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (session_entry.id),
+                    new GLib.Variant.int64 (initial_session_entry.id)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (session_entry.start_time),
+                    new GLib.Variant.int64 (session.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (session_entry.end_time),
+                    new GLib.Variant.int64 (session.end_time)
+                );
+
+                var time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.id),
+                    new GLib.Variant.int64 (initial_time_block_entry.id)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.start_time),
+                    new GLib.Variant.int64 (time_block.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.end_time),
+                    new GLib.Variant.int64 (time_block.end_time)
+                );
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        /**
+         * Simulate a hypothetical scenario that time-block exists in database but not in
+         * session. Expect it to be removed.
+         *
+         * At the time this test is written we do not save scheduled time-blocks and we
+         * don't remove time-blocks from session once they have started.
+         */
+        public void test_save__delete_extra_time_blocks ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            var session = new Pomodoro.Session ();
+            session.append (time_block);
+
+            this.session_manager.current_session = session;
+            this.run_save ();
+
+            Pomodoro.SessionEntry? session_entry = null;
+            Pomodoro.TimeBlockEntry? time_block_entry = null;
+
+            try {
+                session_entry = (Pomodoro.SessionEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_nonnull (session_entry);
+
+                time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_nonnull (time_block_entry);
+
+                var extra_time_block_entry = new Pomodoro.TimeBlockEntry ();
+                extra_time_block_entry.repository = repository;
+                extra_time_block_entry.session_id = session_entry.id;
+                extra_time_block_entry.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+                extra_time_block_entry.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+                extra_time_block_entry.state = "pomodoro";
+                extra_time_block_entry.status = "uncompleted";
+                extra_time_block_entry.intended_duration = 0;
+                extra_time_block_entry.save_sync ();
+
+                var results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 2);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            this.run_save ();
+
+            try {
+                var results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var remaining_time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (remaining_time_block_entry.id),
+                    new GLib.Variant.int64 (time_block_entry.id)
+                );
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        public void test_save__delete_extra_gaps ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            var gap = new Pomodoro.Gap ();
+            gap.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            gap.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block.start_time = gap.start_time;
+            time_block.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+            time_block.add_gap (gap);
+
+            var session = new Pomodoro.Session ();
+            session.append (time_block);
+
+            this.session_manager.current_session = session;
+            this.run_save ();
+
+            Pomodoro.SessionEntry? session_entry = null;
+            Pomodoro.TimeBlockEntry? time_block_entry = null;
+            Pomodoro.GapEntry? gap_entry = null;
+
+            try {
+                session_entry = (Pomodoro.SessionEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_nonnull (session_entry);
+
+                time_block_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_nonnull (time_block_entry);
+
+                gap_entry = (Pomodoro.GapEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.GapEntry), null);
+                assert_nonnull (gap_entry);
+
+                var extra_gap_entry = new Pomodoro.GapEntry ();
+                extra_gap_entry.repository = repository;
+                extra_gap_entry.time_block_id = time_block_entry.id;
+                extra_gap_entry.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+                extra_gap_entry.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+                extra_gap_entry.save_sync ();
+
+                var results = repository.find_sync (typeof (Pomodoro.GapEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 2);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            // Only changed time-block will be saved. Force it.
+            time_block.set_status (Pomodoro.TimeBlockStatus.COMPLETED);
+
+            this.run_save ();
+
+            try {
+
+                var results = repository.find_sync (typeof (Pomodoro.GapEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var remaining_gap_entry = (Pomodoro.TimeBlockEntry?) repository.find_one_sync (
+                        typeof (Pomodoro.GapEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (remaining_gap_entry.id),
+                    new GLib.Variant.int64 (gap_entry.id)
+                );
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        /**
+         * If session becomes empty, expect database entry to be removed.
+         *
+         * It's a hypothetical scenario in practice.
+         */
+        public void test_save__delete_empty_session ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            var time_block = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            var session = new Pomodoro.Session ();
+            session.append (time_block);
+
+            this.session_manager.current_session = session;
+            assert_false (this.timer.is_running ());
+
+            this.run_save ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            time_block.set_status (Pomodoro.TimeBlockStatus.SCHEDULED);
+            this.run_save ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 0);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 0);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            time_block.set_status (Pomodoro.TimeBlockStatus.COMPLETED);
+            this.run_save ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        public void test_save__advance_session ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            var time_block_1 = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block_1.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block_1.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block_1.set_status (Pomodoro.TimeBlockStatus.UNCOMPLETED);
+
+            var time_block_2 = new Pomodoro.TimeBlock (Pomodoro.State.POMODORO);
+            time_block_2.start_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block_2.end_time = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            time_block_2.set_status (Pomodoro.TimeBlockStatus.IN_PROGRESS);
+
+            var session_1 = new Pomodoro.Session ();
+            session_1.append (time_block_1);
+
+            var session_2 = new Pomodoro.Session ();
+            session_2.append (time_block_2);
+
+            this.session_manager.current_session = session_1;
+            this.session_manager.current_session = session_2;
+            this.run_save ();
+
+            // Ensure that previous session has been saved as well as the current one.
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 2);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 2);
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        public void test_save__timer_start ()
+        {
+            this.session_manager.timer.start ();
+            this.run_save ();
+
+            // Expect one time-block that is in-progress to be saved.
+            var repository = Pomodoro.Database.get_repository ();
+            var session    = this.session_manager.current_session;
+            var time_block = this.session_manager.current_time_block;
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.SessionEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var session_entry = (Pomodoro.SessionEntry) repository.find_one_sync (
+                        typeof (Pomodoro.SessionEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (session_entry.start_time),
+                    new GLib.Variant.int64 (session.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (session_entry.end_time),
+                    new GLib.Variant.int64 (session.end_time)
+                );
+
+                var time_block_entry = (Pomodoro.TimeBlockEntry) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.start_time),
+                    new GLib.Variant.int64 (time_block.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.end_time),
+                    new GLib.Variant.int64 (time_block.end_time)
+                );
+                assert_cmpstr (time_block_entry.status,
+                               GLib.CompareOperator.EQ,
+                               "in-progress");
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        public void test_save__timer_pause ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            this.timer.start ();
+            this.run_save ();
+
+            // Pause timer
+            Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            this.timer.pause ();
+            this.run_save ();
+
+            var session = this.session_manager.current_session;
+            assert_false (Pomodoro.Timestamp.is_undefined (session.end_time));
+
+            var time_block = this.session_manager.current_time_block;
+            assert_false (Pomodoro.Timestamp.is_undefined (time_block.end_time));
+
+            var gap = time_block.get_last_gap ();
+            assert_true (Pomodoro.Timestamp.is_undefined (gap.end_time));
+
+            var expected_time_block_id = (int64) 0;
+            var expected_gap_id = (int64) 0;
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.GapEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var time_block_entry = (Pomodoro.TimeBlockEntry) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.end_time),
+                    new GLib.Variant.int64 (time_block.end_time)
+                );
+
+                var gap_entry = (Pomodoro.GapEntry) repository.find_one_sync (
+                        typeof (Pomodoro.GapEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.time_block_id),
+                    new GLib.Variant.int64 (time_block_entry.id)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.start_time),
+                    new GLib.Variant.int64 (gap.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.end_time),
+                    new GLib.Variant.int64 (gap.end_time)
+                );
+
+                expected_time_block_id = time_block_entry.id;
+                expected_gap_id = gap_entry.id;
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+
+            // Resume timer
+            Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            this.timer.resume ();
+            assert_true (Pomodoro.Timestamp.is_defined (gap.end_time));
+
+            this.run_save ();
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.GapEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var time_block_entry = (Pomodoro.TimeBlockEntry) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.id),
+                    new GLib.Variant.int64 (expected_time_block_id)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.end_time),
+                    new GLib.Variant.int64 (time_block.end_time)
+                );
+
+                var gap_entry = (Pomodoro.GapEntry) repository.find_one_sync (
+                        typeof (Pomodoro.GapEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.id),
+                    new GLib.Variant.int64 (expected_gap_id)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.time_block_id),
+                    new GLib.Variant.int64 (time_block_entry.id)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.start_time),
+                    new GLib.Variant.int64 (gap.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.end_time),
+                    new GLib.Variant.int64 (gap.end_time)
+                );
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        /**
+         * Gaps may be normalized after using rewind. Expect unnecessary gaps to be removed.
+         */
+        public void test_save__timer_rewind ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+
+            this.timer.start ();
+
+            var now = Pomodoro.Timestamp.advance (Pomodoro.Interval.MINUTE);
+            this.timer.pause (now);
+
+            now = now + Pomodoro.Interval.MINUTE;
+            Pomodoro.Timestamp.freeze_to (now);
+            this.timer.resume (now);
+            this.run_save ();
+
+            now = now + Pomodoro.Interval.MINUTE;
+            Pomodoro.Timestamp.freeze_to (now);
+            this.timer.rewind (3 * Pomodoro.Interval.MINUTE, now);
+            this.run_save ();
+
+            var time_block = this.session_manager.current_time_block;
+            var gap = time_block.get_last_gap ();
+            assert_cmpvariant (
+                new GLib.Variant.int64 (gap.duration),
+                new GLib.Variant.int64 (3 * Pomodoro.Interval.MINUTE + Pomodoro.Interval.MICROSECOND)  // FIXME: where the one microsecond came from?
+            );
+
+            try {
+                Gom.ResourceGroup results;
+
+                results = repository.find_sync (typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                results = repository.find_sync (typeof (Pomodoro.GapEntry), null);
+                assert_cmpuint (results.count, GLib.CompareOperator.EQ, 1);
+
+                var time_block_entry = (Pomodoro.TimeBlockEntry) repository.find_one_sync (
+                        typeof (Pomodoro.TimeBlockEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.start_time),
+                    new GLib.Variant.int64 (time_block.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (time_block_entry.end_time),
+                    new GLib.Variant.int64 (time_block.end_time)
+                );
+
+                var gap_entry = (Pomodoro.GapEntry) repository.find_one_sync (
+                        typeof (Pomodoro.GapEntry), null);
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.start_time),
+                    new GLib.Variant.int64 (gap.start_time)
+                );
+                assert_cmpvariant (
+                    new GLib.Variant.int64 (gap_entry.end_time),
+                    new GLib.Variant.int64 (gap.end_time)
+                );
+            }
+            catch (GLib.Error error) {
+                assert_no_error (error);
+            }
+        }
+
+        // TODO: test restore
+    }
 }
 
 
@@ -3009,6 +3778,7 @@ public static int main (string[] args)
 
     return Tests.run (
         new Tests.SessionManagerTest (),
-        new Tests.SessionManagerTimerTest ()
+        new Tests.SessionManagerTimerTest (),
+        new Tests.SessionManagerDatabaseTest ()
     );
 }

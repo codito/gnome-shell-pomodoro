@@ -715,50 +715,307 @@ namespace Pomodoro
         }
 
         /**
-         * Saves session state to db.
-         *
-         * TODO also store snapshot timestamp whether timer is paused
-         *
-         * TODO: should be async
+         * Push the removal of extra time-blocks onto SQLite queue.
          */
-        public async void save () throws GLib.Error
+        private void delete_time_blocks (Gom.Repository    repository,
+                                         int64             session_id,
+                                         GLib.Array<int64> time_block_ids_to_keep)
+                                         requires (session_id != 0)
         {
-            // TODO
+            var adapter = repository.adapter;
+            assert (adapter != null);
 
-            // var timer_datetime = new DateTime.from_unix_utc (
-            //                      (int64) Math.floor (this.timestamp));
+            var session_id_value = GLib.Value (typeof (int64));
+            session_id_value.set_int64 (session_id);
 
-            // var state_datetime = new DateTime.from_unix_utc (
-            //                      (int64) Math.floor (this.state.timestamp));
+            Gom.Filter[] filters = {
+                new Gom.Filter.eq (typeof (Pomodoro.TimeBlockEntry),
+                                          "session-id",
+                                          session_id_value),
+            };
 
-            // settings.set_string ("timer-state",
-            //                      this.state.name);
-            // settings.set_double ("timer-state-duration",
-            //                      this.state.duration);
-            // settings.set_string ("timer-state-date",
-            //                      state_datetime.to_string ());
-            // settings.set_double ("timer-elapsed",
-            //                      this.state.elapsed);
-            // settings.set_double ("timer-score",
-            //                      this.score);
-            // settings.set_string ("timer-date",
-            //                      timer_datetime.to_string ());
-            // settings.set_boolean ("timer-paused",
-            //                       this.is_paused);
+            for (var index = 0; index < time_block_ids_to_keep.length; index++)
+            {
+                var time_block_id = time_block_ids_to_keep.index (index);
+                var time_block_id_value = GLib.Value (typeof (int64));
+                time_block_id_value.set_int64 (time_block_id);
+
+                filters += new Gom.Filter.neq (typeof (Pomodoro.TimeBlockEntry),
+                                               "id",
+                                               time_block_id_value);
+            }
+
+            var filter = new Gom.Filter.and_full (filters);
+            var command_builder = (Gom.CommandBuilder) GLib.Object.@new (
+                typeof (Gom.CommandBuilder),
+                resource_type: typeof (Pomodoro.TimeBlockEntry),
+                adapter: adapter,
+                filter: filter);
+            var command = command_builder.build_delete ();
+
+            command.@ref ();
+
+            adapter.queue_write (
+                () => {
+                    try {
+                        command.execute (null);
+                    }
+                    catch (GLib.Error error) {
+                        GLib.warning ("Error while deleting time-blocks: %s", error.message);
+                    }
+
+                    command.@unref ();
+                });
         }
 
-        public async void save_async () throws GLib.Error
+        private void delete_gaps (Gom.Repository    repository,
+                                  int64             time_block_id,
+                                  GLib.Array<int64> gap_ids_to_keep)
+                                  requires (time_block_id != 0)
         {
-            // TODO
+            var adapter = repository.adapter;
+            assert (adapter != null);
 
-            this.save ();
+            var time_block_id_value = GLib.Value (typeof (int64));
+            time_block_id_value.set_int64 (time_block_id);
+
+            Gom.Filter[] filters = {
+                new Gom.Filter.eq (typeof (Pomodoro.GapEntry),
+                                          "time-block-id",
+                                          time_block_id_value),
+            };
+
+            for (var index = 0; index < gap_ids_to_keep.length; index++)
+            {
+                var gap_id = gap_ids_to_keep.index (index);
+                var gap_id_value = GLib.Value (typeof (int64));
+                gap_id_value.set_int64 (gap_id);
+
+                filters += new Gom.Filter.neq (typeof (Pomodoro.GapEntry),
+                                               "id",
+                                               gap_id_value);
+            }
+
+            var filter = new Gom.Filter.and_full (filters);
+            var command_builder = (Gom.CommandBuilder) GLib.Object.@new (
+                typeof (Gom.CommandBuilder),
+                resource_type: typeof (Pomodoro.GapEntry),
+                adapter: adapter,
+                filter: filter);
+            var command = command_builder.build_delete ();
+
+            command.@ref ();
+
+            adapter.queue_write (
+                () => {
+                    try {
+                        command.execute (null);
+                    }
+                    catch (GLib.Error error) {
+                        GLib.warning ("Error while deleting gaps: %s", error.message);
+                    }
+
+                    command.@unref ();
+                });
         }
 
-        public async void restore_async () throws GLib.Error
+        private async void save_session (Gom.Repository   repository,
+                                         Pomodoro.Session session)
+                                         throws GLib.Error
         {
-            // TODO
+            if (!session.should_create_entry ())
+            {
+                if (session.entry != null && session.entry.id != 0)
+                {
+                    var session_entry = session.entry;
+                    session.unset_entry ();
 
-            this.restore ();
+                    yield session_entry.delete_async ();
+                }
+
+                return;
+            }
+
+            // Collect session data.
+            var is_updating_session_entry = session.should_update_entry ();
+            var session_entry = is_updating_session_entry
+                ? session.create_or_update_entry ()
+                : session.entry;
+
+            Pomodoro.TimeBlockEntry[] time_block_entries_array = {};
+            Pomodoro.GapEntry[] gap_entries_array = {};
+
+            var keep_time_block_ids = new GLib.Array<int64> ();
+            var keep_gap_ids = new GLib.HashTable<int64?, GLib.Array> (GLib.direct_hash,
+                                                                       GLib.direct_equal);
+
+            session.@foreach (
+                (time_block) => {
+                    if (!time_block.should_create_entry ()) {
+                        return;
+                    }
+
+                    var time_block_entry = time_block.entry;
+
+                    if (time_block_entry != null && time_block_entry.get_is_from_table ()) {
+                        keep_time_block_ids.append_val (time_block_entry.id);
+                    }
+
+                    if (time_block.should_update_entry ())
+                    {
+                        var gap_ids = new GLib.Array<int64> ();
+
+                        time_block_entry = time_block.create_or_update_entry ();
+                        time_block_entries_array += time_block_entry;
+                        time_block.foreach_gap (
+                            (gap) => {
+                                if (!gap.should_create_entry ()) {
+                                    return;
+                                }
+
+                                var gap_entry = gap.entry;
+
+                                if (gap_entry != null && gap_entry.get_is_from_table ()) {
+                                    gap_ids.append_val (gap_entry.id);
+                                }
+
+                                if (gap.should_update_entry ()) {
+                                    gap_entry = gap.create_or_update_entry ();
+                                    gap_entries_array += gap_entry;
+                                }
+                            });
+
+                        if (time_block_entry.get_is_from_table ()) {
+                            keep_gap_ids.insert (time_block_entry.id, gap_ids);
+                        }
+                    }
+                });
+
+            // Commit updates.
+            try {
+                if (is_updating_session_entry) {
+                    yield session_entry.save_async ();
+                }
+
+                var time_block_entries = (Gom.ResourceGroup) GLib.Object.@new (
+                        typeof (Gom.ResourceGroup),
+                        repository: repository,
+                        resource_type: typeof (Pomodoro.TimeBlockEntry),
+                        is_writable: true);
+
+                foreach (var time_block_entry in time_block_entries_array)
+                {
+                    assert (time_block_entry.session_id != 0);
+
+                    // HACK: gom is eager to erase is-from-table flag,
+                    //       which leads entries to being inserted again not updated
+                    time_block_entry.set_data<bool> ("is-from-table", time_block_entry.id != 0);
+
+                    time_block_entries.append (time_block_entry);
+                }
+
+                this.delete_time_blocks (repository,
+                                         session_entry.id,
+                                         keep_time_block_ids);
+                time_block_entries.write_sync ();
+                // yield time_block_entries.write_async ();  // XXX: should use async
+
+                // HACK: Tell gom that entries are from db
+                foreach (var time_block_entry in time_block_entries_array) {
+                    time_block_entry.set_data<bool> ("is-from-table", true);
+                }
+
+                var gap_entries = (Gom.ResourceGroup) GLib.Object.@new (
+                        typeof (Gom.ResourceGroup),
+                        repository: repository,
+                        resource_type: typeof (Pomodoro.TimeBlockEntry),
+                        is_writable: true);
+
+                foreach (var gap_entry in gap_entries_array) {
+                    assert (gap_entry.time_block_id != 0);
+                    gap_entries.append (gap_entry);
+                }
+
+                keep_gap_ids.@foreach (
+                    (time_block_id, gap_ids) => {
+                        this.delete_gaps (repository,
+                                          time_block_id,
+                                          gap_ids);
+                    });
+                gap_entries.write_sync ();
+                // yield gap_entries.write_async ();  // XXX: should use async
+            }
+            catch (GLib.Error error) {
+                throw error;
+            }
+
+            // TODO: check if instances are disposed properly
+        }
+
+        /**
+         * Save session state to database.
+         */
+        public async bool save ()
+        {
+            var repository = Pomodoro.Database.get_repository ();
+            assert (repository != null);
+
+            var remaining_sessions = 0;
+            var success = true;
+
+            if (this.previous_session != null)
+            {
+                remaining_sessions++;
+
+                this.save_session.begin (
+                    repository,
+                    this.previous_session,
+                    (obj, res) => {
+                        try {
+                            this.save_session.end (res);
+                        }
+                        catch (GLib.Error error) {
+                            GLib.warning ("Error while saving previous session: %s", error.message);
+                            success = false;
+                        }
+
+                        remaining_sessions--;
+
+                        if (remaining_sessions == 0) {
+                            this.save.callback ();
+                        }
+                    });
+            }
+
+            if (this._current_session != null)
+            {
+                remaining_sessions++;
+
+                this.save_session.begin (
+                    repository,
+                    this._current_session,
+                    (obj, res) => {
+                        try {
+                            this.save_session.end (res);
+                        }
+                        catch (GLib.Error error) {
+                            GLib.warning ("Error while saving current session: %s", error.message);
+                            success = false;
+                        }
+
+                        remaining_sessions--;
+
+                        if (remaining_sessions == 0) {
+                            this.save.callback ();
+                        }
+                    });
+            }
+
+            if (remaining_sessions > 0) {
+                yield;
+            }
+
+            return success;
         }
 
         /**

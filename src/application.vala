@@ -798,15 +798,12 @@ namespace Pomodoro
             }
         }
 
-        /**
-         * Invoke `SessionManager.save`.
-         */
-        private void on_advanced (Pomodoro.Session?   current_session,
-                                  Pomodoro.TimeBlock? current_time_block,
-                                  Pomodoro.Session?   previous_session,
-                                  Pomodoro.TimeBlock? previous_time_block)
+        private void schedule_save ()
         {
             this.hold ();
+
+            // TODO: deduplicate calls / track when saving is in-progress
+            // TODO: schedule task with GLib.Priority.LOW
 
             this.session_manager.save.begin ((obj, res) => {
                 try {
@@ -818,6 +815,29 @@ namespace Pomodoro
 
                 this.release ();
             });
+        }
+
+        private void on_enter_time_block (Pomodoro.TimeBlock time_block)
+        {
+            time_block.changed.connect (this.on_current_time_block_changed);
+        }
+
+        private void on_leave_time_block (Pomodoro.TimeBlock time_block)
+        {
+            time_block.changed.disconnect (this.on_current_time_block_changed);
+        }
+
+        private void on_current_time_block_changed ()
+        {
+            this.schedule_save ();
+        }
+
+        private void on_advanced (Pomodoro.Session?   current_session,
+                                  Pomodoro.TimeBlock? current_time_block,
+                                  Pomodoro.Session?   previous_session,
+                                  Pomodoro.TimeBlock? previous_time_block)
+        {
+            this.schedule_save ();
         }
 
         private void on_event (Pomodoro.Event event)

@@ -16,6 +16,12 @@ namespace Tests
             this.add_test ("set_session",
                            this.test_set_session);
 
+            this.add_test ("move_by__without_gaps", this.test_move_by__without_gaps);
+            this.add_test ("move_by__with_gaps", this.test_move_by__with_gaps);
+            this.add_test ("move_to", this.test_move_to);
+            this.add_test ("add_gap", this.test_add_gap);
+            this.add_test ("remove_gap", this.test_remove_gap);
+
             this.add_test ("calculate_elapsed__without_gaps",
                            this.test_calculate_elapsed__without_gaps);
             this.add_test ("calculate_elapsed__with_gaps",
@@ -46,20 +52,12 @@ namespace Tests
             // this.add_test ("calculate_progress_inv__with_gaps_overlapping",
             //                this.test_calculate_progress_inv__with_gaps_overlapping);
 
-            this.add_test ("move_by", this.test_move_by);
-            this.add_test ("move_to", this.test_move_to);
-
             // this.add_test ("state", this.test_state);
             // this.add_test ("start_time", this.test_start_time);
             // this.add_test ("end_time", this.test_end_time);
             // this.add_test ("duration", this.test_duration);
-            // this.add_test ("parent", this.test_parent);
-            // this.add_test ("has_bounds", this.test_has_bounds);
-            // this.add_test ("add_child", this.test_add_child);
-            // this.add_test ("remove_child", this.test_remove_child);
-            // this.add_test ("get_last_child", this.test_get_last_child);
-            // this.add_test ("foreach_child", this.test_foreach_child);
-            // this.add_test ("changed_range_signal", this.test_changed_range_signal);
+
+            // this.add_test ("changed_signal", this.test_changed_signal);
         }
 
         public override void setup ()
@@ -188,9 +186,9 @@ namespace Tests
          * Tests for methods
          */
 
-        public void test_move_by ()
+        public void test_move_by__without_gaps ()
         {
-            var now = Pomodoro.Timestamp.advance (0);
+            var now = Pomodoro.Timestamp.peek ();
             var time_block = new Pomodoro.TimeBlock ();
 
             var changed_emitted = 0;
@@ -236,6 +234,41 @@ namespace Tests
 
             time_block.move_by (0);
             assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 6);
+        }
+
+        public void test_move_by__with_gaps ()
+        {
+            var now = Pomodoro.Timestamp.peek ();
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (now, now + 5 * Pomodoro.Interval.MINUTE);
+
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (now + 0 * Pomodoro.Interval.SECOND,
+                                  now + 5 * Pomodoro.Interval.SECOND);
+            time_block.add_gap (gap_1);
+
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (now + 10 * Pomodoro.Interval.SECOND,
+                                  now + 20 * Pomodoro.Interval.SECOND);
+            time_block.add_gap (gap_2);
+
+            time_block.move_by (Pomodoro.Interval.MINUTE);
+            assert_cmpvariant (
+                new GLib.Variant.int64 (gap_1.start_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE + 0 * Pomodoro.Interval.SECOND)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (gap_1.end_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE + 5 * Pomodoro.Interval.SECOND)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (gap_2.start_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE + 10 * Pomodoro.Interval.SECOND)
+            );
+            assert_cmpvariant (
+                new GLib.Variant.int64 (gap_2.end_time),
+                new GLib.Variant.int64 (now + Pomodoro.Interval.MINUTE + 20 * Pomodoro.Interval.SECOND)
+            );
         }
 
         public void test_move_to ()
@@ -305,20 +338,6 @@ namespace Tests
             assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 6);
         }
 
-
-        // public void test_add_gap ()
-        // {
-        // }
-
-        // public void test_remove_gap ()
-        // {
-        // }
-
-
-        // public void test_has_bounds ()
-        // {
-        // }
-
         // public void test_has_started ()
         // {
         // }
@@ -327,6 +346,86 @@ namespace Tests
         // {
         // }
 
+        public void test_add_gap ()
+        {
+            var now = Pomodoro.Timestamp.peek ();
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (now + Pomodoro.Interval.MINUTE,
+                                       now + 30 * Pomodoro.Interval.MINUTE);
+
+            var changed_emitted = 0;
+            time_block.changed.connect (() => {
+                changed_emitted++;
+            });
+
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (time_block.start_time + 5 * Pomodoro.Interval.MINUTE,
+                                  Pomodoro.Timestamp.UNDEFINED);
+
+            // Expect that `Gap.time_block` is set and that `changed` signal is emitted.
+            time_block.add_gap (gap_1);
+            assert_true (gap_1.time_block == time_block);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 1);
+
+            time_block.add_gap (gap_1);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 1);  // no change
+
+            gap_1.end_time = time_block.start_time + 10 * Pomodoro.Interval.MINUTE;
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 2);
+
+            // Expect add_gap to keep gaps in order.
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (time_block.start_time,
+                                  time_block.start_time + Pomodoro.Interval.MINUTE);
+            time_block.add_gap (gap_2);
+            assert_true (time_block.get_last_gap () == gap_1);
+
+            var gap_3 = new Pomodoro.Gap ();
+            gap_3.set_time_range (time_block.start_time + 20 * Pomodoro.Interval.MINUTE,
+                                  time_block.start_time + 25 * Pomodoro.Interval.MINUTE);
+            time_block.add_gap (gap_3);
+            assert_true (time_block.get_last_gap () == gap_3);
+        }
+
+        public void test_remove_gap ()
+        {
+            var now = Pomodoro.Timestamp.peek ();
+            var time_block = new Pomodoro.TimeBlock ();
+            time_block.set_time_range (now + Pomodoro.Interval.MINUTE,
+                                       now + 30 * Pomodoro.Interval.MINUTE);
+
+            var gap_1 = new Pomodoro.Gap ();
+            gap_1.set_time_range (time_block.start_time + 1 * Pomodoro.Interval.MINUTE,
+                                  time_block.start_time + 2 * Pomodoro.Interval.MINUTE);
+            time_block.add_gap (gap_1);
+
+            var gap_2 = new Pomodoro.Gap ();
+            gap_2.set_time_range (time_block.start_time + 3 * Pomodoro.Interval.MINUTE,
+                                  time_block.start_time + 4 * Pomodoro.Interval.MINUTE);
+            time_block.add_gap (gap_2);
+
+            var gap_3 = new Pomodoro.Gap ();
+            gap_3.set_time_range (time_block.start_time + 5 * Pomodoro.Interval.MINUTE,
+                                  time_block.start_time + 6 * Pomodoro.Interval.MINUTE);
+
+            var changed_emitted = 0;
+            time_block.changed.connect (() => {
+                changed_emitted++;
+            });
+
+            time_block.remove_gap (gap_1);
+            assert_null (gap_1.time_block);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 1);
+
+            time_block.remove_gap (gap_1);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 1);
+
+            time_block.remove_gap (gap_2);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 2);
+
+            time_block.remove_gap (gap_3);
+            assert_cmpuint (changed_emitted, GLib.CompareOperator.EQ, 2);  // no change
+        }
 
         public void test_calculate_elapsed__without_gaps ()
         {

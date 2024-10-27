@@ -161,6 +161,7 @@ namespace Pomodoro
          */
         internal GLib.List<Pomodoro.TimeBlock> time_blocks;
         internal ulong                         version = 0;
+        internal Pomodoro.SessionEntry?        entry = null;
 
         private int64                          _start_time = Pomodoro.Timestamp.UNDEFINED;
         private int64                          _end_time = Pomodoro.Timestamp.UNDEFINED;
@@ -790,6 +791,63 @@ namespace Pomodoro
 
 
         /*
+         * Databaase
+         */
+
+        internal bool should_create_entry ()
+        {
+            unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.first ();
+
+            while (link != null)
+            {
+                if (link.data.should_create_entry ()) {
+                    return true;
+                }
+
+                link = link.next;
+            }
+
+            return false;
+        }
+
+        internal bool should_update_entry ()
+        {
+            if (this.entry == null || this.entry.id == 0) {
+                return true;
+            }
+
+            return this.entry.version != this.version;
+        }
+
+        internal Pomodoro.SessionEntry create_or_update_entry ()
+        {
+            if (this.entry == null) {
+                this.entry = new Pomodoro.SessionEntry ();
+                this.entry.repository = Pomodoro.Database.get_repository ();
+            }
+
+            this.entry.start_time = this.start_time;
+            this.entry.end_time = this.end_time;
+            this.entry.version = this.version;
+
+            return this.entry;
+        }
+
+        internal void unset_entry ()
+        {
+            unowned GLib.List<Pomodoro.TimeBlock> link = this.time_blocks.first ();
+
+            while (link != null)
+            {
+                link.data.unset_entry ();
+                link = link.next;
+            }
+
+            this.entry = null;
+        }
+
+
+        /*
          * Signals
          */
 
@@ -808,8 +866,6 @@ namespace Pomodoro
         [Signal (run = "first")]
         public signal void changed ()
         {
-            assert (this.changed_freeze_count == 0);  // TODO: remove
-
             this.update_time_range ();
             this.invalidate_cycles ();
         }
