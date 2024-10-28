@@ -490,6 +490,8 @@ namespace Pomodoro
 
             var previous_session    = this._current_session;
             var previous_time_block = this._current_time_block;
+            var previous_state      = this._current_state;
+            var state               = time_block != null ? time_block.state : Pomodoro.State.STOPPED;
 
             this.freeze_current_session_changed ();
 
@@ -546,8 +548,11 @@ namespace Pomodoro
             // Enter session.
             if (session != previous_session)
             {
-                this._current_session = session;
+                this.previous_session    = previous_session;
+                this.previous_time_block = previous_time_block;
+                this._current_session    = session;
                 this._current_time_block = null;
+                this._current_gap        = null;
 
                 this.notify_property ("current-session");
 
@@ -569,14 +574,11 @@ namespace Pomodoro
             // Enter time-block. It will start or stop the timer depending whether time-block is null.
             if (time_block != previous_time_block)
             {
-                var previous_state = this._current_state;
-                var state          = time_block != null ? time_block.state : Pomodoro.State.STOPPED;
-
-                this.previous_session    = previous_session;
                 this.previous_time_block = previous_time_block;
-                this._current_gap        = null;
                 this._current_time_block = time_block;
+                this._current_gap        = null;
                 this._current_state      = state;
+
                 this.notify_property ("current-time-block");
 
                 if (state != previous_state) {
@@ -617,7 +619,7 @@ namespace Pomodoro
             if (this._current_session != null && this._current_time_block == null)
             {
                 if (this.previous_time_block != null &&
-                    this.previous_session == this._current_session)
+                    this.previous_time_block.session == this._current_session)
                 {
                     next_time_block = this._current_session.get_next_time_block (this.previous_time_block);
                 }
