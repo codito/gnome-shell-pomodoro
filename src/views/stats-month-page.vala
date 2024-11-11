@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 gnome-pomodoro contributors
+ * Copyright (c) 2024 gnome-pomodoro contributors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,41 +23,20 @@ using GLib;
 
 namespace Pomodoro
 {
-    private class StatsMonthPage : StatsPage
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/stats-month-page.ui")]
+    private class StatsMonthPage : Gtk.Box, Pomodoro.StatsPage
     {
+        public Gom.Repository repository { get; construct; }
+
+        public GLib.Date date { get; construct; }
+
         public StatsMonthPage (Gom.Repository repository,
-                               GLib.DateTime  date)
+                               GLib.Date      date)
         {
-            GLib.Object (date: date);
-
-            this.repository = repository;
-
-            this.update ();
-        }
-
-        protected override string format_datetime (GLib.DateTime date)
-        {
-            var heading = date.format ("%OB %Y");
-
-            // ensure months name is title-cased
-            return heading.splice (0,
-                                   heading.index_of_nth_char (1),
-                                   heading.get_char (0).toupper ().to_string ());
-        }
-
-        public override GLib.DateTime get_previous_date ()
-        {
-            return this.date.add_months (-1);
-        }
-
-        public override GLib.DateTime get_next_date ()
-        {
-            return this.date.add_months (1);
-        }
-
-        public override async uint64 get_reference_value ()
-        {
-            return yield AggregatedEntry.get_baseline_monthly_elapsed ();
+            GLib.Object (
+                repository: repository,
+                date: date
+            );
         }
    }
 }

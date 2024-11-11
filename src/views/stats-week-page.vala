@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 gnome-pomodoro contributors
+ * Copyright (c) 2024 gnome-pomodoro contributors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,69 +23,20 @@ using GLib;
 
 namespace Pomodoro
 {
-    private class StatsWeekPage : StatsPage
+    [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/stats-week-page.ui")]
+    private class StatsWeekPage : Gtk.Box, Pomodoro.StatsPage
     {
+        public Gom.Repository repository { get; construct; }
+
+        public GLib.Date date { get; construct; }
+
         public StatsWeekPage (Gom.Repository repository,
-                              GLib.DateTime  date)
+                              GLib.Date      date)
         {
-            GLib.Object (date: date);
-
-            this.repository = repository;
-
-            this.update ();
-        }
-
-        private static GLib.DateTime normalize_datetime (GLib.DateTime datetime)
-        {
-            var tmp = new GLib.DateTime.local (datetime.get_year (),
-                                               datetime.get_month (),
-                                               datetime.get_day_of_month (),
-                                               0,
-                                               0,
-                                               0.0);
-            // GLib.DateTime constructor is not happy with negative day numbers,
-            // so a separate add_days() call is needed
-            return tmp.add_days (1 - datetime.get_day_of_week ());
-        }
-
-        protected override string format_datetime (GLib.DateTime date)
-        {
-            var now = normalize_datetime (new GLib.DateTime.now_local ());
-            var week = normalize_datetime (date);
-            var week_end = week.add_weeks (1).add_seconds (-1.0);
-
-            if (date.compare (now) == 0) {
-                return _("This week");
-            }
-
-            if (week.get_month () == week_end.get_month ()) {
-                return "%d - %d %s".printf (
-                        week.get_day_of_month (),
-                        week_end.get_day_of_month (),
-                        week_end.format ("%B %Y"));
-            }
-            else {
-                return "%d %s - %d %s".printf (
-                        week.get_day_of_month (),
-                        week.format ("%B"),
-                        week_end.get_day_of_month (),
-                        week_end.format ("%B %Y"));
-            }
-        }
-
-        public override GLib.DateTime get_previous_date ()
-        {
-            return this.date.add_weeks (-1);
-        }
-
-        public override GLib.DateTime get_next_date ()
-        {
-            return this.date.add_weeks (1);
-        }
-
-        public override async uint64 get_reference_value ()
-        {
-            return yield AggregatedEntry.get_baseline_weekly_elapsed ();
+            GLib.Object (
+                repository: repository,
+                date: date
+            );
         }
     }
 }

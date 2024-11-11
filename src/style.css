@@ -201,6 +201,20 @@ compacttimerview:dir(rtl) progressbar {
 
 
 /**
+ * PomodoroStatsView
+ */
+statsview .title-1 {
+    font-size: 1.6em;
+    font-weight: bold;
+}
+
+statsview .title-2 {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+
+/**
  * PomodoroCondition widget
  */
 condition.card {

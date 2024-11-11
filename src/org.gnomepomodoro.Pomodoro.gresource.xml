@@ -20,7 +20,9 @@
     <file alias="ui/preferences-window.ui" compressed="true" preprocess="xml-stripblanks">views/preferences-window.ui</file>
     <file alias="ui/screen-overlay.ui" compressed="true" preprocess="xml-stripblanks">views/screen-overlay.ui</file>
     <file alias="ui/sound-chooser-window.ui" compressed="true" preprocess="xml-stripblanks">views/sound-chooser-window.ui</file>
-    <file alias="ui/stats-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-page.ui</file>
+    <file alias="ui/stats-day-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-day-page.ui</file>
+    <file alias="ui/stats-week-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-week-page.ui</file>
+    <file alias="ui/stats-month-page.ui" compressed="true" preprocess="xml-stripblanks">views/stats-month-page.ui</file>
     <file alias="ui/stats-view.ui" compressed="true" preprocess="xml-stripblanks">views/stats-view.ui</file>
     <file alias="ui/timer-view.ui" compressed="true" preprocess="xml-stripblanks">views/timer-view.ui</file>
     <file alias="ui/window.ui"  compressed="true" preprocess="xml-stripblanks">views/window.ui</file>

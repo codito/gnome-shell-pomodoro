@@ -135,10 +135,7 @@
                             <property name="title" translatable="yes">Stats</property>
                             <property name="icon-name">stats-symbolic</property>
                             <property name="child">
-                              <!-- TODO: change to History -->
-                              <object class="GtkLabel">
-                                <property name="label">Stats</property>
-                              </object>
+                              <object class="PomodoroStatsView"/>
                             </property>
                           </object>
                         </child>

@@ -30,6 +30,17 @@ libm_dep = cc.find_library('m')
 valac = meson.get_compiler('vala')
 posix_dep = valac.find_library('posix')
 
+check_headers = [
+  'sys/types.h',
+  'unistd.h',
+  'langinfo.h',
+  'locale.h'
+]
+
+foreach h : check_headers
+  cc.has_header(h, required: true)
+endforeach
+
 add_project_arguments(
   [
     '--vapidir', meson.current_source_dir(),
