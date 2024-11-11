@@ -140,7 +140,7 @@ namespace Pomodoro
          * For instance it's not aware when the timer gets paused, so the responsibility of managing expiry
          * passes on to a session manager.
          */
-        [CCode(notify = false)]
+        [CCode (notify = false)]
         public int64 expiry_time {
             get {
                 return this._expiry_time;
@@ -224,8 +224,8 @@ namespace Pomodoro
 
         private void update_time_range ()
         {
-            unowned Pomodoro.TimeBlock first_time_block = this.get_first_time_block ();
-            unowned Pomodoro.TimeBlock last_time_block = this.get_last_time_block ();
+            unowned var first_time_block = this.get_first_time_block ();
+            unowned var last_time_block = this.get_last_time_block ();
 
             var old_duration = this._end_time - this._start_time;
 

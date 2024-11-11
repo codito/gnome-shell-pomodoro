@@ -61,12 +61,13 @@ namespace Pomodoro
         return 60.0 * Math.round (seconds / 60.0);
     }
 
+
     /**
      * Convert seconds to text.
      *
      * If hours are present, seconds are omitted.
      */
-    public string format_time (uint seconds)
+    public string format_time (uint seconds)  // TODO: rename to format_interval
     {
         var hours = seconds / 3600;
         var minutes = (seconds % 3600) / 60;
@@ -100,6 +101,7 @@ namespace Pomodoro
         return str;
     }
 
+
     public inline double lerp (double value_from,
                                double value_to,
                                double t)
@@ -118,10 +120,12 @@ namespace Pomodoro
         return _is_flatpak > 0;
     }
 
+
     internal bool is_test ()
     {
         return GLib.Environment.get_variable ("G_TEST_ROOT_PROCESS") != null;
     }
+
 
     public string to_camel_case (string name)
     {

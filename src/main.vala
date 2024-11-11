@@ -41,9 +41,9 @@ private void on_posix_signal (int signal)
 
 public int main (string[] args)
 {
-    Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PACKAGE_LOCALE_DIR);
-    Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
-    Intl.textdomain (Config.GETTEXT_PACKAGE);
+    GLib.Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PACKAGE_LOCALE_DIR);
+    GLib.Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
+    GLib.Intl.textdomain (Config.GETTEXT_PACKAGE);
 
     GLib.Environment.set_application_name (_("Pomodoro"));
     GLib.Environment.set_prgname (Config.APPLICATION_ID);

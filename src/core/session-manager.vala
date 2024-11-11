@@ -1681,6 +1681,29 @@ namespace Pomodoro
             }
         }
 
+        // private void on_enter_time_block (Pomodoro.TimeBlock time_block)
+        // {
+            // this.hold ();
+
+            // TODO: deduplicate calls
+            // TODO: only save if time blocks have changed
+            // TODO: schedule task with GLib.Priority.LOW
+            // this.session_manager.save_async.begin ((obj, res) => {
+            //     try {
+            //         this.session_manager.save_async.end (res);
+            //     }
+            //     catch (GLib.Error error) {
+            //         GLib.warning ("Error while saving session: %s", error.message);
+            //     }
+            //
+            //     this.release ();
+            // });
+        // }
+
+        // private void on_leave_time_block (Pomodoro.TimeBlock time_block)
+        // {
+        // }
+
         private void on_scheduler_notify_session_template ()
         {
             this.update_has_uniform_breaks ();

@@ -118,7 +118,6 @@ namespace Pomodoro
             var text = layout.get_text ();
             var is_numeric = int.try_parse (text);
 
-            layout.get_pixel_size (out width, out height);
             baseline = layout.get_baseline () / Pango.SCALE;
 
             if (is_numeric)
@@ -126,7 +125,10 @@ namespace Pomodoro
                 var reference_text = string.nfill (text.length, '0');
                 var reference_layout = layout.copy ();
                 reference_layout.set_text (reference_text, reference_text.length);
-                reference_layout.get_pixel_size (out width, null);
+                reference_layout.get_pixel_size (out width, out height);
+            }
+            else {
+                layout.get_pixel_size (out width, out height);
             }
         }
 

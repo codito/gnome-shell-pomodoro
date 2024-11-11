@@ -46,12 +46,11 @@ namespace Pomodoro
 
         private static async int64 get_max_elapsed_sum (string group_by_sql)
         {
-            var adapter = get_repository ().get_adapter ();
+            var adapter = Pomodoro.Database.get_repository ().get_adapter ();
             var elapsed = (int64) 0;
 
             adapter.queue_read (() => {
-                // var cursor = (Gom.Cursor) GLib.Object.@new (typeof (Gom.Cursor));
-                Gom.Cursor cursor;
+                Gom.Cursor? cursor = null;
 
                 var command = (Gom.Command) GLib.Object.@new (typeof (Gom.Command),
                                                               adapter: adapter);
@@ -77,7 +76,7 @@ SELECT """ + group_by_sql + """ AS "group", SUM("elapsed") AS "elapsed-sum"
                     GLib.critical ("%s", error.message);
                 }
 
-                Idle.add (get_max_elapsed_sum.callback);
+                GLib.Idle.add (get_max_elapsed_sum.callback);
             });
 
             yield;
