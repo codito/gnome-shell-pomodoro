@@ -5,7 +5,131 @@
     <property name="spacing">10</property>
     <child>
       <object class="GtkLabel">
-        <property name="label">Day</property>
+        <property name="label">Histogram</property>
+        <style>
+          <class name="view"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="label" translatable="yes">Summary</property>
+        <property name="halign">start</property>
+        <property name="margin-top">10</property>
+        <property name="margin-bottom">5</property>
+        <style>
+          <class name="title-2"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkGrid">
+        <property name="column-spacing">10</property>
+        <property name="row-spacing">5</property>
+        <property name="margin-start">20</property>
+        <child>
+          <object class="GtkLabel" id="total_label">
+            <property name="label">2h 55m</property>
+            <property name="halign">end</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label" translatable="yes">Total time</property>
+            <property name="halign">start</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="total_pomodoro_label">
+            <property name="label">2h 30m</property>
+            <property name="halign">end</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label" translatable="yes">Pomodoro time</property>
+            <property name="halign">start</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="break_ratio_label">
+            <property name="label">10%</property>
+            <property name="halign">end</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label" translatable="yes">Break ratio</property>
+            <property name="halign">start</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="interruptions_label">
+            <property name="label">2</property>
+            <property name="halign">end</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">3</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label" translatable="yes">Interruptions</property>
+            <property name="halign">start</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">3</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="label" translatable="yes">History</property>
+        <property name="halign">start</property>
+        <property name="margin-top">10</property>
+        <property name="margin-bottom">5</property>
+        <style>
+          <class name="title-2"/>
+        </style>
       </object>
     </child>
   </template>
