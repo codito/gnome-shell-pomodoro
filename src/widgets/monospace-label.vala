@@ -208,7 +208,13 @@ namespace Pomodoro
         public override void snapshot (Gtk.Snapshot snapshot)
                                        requires (this.layout != null)
         {
-            snapshot.render_layout (this.get_style_context (), this.layout_x, this.layout_y, this.layout);
+            var origin = Graphene.Point () {
+                x = (float) this.layout_x,
+                y = (float) this.layout_y
+            };
+
+            snapshot.translate (origin);
+            snapshot.append_layout (this.layout, this.get_color ());
         }
 
         public override bool focus (Gtk.DirectionType direction)
