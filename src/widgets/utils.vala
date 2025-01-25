@@ -12,6 +12,41 @@ namespace Pomodoro
     }
 
 
+    internal Gdk.RGBA mix_colors (Gdk.RGBA color_1,
+                                  Gdk.RGBA color_2,
+                                  float    factor)
+    {
+        return Gdk.RGBA () {
+            red   = (1.0f - factor) * color_1.red   + factor * color_2.red,
+            green = (1.0f - factor) * color_1.green + factor * color_2.green,
+            blue  = (1.0f - factor) * color_1.blue  + factor * color_2.blue,
+            alpha = (1.0f - factor) * color_1.alpha + factor * color_2.alpha,
+        };
+    }
+
+
+    internal Gdk.RGBA get_foreground_color (Gtk.Widget widget)
+    {
+        var style_context = widget.get_style_context ();
+
+        Gdk.RGBA color;
+        style_context.lookup_color ("theme_fg_color", out color);
+
+        return color;
+    }
+
+
+    internal Gdk.RGBA get_background_color (Gtk.Widget widget)
+    {
+        var style_context = widget.get_style_context ();
+
+        Gdk.RGBA color;
+        style_context.lookup_color ("theme_bg_color", out color);
+
+        return color;
+    }
+
+
     internal unowned Gtk.Widget? get_child_by_buildable_id (Gtk.Widget widget,
                                                             string     buildable_id)
     {
