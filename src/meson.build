@@ -44,6 +44,7 @@ libgnome_pomodoro_sources = files(
   'core/job.vala',
   'core/lock-screen.vala',
   'core/logger.vala',
+  'core/matrix.vala',
   'core/notification-manager.vala',
   'core/presence.vala',
   'core/priority.vala',
