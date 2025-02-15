@@ -31,6 +31,7 @@ libgnome_pomodoro_sources = files(
   'core/context.vala',
   'core/cycle.vala',
   'core/database.vala',
+  'core/date-utils.vala',
   # 'core/desktop-extension.vala',
   'core/entry.vala',
   'core/event-producer.vala',

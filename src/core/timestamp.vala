@@ -20,6 +20,11 @@ namespace Pomodoro.Interval
         return unit * value;
     }
 
+    public int64 from_seconds (double seconds)
+    {
+        return (int64) Math.floor (seconds * (double) Pomodoro.Interval.SECOND);
+    }
+
     public int64 add (int64 interval,
                       int64 other)
     {
@@ -64,6 +69,38 @@ namespace Pomodoro.Interval
     public int64 round_seconds (int64 interval)
     {
         return round (interval, Pomodoro.Interval.SECOND);
+    }
+
+    public string format_short (int64 interval)
+    {
+        if (interval < 0) {
+            // It's ambiguous. We could say for example "2h ago", but in most cases a negative
+            // value doesn't make sense.
+            interval = -interval;
+        }
+
+        var seconds = (uint) (interval / Pomodoro.Interval.SECOND);
+        var hours = seconds / 3600;
+        var minutes = (seconds % 3600) / 60;
+        var str = "";
+
+        if (hours > 0)
+        {
+            /* translators: Short form for number of hours */
+            str = _("%uh").printf (hours);
+        }
+
+        if (minutes > 0 || hours == 0)
+        {
+            if (str != "") {
+                str += " ";  // TODO: use non breaking space
+            }
+
+            /* translators: Short form for number of minutes */
+            str += _("%um").printf (minutes);
+        }
+
+        return str;
     }
 }
 

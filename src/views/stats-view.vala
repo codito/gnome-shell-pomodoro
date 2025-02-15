@@ -23,48 +23,6 @@ using GLib;
 
 namespace Pomodoro
 {
-    private GLib.DateWeekday first_day_of_week = GLib.DateWeekday.BAD_WEEKDAY;
-
-    /**
-     * Based on gtkcalendar.c and https://sourceware.org/glibc/wiki/Locales
-     */
-    private GLib.DateWeekday get_first_day_of_week ()
-    {
-        if (!first_day_of_week.valid ())
-        {
-            // `nl_langinfo()` produces a string pointer whose address is the number we want.
-            // Using the result as a string will cause segfault.
-            var week_origin = (long) Posix.NLTime.WEEK_1STDAY.to_string ();
-            var week_1stday = 0;
-
-            if (week_origin == 19971130) {  // Sunday
-                week_1stday = 0;
-            } else if (week_origin == 19971201) {  // Monday
-                week_1stday = 1;
-            } else {
-                GLib.warning ("Unknown value of _NL_TIME_WEEK_1STDAY: %ld", week_origin);
-            }
-
-            var first_weekday = (int) Posix.NLTime.FIRST_WEEKDAY.to_string ().data[0];
-
-            var first_day_of_week_int = (week_1stday + first_weekday - 1) % 7;
-            GLib.info ("week_1stday = %d", week_1stday);
-            GLib.info ("first_weekday = %d", first_weekday);
-            GLib.info ("first_day_of_week_int = %d", first_day_of_week_int);
-
-            first_day_of_week = first_day_of_week_int == 0
-                ? GLib.DateWeekday.SUNDAY
-                : GLib.DateWeekday.MONDAY;
-
-            GLib.info ("first_day_of_week=%s valid=%s",
-                       first_day_of_week.to_string (),
-                       first_day_of_week.valid ().to_string ());
-        }
-
-        return first_day_of_week;
-    }
-
-
     public enum Timeframe
     {
         DAY,
@@ -135,7 +93,9 @@ namespace Pomodoro
                     break;
 
                 case WEEK:
-                    var offset = (int) date.get_weekday () - (int) get_first_day_of_week ();
+                    var first_day_of_week = Pomodoro.DateUtils.get_first_day_of_week ();
+                    var offset = (int) date.get_weekday () - (int) first_day_of_week;
+
                     if (offset < 0) {
                         offset += 7;
                     }
@@ -153,28 +113,6 @@ namespace Pomodoro
 
             return adjusted_date;
         }
-    }
-
-
-    private GLib.Date get_today_date ()
-    {
-        var datetime = new GLib.DateTime.now_local ();
-        var date = GLib.Date ();
-
-        date.set_dmy ((GLib.DateDay) datetime.get_day_of_month (),
-                      (GLib.DateMonth) datetime.get_month (),
-                      (GLib.DateYear) datetime.get_year ());
-        return date;
-    }
-
-
-    private string format_date (GLib.Date date,
-                                string    format)
-    {
-        var buffer = new char[256];
-        var length = date.strftime (buffer, format);
-
-        return (string) buffer[0 : length];
     }
 
 
@@ -273,7 +211,7 @@ namespace Pomodoro
 
         construct
         {
-            var today = get_today_date ();
+            var today = Pomodoro.DateUtils.get_today ();
 
             this.repository      = Pomodoro.Database.get_repository ();
             this.session_manager = Pomodoro.SessionManager.get_default ();
@@ -292,7 +230,8 @@ namespace Pomodoro
         private string build_page_name (Pomodoro.Timeframe timeframe,
                                         GLib.Date          date)
         {
-            return "%s:%s".printf (timeframe.to_string (), format_date (date, "%d-%m-%Y"));
+            return "%s:%s".printf (timeframe.to_string (),
+                                   Pomodoro.DateUtils.format_date (date, "%d-%m-%Y"));
         }
 
         private Pomodoro.StatsPage? create_page (Pomodoro.Timeframe timeframe,
@@ -395,7 +334,7 @@ namespace Pomodoro
         private void activate_today (GLib.SimpleAction action,
                                      GLib.Variant?     parameter)
         {
-            this._date = this._timeframe.adjust_date (get_today_date ());
+            this._date = this._timeframe.adjust_date (Pomodoro.DateUtils.get_today ());
 
             this.update_title ();
             this.update_actions ();
@@ -447,7 +386,7 @@ namespace Pomodoro
             string title;
             string subtitle;
 
-            var current_date = this._timeframe.adjust_date (get_today_date ());
+            var current_date = this._timeframe.adjust_date (Pomodoro.DateUtils.get_today ());
 
             switch (this._timeframe)
             {
@@ -459,13 +398,16 @@ namespace Pomodoro
                         title = _("Yesterday");
                     }
                     else if (this._date.get_year () == current_date.get_year ()) {
-                        title = capitalize_words (format_date (this._date, "%e %B").chug ());
+                        title = capitalize_words (
+                                Pomodoro.DateUtils.format_date (this._date, "%e %B").chug ());
                     }
                     else {
-                        title = capitalize_words (format_date (this._date, "%e %B %Y").chug ());
+                        title = capitalize_words (
+                                Pomodoro.DateUtils.format_date (this._date, "%e %B %Y").chug ());
                     }
 
-                    subtitle = capitalize_words (format_date (this._date, "%A"));
+                    subtitle = capitalize_words (
+                            Pomodoro.DateUtils.format_date (this._date, "%A"));
                     break;
 
                 case Pomodoro.Timeframe.WEEK:
@@ -484,7 +426,8 @@ namespace Pomodoro
                             "%u week ago", "%u weeks ago", weeks_ago).printf ((uint) weeks_ago);
                     }
                     else {  // shouldn't happen
-                        var week_number = get_first_day_of_week () == GLib.DateWeekday.MONDAY
+                        var first_day_of_week = Pomodoro.DateUtils.get_first_day_of_week ();
+                        var week_number = first_day_of_week == GLib.DateWeekday.MONDAY
                                 ? week_start.get_monday_week_of_year ()
                                 : week_start.get_sunday_week_of_year ();
                         title = _("Week %u").printf (week_number);
@@ -492,23 +435,23 @@ namespace Pomodoro
 
                     if (week_start.get_month () == week_end.get_month ()) {
                         subtitle = capitalize_words ("%s – %s".printf (
-                                format_date (week_start, "%e").chug (),
-                                format_date (week_end, "%e %B %Y").chug ()));
+                                Pomodoro.DateUtils.format_date (week_start, "%e").chug (),
+                                Pomodoro.DateUtils.format_date (week_end, "%e %B %Y").chug ()));
                     }
                     else {
                         subtitle = capitalize_words ("%s – %s".printf (
-                                format_date (week_start, "%e %B").chug (),
-                                format_date (week_end, "%e %B %Y").chug ()));
+                                Pomodoro.DateUtils.format_date (week_start, "%e %B").chug (),
+                                Pomodoro.DateUtils.format_date (week_end, "%e %B %Y").chug ()));
                     }
 
                     break;
 
                 case Pomodoro.Timeframe.MONTH:
-                    if (this.date.get_year () == current_date.get_year ()) {
-                        title = capitalize_words (format_date (this._date, "%B"));
-                    }
-                    else {
-                        title = capitalize_words (format_date (this._date, "%B %Y"));
+                    title = capitalize_words (
+                            Pomodoro.DateUtils.get_month_name (this._date.get_month ()));
+
+                    if (this.date.get_year () != current_date.get_year ()) {
+                        title += Pomodoro.DateUtils.format_date (this._date, " %Y");
                     }
 
                     subtitle = "";
@@ -575,7 +518,7 @@ namespace Pomodoro
 
         private void update_max_date ()
         {
-            this.max_date = get_today_date ();
+            this.max_date = Pomodoro.DateUtils.get_today ();
 
             this.update_actions ();
         }

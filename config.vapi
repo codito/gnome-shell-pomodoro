@@ -19,4 +19,6 @@ namespace Config
 
     public const string EXTENSION_DIR;
     public const string EXTENSION_UUID;
+
+    public const bool   HAVE_ALTMON;
 }

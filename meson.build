@@ -52,6 +52,7 @@ add_project_arguments(
 
 add_project_arguments(
   '-DGETTEXT_PACKAGE="' + meson.project_name() + '"',
+  '-D_GNU_SOURCE',
   language: 'c',
 )
 
@@ -141,6 +142,11 @@ conf.set_quoted(
   'G_LOG_DOMAIN',
   meson.project_name()
 )
+
+# Not all systems support nl_langinfo (ALTMON_*)
+if cc.has_header_symbol('langinfo.h', 'ALTMON_1', args: '-D_GNU_SOURCE')
+  conf.set('HAVE_ALTMON', true)
+endif
 
 configure_file(
   output: 'config.h',
