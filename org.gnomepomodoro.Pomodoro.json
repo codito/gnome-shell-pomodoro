@@ -1,7 +1,7 @@
 {
     "app-id" : "org.gnomepomodoro.Pomodoro",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "master",
+    "runtime-version" : "47",
     "sdk" : "org.gnome.Sdk",
     "command" : "gnome-pomodoro",
     "tags" : [],
