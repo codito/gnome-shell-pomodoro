@@ -4,10 +4,11 @@
     <property name="orientation">vertical</property>
     <property name="spacing">10</property>
     <child>
-      <object class="GtkLabel">
-        <property name="label">Histogram</property>
+      <object class="PomodoroHistogram" id="histogram">
+        <property name="stacked">false</property>
         <style>
-          <class name="view"/>
+          <class name="small-text"/>
+          <class name="numeric"/>
         </style>
       </object>
     </child>
@@ -119,17 +120,6 @@
             </layout>
           </object>
         </child>
-      </object>
-    </child>
-    <child>
-      <object class="GtkLabel">
-        <property name="label" translatable="yes">History</property>
-        <property name="halign">start</property>
-        <property name="margin-top">10</property>
-        <property name="margin-bottom">5</property>
-        <style>
-          <class name="title-2"/>
-        </style>
       </object>
     </child>
   </template>

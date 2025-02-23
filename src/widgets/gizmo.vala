@@ -19,7 +19,7 @@ namespace Pomodoro
      *
      * It's a carbon copy from Gtk+ code. File gtk/gtk/gtkgizmo.c
      */
-    public class Gizmo : Gtk.Widget
+    public sealed class Gizmo : Gtk.Widget
     {
         private Pomodoro.GizmoMeasureFunc?   measure_func;
         private Pomodoro.GizmoAllocateFunc?  allocate_func;

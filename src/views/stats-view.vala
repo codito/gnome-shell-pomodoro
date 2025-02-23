@@ -116,32 +116,6 @@ namespace Pomodoro
     }
 
 
-    private static string capitalize_words (string text)
-    {
-        var string_builder = new GLib.StringBuilder ();
-        var capitalize_next = true;
-        int index = 0;
-        unichar chr;
-
-        while (text.get_next_char (ref index, out chr))
-        {
-            if (chr == ' ') {
-                string_builder.append_unichar (chr);
-                capitalize_next = true;
-            }
-            else if (capitalize_next && chr.islower ()) {
-                string_builder.append_unichar (chr.toupper ());
-                capitalize_next = false;
-            }
-            else {
-                string_builder.append_unichar (chr);
-                capitalize_next = false;
-            }
-        }
-
-        return string_builder.str;
-    }
-
     [GtkTemplate (ui = "/org/gnomepomodoro/Pomodoro/ui/stats-view.ui")]
     public class StatsView : Adw.Bin
     {

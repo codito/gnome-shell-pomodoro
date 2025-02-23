@@ -29,6 +29,8 @@
     <file alias="ui/menus.ui" compressed="true" preprocess="xml-stripblanks">views/menus.ui</file>
 
     <!-- Widgets -->
+    <file alias="ui/bubble-chart.ui" compressed="true" preprocess="xml-stripblanks">widgets/bubble-chart.ui</file>
+    <file alias="ui/chart.ui" compressed="true" preprocess="xml-stripblanks">widgets/chart.ui</file>
     <file alias="ui/command-entryrow.ui" compressed="true" preprocess="xml-stripblanks">widgets/command-entryrow.ui</file>
     <file alias="ui/condition-group-widget.ui" compressed="true" preprocess="xml-stripblanks">widgets/condition-group-widget.ui</file>
     <file alias="ui/condition-widget.ui" compressed="true" preprocess="xml-stripblanks">widgets/condition-widget.ui</file>

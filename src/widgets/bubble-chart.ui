@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroBubbleChart" parent="GtkWidget">
+    <property name="width-request">400</property>
+    <property name="height-request">200</property>
+    <property name="accessible-role">img</property>
+    <child>
+      <object class="GtkGrid" id="layout_grid">
+        <property name="row-spacing">5</property>
+        <property name="column-spacing">5</property>
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <child>
+          <object class="GtkBox" id="x_axis">
+            <property name="orientation">horizontal</property>
+            <property name="hexpand">true</property>
+            <property name="vexpand">false</property>
+            <property name="homogeneous">true</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="y_axis">
+            <property name="orientation">vertical</property>
+            <property name="hexpand">false</property>
+            <property name="vexpand">true</property>
+            <property name="homogeneous">true</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkGrid" id="bubbles_grid">
+            <property name="column-homogeneous">true</property>
+            <property name="row-homogeneous">true</property>
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

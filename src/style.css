@@ -215,6 +215,18 @@ statsview .title-2 {
 
 
 /**
+ * PomodoroHistogram, PomodoroBubbleChart widgets
+ */
+chart scrolledwindow undershoot.left {
+    background: linear-gradient(to right, @theme_bg_color, transparent 100%);
+}
+
+chart scrolledwindow undershoot.right {
+    background: linear-gradient(to left, @theme_bg_color, transparent 100%);
+}
+
+
+/**
  * PomodoroCondition widget
  */
 condition.card {
@@ -316,4 +328,17 @@ popover.menu .title.no-padding {
 
 .numeric {
     font-feature-settings: "tnum";
+}
+
+.small-text {
+    font-size: 80%;
+    font-weight: 400;
+}
+
+.tooltip-contents {
+    font-size: 90%;
+}
+
+.tooltip-header {
+    font-weight: bold;
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PomodoroChart" parent="GtkWidget">
+    <property name="width-request">400</property>
+    <property name="height-request">200</property>
+    <property name="accessible-role">img</property>
+    <child>
+      <object class="PomodoroCanvas" id="guides">
+        <property name="y-scale" bind-source="canvas" bind-property="y-scale" bind-flags="sync-create"/>
+        <signal name="notify::y-origin" handler="on_y_origin_notify"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolled_window">
+        <property name="window-placement">bottom-left</property>
+        <property name="hscrollbar-policy">external</property>
+        <property name="vscrollbar-policy">never</property>
+        <property name="propagate-natural-height">true</property>
+        <property name="kinetic-scrolling">false</property>
+        <property name="overlay-scrolling">false</property>
+        <property name="hexpand">true</property>
+        <child>
+          <object class="PomodoroCanvas" id="canvas">
+            <property name="halign">center</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkGesturePan" id="pan_gesture">
+            <property name="orientation">horizontal</property>
+            <signal name="drag-begin" handler="on_drag_begin"/>
+            <signal name="pan" handler="on_pan"/>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
